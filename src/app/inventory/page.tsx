@@ -41,19 +41,20 @@ export default function InventoryPage() {
   const { data: assetRoster = [], isLoading: loadingAssets } = useQuery({ 
     queryKey: ['assetRoster'], 
     queryFn: getAssetRoster,
-    refetchInterval: 5000
+    refetchInterval: 60000
   });
 
   const { data: stockAssets = [], isLoading: loadingStock } = useQuery({ 
     queryKey: ['stockAssets'], 
     queryFn: getStockAssets,
-    refetchInterval: 5000
+    refetchInterval: 60000
   });
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedType, setSelectedType] = useState("All");
   const [selectedCondition, setSelectedCondition] = useState("All");
   const [selectedOwnership, setSelectedOwnership] = useState("All");
+  const [selectedUsage, setSelectedUsage] = useState("All");
   const [mounted, setMounted] = useState(false);
   const itemsPerPage = 10;
 
@@ -123,14 +124,21 @@ export default function InventoryPage() {
     ];
   }, [mounted, assetRoster, stockAssets]);
 
+  const allAssets = useMemo(() => {
+    const deployed = assetRoster.map((a: any) => ({ ...a, isStock: false, is_used: true }));
+    const stock = stockAssets.map((a: any) => ({ ...a, isStock: true, is_used: !!a.is_used }));
+    return [...deployed, ...stock];
+  }, [assetRoster, stockAssets]);
+
   const filteredAssets = useMemo(() => {
-    return assetRoster.filter(asset => {
+    return allAssets.filter(asset => {
       const typeMatch = selectedType === "All" || asset.type === selectedType;
       const conditionMatch = selectedCondition === "All" || asset.condition === selectedCondition;
       const ownershipMatch = selectedOwnership === "All" || asset.kepemilikan === selectedOwnership || (selectedOwnership === "Dimiliki" && !asset.kepemilikan);
-      return typeMatch && conditionMatch && ownershipMatch;
+      const usageMatch = selectedUsage === "All" || (selectedUsage === "Stock" && !asset.is_used) || (selectedUsage === "In Use" && asset.is_used);
+      return typeMatch && conditionMatch && ownershipMatch && usageMatch;
     });
-  }, [selectedType, selectedCondition, selectedOwnership, mounted, assetRoster]);
+  }, [selectedType, selectedCondition, selectedOwnership, selectedUsage, mounted, allAssets]);
 
   const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
   const paginatedAssets = filteredAssets.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -279,6 +287,21 @@ export default function InventoryPage() {
             </div>
             <div className="relative group">
               <select
+                value={selectedUsage}
+                onChange={(e) => {
+                  setSelectedUsage(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-12 shadow-sm"
+              >
+                <option value="All">All Status</option>
+                <option value="Stock">Ready Stock</option>
+                <option value="In Use">In Use</option>
+              </select>
+              <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+            <div className="relative group">
+              <select
                 value={selectedOwnership}
                 onChange={(e) => {
                   setSelectedOwnership(e.target.value);
@@ -321,18 +344,35 @@ export default function InventoryPage() {
                     >
                       <td className="px-10 py-8">
                         <div className="flex items-center gap-5">
-                          <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                            {asset.type === "Router" && <Router size={28} />}
-                            {asset.type === "Switch" && <Box size={28} />}
-                            {asset.type === "Core Switch" && <Box size={28} />}
-                            {asset.type === "Server" && <Cpu size={28} />}
-                            {asset.type === "Access Point" && <Wifi size={28} />}
-                            {asset.type === "OLT" && <Cpu size={28} />}
-                            {asset.type === "ONT" && <Smartphone size={28} />}
-                            {asset.type === "ODP" && <Box size={28} />}
+                          <div className="relative">
+                            <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
+                              {asset.type === "Router" && <Router size={28} />}
+                              {asset.type === "Switch" && <Box size={28} />}
+                              {asset.type === "Core Switch" && <Box size={28} />}
+                              {asset.type === "Server" && <Cpu size={28} />}
+                              {asset.type === "Access Point" && <Wifi size={28} />}
+                              {asset.type === "OLT" && <Cpu size={28} />}
+                              {asset.type === "ONT" && <Smartphone size={28} />}
+                              {asset.type === "ODP" && <Box size={28} />}
+                            </div>
+                            {asset.color && (
+                              <div 
+                                className="absolute -bottom-1 -right-1 w-5 h-5 rounded-lg border-2 border-white dark:border-slate-900 shadow-sm"
+                                style={{ backgroundColor: asset.color.toLowerCase() }}
+                                title={`Color: ${asset.color}`}
+                              />
+                            )}
                           </div>
                           <div>
-                            <p className="font-black text-slate-900 dark:text-slate-100 text-lg">{asset.sn}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-black text-slate-900 dark:text-slate-100 text-lg">{asset.sn}</p>
+                              <span className={cn(
+                                "text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-tight",
+                                asset.isStock ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+                              )}>
+                                {asset.isStock ? "In Stock" : "Deployed"}
+                              </span>
+                            </div>
                             <p className="text-[11px] font-bold text-slate-400 uppercase mt-0.5 tracking-tighter">{asset.mac}</p>
                           </div>
                         </div>
@@ -371,14 +411,18 @@ export default function InventoryPage() {
                         {asset.tanggal_perubahan && (
                           <div className="flex items-center gap-1 mt-1 text-[9px] text-slate-400">
                             <Calendar size={10} />
-                            {asset.tanggal_perubahan}
+                            {new Date(asset.tanggal_perubahan).toLocaleDateString('id-ID')}
                           </div>
                         )}
                       </td>
                       <td className="px-10 py-8">
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{asset.location}</span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">DC Zone 4</span>
+                          <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{asset.location || "Unset"}</span>
+                          {asset.latitude && asset.longitude && (
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">
+                              {asset.latitude}, {asset.longitude}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-10 py-8 text-right">

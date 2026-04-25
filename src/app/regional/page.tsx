@@ -23,9 +23,9 @@ export default function RegionalAnalysisPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
 
-  const { data: customerList = [], isLoading: loadingCustomers } = useQuery({ queryKey: ['customers'], queryFn: getCustomers, refetchInterval: 5000 });
-  const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers, refetchInterval: 5000 });
-  const { data: assetRoster = [], isLoading: loadingAssets } = useQuery({ queryKey: ['assetRoster'], queryFn: getAssetRoster, refetchInterval: 5000 });
+  const { data: customerList = [], isLoading: loadingCustomers } = useQuery({ queryKey: ['customers'], queryFn: getCustomers, refetchInterval: 60000 });
+  const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers, refetchInterval: 60000 });
+  const { data: assetRoster = [], isLoading: loadingAssets } = useQuery({ queryKey: ['assetRoster'], queryFn: getAssetRoster, refetchInterval: 60000 });
 
   const assetSummary = useMemo(() => {
     const filteredAssets = assetRoster.filter(a => {

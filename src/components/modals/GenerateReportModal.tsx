@@ -8,7 +8,7 @@ import {
   ChevronRight, 
   ChevronLeft, 
   Download, 
-  PieChart, 
+  PieChart as PieChartIcon, 
   Package, 
   MapPin, 
   Calendar,
@@ -32,7 +32,11 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  Cell
+  Cell,
+  ReferenceLine,
+  PieChart,
+  Pie,
+  Legend
 } from "recharts";
 
 interface GenerateReportModalProps {
@@ -150,8 +154,8 @@ export function GenerateReportModal({ isOpen, onClose }: GenerateReportModalProp
           color: "#f59e0b",
           type: "bar",
           mainTitle: "Jumlah Assets",
-          breakdownTitle: "Jumlah type berdasarkan location (province)",
-          subBreakdownTitle: region === "All Regions (Indonesia)" ? "Top 10 Lokasi (Nasional)" : `Detail Lokasi: ${region}`,
+          breakdownTitle: "Jumlah Assets Berdasarkan Location (Province)",
+          subBreakdownTitle: region === "All Regions (Indonesia)" ? "Stock Assets Location (Unused)" : `Detail Lokasi: ${region}`,
           ownership: reportData?.ownership || [],
           ownershipTitle: "Distribusi Kepemilikan"
         };
@@ -550,17 +554,41 @@ export function GenerateReportModal({ isOpen, onClose }: GenerateReportModalProp
                                 <h4 className="text-slate-200 font-medium mb-6">{chartConfig.breakdownTitle}</h4>
                                 <div ref={breakdownRef} className="h-[300px]">
                                   <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={chartConfig.breakdown} layout="vertical">
-                                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-                                      <XAxis type="number" stroke="#94a3b8" />
-                                      <YAxis dataKey="name" type="category" stroke="#94a3b8" width={100} fontSize={12} interval={0} />
-                                      <Tooltip 
-                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#f1f5f9' }}
-                                        itemStyle={{ color: chartConfig.color }}
+                                    <BarChart 
+                                      data={chartConfig.breakdown} 
+                                      layout="vertical" 
+                                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                                    >
+                                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} strokeOpacity={0.1} />
+                                      <XAxis 
+                                        type="number" 
+                                        stroke="#94a3b8" 
+                                        fontSize={10} 
+                                        tickFormatter={(val) => reportType === 'Revenue' ? `Rp ${(val/1000).toLocaleString()}k` : val.toLocaleString()} 
                                       />
-                                      <Bar dataKey="value" fill={chartConfig.color} radius={[0, 4, 4, 0]}>
+                                      <YAxis 
+                                        dataKey="name" 
+                                        type="category" 
+                                        stroke="#94a3b8" 
+                                        width={140}
+                                        fontSize={11} 
+                                        interval={0} 
+                                      />
+                                      <Tooltip 
+                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#f1f5f9', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                        formatter={(value: any) => [
+                                          reportType === 'Revenue' ? `Rp ${Number(value || 0).toLocaleString()}` : Number(value || 0).toLocaleString(), 
+                                          reportType === 'Revenue' ? 'Revenue' : 'Quantity'
+                                        ]}
+                                      />
+                                      <ReferenceLine x={0} stroke="#64748b" strokeWidth={2} />
+                                      <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={32}>
                                         {chartConfig.breakdown.map((entry: any, index: number) => (
-                                          <Cell key={`cell-${index}`} fillOpacity={0.8 - (index * 0.05)} />
+                                          <Cell 
+                                            key={`cell-${index}`} 
+                                            fill={entry.value >= 0 ? '#10b981' : '#f43f5e'} 
+                                            fillOpacity={0.9}
+                                          />
                                         ))}
                                       </Bar>
                                     </BarChart>
@@ -569,26 +597,69 @@ export function GenerateReportModal({ isOpen, onClose }: GenerateReportModalProp
                               </div>
                             )}
 
-                            {/* Sub-Breakdown Chart (Site/Regency) */}
+                            {/* Sub-Breakdown Chart (Site/Regency / Condition) */}
                             {!isLoading && chartConfig.subBreakdown && chartConfig.subBreakdown.length > 0 && (
                               <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700/50">
                                 <h4 className="text-slate-200 font-medium mb-6">{chartConfig.subBreakdownTitle}</h4>
                                 <div ref={subBreakdownRef} className="h-[300px]">
                                   <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={chartConfig.subBreakdown} layout="vertical">
-                                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-                                      <XAxis type="number" stroke="#94a3b8" />
-                                      <YAxis dataKey="name" type="category" stroke="#94a3b8" width={100} fontSize={12} interval={0} />
-                                      <Tooltip 
-                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#f1f5f9' }}
-                                        itemStyle={{ color: chartConfig.color }}
+                                    <BarChart data={chartConfig.subBreakdown} layout="vertical" margin={{ left: 20, right: 20 }}>
+                                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} strokeOpacity={0.1} />
+                                      <XAxis 
+                                        type="number" 
+                                        stroke="#94a3b8" 
+                                        fontSize={10} 
+                                        tickFormatter={(val) => reportType === 'Revenue' ? `Rp ${(val/1000).toLocaleString()}k` : val.toLocaleString()} 
                                       />
-                                      <Bar dataKey="value" fill={chartConfig.color} radius={[0, 4, 4, 0]}>
+                                      <YAxis dataKey="name" type="category" stroke="#94a3b8" width={120} fontSize={11} interval={0} />
+                                      <Tooltip 
+                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#f1f5f9' }}
+                                        formatter={(value: any) => [
+                                          reportType === 'Revenue' ? `Rp ${Number(value || 0).toLocaleString()}` : Number(value || 0).toLocaleString(), 
+                                          reportType === 'Revenue' ? 'Amount' : 'Quantity'
+                                        ]}
+                                      />
+                                      <ReferenceLine x={0} stroke="#64748b" strokeWidth={2} />
+                                      <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={24}>
                                         {chartConfig.subBreakdown.map((entry: any, index: number) => (
-                                          <Cell key={`cell-${index}`} fillOpacity={0.6 - (index * 0.05)} />
+                                          <Cell 
+                                            key={`cell-${index}`} 
+                                            fill={reportType === 'Revenue' ? (entry.value >= 0 ? '#10b981' : '#f43f5e') : '#f59e0b'} 
+                                            fillOpacity={0.8}
+                                          />
                                         ))}
                                       </Bar>
                                     </BarChart>
+                                  </ResponsiveContainer>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Ownership Distribution (Inventory Specific) */}
+                            {!isLoading && reportType === "Inventory" && chartConfig.ownership && chartConfig.ownership.length > 0 && (
+                              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700/50">
+                                <h4 className="text-slate-200 font-medium mb-6">{chartConfig.ownershipTitle}</h4>
+                                <div className="h-[300px]">
+                                  <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                      <Pie
+                                        data={chartConfig.ownership}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                      >
+                                        {chartConfig.ownership.map((entry: any, index: number) => (
+                                          <Cell key={`cell-${index}`} fill={index === 0 ? '#f59e0b' : '#6366f1'} />
+                                        ))}
+                                      </Pie>
+                                      <Tooltip 
+                                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#f1f5f9' }}
+                                      />
+                                      <Legend />
+                                    </PieChart>
                                   </ResponsiveContainer>
                                 </div>
                               </div>

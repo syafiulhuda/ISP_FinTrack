@@ -49,7 +49,7 @@ export default function NotificationsPage() {
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: getNotifications,
-    refetchInterval: 5000, // Refresh otomatis setiap 5 detik
+    refetchInterval: 60000, // Refresh otomatis setiap 60 detik
   });
 
   const [pageMap, setPageMap] = useState<Record<string, number>>({
@@ -62,12 +62,38 @@ export default function NotificationsPage() {
 
   const markReadMutation = useMutation({
     mutationFn: markNotificationAsRead,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      const previousNotifications = queryClient.getQueryData(['notifications']);
+      queryClient.setQueryData(['notifications'], (old: any) => 
+        old?.map((n: any) => n.id === id ? { ...n, is_unread: false } : n)
+      );
+      return { previousNotifications };
+    },
+    onError: (err, id, context: any) => {
+      queryClient.setQueryData(['notifications'], context.previousNotifications);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }
   });
 
   const markAllReadMutation = useMutation({
     mutationFn: markAllNotificationsAsRead,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      const previousNotifications = queryClient.getQueryData(['notifications']);
+      queryClient.setQueryData(['notifications'], (old: any) => 
+        old?.map((n: any) => ({ ...n, is_unread: false }))
+      );
+      return { previousNotifications };
+    },
+    onError: (err, variables, context: any) => {
+      queryClient.setQueryData(['notifications'], context.previousNotifications);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }
   });
 
   if (isLoading) {

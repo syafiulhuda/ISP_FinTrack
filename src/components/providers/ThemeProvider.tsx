@@ -53,25 +53,32 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.documentElement.classList.toggle("dark", newTheme === "dark");
     });
 
+    // Add direction attribute for CSS layering
+    document.documentElement.setAttribute("data-theme-transition", newTheme === "light" ? "to-light" : "to-dark");
+
     transition.ready.then(() => {
-      const clipPath = [
-        `circle(0px at ${x}px ${y}px)`,
-        `circle(${endRadius}px at ${x}px ${y}px)`,
-      ];
+      const isExpanding = newTheme === "dark";
       
       document.documentElement.animate(
         {
-          clipPath: [
-            `circle(0px at ${x}px ${y}px)`,
-            `circle(${endRadius}px at ${x}px ${y}px)`,
-          ],
+          clipPath: isExpanding 
+            ? [
+                `circle(0px at ${x}px ${y}px)`,
+                `circle(${endRadius}px at ${x}px ${y}px)`,
+              ]
+            : [
+                `circle(${endRadius}px at ${x}px ${y}px)`,
+                `circle(0px at ${x}px ${y}px)`,
+              ],
         },
         {
-          duration: 500,
-          easing: "cubic-bezier(0.65, 0, 0.35, 1)",
-          pseudoElement: "::view-transition-new(root)",
+          duration: 650,
+          easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+          pseudoElement: isExpanding ? "::view-transition-new(root)" : "::view-transition-old(root)",
         }
-      );
+      ).onfinish = () => {
+        document.documentElement.removeAttribute("data-theme-transition");
+      };
     });
   };
 

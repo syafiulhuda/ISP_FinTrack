@@ -25,15 +25,21 @@ export default function FinancePage() {
   const { data: transactions = [], isLoading: loadingTx } = useQuery({ 
     queryKey: ['transactions'], 
     queryFn: getTransactions,
-    refetchInterval: 5000 
+    refetchInterval: 60000 
   });
   const { data: ocrData, isLoading: loadingOcr } = useQuery({ queryKey: ['ocrData'], queryFn: getOcrData });
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedKeterangan, setSelectedKeterangan] = useState("All");
   const itemsPerPage = 5;
 
-  const totalPages = Math.ceil(transactions.length / itemsPerPage);
-  const paginatedTransactions = transactions.slice(
+  const filteredByKeterangan = transactions.filter(trx => {
+    if (selectedKeterangan === "All") return true;
+    return trx.keterangan?.toLowerCase() === selectedKeterangan.toLowerCase();
+  });
+
+  const totalPages = Math.ceil(filteredByKeterangan.length / itemsPerPage);
+  const paginatedTransactions = filteredByKeterangan.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -41,10 +47,10 @@ export default function FinancePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalSearch, setModalSearch] = useState("");
 
-  const filteredTransactions = transactions.filter(trx => 
-    trx.id.toLowerCase().includes(modalSearch.toLowerCase()) ||
-    trx.method.toLowerCase().includes(modalSearch.toLowerCase()) ||
-    trx.status.toLowerCase().includes(modalSearch.toLowerCase())
+  const filteredTransactions = filteredByKeterangan.filter(trx => 
+    (trx.id?.toLowerCase() || "").includes(modalSearch.toLowerCase()) ||
+    (trx.method?.toLowerCase() || "").includes(modalSearch.toLowerCase()) ||
+    (trx.status?.toLowerCase() || "").includes(modalSearch.toLowerCase())
   );
 
   if (loadingTx || loadingOcr || !ocrData) {
@@ -175,7 +181,24 @@ export default function FinancePage() {
       {/* Recent Transactions Table List */}
       <div className="space-y-6 relative overflow-hidden">
         <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Recent Processed Slips</h2>
+          <div className="flex items-center gap-6">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Recent Processed Slips</h2>
+            <div className="relative group">
+              <select
+                value={selectedKeterangan}
+                onChange={(e) => {
+                  setSelectedKeterangan(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-5 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-10 shadow-sm"
+              >
+                <option value="All">Semua Transaksi</option>
+                <option value="pemasukan">Income (Pemasukan)</option>
+                <option value="pengeluaran">Outcome (Pengeluaran)</option>
+              </select>
+              <FilterIcon size={12} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
           <button 
             onClick={() => setIsModalOpen(true)}
             className="text-primary text-sm font-bold hover:underline flex items-center gap-1"
@@ -197,7 +220,7 @@ export default function FinancePage() {
           {/* Transaction Rows */}
           {paginatedTransactions.map((trx, index) => (
             <motion.div 
-              key={trx.id}
+              key={`${trx.id}-${index}`}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 + index * 0.1 }}
@@ -239,7 +262,7 @@ export default function FinancePage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-2 pt-4">
             <p className="text-sm font-medium text-slate-500">
-              Showing <span className="text-slate-900 dark:text-slate-100 font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-slate-100 font-bold">{Math.min(currentPage * itemsPerPage, transactions.length)}</span> of <span className="text-slate-900 dark:text-slate-100 font-bold">{transactions.length}</span> results
+              Showing <span className="text-slate-900 dark:text-slate-100 font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-slate-100 font-bold">{Math.min(currentPage * itemsPerPage, filteredByKeterangan.length)}</span> of <span className="text-slate-900 dark:text-slate-100 font-bold">{filteredByKeterangan.length}</span> results
             </p>
             <div className="flex items-center gap-2">
               <button 
@@ -338,9 +361,9 @@ export default function FinancePage() {
                 {/* Condensed List */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                   <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                    {filteredTransactions.map((trx) => (
+                    {filteredTransactions.map((trx, index) => (
                       <div 
-                        key={trx.id}
+                        key={`${trx.id}-${index}`}
                         className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer"
                       >
                         <div className="flex items-center gap-3">

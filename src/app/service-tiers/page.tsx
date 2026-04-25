@@ -28,6 +28,7 @@ export default function ServiceTiersPage() {
   const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
   const isSearching = searchQuery.trim().length > 0;
@@ -36,12 +37,19 @@ export default function ServiceTiersPage() {
     return <div className="h-full w-full flex items-center justify-center"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="text-slate-500 font-medium">Loading Service Tiers Data...</p></div></div>;
   }
 
-  const filteredCustomers = customerList.filter(cust => 
-    cust.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    cust.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    cust.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (cust.service && cust.service.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredCustomers = customerList.filter(cust => {
+    const matchesSearch = 
+      cust.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cust.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cust.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (cust.service && cust.service.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesStatus = 
+      statusFilter === "All" || 
+      (cust.status?.toLowerCase() === statusFilter.toLowerCase());
+
+    return matchesSearch && matchesStatus;
+  });
 
   const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
   
@@ -144,18 +152,38 @@ export default function ServiceTiersPage() {
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Customer Directory</h3>
             <p className="text-sm font-medium text-slate-500 mt-1">Search and manage your active subscriber base.</p>
           </div>
-          <div className="relative max-w-sm w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search by name, ID, city or plan..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-            />
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            <div className="relative w-full sm:w-auto">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full sm:w-[160px] pl-4 pr-10 py-2.5 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none cursor-pointer shadow-sm"
+              >
+                <option value="All">All Subscribers</option>
+                <option value="active">Active Only</option>
+                <option value="inactive">Inactive Only</option>
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+            
+            <div className="relative w-full md:w-[320px] group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+              <input 
+                type="text" 
+                placeholder="Search name, ID or city..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full pl-11 pr-4 py-2.5 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-xs font-medium focus:ring-4 focus:ring-primary/10 transition-all outline-none"
+              />
+            </div>
           </div>
         </div>
 
@@ -164,33 +192,62 @@ export default function ServiceTiersPage() {
             <table className="w-full text-left border-collapse table-fixed min-w-[1000px]">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50">
-                  <th className="w-[100px] px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">ID & Service</th>
-                  <th className="w-[140px] px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Name</th>
-                  <th className="w-[220px] px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Address</th>
-                  <th className="w-[140px] px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Village</th>
-                  <th className="w-[140px] px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">District</th>
-                  <th className="w-[150px] px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Regency</th>
-                  <th className="w-[140px] px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Province</th>
+                  <th className="w-[120px] px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Status</th>
+                  <th className="w-[130px] px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Subscriber</th>
+                  <th className="w-[180px] px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Full Name</th>
+                  <th className="w-[240px] px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Service Address</th>
+                  <th className="w-[150px] px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Region</th>
+                  <th className="w-[150px] px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">City/Regency</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {displayCustomers.map((cust) => (
-                  <tr key={cust.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs font-bold text-primary bg-primary/5 px-2 py-1 rounded-md w-fit whitespace-nowrap">{cust.id}</span>
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter truncate">{cust.service || 'Standard'} Plan</span>
+                {displayCustomers.map((cust, idx) => (
+                  <motion.tr 
+                    key={cust.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-all group"
+                  >
+                    <td className="px-6 py-5">
+                      <div className={cn(
+                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all",
+                        cust.status?.toLowerCase() === 'active' 
+                          ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 ring-1 ring-emerald-500/20" 
+                          : "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 ring-1 ring-rose-500/20"
+                      )}>
+                        <div className={cn(
+                          "w-1.5 h-1.5 rounded-full animate-pulse",
+                          cust.status?.toLowerCase() === 'active' ? "bg-emerald-500" : "bg-rose-500"
+                        )}></div>
+                        {cust.status || 'Active'}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100 break-words leading-relaxed">{cust.name}</span>
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[11px] font-black text-slate-900 dark:text-slate-100 tracking-tight">{cust.id}</span>
+                        <span className="text-[9px] font-bold text-primary uppercase tracking-tighter opacity-80">{cust.service || 'Standard'} Plan</span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 font-medium break-words leading-relaxed">{cust.address}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 break-words leading-relaxed">{cust.village}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 break-words leading-relaxed">{cust.district}</td>
-                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100 font-bold break-words leading-relaxed">{cust.city}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 break-words leading-relaxed">{cust.province}</td>
-                  </tr>
+                    <td className="px-6 py-5">
+                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">{cust.name}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col">
+                        <span className="text-xs text-slate-600 dark:text-slate-400 font-medium line-clamp-1">{cust.address}</span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wide mt-0.5">{cust.village}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{cust.district}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{cust.city}</span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase">{cust.province}</span>
+                      </div>
+                    </td>
+                  </motion.tr>
                 ))}
                 {displayCustomers.length === 0 && (
                   <tr>

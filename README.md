@@ -1,6 +1,6 @@
 # 🚀 ISP-FinTrack: Enterprise Financial Intelligence
 
-![ISP-FinTrack Dashboard](public/images/screenshots/dashboard-page.png)
+![ISP-FinTrack Dashboard](public/images/screenshots/dashboard.png)
 
 **ISP-FinTrack** is a high-performance, database-driven financial dashboard designed for Internet Service Providers. It provides real-time insights into profitability, regional revenue distribution, inventory health, and automated financial processing.
 
@@ -104,20 +104,6 @@ You can use the default administrator account to explore the dashboard:
 - `/src/components`: Reusable UI components.
 - `/src/lib`: Shared utilities and DB configuration.
 - `/scripts`: MJS scripts for automated DB tasks.
-
----
-
-## 📸 Visual Tour
-
-### Login & Authentication
-
-Secure entry point for administrative staff with premium design.
-![Login Page](public/images/screenshots/login-page.png)
-
-### Profitability Analysis
-
-Deep dive into unit economics, expenses, and regional performance.
-![Profitability Analysis](public/images/screenshots/profitability-page.png)
 
 ---
 

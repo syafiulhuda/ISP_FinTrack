@@ -89,7 +89,7 @@ export default function Dashboard() {
   const { data: transactions = [], isLoading: loadingTx } = useQuery({ 
     queryKey: ['transactions'], 
     queryFn: getTransactions,
-    refetchInterval: 5000 
+    refetchInterval: 60000 
   });
 
   const [mounted, setMounted] = useState(false);
@@ -123,6 +123,8 @@ export default function Dashboard() {
       .filter((t: any) => t.status === "Verified")
       .reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
 
+    // Disable the automated flood of notifications
+    /*
     if (estimatedRevenue !== verifiedTxTotal) {
       const diff = Math.abs(estimatedRevenue - verifiedTxTotal);
       const formattedDiff = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(diff);
@@ -133,6 +135,7 @@ export default function Dashboard() {
         `Dashboard detection: A discrepancy of ${formattedDiff} exists between Active Customer capacity and Verified Transactions.`
       );
     }
+    */
   }, [customerList, transactions, serviceTiers, loadingCustomers, loadingTx, loadingTiers]);
 
   useEffect(() => {
@@ -173,67 +176,20 @@ export default function Dashboard() {
     };
 
     const activeCustomers = customerList.filter(c => c.status === "Active");
-    const currentRevenue = calculateRevenue();
+    const currentRevenue = transactions
+      .filter(t => t.status === "Verified")
+      .reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
+    
     const currentARPU = activeCustomers.length > 0 ? currentRevenue / activeCustomers.length : 0;
 
-    // Churn Rate Calculation
-    const totalCustomers = customerList.length;
+    // Churn Rate Calculation (Inactive / Total Customers)
+    const totalCustomersCount = customerList.length;
     const inactiveCustomersCount = customerList.filter(c => c.status === "Inactive").length;
-    const churnRateVal = totalCustomers > 0 ? (inactiveCustomersCount / totalCustomers) * 100 : 0;
+    const churnRateVal = totalCustomersCount > 0 ? (inactiveCustomersCount / totalCustomersCount) * 100 : 0;
 
-    // Dynamic CAC Calculation
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    const currentPeriodKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-
-    // Helper to get expenses for any month
-    const getMarketingExpenses = (monthKey: string) => {
-      return expenseList
-        .filter((e: any) => {
-          if (!e.date || !e.category) return false;
-          const d = new Date(e.date);
-          const itemPeriodKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-          
-          const cat = e.category.toLowerCase();
-          const isAcquisition = cat.includes('marketing') || cat.includes('promo') || cat.includes('iklan') || cat.includes('ads');
-          
-          return isAcquisition && itemPeriodKey === monthKey;
-        })
-        .reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
-    };
-
-    const getNewCustomers = (monthKey: string) => {
-      return customerList.filter((c: any) => {
-        if (!c.createdAt) return false;
-        const d = new Date(c.createdAt);
-        const itemPeriodKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        return itemPeriodKey === monthKey;
-      }).length;
-    };
-
-    let marketingExpenses = getMarketingExpenses(currentPeriodKey);
-    let newCustomers = getNewCustomers(currentPeriodKey);
-
-    // Fallback: If current month is 0, find the most recent month with data
-    if (marketingExpenses === 0 || newCustomers === 0) {
-      // Look back up to 6 months
-      for (let i = 1; i <= 6; i++) {
-        const d = new Date();
-        d.setMonth(d.getMonth() - i);
-        const pastKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        const pastExp = getMarketingExpenses(pastKey);
-        const pastCust = getNewCustomers(pastKey);
-        
-        if (pastExp > 0 && pastCust > 0) {
-          marketingExpenses = pastExp;
-          newCustomers = pastCust;
-          break;
-        }
-      }
-    }
-
-    const cacVal = newCustomers > 0 ? marketingExpenses / newCustomers : 0;
+    // CAC Calculation (Total Absolute Expense / Total Customers)
+    const totalAbsExpense = expenseList.reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0);
+    const cacVal = totalCustomersCount > 0 ? totalAbsExpense / totalCustomersCount : 0;
 
     const distribution = serviceTiers.map(tier => {
       const count = activeCustomers.filter(c => {
@@ -267,16 +223,38 @@ export default function Dashboard() {
     ];
 
     const formatCompactNumber = (number: number) => {
-      if (number >= 1000000000) {
-        return `Rp ${(number / 1000000000).toFixed(1)}B`;
-      }
-      if (number >= 1000000) {
-        return `Rp ${(number / 1000000).toFixed(1)}M`;
-      }
-      if (number >= 1000) {
-        return `Rp ${(number / 1000).toFixed(1)}k`;
-      }
+      if (number >= 1000000000) return `Rp ${(number / 1000000000).toFixed(1)}B`;
+      if (number >= 1000000) return `Rp ${(number / 1000000).toFixed(1)}M`;
+      if (number >= 1000) return `Rp ${(number / 1000).toFixed(1)}k`;
       return `Rp ${number.toFixed(0)}`;
+    };
+
+    // Trend Calculations (Comparing current month with previous)
+    const getMonthStats = (monthStr: string) => {
+      const txs = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pemasukan" && t.timestamp && String(t.timestamp).startsWith(monthStr));
+      const rev = txs.reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
+      const custs = customerList.filter((c: any) => c.createdAt && String(c.createdAt).startsWith(monthStr));
+      const totalCustsAtEnd = customerList.filter((c: any) => c.createdAt && String(c.createdAt) <= `${monthStr}-31`).length;
+      const inactiveInMonth = customerList.filter((c: any) => c.status === "Inactive" && c.createdAt && String(c.createdAt).startsWith(monthStr)).length;
+      
+      const activeCount = customerList.filter((c: any) => c.status === "Active" && c.createdAt && String(c.createdAt) <= `${monthStr}-31`).length;
+      const arpu = activeCount > 0 ? rev / activeCount : 0;
+      
+      const exps = expenseList.filter((e: any) => e.date && String(e.date).startsWith(monthStr));
+      const totalExp = exps.reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0);
+      const cac = totalCustsAtEnd > 0 ? totalExp / totalCustsAtEnd : 0;
+      const churn = totalCustsAtEnd > 0 ? (inactiveInMonth / totalCustsAtEnd) * 100 : 0;
+
+      return { rev, arpu, cac, churn };
+    };
+
+    const currentStats = getMonthStats("2026-04");
+    const prevStats = getMonthStats("2026-03");
+
+    const calculateTrend = (current: number, prev: number) => {
+      if (prev === 0) return current > 0 ? "+100%" : "0%";
+      const diff = ((current / prev) - 1) * 100;
+      return `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%`;
     };
 
     return {
@@ -285,15 +263,21 @@ export default function Dashboard() {
       churnRate: `${churnRateVal.toFixed(1)}%`,
       cac: formatCompactNumber(cacVal),
       distribution,
-      trendData
+      trendData,
+      trends: {
+        arpu: calculateTrend(currentStats.arpu, prevStats.arpu),
+        cac: calculateTrend(currentStats.cac, prevStats.cac),
+        churn: calculateTrend(currentStats.churn, prevStats.churn),
+        revenue: calculateTrend(currentStats.rev, prevStats.rev)
+      }
     };
-  }, [customerList, serviceTiers, expenseList]);
+  }, [customerList, serviceTiers, expenseList, transactions]);
 
   const kpis = [
-    { name: "ARPU", value: dynamicData.arpu, trend: "+4.2%", trendType: "up", icon: "user" },
-    { name: "CAC", value: dynamicData.cac, trend: "-12%", trendType: "up", icon: "dollar" },
-    { name: "Churn Rate", value: dynamicData.churnRate, trend: "-0.5%", trendType: "up", icon: "user-minus" },
-    { name: "Total Revenue", value: dynamicData.totalRevenue, trend: "+8.1%", trendType: "up", icon: "wallet" },
+    { name: "ARPU", value: dynamicData.arpu, trend: dynamicData.trends.arpu, trendType: dynamicData.trends.arpu.startsWith('+') ? "up" : "down", icon: "user" },
+    { name: "CAC", value: dynamicData.cac, trend: dynamicData.trends.cac, trendType: dynamicData.trends.cac.startsWith('-') ? "up" : "down", icon: "dollar" }, // Lower CAC is 'up' in terms of performance
+    { name: "Churn Rate", value: dynamicData.churnRate, trend: dynamicData.trends.churn, trendType: dynamicData.trends.churn.startsWith('-') ? "up" : "down", icon: "user-minus" }, // Lower Churn is 'up'
+    { name: "Total Revenue", value: dynamicData.totalRevenue, trend: dynamicData.trends.revenue, trendType: dynamicData.trends.revenue.startsWith('+') ? "up" : "down", icon: "wallet" },
   ];
 
   const handleDownload = async () => {

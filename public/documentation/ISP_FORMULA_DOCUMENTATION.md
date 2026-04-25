@@ -1,61 +1,88 @@
-# ISP-FinTrack: Dokumentasi Rumus & Logika Perhitungan
+# ISP-FinTrack: Dokumentasi Rumus & Logika Bisnis (Master Reference)
 
-Dokumen ini menjelaskan rumus teknis, logika bisnis, dan sumber data yang digunakan dalam setiap komponen perhitungan di seluruh aplikasi ISP-FinTrack.
-
----
-
-## 1. Dashboard Utama (`src/app/page.tsx`)
-
-| Komponen | Rumus / Logika | Sumber Data |
-| :--- | :--- | :--- |
-| **Total Revenue** | $\sum (\text{Active Customers} \times \text{Tier Price})$ | `customers` (Active) $\bowtie$ `service_tiers` |
-| **ARPU** | $\frac{\text{Total Revenue}}{\text{Jumlah Pelanggan Aktif}}$ | Kalkulasi Internal |
-| **CAC** | $\frac{\text{Total Biaya Marketing (Bulan Berjalan)}}{\text{Jumlah Pelanggan Baru (Bulan Berjalan)}}$ | `expenses` (Marketing) / `customers` (New) |
-| **Churn Rate** | $\frac{\text{Jumlah Pelanggan Inactive}}{\text{Total Seluruh Pelanggan}} \times 100$ | `customers` (Inactive vs Total) |
-| **Revenue Trend Chart** | Data historis bulanan dari `transactions` (Verified) | `transactions` |
+Dokumen ini adalah referensi otoritatif untuk seluruh perhitungan metrik finansial, operasional, dan analitik di aplikasi ISP-FinTrack. Dokumentasi ini disinkronkan dengan logika yang diimplementasikan pada kode sumber (`src/app/**`) dan query database.
 
 ---
 
-## 2. Profitability Analysis (`src/app/profitability/page.tsx`)
+## 1. Metrik Pendapatan (Revenue Metrics)
 
-| Komponen | Rumus / Logika | Sumber Data |
-| :--- | :--- | :--- |
-| **MRR** | $\sum (\text{Active Customers in Region} \times \text{Tier Price})$ | `customers` $\bowtie$ `service_tiers` |
-| **EBITDA Margin** | $\frac{\text{Net Profit}}{\text{MRR}} \times 100$ | Kalkulasi Internal |
-| **Net Profit / User** | $\frac{\text{MRR} - (\text{Infra} + \text{Ops} + \text{Marketing Expenses})}{\text{Jumlah Pelanggan Aktif}}$ | `expenses` (Allocated) |
-| **LTV:CAC Ratio** | $\frac{\text{ARPU} \times 24 \text{ bulan}}{\text{CAC}}$ | ARPU $\div$ CAC |
-| **Waterfall Chart** | Alokasi biaya per kategori: COGS (Infra), OPEX (Ops + Marketing) | `expenses` (Categorized) |
+### 1.1. Monthly Recurring Revenue (MRR)
+Sistem menggunakan dua metode perhitungan MRR untuk memastikan akurasi data:
+*   **Estimated MRR (Kapasitas)**: Dihitung berdasarkan jumlah pelanggan aktif dikalikan harga paket mereka.
+    *   **Rumus**: `SUM(service_tiers.price)` WHERE `customers.status = 'Active'`
+    *   **Kode**: `src/app/page.tsx` (Logic di `estimatedRevenue`)
+*   **Verified MRR (Realita)**: Dihitung berdasarkan total uang yang benar-benar masuk dan telah diverifikasi.
+    *   **Rumus**: `SUM(transactions.amount)` WHERE `status = 'Verified'` AND `keterangan = 'pemasukan'`
+    *   **Kode**: `src/app/profitability/page.tsx` (Logic di `mrrVerified`)
 
----
+> **Logika Fallback**: Di Dashboard Utama, jika `estimatedRevenue` bernilai 0 (data pelanggan belum lengkap), sistem akan menggunakan `totalVerifiedRevenue` sebagai cadangan tampilan.
 
-## 3. Report Generator (`src/actions/reports.ts`)
-
-| Jenis Laporan | Komponen | Logika Perhitungan |
-| :--- | :--- | :--- |
-| **Revenue Report** | **Main Trend** | Agregasi harian: `SUM(price)` berdasarkan `createdAt` pelanggan. |
-| | **Breakdown** | Distribusi pendapatan per Provinsi atau Kota. |
-| **Inventory Report** | **Asset Mix** | Persentase jumlah aset berdasarkan `type` (Router, OLT, dll). |
-| | **Ownership** | Rasio aset 'Dimiliki' vs 'Telah Dijual' (filter `kepemilikan`). |
-| **Regional Report** | **Growth** | Hitung jumlah pelanggan baru (`COUNT`) per wilayah dalam rentang tanggal. |
+### 1.2. Average Revenue Per User (ARPU)
+Mengukur nilai rata-rata kontribusi pendapatan dari setiap pelanggan aktif.
+*   **Rumus**: `Verified MRR / Jumlah Pelanggan Aktif`
+*   **File**: `src/app/page.tsx` (Logic di `currentARPU`)
 
 ---
 
-## 4. Logika Validasi & Notifikasi (System Logic)
+## 2. Metrik Efisiensi & Pertumbuhan (Efficiency & Growth)
 
-Sistem melakukan pengecekan integritas data secara otomatis setiap kali Dashboard atau Profitability dibuka:
+### 2.1. Customer Acquisition Cost (CAC)
+Dalam sistem FinTrack, CAC dihitung secara agregat mencakup seluruh biaya operasional dibagi total basis pelanggan untuk mendapatkan gambaran biaya "pemeliharaan" per akun.
+*   **Rumus**: `Total Absolute Expense / Total Seluruh Pelanggan`
+*   **File**: `src/app/page.tsx` (Logic di `cacVal`)
+*   **Catatan**: Menggunakan `Math.abs()` pada nilai `amount` di tabel `expenses` untuk memastikan pengeluaran negatif tetap terhitung sebagai biaya positif dalam rasio.
 
-*   **Logic**: `IF (Estimated_MRR != Total_Verified_Transactions)`
-*   **Action**: Memicu `createNotification` dengan tipe `warning`.
-*   **Tujuan**: Memastikan sinkronisasi antara database operasional (`customers`) dengan database keuangan (`transactions`).
-
----
-
-## 5. Glosarium Teknis
-
-*   **Active Customer**: Pelanggan dengan `status = 'Active'`.
-*   **Verified Transaction**: Transaksi dengan `status = 'Verified'` di tabel `transactions`.
-*   **Allocation Factor**: Rasio jumlah pelanggan di wilayah tertentu dibagi total nasional, digunakan untuk membagi biaya tetap (Fixed Costs) secara adil per wilayah.
+### 2.2. Churn Rate
+Persentase kehilangan pelanggan dibandingkan dengan total basis pelanggan.
+*   **Rumus**: `(Jumlah Pelanggan Inactive / Total Seluruh Pelanggan) * 100`
+*   **File**: `src/app/page.tsx` (Logic di `churnRateVal`)
 
 ---
 
-> **Catatan**: Seluruh perhitungan mata uang menggunakan pembersihan string `REPLACE(/[^0-9]/g, '')` sebelum dikonversi ke tipe data `BIGINT` untuk menjamin akurasi angka.
+## 3. Analisis Profitabilitas Wilayah (Regional Profitability)
+
+### 3.1. Allocation Factor (Faktor Alokasi Biaya)
+Karena biaya operasional (`expenses`) seringkali bersifat global (pusat), sistem membagi biaya tersebut ke tiap wilayah secara proporsional berdasarkan jumlah pelanggan di wilayah tersebut.
+*   **Rumus**: `Jumlah Pelanggan di Provinsi X / Total Seluruh Pelanggan`
+*   **File**: `src/app/profitability/page.tsx` (Logic di `allocationFactor`)
+
+### 3.2. Regional Net Profit
+*   **Rumus**: `Verified Income Wilayah - (Total Pengeluaran Global * Allocation Factor)`
+*   **File**: `src/app/profitability/page.tsx` (Logic di `netProfit`)
+
+---
+
+## 4. Manajemen Aset & Inventaris (Inventory Logic)
+
+### 4.1. Status Penggunaan Aset (`is_used`)
+Status aset ditentukan berdasarkan lokasi keberadaannya:
+*   **Aset di Lapangan (`asset_roster`)**: Otomatis dianggap `is_used = true` (In Use).
+*   **Aset di Gudang (`stock_asset_roster`)**: Status mengikuti field `is_used` di database.
+    *   `true` = In Use (Sedang dipinjam/disiapkan).
+    *   `false` = In Stock (Ready).
+*   **File**: `src/app/inventory/page.tsx` (Logic di `allAssets` & `usageMatch`)
+
+---
+
+## 5. Pembersihan & Integritas Data (Data Integrity)
+
+### 5.1. Konversi Mata Uang
+Seluruh data mata uang yang disimpan sebagai string (misal: "Rp 150.000") dibersihkan secara otomatis sebelum perhitungan aritmatika.
+*   **Regex**: `amount.replace(/[^0-9]/g, '')`
+*   **Tipe Data**: Dikonversi ke `parseInt` atau `Number` (BigInt di SQL).
+
+### 5.2. Sinkronisasi Detektor (Mismatch Detection)
+Sistem melakukan audit *on-the-fly* setiap kali data dimuat. Jika terdapat perbedaan antara **Estimated MRR** dan **Verified MRR**, sistem akan mencatat *discrepancy* tersebut.
+*   **Threshold**: Perbedaan ± 1 Rupiah akan memicu logika peringatan (saat ini fitur notifikasi otomatis untuk ini sedang dalam mode *silent* untuk menghindari *flood*).
+
+---
+
+## 6. Visualisasi Data (Charts Logic)
+
+*   **Waterfall Chart**: Pendapatan ditampilkan sebagai bar hijau (positif), sedangkan pengeluaran kategori ditampilkan sebagai bar merah (negatif) setelah dikalikan dengan `allocationFactor`.
+*   **Growth Trend**: Data dikelompokkan berdasarkan `YYYY-MM` dari `timestamp` transaksi yang terverifikasi.
+
+---
+
+> **Update Terakhir**: 25 April 2026
+> **Oleh**: Antigravity AI Coding Assistant

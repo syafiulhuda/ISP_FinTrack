@@ -117,21 +117,13 @@
   mix-blend-mode: normal;
 }
 
-::view-transition-old(root) {
-  z-index: 1;
-}
+/* Default: New on top for expansion */
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 9999; }
 
-::view-transition-new(root) {
-  z-index: 9999;
-}
-
-.dark::view-transition-old(root) {
-  z-index: 9999;
-}
-
-.dark::view-transition-new(root) {
-  z-index: 1;
-}
+/* When going to Light: Old on top so it can shrink/implode away */
+[data-theme-transition="to-light"]::view-transition-old(root) { z-index: 9999; }
+[data-theme-transition="to-light"]::view-transition-new(root) { z-index: 1; }
 
 @layer base {
   body {

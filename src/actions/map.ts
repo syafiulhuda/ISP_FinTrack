@@ -1,6 +1,7 @@
 'use server';
 
 import { query } from '@/lib/db';
+import { MOCK_ASSETS } from '@/lib/mockData';
 
 export async function getMapAssets() {
   try {
@@ -23,9 +24,9 @@ export async function getMapAssets() {
         AND (kepemilikan = 'Dimiliki' OR kepemilikan IS NULL)
       ORDER BY id ASC
     `);
-    return res.rows;
+    return res.rows.length > 0 ? res.rows : MOCK_ASSETS;
   } catch (error) {
-    console.error('Error fetching map assets:', error);
-    return [];
+    console.error('DB Error: getMapAssets:', error);
+    return MOCK_ASSETS;
   }
 }

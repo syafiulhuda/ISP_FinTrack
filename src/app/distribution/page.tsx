@@ -54,7 +54,7 @@ export default function DistributionMapPage() {
   const { data: assets = [], isLoading } = useQuery({
     queryKey: ['map-assets'],
     queryFn: () => getMapAssets(),
-    refetchInterval: 5000,
+    refetchInterval: 60000,
   });
 
   const filteredAssets = useMemo(() => {
