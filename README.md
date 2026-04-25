@@ -1,6 +1,6 @@
 # 🚀 ISP-FinTrack: Enterprise Financial Intelligence
 
-![ISP-FinTrack Dashboard](https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2000)
+![ISP-FinTrack Dashboard](public/images/screenshots/dashboard-page.png)
 
 **ISP-FinTrack** is a high-performance, database-driven financial dashboard designed for Internet Service Providers. It provides real-time insights into profitability, regional revenue distribution, inventory health, and automated financial processing.
 
@@ -34,10 +34,12 @@
 Follow these steps to set up the project locally.
 
 ### 1. Prerequisites
+
 - **Node.js** (v18.x or later)
 - **PostgreSQL** (v14.x or later)
 
 ### 2. Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/syafiulhuda/ISP_FinTrack.git
@@ -48,19 +50,26 @@ npm install
 ```
 
 ### 3. Database Setup
+
 1. Create a new PostgreSQL database (e.g., `fintrack_db`).
 2. Run the provided [**`seed.sql`**](seed.sql) script in your SQL editor or via terminal:
+
 ```bash
 psql -U your_username -d fintrack_db -f seed.sql
 ```
-*This will create all tables (Admin, Customers, Transactions, Inventory, etc.) and populate them with sample data.*
+
+_This will create all tables (Admin, Customers, Transactions, Inventory, etc.) and populate them with sample data._
 
 ### 4. Environment Configuration
+
 Copy `.env.example` to `.env.local` and update your database credentials:
+
 ```bash
 cp .env.example .env.local
 ```
+
 Update your `.env.local`:
+
 ```env
 DATABASE_USER=your_postgres_user
 DATABASE_HOST=localhost
@@ -70,21 +79,26 @@ DATABASE_PORT=5432
 ```
 
 ### 5. Launch the App
+
 ```bash
 npm run dev
 ```
+
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
 ## 🔐 Access Credentials
+
 You can use the default administrator account to explore the dashboard:
+
 - **Email**: `admin@company.com`
 - **Password**: `admin`
 
 ---
 
 ## 📁 Project Structure
+
 - `/src/app`: Next.js pages and layouts.
 - `/src/actions`: Server Actions for database operations.
 - `/src/components`: Reusable UI components.
@@ -93,5 +107,20 @@ You can use the default administrator account to explore the dashboard:
 
 ---
 
+## 📸 Visual Tour
+
+### Login & Authentication
+
+Secure entry point for administrative staff with premium design.
+![Login Page](public/images/screenshots/login-page.png)
+
+### Profitability Analysis
+
+Deep dive into unit economics, expenses, and regional performance.
+![Profitability Analysis](public/images/screenshots/profitability-page.png)
+
+---
+
 ## 📄 License
+
 Custom Enterprise License - Created by [Syafiul Huda](https://github.com/syafiulhuda) for Advanced ISP Financial Management.
