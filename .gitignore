@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# vscode
+/.vscode
+
 # next.js
 /.next/
 /out/
@@ -30,8 +33,28 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Keep .env.example tracked
+!.env.example
+
+# Internal Guides & Documentation
+ISP_FinTrack_Development_Guide.md
+AGENTS.md
+CLAUDE.md
+
+# Debug & Temp Logs
+debug_tx*.txt
+*.log
+
+# Database
+scripts/*.pgsql
+!scripts/setup_trigger.sql
 
 # vercel
 .vercel
