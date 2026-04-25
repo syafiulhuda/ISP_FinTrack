@@ -41,7 +41,7 @@ Follow these steps to set up the project locally.
 ```bash
 # Clone the repository
 git clone https://github.com/syafiulhuda/ISP_FinTrack.git
-cd ISP_FinTrack/isp-fintrack-web
+cd ISP_FinTrack
 
 # Install dependencies
 npm install
@@ -49,7 +49,7 @@ npm install
 
 ### 3. Database Setup
 1. Create a new PostgreSQL database (e.g., `fintrack_db`).
-2. Run the provided [**`seed.sql`**](isp-fintrack-web/seed.sql) script in your SQL editor or via terminal:
+2. Run the provided [**`seed.sql`**](seed.sql) script in your SQL editor or via terminal:
 ```bash
 psql -U your_username -d fintrack_db -f seed.sql
 ```
