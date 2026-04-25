@@ -32,7 +32,7 @@ import {
   Cell
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getServiceTiers, getExpenses, getTransactions, createNotification } from "@/actions/db";
+import { getCustomers, getServiceTiers, getExpenses, getTransactions, createNotification, getRevenueGrowthTrend } from "@/actions/db";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
@@ -68,7 +68,7 @@ const RevenueTooltip = ({ active, payload, label }: any) => {
               </span>
               <span className="text-slate-900 dark:text-slate-100">
                 {item.value >= 1000000
-                  ? `Rp ${(item.value / 1000000).toFixed(1)}M`
+                  ? `Rp ${(item.value / 1000000).toFixed(2)}M`
                   : `Rp ${(item.value / 1000).toFixed(0)}k`}
               </span>
             </div>
@@ -90,6 +90,10 @@ export default function Dashboard() {
     queryKey: ['transactions'], 
     queryFn: getTransactions,
     refetchInterval: 60000 
+  });
+  const { data: trendData = [], isLoading: loadingTrend } = useQuery({
+    queryKey: ['revenueGrowthTrend'],
+    queryFn: getRevenueGrowthTrend
   });
 
   const [mounted, setMounted] = useState(false);
@@ -169,7 +173,7 @@ export default function Dashboard() {
 
       // Fallback to verified transactions if estimation is 0
       const totalVerifiedRevenue = transactions
-        .filter(t => t.status === "Verified")
+        .filter(t => t.status === "Verified" && t.keterangan === 'pemasukan')
         .reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
 
       return estimatedRevenue > 0 ? estimatedRevenue : totalVerifiedRevenue;
@@ -177,7 +181,7 @@ export default function Dashboard() {
 
     const activeCustomers = customerList.filter(c => c.status === "Active");
     const currentRevenue = transactions
-      .filter(t => t.status === "Verified")
+      .filter(t => t.status === "Verified" && t.keterangan === 'pemasukan')
       .reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
     
     const currentARPU = activeCustomers.length > 0 ? currentRevenue / activeCustomers.length : 0;
@@ -213,23 +217,6 @@ export default function Dashboard() {
       };
     });
 
-    const trendData = [
-      { month: "Jan", revenue: currentRevenue * 0.4, expenses: currentRevenue * 0.25 },
-      { month: "Mar", revenue: currentRevenue * 0.6, expenses: currentRevenue * 0.35 },
-      { month: "May", revenue: currentRevenue * 0.75, expenses: currentRevenue * 0.45 },
-      { month: "Jul", revenue: currentRevenue * 0.85, expenses: currentRevenue * 0.55 },
-      { month: "Sep", revenue: currentRevenue * 0.9, expenses: currentRevenue * 0.6 },
-      { month: "Oct", revenue: currentRevenue, expenses: currentRevenue * 0.65 },
-    ];
-
-    const formatCompactNumber = (number: number) => {
-      if (number >= 1000000000) return `Rp ${(number / 1000000000).toFixed(1)}B`;
-      if (number >= 1000000) return `Rp ${(number / 1000000).toFixed(1)}M`;
-      if (number >= 1000) return `Rp ${(number / 1000).toFixed(1)}k`;
-      return `Rp ${number.toFixed(0)}`;
-    };
-
-    // Trend Calculations (Comparing current month with previous)
     const getMonthStats = (monthStr: string) => {
       const txs = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pemasukan" && t.timestamp && String(t.timestamp).startsWith(monthStr));
       const rev = txs.reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
@@ -241,12 +228,47 @@ export default function Dashboard() {
       const arpu = activeCount > 0 ? rev / activeCount : 0;
       
       const exps = expenseList.filter((e: any) => e.date && String(e.date).startsWith(monthStr));
-      const totalExp = exps.reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0);
+      const txExps = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pengeluaran" && t.timestamp && String(t.timestamp).startsWith(monthStr));
+      
+      const totalExp = 
+        exps.reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0) +
+        txExps.reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
       const cac = totalCustsAtEnd > 0 ? totalExp / totalCustsAtEnd : 0;
       const churn = totalCustsAtEnd > 0 ? (inactiveInMonth / totalCustsAtEnd) * 100 : 0;
 
-      return { rev, arpu, cac, churn };
+      return { rev, arpu, cac, churn, totalExp };
     };
+
+    const formatCompactNumber = (number: number) => {
+      if (number >= 1000000000) return `Rp ${(number / 1000000000).toFixed(2)}B`;
+      if (number >= 1000000) return `Rp ${(number / 1000000).toFixed(2)}M`;
+      if (number >= 1000) return `Rp ${(number / 1000).toFixed(1)}k`;
+      return `Rp ${number.toFixed(0)}`;
+    };
+
+    // Generate dynamic trend data for the last 6 months (Now using DB-provided data)
+    /* 
+    const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+    const currentYear = new Date().getFullYear();
+    const currentMonthIdx = new Date().getMonth();
+    
+    const trendData = [];
+    for (let i = 5; i >= 0; i--) {
+      let mIdx = currentMonthIdx - i;
+      let year = currentYear;
+      if (mIdx < 0) {
+        mIdx += 12;
+        year -= 1;
+      }
+      const monthStr = `${year}-${months[mIdx]}`;
+      const stats = getMonthStats(monthStr);
+      trendData.push({
+        month: new Date(year, mIdx).toLocaleString('default', { month: 'short' }),
+        revenue: stats.rev,
+        expenses: stats.totalExp
+      });
+    }
+    */
 
     const currentStats = getMonthStats("2026-04");
     const prevStats = getMonthStats("2026-03");
@@ -263,7 +285,7 @@ export default function Dashboard() {
       churnRate: `${churnRateVal.toFixed(1)}%`,
       cac: formatCompactNumber(cacVal),
       distribution,
-      trendData,
+      trendData: trendData,
       trends: {
         arpu: calculateTrend(currentStats.arpu, prevStats.arpu),
         cac: calculateTrend(currentStats.cac, prevStats.cac),
@@ -271,7 +293,7 @@ export default function Dashboard() {
         revenue: calculateTrend(currentStats.rev, prevStats.rev)
       }
     };
-  }, [customerList, serviceTiers, expenseList, transactions]);
+  }, [customerList, serviceTiers, expenseList, transactions, trendData]);
 
   const kpis = [
     { name: "ARPU", value: dynamicData.arpu, trend: dynamicData.trends.arpu, trendType: dynamicData.trends.arpu.startsWith('+') ? "up" : "down", icon: "user" },
@@ -308,7 +330,7 @@ export default function Dashboard() {
     }
   };
 
-  if (loadingCustomers || loadingTiers || loadingExpenses || loadingTx) {
+  if (loadingCustomers || loadingTiers || loadingExpenses || loadingTx || loadingTrend) {
     return (
       <div className="min-h-[70vh] w-full flex flex-col items-center justify-center">
         <div className="animate-pulse flex flex-col items-center gap-4">
@@ -514,7 +536,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.4 }}
-              className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-full"
+              className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-full"
             >
               <div className="flex items-center justify-between mb-8">
                 <div>
@@ -575,39 +597,53 @@ export default function Dashboard() {
             </motion.section>
 
             <div className="space-y-8">
-              <motion.section
+              {/* Right Column: Customer Mix */}
+              <motion.section 
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.5 }}
-                className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800"
+                className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-200 dark:border-slate-800 shadow-sm"
               >
-                <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 mb-6">Customer Mix</h3>
-                <div className="h-[200px] w-full">
-                  {mounted && (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie data={dynamicData.distribution} innerRadius={60} outerRadius={80} paddingAngle={8} dataKey="value">
-                          {dynamicData.distribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip content={<CustomTooltip />} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-4 mt-6">
-                  {dynamicData.distribution.map((item) => (
-                    <div key={item.name} className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
-                        {item.name}
-                      </span>
-                      <span className="text-lg font-black text-slate-900 dark:text-slate-100">{item.value}%</span>
+            <div className="mb-8">
+              <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Customer Mix</h3>
+              <p className="text-sm font-medium text-slate-500 mt-1">Segmentation</p>
+            </div>
+            <div className="flex items-center">
+              <div className="h-[220px] w-[60%]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie 
+                      data={dynamicData.distribution} 
+                      innerRadius={70} 
+                      outerRadius={90} 
+                      paddingAngle={12} 
+                      dataKey="value"
+                      startAngle={180}
+                      endAngle={-180}
+                      stroke="none"
+                      cornerRadius={10}
+                    >
+                      {dynamicData.distribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="w-[40%] space-y-4 pl-4 pr-6">
+                {dynamicData.distribution.map((item) => (
+                  <div key={item.name} className="flex items-center group">
+                    <div className="flex items-center gap-2 min-w-[100px]">
+                      <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: item.color }} />
+                      <span className="text-xs font-black text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors">{item.name}</span>
                     </div>
-                  ))}
-                </div>
-              </motion.section>
+                    <span className="ml-auto text-xs font-black text-slate-900 dark:text-white tabular-nums">{item.value}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.section>
 
               <motion.section
                 initial={{ opacity: 0, x: 20 }}

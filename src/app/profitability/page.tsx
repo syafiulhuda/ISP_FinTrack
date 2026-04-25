@@ -37,7 +37,7 @@ import {
 } from "recharts";
 
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getServiceTiers, getExpenses, getTransactions, createNotification } from "@/actions/db";
+import { getCustomers, getServiceTiers, getExpenses, getTransactions, createNotification, getServiceMix } from "@/actions/db";
 import { cn } from "@/lib/utils";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 
@@ -56,6 +56,9 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export default function ProfitabilityPage() {
+  const [selectedProvince, setSelectedProvince] = useState("All Regions");
+  const [searchQuery, setSearchQuery] = useState("");
+
   const { data: customerList = [], isLoading: loadingCustomers } = useQuery({ queryKey: ['customers'], queryFn: getCustomers });
   const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
   const { data: expenseList = [], isLoading: loadingExpenses } = useQuery({ queryKey: ['expenses'], queryFn: getExpenses });
@@ -70,8 +73,6 @@ export default function ProfitabilityPage() {
     ...Array.from(new Set(customerList.map((c: any) => c.province))).sort()
   ], [customerList]);
 
-  const [selectedProvince, setSelectedProvince] = useState("All Regions");
-  const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDownloadConfirmOpen, setIsDownloadConfirmOpen] = useState(false);
@@ -107,7 +108,7 @@ export default function ProfitabilityPage() {
       const isVerified = tx.status === "Verified" && tx.keterangan === "pemasukan";
       if (!isVerified) return false;
       if (isAllRegions) return true;
-      const customer = customerList.find((c: any) => String(c.id) === String(tx.customer_id));
+      const customer = customerList.find((c: any) => String(c.id) === String(tx.linked_id));
       return customer?.province === selectedProvince;
     });
 
@@ -174,20 +175,62 @@ export default function ProfitabilityPage() {
       : customerList.filter((c: any) => c.status === "Active" && c.province === selectedProvince).length;
 
     const metrics = [
-      { name: "MRR (Verified)", value: mrrVerified >= 1000000 ? `Rp ${(mrrVerified/1000000).toFixed(1)}M` : `Rp ${(mrrVerified/1000).toFixed(0)}k`, trend: "+12%", trendType: "up" as const, icon: "trending", detail: "Total Verified Income" },
+      { name: "MRR (Verified)", value: mrrVerified >= 1000000 ? `Rp ${(mrrVerified/1000000).toFixed(2)}M` : `Rp ${(mrrVerified/1000).toFixed(0)}k`, trend: "+12%", trendType: "up" as const, icon: "trending", detail: "Total Verified Income" },
       { name: "EBITDA MARGIN", value: `${ebitdaMargin.toFixed(1)}%`, trend: "Stable", trendType: "neutral" as const, icon: "target", detail: "Profit after total Opex" },
-      { name: "NET PROFIT", value: `Rp ${(netProfit/1000000).toFixed(1)}M`, trend: "Annual", trendType: "neutral" as const, icon: "pie", detail: "Revenue - Total Expense" },
+      { name: "NET PROFIT", value: `Rp ${(netProfit/1000000).toFixed(2)}M`, trend: "Annual", trendType: "neutral" as const, icon: "pie", detail: "Revenue - Total Expense" },
       { name: "ACTIVE USERS", value: String(activeCount), trend: "Synced", trendType: "up" as const, icon: "user", detail: "Paying Subscribers" },
     ];
+
+    const totalRevenue = growthTrend.reduce((sum, item) => sum + item.value, 0);
+    const avgMonthlyRevenue = growthTrend.length > 0 ? totalRevenue / growthTrend.length : 0;
+
+    const filteredCustomers = isAllRegions 
+      ? customerList.filter((c: any) => c.status === "Active")
+      : customerList.filter((c: any) => c.status === "Active" && c.province === selectedProvince);
+
+    const residentialCount = filteredCustomers.filter((c: any) => c.type === "Residential").length;
+    const businessCount = filteredCustomers.filter((c: any) => c.type === "Business").length;
+    const totalFiltered = filteredCustomers.length;
+
+    // 4. Service Plan Mix (Client-side calculation for consistency)
+    const activeCustomers = isAllRegions 
+      ? customerList.filter((c: any) => c.status === "Active")
+      : customerList.filter((c: any) => c.status === "Active" && c.province === selectedProvince);
+
+    const targetServices = ['Premium', 'Standard', 'Basic', 'Gamers'];
+    const serviceCounts: Record<string, number> = { 'Premium': 0, 'Standard': 0, 'Basic': 0, 'Gamers': 0 };
+    
+    activeCustomers.forEach((c: any) => {
+      const name = c.service === 'Gamers Node' ? 'Gamers' : c.service;
+      if (targetServices.includes(name)) {
+        serviceCounts[name] = (serviceCounts[name] || 0) + 1;
+      }
+    });
+
+    const totalActiveWithPlan = Object.values(serviceCounts).reduce((a, b) => a + b, 0);
+
+    const distribution = Object.entries(serviceCounts).map(([name, count]) => {
+      const colors: Record<string, string> = {
+        'Premium': '#004ac6',
+        'Standard': '#64748b',
+        'Basic': '#bc4800',
+        'Gamers': '#16a34a'
+      };
+      return {
+        name,
+        value: totalActiveWithPlan > 0 ? Math.round((count / totalActiveWithPlan) * 100) : 0,
+        color: colors[name] || '#94a3b8'
+      };
+    });
+
+
 
     return {
       metrics,
       waterfallData,
-      distribution: [
-        { name: "Residential", value: 70, color: "#004ac6" },
-        { name: "Business", value: 30, color: "#bc4800" },
-      ],
-      growthTrend
+      distribution,
+      growthTrend,
+      avgMonthlyRevenue
     };
   }, [selectedProvince, customerList, transactions, expenseList]);
 
@@ -319,18 +362,39 @@ export default function ProfitabilityPage() {
                 <div className="h-[220px] w-1/2">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={dynamicData.distribution} innerRadius={70} outerRadius={90} paddingAngle={10} dataKey="value">{dynamicData.distribution.map((entry, index) => (<Cell key={`cell-${index}`} fill={(entry as any).color} />))}</Pie>
+                      <Pie 
+                        data={dynamicData.distribution} 
+                        innerRadius={70} 
+                        outerRadius={90} 
+                        paddingAngle={15} 
+                        dataKey="value"
+                        startAngle={180}
+                        endAngle={-180}
+                        stroke="none"
+                        cornerRadius={10}
+                      >
+                        {dynamicData.distribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={(entry as any).color} />
+                        ))}
+                      </Pie>
                       <Tooltip content={<CustomTooltip />} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="space-y-5 w-1/2">
-                  {dynamicData.distribution.map((item) => (
-                    <div key={item.name} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full" style={{ backgroundColor: (item as any).color }} /><span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{item.name}</span></div>
-                      <span className="text-lg font-black text-slate-900 dark:text-slate-100">{item.value}%</span>
-                    </div>
-                  ))}
+                <div className="space-y-6 w-1/2">
+                  {dynamicData.distribution.map((item) => {
+                    const total = dynamicData.distribution.reduce((sum, d) => sum + d.value, 0);
+                    const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
+                    return (
+                      <div key={item.name} className="flex items-center justify-between group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: (item as any).color }} />
+                          <span className="text-xs font-black text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors">{item.name}</span>
+                        </div>
+                        <span className="text-xl font-black text-slate-900 dark:text-slate-100">{percentage}%</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </motion.section>
@@ -342,9 +406,9 @@ export default function ProfitabilityPage() {
                 <div className="mb-6">
                   <span className="text-4xl font-black text-white tracking-tight">
                     {(() => {
-                      const val = dynamicData.growthTrend[dynamicData.growthTrend.length - 1]?.value || 0;
+                      const val = dynamicData.avgMonthlyRevenue;
                       return val >= 1000000 
-                        ? `Rp ${(val / 1000000).toFixed(1)}M` 
+                        ? `Rp ${(val / 1000000).toFixed(2)}M` 
                         : `Rp ${(val / 1000).toFixed(0)}k`;
                     })()}
                   </span>

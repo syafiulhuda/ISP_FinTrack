@@ -37,7 +37,7 @@ FROM RevenueCapacity, VerifiedIncome;
 -- Menghitung metrik performa bisnis utama.
 SELECT 
     -- ARPU: Rata-rata pendapatan per pengguna aktif
-    (SELECT SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) FROM transactions WHERE status = 'Verified') / 
+    (SELECT SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) FROM transactions WHERE status = 'Verified' AND keterangan = 'pemasukan') / 
     NULLIF((SELECT COUNT(*) FROM customers WHERE status = 'Active'), 0) as "ARPU (Verified)",
 
     -- CAC: Biaya akuisisi pelanggan (Total Expenses / Total Customers)
@@ -65,7 +65,7 @@ RegionalIncome AS (
         c.province,
         SUM(CAST(REPLACE(REPLACE(REPLACE(t.amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) as income
     FROM transactions t
-    JOIN customers c ON t.customer_id = c.id
+    JOIN customers c ON split_part(t.id,'-',2) = c.id
     WHERE t.status = 'Verified' AND t.keterangan = 'pemasukan'
     GROUP BY c.province
 )
@@ -105,3 +105,83 @@ FROM transactions
 WHERE status = 'Verified' AND keterangan = 'pemasukan'
 GROUP BY 1
 ORDER BY 1 DESC;
+
+-- 6. REVENUE WATERFALL ANALYSIS
+-- Menggabungkan Pemasukan per Tipe dan Pengeluaran per Kategori
+(
+    -- Bagian 1: Pemasukan (Positif)
+    SELECT
+        type as "Component",
+        SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) as "Value",
+        'Income' as "Type"
+    FROM transactions
+    WHERE status = 'Verified' AND keterangan = 'pemasukan'
+    GROUP BY type
+)
+UNION ALL
+(
+    -- Bagian 2: Pengeluaran (Negatif)
+    SELECT
+        category as "Component",
+        -SUM(ABS(amount::numeric)) as "Value",
+        'Expense' as "Type"
+    FROM expenses
+    GROUP BY category
+)
+ORDER BY "Type" ASC, "Value" DESC;
+
+-- 7. GROWTH TREND: AVERAGE MONTHLY REVENUE (TRENDING VALUE)
+WITH MonthlyRevenue AS (
+    SELECT
+        TO_CHAR(timestamp, 'YYYY-MM') as month_key,
+        SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) as revenue
+    FROM transactions
+    WHERE status = 'Verified' AND keterangan = 'pemasukan'
+    GROUP BY 1
+    order by 1 desc
+)
+SELECT
+    ROUND(AVG(revenue), 0) as "Average Monthly Trending"
+FROM MonthlyRevenue;
+
+
+-- 8. REGIONAL PROFITABILITY ANALYSIS (MRR, EBITDA, NET PROFIT)
+WITH ProvinceStats AS (
+    -- Menghitung jumlah pelanggan dan faktor alokasi biaya per provinsi
+    SELECT
+        province,
+        COUNT(*) as customer_count,
+        (COUNT(*)::numeric / (SELECT COUNT(*) FROM customers)) as allocation_factor
+    FROM customers
+    GROUP BY province
+),
+RegionalIncome AS (
+    -- Menghitung pendapatan terverifikasi per provinsi
+    SELECT
+        c.province,
+        SUM(CAST(REPLACE(REPLACE(REPLACE(t.amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) as verified_mrr
+    FROM transactions t
+    JOIN customers c ON split_part(t.id, '-', 2) = c.id
+    WHERE t.status = 'Verified' AND t.keterangan = 'pemasukan'
+    GROUP BY c.province
+),
+TotalExpenses AS (
+    -- Menghitung total pengeluaran global
+    SELECT SUM(ABS(amount::numeric)) as global_expense FROM expenses
+)
+SELECT
+    ps.province,
+    ps.customer_count as "Active Customers",
+    COALESCE(ri.verified_mrr, 0) as "MRR (Verified)",
+    -- Net Profit = Pendapatan Provinsi - (Total Biaya * Faktor Alokasi)
+    ROUND(COALESCE(ri.verified_mrr, 0) - (te.global_expense * ps.allocation_factor), 2) as "Net Profit",
+    -- EBITDA Margin = (Net Profit / Pendapatan) * 100
+    CASE
+        WHEN COALESCE(ri.verified_mrr, 0) > 0
+        THEN ROUND(((COALESCE(ri.verified_mrr, 0) - (te.global_expense * ps.allocation_factor)) / ri.verified_mrr) * 100, 2)
+        ELSE 0
+    END as "EBITDA Margin %"
+FROM ProvinceStats ps
+LEFT JOIN RegionalIncome ri ON ps.province = ri.province
+CROSS JOIN TotalExpenses te
+ORDER BY "Net Profit" DESC;

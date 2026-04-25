@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -18,8 +18,9 @@ import {
   Filter as FilterIcon
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getTransactions, getOcrData } from "@/actions/db";
+import { getTransactions, getOcrData, updateOcrData, postOcrEntry } from "@/actions/db";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function FinancePage() {
   const { data: transactions = [], isLoading: loadingTx } = useQuery({ 
@@ -33,6 +34,73 @@ export default function FinancePage() {
   const [selectedKeterangan, setSelectedKeterangan] = useState("All");
   const itemsPerPage = 5;
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalSearch, setModalSearch] = useState("");
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isPosting, setIsPosting] = useState(false);
+
+  // Form States
+  const [vendor, setVendor] = useState("");
+  const [date, setDate] = useState("");
+  const [amount, setAmount] = useState("");
+  const [reference, setReference] = useState("");
+  const [method, setMethod] = useState("Bank Transfer");
+
+  // Sync state with ocrData when loaded
+  useEffect(() => {
+    if (ocrData) {
+      setVendor(ocrData.vendor || "");
+      setDate(ocrData.date || "");
+      setAmount(ocrData.amount || "");
+      setReference(ocrData.reference || "");
+    }
+  }, [ocrData]);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
+    e.preventDefault();
+    let files: FileList | null = null;
+    
+    if ('dataTransfer' in e) {
+      files = e.dataTransfer.files;
+    } else if (e.target instanceof HTMLInputElement) {
+      files = e.target.files;
+    }
+
+    if (files && files[0]) {
+      toast.success("File uploaded successfully! Starting AI analysis...");
+      // Mock AI processing delay
+      setTimeout(() => {
+        toast.info("AI Analysis complete. Please verify the extracted data.");
+      }, 2000);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!ocrData?.id) return;
+    const res = await updateOcrData(ocrData.id, { vendor, date, amount, reference });
+    if (res) {
+      toast.success("OCR data updated successfully");
+      setIsEditing(false);
+    } else {
+      toast.error("Failed to update OCR data");
+    }
+  };
+
+  const handlePost = async () => {
+    if (!ocrData?.id) return;
+    setIsPosting(true);
+    const res = await postOcrEntry(ocrData.id, { vendor, amount, date, reference, method });
+    if (res.success) {
+      toast.success(`Transaction ${res.trxId} posted successfully!`);
+    } else {
+      toast.error("Failed to post transaction");
+    }
+    setIsPosting(false);
+  };
+
   const filteredByKeterangan = transactions.filter(trx => {
     if (selectedKeterangan === "All") return true;
     return trx.keterangan?.toLowerCase() === selectedKeterangan.toLowerCase();
@@ -44,8 +112,6 @@ export default function FinancePage() {
     currentPage * itemsPerPage
   );
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalSearch, setModalSearch] = useState("");
 
   const filteredTransactions = filteredByKeterangan.filter(trx => 
     (trx.id?.toLowerCase() || "").includes(modalSearch.toLowerCase()) ||
@@ -65,7 +131,19 @@ export default function FinancePage() {
           <h1 className="text-6xl font-bold leading-tight tracking-tight text-slate-900 dark:text-slate-100 mb-2">Receipt OCR</h1>
           <p className="text-xl font-medium text-slate-500 max-w-2xl">Upload and verify financial documents for automated ledger entry.</p>
         </div>
-        <div className="w-full lg:w-1/3 bg-slate-100 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors group">
+        <div 
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleFileUpload}
+          className="w-full lg:w-1/3 bg-slate-100 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors group"
+        >
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            className="hidden" 
+            accept="image/*"
+          />
           <div className="w-14 h-14 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors shadow-sm">
             <CloudUpload size={24} className="text-primary group-hover:text-white" />
           </div>
@@ -82,12 +160,18 @@ export default function FinancePage() {
             <div className="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Source Document</h2>
-              <div className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5 cursor-pointer hover:bg-slate-200 transition-colors">
+              <div 
+                onClick={() => setIsZoomed(true)}
+                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5 cursor-pointer hover:bg-slate-200 transition-colors"
+              >
                 <ZoomIn size={14} />
                 Zoom
               </div>
             </div>
-            <div className="flex-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl overflow-hidden relative group border border-slate-200/50 dark:border-slate-700">
+            <div 
+              onClick={() => setIsZoomed(true)}
+              className="flex-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl overflow-hidden relative group border border-slate-200/50 dark:border-slate-700 cursor-zoom-in"
+            >
               <img 
                 alt="Receipt Source" 
                 className="w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105" 
@@ -117,11 +201,16 @@ export default function FinancePage() {
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Vendor / Payee</label>
                   <div className="relative">
                     <input 
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all" 
+                      disabled={!isEditing}
+                      className={cn(
+                        "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all",
+                        isEditing && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                      )}
                       type="text" 
-                      defaultValue={ocrData.vendor}
+                      value={vendor}
+                      onChange={(e) => setVendor(e.target.value)}
                     />
-                    <CheckCircle2 size={20} className="absolute right-4 top-4 text-green-500" />
+                    {!isEditing && <CheckCircle2 size={20} className="absolute right-4 top-4 text-green-500" />}
                   </div>
                 </div>
 
@@ -130,11 +219,16 @@ export default function FinancePage() {
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Transaction Date</label>
                   <div className="relative">
                     <input 
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all" 
+                      disabled={!isEditing}
+                      className={cn(
+                        "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all",
+                        isEditing && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                      )}
                       type="text" 
-                      defaultValue={ocrData.date}
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
                     />
-                    <CheckCircle2 size={20} className="absolute right-4 top-4 text-green-500" />
+                    {!isEditing && <CheckCircle2 size={20} className="absolute right-4 top-4 text-green-500" />}
                   </div>
                 </div>
 
@@ -145,38 +239,116 @@ export default function FinancePage() {
                   <div className="relative">
                     <span className="absolute left-5 top-4 text-slate-400 font-bold">Rp</span>
                     <input 
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-xl rounded-xl pl-14 pr-12 py-4 border-2 border-orange-500/20 focus:ring-2 focus:ring-primary/20 outline-none font-black transition-all" 
+                      disabled={!isEditing}
+                      className={cn(
+                        "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-xl rounded-xl pl-14 pr-12 py-4 border-2 border-orange-500/20 focus:ring-2 focus:ring-primary/20 outline-none font-black transition-all",
+                        isEditing && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                      )}
                       type="text" 
-                      defaultValue={ocrData.amount}
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
                     />
-                    <AlertCircle size={22} className="absolute right-4 top-4.5 text-orange-500" />
+                    {!isEditing && <AlertCircle size={22} className="absolute right-4 top-4.5 text-orange-500" />}
                   </div>
-                  <p className="text-[11px] text-orange-600 font-bold">Low confidence read. Please verify manually.</p>
+                  {!isEditing && <p className="text-[11px] text-orange-600 font-bold">Low confidence read. Please verify manually.</p>}
+                </div>
+                
+                {/* Payment Method Field */}
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Payment Method</label>
+                  <select 
+                    disabled={!isEditing}
+                    className={cn(
+                      "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all appearance-none cursor-pointer",
+                      isEditing && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                    )}
+                    value={method}
+                    onChange={(e) => setMethod(e.target.value)}
+                  >
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="QRIS Dynamic">QRIS Dynamic</option>
+                    <option value="E-Wallet Payment">E-Wallet Payment</option>
+                    <option value="Vendor Payment">Vendor Payment</option>
+                  </select>
                 </div>
 
                 {/* Reference No Field */}
                 <div className="space-y-2">
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Reference No</label>
                   <input 
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-mono font-bold transition-all" 
+                    disabled={!isEditing}
+                    className={cn(
+                      "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-mono font-bold transition-all",
+                      isEditing && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                    )}
                     type="text" 
-                    defaultValue={ocrData.reference}
+                    value={reference}
+                    onChange={(e) => setReference(e.target.value)}
                   />
                 </div>
               </div>
             </div>
 
             <div className="mt-12 flex gap-4">
-              <button className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl py-4 text-sm font-bold hover:bg-slate-200 transition-all">
-                Edit Details
+              <button 
+                onClick={() => setIsEditing(!isEditing)}
+                className={cn(
+                  "flex-1 rounded-xl py-4 text-sm font-bold transition-all",
+                  isEditing 
+                    ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-xl" 
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200"
+                )}
+              >
+                {isEditing ? "Finish Editing" : "Edit Details"}
               </button>
-              <button className="flex-[2] bg-gradient-to-r from-primary to-blue-700 text-white rounded-xl py-4 text-sm font-bold hover:opacity-90 transition-all shadow-lg shadow-blue-500/25">
-                Confirm & Post Entry
+              <button 
+                onClick={handlePost}
+                disabled={isPosting}
+                className={cn(
+                  "flex-[2] bg-gradient-to-r from-primary to-blue-700 text-white rounded-xl py-4 text-sm font-bold hover:opacity-90 transition-all shadow-lg shadow-blue-500/25",
+                  isPosting && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {isPosting ? "Posting..." : "Confirm & Post Entry"}
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {isZoomed && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-auto"
+            onClick={() => setIsZoomed(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 40 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 40 }}
+              className="relative max-w-4xl w-full flex items-center justify-center p-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Integrated Close Button */}
+              <button 
+                className="absolute -top-4 -right-4 w-12 h-12 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-full flex items-center justify-center shadow-xl border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform z-[110]"
+                onClick={() => setIsZoomed(false)}
+              >
+                <X size={20} />
+              </button>
+
+              <img 
+                src={ocrData.image} 
+                className="w-auto max-h-[75vh] object-contain rounded-3xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] border-4 border-white/20"
+                alt="Receipt Zoom"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Recent Transactions Table List */}
       <div className="space-y-6 relative overflow-hidden">

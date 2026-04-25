@@ -22,14 +22,21 @@ export const MOCK_SERVICE_TIERS = [
 ];
 
 export const MOCK_CUSTOMERS = [
-  { id: 'CT001', name: 'Ahmad Subarjo', service: 'Premium', address: 'Jl. Merdeka No. 12', village: 'Giri Mekar', district: 'Cilengkrang', city: 'Bandung', province: 'Jawa Barat', status: 'Active', createdAt: '2026-01-15' },
-  { id: 'CT002', name: 'Siti Aminah', service: 'Standard', address: 'Jl. Sudirman No. 45', village: 'Senayan', district: 'Kebayoran Baru', city: 'Jakarta Selatan', province: 'DKI Jakarta', status: 'Active', createdAt: '2026-02-20' },
-  { id: 'CT003', name: 'Budi Santoso', service: 'Basic', address: 'Jl. Diponegoro No. 8', village: 'Tegalsari', district: 'Candisari', city: 'Semarang', province: 'Jawa Tengah', status: 'Inactive', createdAt: '2026-03-10' },
-  { id: 'CT004', name: 'Dewi Lestari', service: 'Gamers', address: 'Jl. Gajah Mada No. 21', village: 'Keputran', district: 'Tegalsari', city: 'Surabaya', province: 'Jawa Timur', status: 'Active', createdAt: '2026-04-05' },
-  { id: 'CT005', name: 'Eko Prasetyo', service: 'Premium', address: 'Jl. Malioboro No. 99', village: 'Sosromenduran', district: 'Gedongtengen', city: 'Yogyakarta', province: 'DI Yogyakarta', status: 'Active', createdAt: '2026-05-12' },
-  { id: 'CT006', name: 'Farah Quinn', service: 'Standard', address: 'Jl. Sunset Road No. 7', village: 'Seminyak', district: 'Kuta', city: 'Badung', province: 'Bali', status: 'Active', createdAt: '2026-06-18' },
-  { id: 'CT007', name: 'Guntur Pratama', service: 'Basic', address: 'Jl. Gatot Subroto No. 33', village: 'Sei Sikambing', district: 'Medan Helvetia', city: 'Medan', province: 'Sumatera Utara', status: 'Active', createdAt: '2026-07-22' },
-  { id: 'CT008', name: 'Hani Safitri', service: 'Gamers', address: 'Jl. Pahlawan No. 5', village: 'Klampis Ngasem', district: 'Sukolilo', city: 'Surabaya', province: 'Jawa Timur', status: 'Active', createdAt: '2026-08-30' }
+  { id: 1, name: "Ahmad Subarjo", email: "ahmad@example.com", service: "Premium", province: "Jawa Barat", status: "Active", joinDate: "2023-10-12", type: "Residential" },
+  { id: 2, name: "Siti Aminah", email: "siti@example.com", service: "Standard", province: "Jawa Tengah", status: "Active", joinDate: "2023-11-05", type: "Residential" },
+  { id: 3, name: "Budi Santoso", email: "budi@corp.com", service: "Basic", province: "Jawa Timur", status: "Active", joinDate: "2023-09-20", type: "Residential" },
+  { id: 4, name: "Diana Putri", email: "diana@example.com", service: "Gamers Node", province: "DKI Jakarta", status: "Active", joinDate: "2024-01-15", type: "Residential" },
+  { id: 5, name: "Eko Prasetyo", email: "eko@gamers.net", service: "Gamers Node", province: "Jawa Barat", status: "Active", joinDate: "2024-02-10", type: "Residential" },
+  { id: 6, name: "Linda Wijaya", email: "linda@example.com", service: "Premium", province: "Bali", status: "Active", joinDate: "2023-12-01", type: "Residential" },
+  { id: 7, name: "Rizky Ramadhan", email: "rizky@example.com", service: "Standard", province: "Sumatera Utara", status: "Active", joinDate: "2024-03-05", type: "Residential" },
+  { id: 8, name: "Maya Sari", email: "maya@example.com", service: "Basic", province: "Sulawesi Selatan", status: "Active", joinDate: "2023-08-15", type: "Residential" },
+  { id: 9, name: "Andi Wijaya", email: "andi@example.com", service: "Premium", province: "Kalimantan Timur", status: "Active", joinDate: "2024-01-20", type: "Residential" },
+  { id: 10, name: "Siska Pratama", email: "siska@example.com", service: "Standard", province: "DI Yogyakarta", status: "Active", joinDate: "2023-11-12", type: "Residential" },
+  { id: 11, name: "Fajar Sidik", email: "fajar@example.com", service: "Gamers Node", province: "Banten", status: "Active", joinDate: "2024-02-25", type: "Residential" },
+  { id: 12, name: "Gita Gutawa", email: "gita@example.com", service: "Premium", province: "Jawa Barat", status: "Active", joinDate: "2024-03-10", type: "Residential" },
+  { id: 13, name: "Hendra Kurnia", email: "hendra@example.com", service: "Standard", province: "Jawa Tengah", status: "Active", joinDate: "2023-12-15", type: "Residential" },
+  { id: 14, name: "Indra Brugman", email: "indra@example.com", service: "Basic", province: "DKI Jakarta", status: "Active", joinDate: "2024-01-05", type: "Residential" },
+  { id: 15, name: "Joko Wow", email: "joko@example.com", service: "Gamers Node", province: "Jawa Timur", status: "Active", joinDate: "2024-02-18", type: "Residential" }
 ];
 
 export const MOCK_TRANSACTIONS = [
