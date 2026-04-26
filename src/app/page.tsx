@@ -29,10 +29,12 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  AreaChart,
+  Area
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getServiceTiers, getExpenses, getTransactions, createNotification, getRevenueGrowthTrend } from "@/actions/db";
+import { getCustomers, getServiceTiers, getExpenses, getTransactions, createNotification, getRevenueGrowthTrend, getCustomerGrowthTrend } from "@/actions/db";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
@@ -95,6 +97,10 @@ export default function Dashboard() {
     queryKey: ['revenueGrowthTrend'],
     queryFn: getRevenueGrowthTrend
   });
+  const { data: customerGrowthTrend = [], isLoading: loadingGrowth } = useQuery({
+    queryKey: ['customerGrowthTrend'],
+    queryFn: getCustomerGrowthTrend
+  });
 
   const [mounted, setMounted] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -156,11 +162,36 @@ export default function Dashboard() {
   }, [lastUpdated]);
 
   const dynamicData = useMemo(() => {
-    const calculateRevenue = () => {
-      const active = customerList.filter(c => c.status === "Active");
+    const activeCustomers = customerList.filter(c => c.status === "Active");
+    
+    const getMonthStats = (monthStr: string) => {
+      const txs = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pemasukan" && t.timestamp && String(t.timestamp).startsWith(monthStr));
+      const rev = txs.reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
       
-      // Calculate Revenue based on Active Customers' Service Tiers (Consistent with Profitability MRR)
-      const estimatedRevenue = active.reduce((sum, customer) => {
+      // Get only NEW customers in this specific month
+      const newCustsInMonth = customerList.filter((c: any) => c.createdAt && String(c.createdAt).startsWith(monthStr)).length;
+      const totalCustsAtEnd = customerList.filter((c: any) => c.createdAt && String(c.createdAt) <= `${monthStr}-31`).length;
+      const inactiveInMonth = customerList.filter((c: any) => c.status === "Inactive" && c.createdAt && String(c.createdAt).startsWith(monthStr)).length;
+      
+      const activeCount = customerList.filter((c: any) => c.status === "Active" && c.createdAt && String(c.createdAt) <= `${monthStr}-31`).length;
+      const arpu = activeCount > 0 ? rev / activeCount : 0;
+      
+      const exps = expenseList.filter((e: any) => e.date && String(e.date).startsWith(monthStr));
+      const txExps = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pengeluaran" && t.timestamp && String(t.timestamp).startsWith(monthStr));
+      
+      const totalExp = 
+        exps.reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0) +
+        txExps.reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
+      
+      // CAC = Expenses in month / NEW customers in month
+      const cac = newCustsInMonth > 0 ? totalExp / newCustsInMonth : 0;
+      const churn = totalCustsAtEnd > 0 ? (inactiveInMonth / totalCustsAtEnd) * 100 : 0;
+
+      return { rev, arpu, cac, churn, totalExp, newCusts: newCustsInMonth };
+    };
+
+    const calculateRevenue = () => {
+      const estimatedRevenue = activeCustomers.reduce((sum, customer) => {
         const tier = serviceTiers.find(t => {
           const sName = customer.service?.toLowerCase();
           const tName = t.name?.toLowerCase();
@@ -171,7 +202,6 @@ export default function Dashboard() {
         return sum + price;
       }, 0);
 
-      // Fallback to verified transactions if estimation is 0
       const totalVerifiedRevenue = transactions
         .filter(t => t.status === "Verified" && t.keterangan === 'pemasukan')
         .reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
@@ -179,20 +209,27 @@ export default function Dashboard() {
       return estimatedRevenue > 0 ? estimatedRevenue : totalVerifiedRevenue;
     };
 
-    const activeCustomers = customerList.filter(c => c.status === "Active");
-    const currentRevenue = transactions
-      .filter(t => t.status === "Verified" && t.keterangan === 'pemasukan')
-      .reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
-    
-    const currentARPU = activeCustomers.length > 0 ? currentRevenue / activeCustomers.length : 0;
+    const currentRevenue = calculateRevenue();
 
-    // Churn Rate Calculation (Inactive / Total Customers)
+    // --- CALCULATE ANNUAL ARPU (Average of Monthly ARPUs) ---
+    const allMonths = Array.from(new Set([
+      ...transactions.map(t => String(t.timestamp).slice(0, 7)),
+      ...customerList.map(c => String(c.createdAt).slice(0, 7))
+    ])).filter(m => m.match(/^\d{4}-\d{2}$/)).sort();
+
+    const monthlyStatsList = allMonths.map(mStr => getMonthStats(mStr));
+    const arpuValues = monthlyStatsList.map(s => s.arpu).filter(v => v > 0);
+    const currentARPU = arpuValues.length > 0 ? arpuValues.reduce((a, b) => a + b, 0) / arpuValues.length : 0;
+
+    // Churn Rate (Cumulative)
     const totalCustomersCount = customerList.length;
     const inactiveCustomersCount = customerList.filter(c => c.status === "Inactive").length;
     const churnRateVal = totalCustomersCount > 0 ? (inactiveCustomersCount / totalCustomersCount) * 100 : 0;
 
-    // CAC Calculation (Total Absolute Expense / Total Customers)
-    const totalAbsExpense = expenseList.reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0);
+    // CAC (Cumulative)
+    const totalAbsExpense = expenseList.reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0) +
+                           transactions.filter(t => t.status === "Verified" && t.keterangan === "pengeluaran")
+                                     .reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
     const cacVal = totalCustomersCount > 0 ? totalAbsExpense / totalCustomersCount : 0;
 
     const distribution = serviceTiers.map(tier => {
@@ -217,27 +254,7 @@ export default function Dashboard() {
       };
     });
 
-    const getMonthStats = (monthStr: string) => {
-      const txs = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pemasukan" && t.timestamp && String(t.timestamp).startsWith(monthStr));
-      const rev = txs.reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
-      const custs = customerList.filter((c: any) => c.createdAt && String(c.createdAt).startsWith(monthStr));
-      const totalCustsAtEnd = customerList.filter((c: any) => c.createdAt && String(c.createdAt) <= `${monthStr}-31`).length;
-      const inactiveInMonth = customerList.filter((c: any) => c.status === "Inactive" && c.createdAt && String(c.createdAt).startsWith(monthStr)).length;
-      
-      const activeCount = customerList.filter((c: any) => c.status === "Active" && c.createdAt && String(c.createdAt) <= `${monthStr}-31`).length;
-      const arpu = activeCount > 0 ? rev / activeCount : 0;
-      
-      const exps = expenseList.filter((e: any) => e.date && String(e.date).startsWith(monthStr));
-      const txExps = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pengeluaran" && t.timestamp && String(t.timestamp).startsWith(monthStr));
-      
-      const totalExp = 
-        exps.reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0) +
-        txExps.reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
-      const cac = totalCustsAtEnd > 0 ? totalExp / totalCustsAtEnd : 0;
-      const churn = totalCustsAtEnd > 0 ? (inactiveInMonth / totalCustsAtEnd) * 100 : 0;
 
-      return { rev, arpu, cac, churn, totalExp };
-    };
 
     const formatCompactNumber = (number: number) => {
       if (number >= 1000000000) return `Rp ${(number / 1000000000).toFixed(2)}B`;
@@ -270,30 +287,106 @@ export default function Dashboard() {
     }
     */
 
-    const currentStats = getMonthStats("2026-04");
-    const prevStats = getMonthStats("2026-03");
+    // --- NEW TREND LOGIC: Latest Month vs Average of Previous Months ---
+    
+    // 1. Find the latest month that actually has transaction data
+    const monthsWithData = transactions
+      .filter(t => t.status === "Verified" && t.keterangan === "pemasukan")
+      .map(t => String(t.timestamp).slice(0, 7))
+      .sort();
+    
+    const latestMonthStr = monthsWithData.length > 0 ? monthsWithData[monthsWithData.length - 1] : "2026-04";
+    const [year, month] = latestMonthStr.split('-').map(Number);
+    
+    // 2. Get stats for the latest month
+    const latestStats = getMonthStats(latestMonthStr);
+    
+    // 3. Calculate average for all previous months in the same year (e.g., Jan to Sep if latest is Oct)
+    let prevTotalStats = { rev: 0, arpu: 0, cac: 0, churn: 0, count: 0 };
+    
+    for (let m = 1; m < month; m++) {
+      const mStr = `${year}-${String(m).padStart(2, '0')}`;
+      const stats = getMonthStats(mStr);
+      if (stats.rev > 0 || stats.totalExp > 0) {
+        prevTotalStats.rev += stats.rev;
+        prevTotalStats.arpu += stats.arpu;
+        prevTotalStats.cac += stats.cac;
+        prevTotalStats.churn += stats.churn;
+        prevTotalStats.count++;
+      }
+    }
+    
+    const avgPrevStats = {
+      rev: prevTotalStats.count > 0 ? prevTotalStats.rev / prevTotalStats.count : 0,
+      arpu: prevTotalStats.count > 0 ? prevTotalStats.arpu / prevTotalStats.count : 0,
+      cac: prevTotalStats.count > 0 ? prevTotalStats.cac / prevTotalStats.count : 0,
+      churn: prevTotalStats.count > 0 ? prevTotalStats.churn / prevTotalStats.count : 0,
+    };
 
-    const calculateTrend = (current: number, prev: number) => {
-      if (prev === 0) return current > 0 ? "+100%" : "0%";
-      const diff = ((current / prev) - 1) * 100;
+    // --- SPECIAL CHURN TREND LOGIC (Matching your SQL) ---
+    const getChurnForRange = (startDateStr: string, endDateStr: string) => {
+      const start = new Date(startDateStr);
+      const end = new Date(endDateStr);
+      
+      const inactivesInRange = customerList.filter(c => {
+        const cDate = new Date(c.createdAt);
+        return c.status === "Inactive" && cDate >= start && cDate <= end;
+      }).length;
+      
+      return customerList.length > 0 ? (inactivesInRange / customerList.length) * 100 : 0;
+    };
+
+    // 1. Benchmark: Churn Rate Jan - Sep
+    const benchmarkChurn = getChurnForRange('2026-01-01', '2026-09-30');
+    
+    // 2. Current: Churn Rate Oct
+    const octoberChurn = getChurnForRange('2026-10-01', '2026-10-31');
+
+    const calculateTrend = (current: number, benchmark: number) => {
+      if (benchmark === 0) return current > 0 ? "+100%" : "0%";
+      const diff = ((current / benchmark) - 1) * 100;
       return `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%`;
     };
 
+    // Special Ratio Trend for Churn: (Current / Benchmark) * 100
+    const calculateRatioTrend = (current: number, benchmark: number) => {
+      if (benchmark === 0) return current > 0 ? "+100%" : "0%";
+      const ratio = (current / benchmark) * 100;
+      return `+${ratio.toFixed(1)}%`;
+    };
+
+    const churnTrendLabel = calculateRatioTrend(octoberChurn, benchmarkChurn);
+
+    // --- 4. PREPARE FINAL KPI VALUES ---
+    
+    // Total Revenue: Latest Month (October)
+    const bigRevenue = latestStats.rev; 
+    
+    // ARPU: Latest Month (October)
+    const bigARPU = latestStats.arpu; 
+    
+    // CAC: Latest Month (October)
+    const bigCAC = latestStats.cac; 
+    
+    // Churn Rate: Latest Month (October)
+    const bigChurn = latestStats.churn;
+
     return {
-      arpu: formatCompactNumber(currentARPU),
-      totalRevenue: formatCompactNumber(currentRevenue),
-      churnRate: `${churnRateVal.toFixed(1)}%`,
-      cac: formatCompactNumber(cacVal),
-      distribution,
+      arpu: formatCompactNumber(bigARPU),
+      totalRevenue: formatCompactNumber(bigRevenue),
+      churnRate: `${bigChurn.toFixed(1)}%`,
+      cac: formatCompactNumber(bigCAC),
+      distribution: distribution,
       trendData: trendData,
+      growthTrend: customerGrowthTrend,
       trends: {
-        arpu: calculateTrend(currentStats.arpu, prevStats.arpu),
-        cac: calculateTrend(currentStats.cac, prevStats.cac),
-        churn: calculateTrend(currentStats.churn, prevStats.churn),
-        revenue: calculateTrend(currentStats.rev, prevStats.rev)
+        arpu: calculateTrend(latestStats.arpu, avgPrevStats.arpu),
+        cac: calculateTrend(latestStats.cac, avgPrevStats.cac),
+        churn: churnTrendLabel,
+        revenue: calculateTrend(latestStats.rev, avgPrevStats.rev)
       }
     };
-  }, [customerList, serviceTiers, expenseList, transactions, trendData]);
+  }, [customerList, serviceTiers, expenseList, transactions, trendData, customerGrowthTrend]);
 
   const kpis = [
     { name: "ARPU", value: dynamicData.arpu, trend: dynamicData.trends.arpu, trendType: dynamicData.trends.arpu.startsWith('+') ? "up" : "down", icon: "user" },
@@ -605,44 +698,63 @@ export default function Dashboard() {
                 className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-200 dark:border-slate-800 shadow-sm"
               >
             <div className="mb-8">
-              <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Customer Mix</h3>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Customer Growth</h3>
               <p className="text-sm font-medium text-slate-500 mt-1">Segmentation</p>
             </div>
-            <div className="flex items-center">
-              <div className="h-[220px] w-[60%]">
+            <div className="h-[220px] w-full">
+              {mounted && (
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie 
-                      data={dynamicData.distribution} 
-                      innerRadius={70} 
-                      outerRadius={90} 
-                      paddingAngle={12} 
-                      dataKey="value"
-                      startAngle={180}
-                      endAngle={-180}
-                      stroke="none"
-                      cornerRadius={10}
-                    >
-                      {dynamicData.distribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip />} />
-                  </PieChart>
+                  <AreaChart data={dynamicData.growthTrend} margin={{ top: 10, right: 20, left: 20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorGrowth" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
+                    <XAxis 
+                      dataKey="month" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }} 
+                      interval={0}
+                      tickFormatter={(value) => {
+                        const mapping: Record<string, string> = {
+                          'Jan': 'Jan',
+                          'Apr': 'Apr',
+                          'Aug': 'Aug',
+                          'Dec': 'Dec'
+                        };
+                        return mapping[value] || '';
+                      }}
+                    />
+                    <YAxis hide domain={['auto', 'auto']} />
+                    <Tooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-xl">
+                              <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">{payload[0].payload.month}</p>
+                              <p className="text-sm font-black text-slate-900 dark:text-white">{payload[0].value} Active</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="growth" 
+                      stroke="#0ea5e9" 
+                      strokeWidth={3} 
+                      fillOpacity={1} 
+                      fill="url(#colorGrowth)" 
+                    />
+                  </AreaChart>
                 </ResponsiveContainer>
-              </div>
-              <div className="w-[40%] space-y-4 pl-4 pr-6">
-                {dynamicData.distribution.map((item) => (
-                  <div key={item.name} className="flex items-center group">
-                    <div className="flex items-center gap-2 min-w-[100px]">
-                      <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: item.color }} />
-                      <span className="text-xs font-black text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors">{item.name}</span>
-                    </div>
-                    <span className="ml-auto text-xs font-black text-slate-900 dark:text-white tabular-nums">{item.value}%</span>
-                  </div>
-                ))}
-              </div>
+              )}
             </div>
+
           </motion.section>
 
               <motion.section

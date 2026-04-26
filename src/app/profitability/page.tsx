@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   TrendingUp, 
   ArrowUp, 
+  ArrowDown,
   Target, 
   UserCheck, 
   PieChart as PieChartIcon,
@@ -15,7 +16,8 @@ import {
   Minus,
   Search,
   Check,
-  X
+  X,
+  RotateCcw
 } from "lucide-react";
 import jsPDF from "jspdf";
 import { domToPng } from "modern-screenshot";
@@ -33,7 +35,8 @@ import {
   LineChart,
   Line,
   Area,
-  AreaChart
+  AreaChart,
+  ReferenceLine
 } from "recharts";
 
 import { useQuery } from "@tanstack/react-query";
@@ -57,7 +60,14 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export default function ProfitabilityPage() {
   const [selectedProvince, setSelectedProvince] = useState("All Regions");
+  const [startDate, setStartDate] = useState("2026-01-01");
+  const [endDate, setEndDate] = useState("2026-12-31");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleResetDates = () => {
+    setStartDate("2026-01-01");
+    setEndDate("2026-12-31");
+  };
 
   const { data: customerList = [], isLoading: loadingCustomers } = useQuery({ queryKey: ['customers'], queryFn: getCustomers });
   const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
@@ -100,89 +110,279 @@ export default function ProfitabilityPage() {
     setMounted(true);
   }, []);
 
+  const formatCompactNumber = (number: number) => {
+    const absNum = Math.abs(number);
+    const sign = number < 0 ? "-" : "";
+    
+    if (absNum >= 1000000000) return `${sign}Rp ${(absNum / 1000000000).toFixed(2)}B`;
+    if (absNum >= 1000000) return `${sign}Rp ${(absNum / 1000000).toFixed(2)}M`;
+    if (absNum >= 1000) return `${sign}Rp ${(absNum / 1000).toFixed(1)}k`;
+    return `${sign}Rp ${absNum.toFixed(0)}`;
+  };
+
   const dynamicData = useMemo(() => {
     const isAllRegions = selectedProvince === "All Regions";
-    
-    // 1. Filter Transactions (Verified Income Only)
-    const verifiedIncomeTx = transactions.filter((tx: any) => {
-      const isVerified = tx.status === "Verified" && tx.keterangan === "pemasukan";
-      if (!isVerified) return false;
-      if (isAllRegions) return true;
-      const customer = customerList.find((c: any) => String(c.id) === String(tx.linked_id));
-      return customer?.province === selectedProvince;
-    });
-
-    const annualRevenue = verifiedIncomeTx.reduce((sum: number, tx: any) => sum + (tx.numericAmount || 0), 0);
-    
-    // 2. Expenses Calculation (Total Absolute)
     const allocationFactor = isAllRegions ? 1 : (customerList.length > 0 ? (customerList.filter((c: any) => c.province === selectedProvince).length / customerList.length) : 0);
-    const totalExpenses = expenseList.reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0) * allocationFactor;
+    
+    // --- 1. Basic Stats Logic ---
+    // Mapping Kota ke Provinsi untuk transaksi yang tidak punya ID Pelanggan
+    const getProvinceFromCity = (city: string) => {
+      if (!city) return null;
+      const c = city.toLowerCase();
+      if (c.includes("bandung") || c.includes("bogor") || c.includes("depok") || c.includes("bekasi")) return "Jawa Barat";
+      if (c.includes("jakarta")) return "DKI Jakarta";
+      if (c.includes("semarang") || c.includes("solo")) return "Jawa Tengah";
+      if (c.includes("surabaya") || c.includes("malang")) return "Jawa Timur";
+      if (c.includes("jogja") || c.includes("yogyakarta")) return "DI Yogyakarta";
+      if (c.includes("bali") || c.includes("denpasar")) return "Bali";
+      return null;
+    };
 
-    const netProfit = annualRevenue - totalExpenses;
-    const ebitdaMargin = annualRevenue > 0 ? (netProfit / annualRevenue) * 100 : 0;
+    // Helper untuk memformat tanggal ke YYYY-MM-DD (Waktu Lokal)
+    const getLocalDate = (d: any) => {
+      if (!d) return "";
+      try {
+        const date = new Date(d);
+        if (isNaN(date.getTime())) return String(d);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      } catch (e) {
+        return String(d);
+      }
+    };
 
-    // 3. MRR (Total Verified Income - All Dates)
-    const mrrVerified = verifiedIncomeTx
-      .reduce((sum: number, tx: any) => sum + (tx.numericAmount || 0), 0);
+    // Helper untuk cek range tanggal
+    const isInRange = (d: string) => {
+      const dateStr = getLocalDate(d);
+      return dateStr >= startDate && dateStr <= endDate;
+    };
 
-    // 4. Waterfall Data (Distribution by Type + Expenses)
-    const incomeByType: Record<string, number> = {};
-    verifiedIncomeTx.forEach((tx: any) => {
-      const type = tx.type || "Other";
-      incomeByType[type] = (incomeByType[type] || 0) + (tx.numericAmount || 0);
-    });
+    // --- 1. Raw Stats (Untuk EBITDA & MRR) ---
+    const getRawMonthStats = (monthStr: string) => {
+      const txs = transactions.filter((tx: any) => {
+        const isVerified = tx.status === "Verified" && tx.keterangan === "pemasukan";
+        const matchesMonth = getLocalDate(tx.timestamp).startsWith(monthStr);
+        if (!isVerified || !matchesMonth || !isInRange(tx.timestamp)) return false;
 
-    const waterfallData = [
-      ...Object.entries(incomeByType).map(([name, value]) => ({ 
-        name, 
-        value: value, 
-        color: "#16a34a" 
-      })),
-      ...Array.from(new Set(expenseList.map((e: any) => e.category))).map(cat => {
-        const catValue = expenseList
-          .filter((e: any) => e.category === cat)
-          .reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0) * allocationFactor;
-        return { 
-          name: cat, 
-          value: -catValue, 
-          color: "#f43f5e" 
-        };
-      })
-    ];
+        if (isAllRegions) return true;
+        
+        const cityProvince = getProvinceFromCity(tx.city);
+        if (cityProvince === selectedProvince) return true;
 
-    // 5. Growth Trend Calculation
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const monthlyGroups: Record<string, number> = {};
+        const idSuffix = tx.id?.split('-')[1];
+        const customer = customerList.find((c: any) => String(c.id) === idSuffix);
+        return customer?.province === selectedProvince;
+      });
 
-    verifiedIncomeTx.forEach((tx: any) => {
-      const dateStr = tx.timestamp.split('T')[0];
-      const [year, month] = dateStr.split('-');
-      const key = `${year}-${month}`;
-      monthlyGroups[key] = (monthlyGroups[key] || 0) + (tx.numericAmount || 0);
-    });
+      // Revenue (MRR) - 100% spesifik
+      const rev = txs.reduce((sum: number, tx: any) => sum + (tx.numericAmount || 0), 0);
 
-    const growthTrend = Object.keys(monthlyGroups).sort().map(key => {
-      const [year, month] = key.split("-");
-      const mIdx = parseInt(month) - 1;
-      return {
-        month: `${monthNames[mIdx]} ${year.substring(2)}`,
-        value: monthlyGroups[key]
-      };
-    });
+      // Kita fokus ke Transactions sebagai Source of Truth agar sinkron dengan Waterfall
+      const txExps = transactions.filter((tx: any) => {
+        const isExpense = tx.status === "Verified" && tx.keterangan === "pengeluaran";
+        const matchesMonth = getLocalDate(tx.timestamp).startsWith(monthStr);
+        if (!isExpense || !matchesMonth || !isInRange(tx.timestamp)) return false;
+        
+        if (isAllRegions) return true;
 
-    const activeCount = isAllRegions 
-      ? customerList.filter((c: any) => c.status === "Active").length 
-      : customerList.filter((c: any) => c.status === "Active" && c.province === selectedProvince).length;
+        const cityProvince = getProvinceFromCity(tx.city);
+        if (cityProvince === selectedProvince) return true;
+
+        const idSuffix = tx.id?.split('-')[1];
+        const customer = customerList.find((c: any) => String(c.id) === idSuffix);
+        return customer?.province === selectedProvince;
+      });
+
+      // Biaya - Hanya dari Transactions agar sinkron dengan Waterfall & Audit SQL
+      const totalExp = txExps.reduce((sum: number, tx: any) => sum + (tx.numericAmount || 0), 0);
+
+      const profit = rev - totalExp;
+      const margin = rev > 0 ? (profit / rev) * 100 : 0;
+      return { rev, totalExp, profit, margin };
+    };
+
+    // --- 2. Filtered Stats (Khusus Untuk NET PROFIT) ---
+    const getFilteredMonthStats = (monthStr: string) => {
+      const txs = transactions.filter((tx: any) => {
+        const isVerified = tx.status === "Verified" && tx.keterangan === "pemasukan";
+        const matchesMonth = getLocalDate(tx.timestamp).startsWith(monthStr);
+        if (!isVerified || !matchesMonth || !isInRange(tx.timestamp)) return false;
+        
+        if (isAllRegions) return true;
+
+        const cityProvince = getProvinceFromCity(tx.city);
+        if (cityProvince === selectedProvince) return true;
+
+        const idSuffix = tx.id?.split('-')[1];
+        const customer = customerList.find((c: any) => String(c.id) === idSuffix);
+        
+        if (!customer) return false;
+        return customer.province === selectedProvince;
+      });
+      const rev = txs.reduce((sum: number, tx: any) => sum + (tx.numericAmount || 0), 0);
+
+      const txExps = transactions.filter((tx: any) => {
+        const isExpense = tx.status === "Verified" && tx.keterangan === "pengeluaran";
+        const matchesMonth = getLocalDate(tx.timestamp).startsWith(monthStr);
+        if (!isExpense || !matchesMonth || !isInRange(tx.timestamp)) return false;
+
+        if (isAllRegions) return true;
+
+        const cityProvince = getProvinceFromCity(tx.city);
+        if (cityProvince === selectedProvince) return true;
+
+        const idSuffix = tx.id?.split('-')[1];
+        const customer = customerList.find((c: any) => String(c.id) === idSuffix);
+
+        if (!customer) return false;
+        return customer.province === selectedProvince;
+      });
+
+      const exps = expenseList.filter((e: any) => getLocalDate(e.date).startsWith(monthStr) && isInRange(e.date));
+
+      // Biaya - Hanya dari Transactions
+      const totalExp = txExps.reduce((sum: number, tx: any) => sum + (tx.numericAmount || 0), 0);
+
+      const profit = rev - totalExp;
+      return { rev, totalExp, profit };
+    };
+
+    // --- 3. Analysis ---
+    const allMonths = Array.from(new Set([
+      ...transactions.filter(t => isInRange(t.timestamp)).map((t: any) => getLocalDate(t.timestamp).slice(0, 7)),
+      ...expenseList.filter(e => isInRange(e.date)).map((e: any) => getLocalDate(e.date).slice(0, 7))
+    ])).filter(m => m.match(/^\d{4}-\d{2}$/)).sort();
+
+    const latestMonth = allMonths[allMonths.length - 1] || "2026-10";
+    const prevMonths = allMonths.filter(m => m < latestMonth);
+
+    // Raw Latest/Benchmark (Untuk EBITDA & MRR Trends)
+    const rawLatest = getRawMonthStats(latestMonth);
+    const rawPrevTotal = prevMonths.reduce((acc, m) => {
+      const s = getRawMonthStats(m);
+      return { rev: acc.rev + s.rev, margin: acc.margin + s.margin, count: acc.count + 1 };
+    }, { rev: 0, margin: 0, count: 0 });
+    const rawBenchmark = {
+      rev: rawPrevTotal.count > 0 ? rawPrevTotal.rev / rawPrevTotal.count : 0,
+      margin: rawPrevTotal.count > 0 ? rawPrevTotal.margin / rawPrevTotal.count : 0
+    };
+
+    // Filtered Latest/Benchmark (Untuk NET PROFIT Trends)
+    const filtLatest = getFilteredMonthStats(latestMonth);
+    const filtPrevTotal = prevMonths.reduce((acc, m) => {
+      const s = getFilteredMonthStats(m);
+      return { profit: acc.profit + s.profit, count: acc.count + 1 };
+    }, { profit: 0, count: 0 });
+    const filtBenchmark = {
+      profit: filtPrevTotal.count > 0 ? filtPrevTotal.profit / filtPrevTotal.count : 0
+    };
+
+    // Annual Totals (Untuk Big Numbers)
+    const totalRawRevenue = allMonths.reduce((sum, m) => sum + getRawMonthStats(m).rev, 0);
+    const totalRawExp = allMonths.reduce((sum, m) => sum + getRawMonthStats(m).totalExp, 0);
+    const totalRawProfit = totalRawRevenue - totalRawExp;
+    const overallEbitdaMargin = totalRawRevenue > 0 ? (totalRawProfit / totalRawRevenue) * 100 : 0;
+
+    const totalFiltProfit = allMonths.reduce((sum, m) => sum + getFilteredMonthStats(m).profit, 0);
+
+    const calculateTrend = (current: number, benchmark: number) => {
+      if (benchmark === 0) {
+        if (current > 0) return { text: "+100%", type: "up" };
+        if (current < 0) return { text: "-100%", type: "danger" };
+        return { text: "0%", type: "neutral" };
+      }
+      const diff = ((current / benchmark) - 1) * 100;
+      if (diff > 0) return { text: `+${diff.toFixed(1)}%`, type: "up" };
+      if (diff < 0) return { text: `${diff.toFixed(1)}%`, type: "danger" };
+      return { text: "0%", type: "neutral" };
+    };
+
+
+    // --- Dynamic Active Users Logic ---
+    const activeCustomerIdsInRange = new Set(
+      transactions
+        .filter((tx: any) => tx.status === "Verified" && tx.keterangan === "pemasukan" && isInRange(tx.timestamp))
+        .map((tx: any) => {
+          // Ambil bagian setelah 'TRX-' atau 'TRX-CT'
+          const fullId = tx.id?.split('-').slice(1).join('-'); // CT001
+          return fullId;
+        })
+        .filter(Boolean)
+    );
+
+    const totalCount = customerList.filter((c: any) => {
+      const joinDate = getLocalDate(c.createdAt || c.registration_date);
+      if (joinDate > endDate) return false; 
+      if (isAllRegions) return true;
+      return c.province === selectedProvince;
+    }).length;
+
+    const activeCount = customerList.filter((c: any) => {
+      const joinDate = getLocalDate(c.createdAt || c.registration_date);
+      if (joinDate > endDate) return false;
+      const hasTxInRange = activeCustomerIdsInRange.has(String(c.id));
+      if (!hasTxInRange) return false;
+      if (isAllRegions) return true;
+      return c.province === selectedProvince;
+    }).length;
+
+    const inactiveCount = customerList.filter((c: any) => {
+      const joinDate = getLocalDate(c.createdAt || c.registration_date);
+      if (joinDate > endDate) return false;
+      const isStatusInactive = c.status === "Inactive" || c.status === "Non-Active";
+      if (!isStatusInactive) return false;
+      if (isAllRegions) return true;
+      return c.province === selectedProvince;
+    }).length;
+
+    const mrrTrend = calculateTrend(rawLatest.rev, rawBenchmark.rev);
+    const marginTrend = calculateTrend(rawLatest.margin, rawBenchmark.margin);
+    const profitTrend = calculateTrend(filtLatest.profit, filtBenchmark.profit);
 
     const metrics = [
-      { name: "MRR (Verified)", value: mrrVerified >= 1000000 ? `Rp ${(mrrVerified/1000000).toFixed(2)}M` : `Rp ${(mrrVerified/1000).toFixed(0)}k`, trend: "+12%", trendType: "up" as const, icon: "trending", detail: "Total Verified Income" },
-      { name: "EBITDA MARGIN", value: `${ebitdaMargin.toFixed(1)}%`, trend: "Stable", trendType: "neutral" as const, icon: "target", detail: "Profit after total Opex" },
-      { name: "NET PROFIT", value: `Rp ${(netProfit/1000000).toFixed(2)}M`, trend: "Annual", trendType: "neutral" as const, icon: "pie", detail: "Revenue - Total Expense" },
-      { name: "ACTIVE USERS", value: String(activeCount), trend: "Synced", trendType: "up" as const, icon: "user", detail: "Paying Subscribers" },
+      { 
+        name: "MRR (Verified)", 
+        value: formatCompactNumber(rawLatest.rev), 
+        trend: mrrTrend.text, 
+        trendType: mrrTrend.type, 
+        icon: "trending", 
+        detail: "Current Month Revenue" 
+      },
+      { 
+        name: "EBITDA MARGIN", 
+        value: `${rawLatest.margin.toFixed(1)}%`, 
+        trend: marginTrend.text, 
+        trendType: marginTrend.type, 
+        icon: "target", 
+        detail: "Current Month Margin" 
+      },
+      { 
+        name: "NET PROFIT", 
+        value: formatCompactNumber(filtLatest.profit), 
+        trend: profitTrend.text, 
+        trendType: profitTrend.type, 
+        icon: "pie", 
+        detail: "Current Month Result" 
+      },
+      { 
+        name: "ACTIVE USERS", 
+        value: String(activeCount), 
+        trend: activeCount > 0 ? "Synced" : "Stable", 
+        trendType: activeCount > 0 ? "up" : "neutral", 
+        icon: "user", 
+        detail: "Paying Subscribers" 
+      },
+      { 
+        name: "INACTIVE USERS", 
+        value: String(inactiveCount), 
+        trend: inactiveCount > 0 ? "Attention" : "Healthy", 
+        trendType: inactiveCount > 0 ? "danger" : "up", 
+        icon: "target", 
+        detail: "Non-Paying / Idle" 
+      },
     ];
-
-    const totalRevenue = growthTrend.reduce((sum, item) => sum + item.value, 0);
-    const avgMonthlyRevenue = growthTrend.length > 0 ? totalRevenue / growthTrend.length : 0;
 
     const filteredCustomers = isAllRegions 
       ? customerList.filter((c: any) => c.status === "Active")
@@ -192,10 +392,13 @@ export default function ProfitabilityPage() {
     const businessCount = filteredCustomers.filter((c: any) => c.type === "Business").length;
     const totalFiltered = filteredCustomers.length;
 
-    // 4. Service Plan Mix (Client-side calculation for consistency)
-    const activeCustomers = isAllRegions 
-      ? customerList.filter((c: any) => c.status === "Active")
-      : customerList.filter((c: any) => c.status === "Active" && c.province === selectedProvince);
+    // 4. Service Plan Mix (Sekarang mengikuti Filter Tanggal & Region)
+    const activeCustomers = customerList.filter((c: any) => {
+      const isActiveInRange = activeCustomerIdsInRange.has(String(c.id));
+      if (!isActiveInRange) return false;
+      if (isAllRegions) return true;
+      return c.province === selectedProvince;
+    });
 
     const targetServices = ['Premium', 'Standard', 'Basic', 'Gamers'];
     const serviceCounts: Record<string, number> = { 'Premium': 0, 'Standard': 0, 'Basic': 0, 'Gamers': 0 };
@@ -218,10 +421,72 @@ export default function ProfitabilityPage() {
       };
       return {
         name,
+        count,
         value: totalActiveWithPlan > 0 ? Math.round((count / totalActiveWithPlan) * 100) : 0,
         color: colors[name] || '#94a3b8'
       };
     });
+
+      const growthTrend = allMonths.map(mStr => {
+        const stats = getRawMonthStats(mStr);
+        const [year, month] = mStr.split("-");
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        return {
+          month: `${monthNames[parseInt(month)-1]} ${year.substring(2)}`,
+          value: stats.profit
+        };
+      });
+
+    const incomeByType: Record<string, number> = {};
+    const expenseByType: Record<string, number> = {};
+    transactions
+      .filter((tx: any) => {
+        const isVerified = tx.status === "Verified" && tx.keterangan === "pemasukan";
+        const matchesMonth = getLocalDate(tx.timestamp).startsWith(latestMonth);
+        if (!isVerified || !matchesMonth) return false;
+        
+        if (isAllRegions) return true;
+        const idSuffix = tx.id?.split('-')[1];
+        const customer = customerList.find((c: any) => String(c.id) === idSuffix);
+        return customer?.province === selectedProvince;
+      })
+      .forEach((tx: any) => {
+        const type = tx.type || "Other";
+        incomeByType[type] = (incomeByType[type] || 0) + (tx.numericAmount || 0);
+      });
+
+    // B. Dari General Expenses (Allocated)
+    expenseList
+      .filter((exp: any) => isInRange(exp.date))
+      .forEach((exp: any) => {
+        const type = exp.category || "Operational";
+        const amount = Math.abs(exp.amount || 0) * allocationFactor;
+        expenseByType[type] = (expenseByType[type] || 0) + amount;
+      });
+
+    const waterfallData = [
+      ...Object.entries(incomeByType).map(([name, value]) => ({
+        name,
+        value: Number(value),
+        isExpense: false
+      })),
+      ...Object.entries(expenseByType).map(([name, value]) => ({
+        name,
+        value: -Number(value),
+        isExpense: true
+      }))
+    ].filter(d => d.value !== 0);
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -230,9 +495,11 @@ export default function ProfitabilityPage() {
       waterfallData,
       distribution,
       growthTrend,
-      avgMonthlyRevenue
+      latestRevenue: rawLatest.rev,
+      latestProfit: rawLatest.profit,
+      avgMonthlyRevenue: rawBenchmark.rev
     };
-  }, [selectedProvince, customerList, transactions, expenseList]);
+  }, [selectedProvince, startDate, endDate, customerList, transactions, expenseList]);
 
   const filteredProvinces = useMemo(() => 
     provinces.filter((p: any) => p.toLowerCase().includes(searchQuery.toLowerCase())), 
@@ -289,7 +556,30 @@ export default function ProfitabilityPage() {
             <h2 className="text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Profitability Analysis</h2>
             <p className="text-lg font-medium text-slate-500 mt-2">Segmented performance and unit economics audit.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-nowrap items-center gap-4">
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <input 
+                type="date" 
+                value={startDate} 
+                onChange={(e) => setStartDate(e.target.value)}
+                className="bg-transparent border-none text-xs font-bold outline-none text-slate-600 px-2"
+              />
+              <span className="text-slate-300">|</span>
+              <input 
+                type="date" 
+                value={endDate} 
+                onChange={(e) => setEndDate(e.target.value)}
+                className="bg-transparent border-none text-xs font-bold outline-none text-slate-600 px-2"
+              />
+              <button 
+                onClick={handleResetDates}
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors"
+                title="Reset Date Range"
+              >
+                <RotateCcw size={14} />
+              </button>
+            </div>
+
             <div className="relative" ref={dropdownRef}>
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-3 px-6 py-3.5 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 text-sm font-bold min-w-[200px]">
                 <Filter size={18} className="text-primary" />
@@ -311,23 +601,30 @@ export default function ProfitabilityPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {dynamicData.metrics.map((kpi, i) => (
-            <motion.div key={kpi.name} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-primary/5 transition-all group">
-              <div className="flex items-center justify-between mb-6">
-                <div className="p-3.5 bg-slate-100 dark:bg-slate-800 rounded-2xl text-primary group-hover:bg-primary group-hover:text-white transition-all">
-                  {kpi.icon === "trending" && <TrendingUp size={24} />}
-                  {kpi.icon === "target" && <Target size={24} />}
-                  {kpi.icon === "user" && <UserCheck size={24} />}
-                  {kpi.icon === "pie" && <PieChartIcon size={24} />}
+            <motion.div key={kpi.name} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-primary/5 transition-all group">
+              <div className="flex items-center justify-between gap-2 mb-6">
+                <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0 flex items-center justify-center">
+                  {kpi.icon === "trending" && <TrendingUp size={18} />}
+                  {kpi.icon === "target" && <Target size={18} />}
+                  {kpi.icon === "user" && <UserCheck size={18} />}
+                  {kpi.icon === "pie" && <PieChartIcon size={18} />}
                 </div>
-                <div className={cn("text-[10px] font-black px-3 py-1.5 rounded-full flex items-center gap-1", kpi.trendType === "up" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600")}>
-                  {kpi.trendType === "up" && <ArrowUp size={12} />}{kpi.trend}
+                <div className={cn(
+                  "text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 shadow-sm border", 
+                  kpi.trendType === "up" ? "bg-green-100 text-green-700 border-green-200" : 
+                  kpi.trendType === "danger" ? "bg-rose-100 text-rose-700 border-rose-200" :
+                  "bg-slate-100 text-slate-600 border-slate-200"
+                )}>
+                  {kpi.trendType === "up" && <ArrowUp size={10} />}
+                  {kpi.trendType === "danger" && <ArrowDown size={10} />}
+                  {kpi.trend}
                 </div>
               </div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{kpi.name}</p>
-              <h3 className="text-3xl font-black text-slate-900 dark:text-slate-100 mt-2">{kpi.value}</h3>
-              <p className="text-[10px] font-bold text-slate-400 mt-4 uppercase tracking-tighter">{kpi.detail}</p>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{kpi.name}</p>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-2 whitespace-nowrap">{kpi.value}</h3>
+              <p className="text-[9px] font-bold text-slate-400 mt-4 uppercase tracking-tighter">{kpi.detail}</p>
             </motion.div>
           ))}
         </div>
@@ -339,17 +636,32 @@ export default function ProfitabilityPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={dynamicData.waterfallData} margin={{ top: 10, right: 20, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 'bold', fill: '#64748b' }} dy={10} />
-                  <YAxis hide />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 9, fontWeight: 'bold', fill: '#64748b' }} 
+                    dy={10} 
+                    interval={0}
+                  />
+                  <YAxis hide domain={['auto', 'auto']} />
                   <Tooltip 
                     cursor={{ fill: 'transparent' }} 
                     content={({ active, payload }) => active && payload && payload.length && (
-                      <div className="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-2xl">
-                        {payload[0].name}: Rp {Number(payload[0].value).toLocaleString()}
+                      <div className="bg-slate-900 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl border border-white/10 backdrop-blur-md">
+                        <p className="opacity-60 mb-1">{payload[0].name}</p>
+                        <p className="text-sm font-black">Rp {Math.abs(Number(payload[0].value)).toLocaleString()}</p>
                       </div>
                     )} 
                   />
-                  <Bar dataKey="value" radius={[12, 12, 12, 12]} barSize={50}>{dynamicData.waterfallData.map((entry, index) => (<Cell key={`cell-${index}`} fill={(entry as any).color} />))}</Bar>
+                  <Bar dataKey="value" barSize={32} radius={[20, 20, 20, 20]}>
+                    {dynamicData.waterfallData.map((entry: any, index: number) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.isExpense ? "#f43f5e" : "#10b981"} 
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -377,7 +689,10 @@ export default function ProfitabilityPage() {
                           <Cell key={`cell-${index}`} fill={(entry as any).color} />
                         ))}
                       </Pie>
-                      <Tooltip content={<CustomTooltip />} />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                        formatter={(value: any, name: any, props: any) => [`${props.payload.count} Users`, name]}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -402,17 +717,14 @@ export default function ProfitabilityPage() {
             <motion.section initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-[2.5rem] p-10 border border-slate-700/30 shadow-xl relative overflow-hidden">
               <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/10 rounded-full blur-3xl" />
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-6"><div><h3 className="text-xl font-black text-white mb-1">Growth Trend</h3><p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Revenue Month-over-Month</p></div><div className="px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full flex items-center gap-2"><div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" /><span className="text-[10px] font-black text-green-400 uppercase tracking-wider">Live</span></div></div>
+                <div className="flex items-center justify-between mb-6"><div><h3 className="text-xl font-black text-white mb-1">Profitability Trend</h3><p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Net Profit Month-over-Month</p></div><div className="px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full flex items-center gap-2"><div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" /><span className="text-[10px] font-black text-green-400 uppercase tracking-wider">Live</span></div></div>
                 <div className="mb-6">
                   <span className="text-4xl font-black text-white tracking-tight">
-                    {(() => {
-                      const val = dynamicData.avgMonthlyRevenue;
-                      return val >= 1000000 
-                        ? `Rp ${(val / 1000000).toFixed(2)}M` 
-                        : `Rp ${(val / 1000).toFixed(0)}k`;
-                    })()}
+                    {formatCompactNumber(dynamicData.latestProfit)}
                   </span>
-                  <span className="text-sm font-bold text-green-400 ml-3">↑ trending</span>
+                  <span className={cn("text-sm font-bold ml-3", dynamicData.latestProfit >= 0 ? "text-green-400" : "text-rose-400")}>
+                    {dynamicData.latestProfit >= 0 ? "↑ trending" : "↓ deficit"}
+                  </span>
                 </div>
                 <div className="h-[160px] w-full">
                   <ResponsiveContainer width="100%" height="100%">

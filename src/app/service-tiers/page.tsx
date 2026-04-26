@@ -14,7 +14,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { getCustomers, getServiceTiers } from "@/actions/db";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 const IconMap = {
   wifi: Wifi,
@@ -33,27 +33,43 @@ export default function ServiceTiersPage() {
   const itemsPerPage = 7;
   const isSearching = searchQuery.trim().length > 0;
 
+  // 1. Memoize filtered list - MUST be before any conditional returns
+  const filteredCustomers = useMemo(() => {
+    return customerList.filter(cust => {
+      const matchesSearch = 
+        cust.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        cust.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        cust.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (cust.service && cust.service.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      const matchesStatus = 
+        statusFilter === "All" || 
+        (cust.status?.toLowerCase() === statusFilter.toLowerCase());
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [customerList, searchQuery, statusFilter]);
+
+  // 2. Memoize tier counts - MUST be before any conditional returns
+  const tierCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    serviceTiers.forEach(tier => {
+      counts[tier.name] = customerList.filter(c => {
+        const service = c.service?.toLowerCase();
+        const tierName = tier.name.toLowerCase();
+        if (tierName === "gamers node") return service === "gamers";
+        return service === tierName;
+      }).length;
+    });
+    return counts;
+  }, [customerList, serviceTiers]);
+
   if (loadingCustomers || loadingTiers) {
     return <div className="h-full w-full flex items-center justify-center"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="text-slate-500 font-medium">Loading Service Tiers Data...</p></div></div>;
   }
 
-  const filteredCustomers = customerList.filter(cust => {
-    const matchesSearch = 
-      cust.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cust.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cust.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (cust.service && cust.service.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesStatus = 
-      statusFilter === "All" || 
-      (cust.status?.toLowerCase() === statusFilter.toLowerCase());
-
-    return matchesSearch && matchesStatus;
-  });
-
   const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
   
-  // Logic: If searching, show all. If not, paginate.
   const displayCustomers = isSearching 
     ? filteredCustomers 
     : filteredCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -131,12 +147,7 @@ export default function ServiceTiersPage() {
                 <div className="flex justify-between items-center text-sm">
                   <span className={cn(isFeatured ? "text-white/80" : "text-slate-500")}>Active Users</span>
                   <span className="font-semibold">
-                    {customerList.filter(c => {
-                      const service = c.service?.toLowerCase();
-                      const tierName = tier.name.toLowerCase();
-                      if (tierName === "gamers node") return service === "gamers";
-                      return service === tierName;
-                    }).length}
+                    {tierCounts[tier.name] || 0}
                   </span>
                 </div>
               </div>
@@ -201,12 +212,12 @@ export default function ServiceTiersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {displayCustomers.map((cust, idx) => (
+                {displayCustomers.map((cust: any, idx: number) => (
                   <motion.tr 
                     key={cust.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
+                    transition={{ delay: isSearching ? 0 : idx * 0.05 }}
                     className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-all group"
                   >
                     <td className="px-6 py-5">

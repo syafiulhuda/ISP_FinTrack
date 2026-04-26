@@ -144,6 +144,60 @@ SELECT
     ROUND(AVG(revenue), 0) as "Average Monthly Trending"
 FROM MonthlyRevenue;
 
+WITH MonthlyRevenue AS (
+    -- Mengambil total pemasukan dari transaksi yang terverifikasi
+    SELECT 
+        TO_CHAR(timestamp, 'YYYY-MM') as month,
+        SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) as revenue
+    FROM transactions
+    WHERE status = 'Verified' AND keterangan = 'pemasukan'
+    GROUP BY 1
+),
+MonthlyExpenses AS (
+    -- Mengambil pengeluaran dari tabel expenses
+    SELECT 
+        TO_CHAR(date, 'YYYY-MM') as month,
+        SUM(ABS(amount::numeric)) as expense
+    FROM expenses
+    GROUP BY 1
+),
+AggregatedExpenses AS (
+    -- Menggabungkan semua sumber pengeluaran per bulan
+    SELECT month, SUM(expense) as total_expense
+    FROM MonthlyExpenses
+    GROUP BY 1
+)
+SELECT 
+    COALESCE(r.month, e.month) as "Month",
+    COALESCE(r.revenue, 0) as "Revenue",
+    COALESCE(e.total_expense, 0) as "Expenses"
+FROM MonthlyRevenue r
+FULL OUTER JOIN AggregatedExpenses e ON r.month = e.month
+ORDER BY "Month" ASC
+LIMIT 6;
+
+with activeCustomer as (
+    select
+        TO_CHAR("createdAt"::date, 'YYYY-MM') as month,
+        count(*) as tot_cust
+    from clients.public.customers c
+    group by 1
+)
+, inactiveCustomer as (
+    select
+        TO_CHAR("createdAt"::date, 'YYYY-MM') as month,
+        count(*) as inactive_cust
+    from clients.public.customers c
+    where status = 'Inactive'
+    group by 1
+)
+select
+    COALESCE(a.month, i.month) as "Month",
+    sum(coalesce(a.tot_cust,0)) - sum(coalesce(i.inactive_cust,0)) as "Revenue"
+from activeCustomer a
+full outer join inactiveCustomer i on a.month = i.month
+group by a.month, i.month
+
 
 -- 8. REGIONAL PROFITABILITY ANALYSIS (MRR, EBITDA, NET PROFIT)
 WITH ProvinceStats AS (
