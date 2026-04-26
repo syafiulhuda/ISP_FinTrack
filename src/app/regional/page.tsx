@@ -5,8 +5,6 @@ import {
   MapPin, 
   ChevronRight, 
   MessageSquare,
-  Search,
-  ArrowUpRight,
   ChevronDown, 
   ChevronLeft 
 } from "lucide-react";
@@ -154,25 +152,6 @@ export default function RegionalAnalysisPage() {
         <div>
           <h2 className="text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Regional Analysis</h2>
           <p className="text-lg font-medium text-slate-500 mt-2">Granular profitability and aging distribution per territory.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
-            <input 
-              type="text"
-              placeholder="Search territory..."
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setAgingPage(1); setProfitPage(1); }}
-              className="pl-12 pr-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all outline-none w-72 shadow-sm"
-            />
-          </div>
-          <motion.button 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="p-4 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20"
-          >
-            <ArrowUpRight size={24} />
-          </motion.button>
         </div>
       </div>
 

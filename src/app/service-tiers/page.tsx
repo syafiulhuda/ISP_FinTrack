@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Wifi, 
   Zap, 
@@ -9,12 +9,19 @@ import {
   Search,
   MapPin,
   ChevronRight,
-  User
+  User,
+  Plus,
+  X,
+  CheckCircle2,
+  ChevronDown,
+  Phone,
+  RefreshCw
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getServiceTiers } from "@/actions/db";
+import { getCustomers, getServiceTiers, createCustomer } from "@/actions/db";
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 
 const IconMap = {
   wifi: Wifi,
@@ -24,7 +31,11 @@ const IconMap = {
 };
 
 export default function ServiceTiersPage() {
-  const { data: customerList = [], isLoading: loadingCustomers } = useQuery({ queryKey: ['customers'], queryFn: getCustomers });
+  const { data: customerList = [], isLoading: loadingCustomers, refetch: refetchCustomers, isRefetching } = useQuery({ 
+    queryKey: ['customers'], 
+    queryFn: getCustomers,
+    staleTime: 0
+  });
   const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,6 +43,31 @@ export default function ServiceTiersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
   const isSearching = searchQuery.trim().length > 0;
+
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    name: '',
+    no_telp: '',
+    service: 'Basic',
+    province: '',
+    city: '',
+    district: '',
+    village: '',
+    address: ''
+  });
+
+  const handleAddCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await createCustomer(newCustomer);
+    if (res?.success) {
+      toast.success(`Customer ${res.id} registered!`);
+      setIsAddModalOpen(false);
+      setNewCustomer({ name: '', no_telp: '', service: 'Basic', province: '', city: '', district: '', village: '', address: '' });
+      refetchCustomers();
+    } else {
+      toast.error(res?.error || "Failed to register customer.");
+    }
+  };
 
   // 1. Memoize filtered list - MUST be before any conditional returns
   const filteredCustomers = useMemo(() => {
@@ -87,6 +123,16 @@ export default function ServiceTiersPage() {
         <div>
           <h2 className="text-5xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Active Packages</h2>
           <p className="text-lg font-medium text-slate-500 mt-2">Manage broadband tiers and subscriber distribution.</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-primary text-white px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-primary/20 hover:opacity-95 transition-all flex items-center gap-2"
+          >
+            <Plus size={18} /> Add New Customer
+          </motion.button>
         </div>
       </div>
 
@@ -159,11 +205,19 @@ export default function ServiceTiersPage() {
       {/* Customer List Section */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
+          <div className="flex-1">
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Customer Directory</h3>
             <p className="text-sm font-medium text-slate-500 mt-1">Search and manage your active subscriber base.</p>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            <button 
+              onClick={() => refetchCustomers()}
+              disabled={isRefetching}
+              className="p-2.5 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-500 hover:text-primary transition-all shadow-sm group"
+              title="Refresh Data"
+            >
+              <RefreshCw size={18} className={cn(isRefetching && "animate-spin")} />
+            </button>
             <div className="relative w-full sm:w-auto">
               <select
                 value={statusFilter}
@@ -326,6 +380,155 @@ export default function ServiceTiersPage() {
           </div>
         )}
       </div>
+      {/* Add Customer Sidebar */}
+      <AnimatePresence>
+        {isAddModalOpen && (
+          <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
+            <motion.div 
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="absolute top-0 right-0 w-full max-w-md bg-white dark:bg-slate-900 h-fit max-h-screen shadow-[-20px_20px_60px_rgba(0,0,0,0.15)] rounded-bl-[3.5rem] border-l border-b border-slate-200 dark:border-slate-800 p-8 md:p-10 pointer-events-auto flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Register New Customer</h3>
+                  <p className="text-xs font-medium text-slate-500 mt-1">Add a new subscriber to the network.</p>
+                </div>
+                <motion.button 
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setIsAddModalOpen(false)} 
+                  className="p-2 text-slate-400 hover:text-primary transition-colors"
+                >
+                  <X size={24} />
+                </motion.button>
+              </div>
+              
+              <form onSubmit={handleAddCustomer} className="space-y-6 overflow-y-auto px-1 pr-3 custom-scrollbar">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Full Name</label>
+                    <input 
+                      required
+                      type="text" 
+                      placeholder="Enter full name..."
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                      value={newCustomer.name}
+                      onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Phone Number</label>
+                    <input 
+                      required
+                      type="tel" 
+                      placeholder="0812..."
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                      value={newCustomer.no_telp}
+                      onChange={(e) => setNewCustomer({...newCustomer, no_telp: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Package</label>
+                    <div className="relative">
+                      <select 
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none"
+                        value={newCustomer.service}
+                        onChange={(e) => setNewCustomer({...newCustomer, service: e.target.value})}
+                      >
+                        {serviceTiers.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+                      </select>
+                      <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Province</label>
+                      <input 
+                        required
+                        type="text" 
+                        placeholder="Province"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                        value={newCustomer.province}
+                        onChange={(e) => setNewCustomer({...newCustomer, province: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">City</label>
+                      <input 
+                        required
+                        type="text" 
+                        placeholder="City"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                        value={newCustomer.city}
+                        onChange={(e) => setNewCustomer({...newCustomer, city: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">District</label>
+                      <input 
+                        required
+                        type="text" 
+                        placeholder="District"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                        value={newCustomer.district}
+                        onChange={(e) => setNewCustomer({...newCustomer, district: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Village</label>
+                      <input 
+                        required
+                        type="text" 
+                        placeholder="Village"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                        value={newCustomer.village}
+                        onChange={(e) => setNewCustomer({...newCustomer, village: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Complete Address</label>
+                    <textarea 
+                      required
+                      rows={3}
+                      placeholder="Street name, house number..."
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all resize-none"
+                      value={newCustomer.address}
+                      onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 pt-6 border-t border-slate-100 dark:border-slate-800 mt-6">
+                  <button 
+                    type="submit"
+                    className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 transition-all hover:opacity-90 flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 size={18} /> Confirm Registration
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setIsAddModalOpen(false)}
+                    className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-sm transition-all hover:bg-slate-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

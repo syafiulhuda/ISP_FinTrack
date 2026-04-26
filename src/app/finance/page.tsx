@@ -18,7 +18,7 @@ import {
   Filter as FilterIcon
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getTransactions, getOcrData, updateOcrData, postOcrEntry } from "@/actions/db";
+import { getTransactions, getOcrData, updateOcrData, postOcrEntry, checkTrxExists } from "@/actions/db";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -39,6 +39,7 @@ export default function FinancePage() {
   const [isZoomed, setIsZoomed] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
 
   // Form States
   const [vendor, setVendor] = useState("");
@@ -47,15 +48,8 @@ export default function FinancePage() {
   const [reference, setReference] = useState("");
   const [method, setMethod] = useState("Bank Transfer");
 
-  // Sync state with ocrData when loaded
-  useEffect(() => {
-    if (ocrData) {
-      setVendor(ocrData.vendor || "");
-      setDate(ocrData.date || "");
-      setAmount(ocrData.amount || "");
-      setReference(ocrData.reference || "");
-    }
-  }, [ocrData]);
+  // Remove auto-sync useEffect to keep form empty with placeholders initially
+  // We will only fill it if the user manually triggers or edits it
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -89,16 +83,37 @@ export default function FinancePage() {
     }
   };
 
-  const handlePost = async () => {
+  const handlePost = async (force: boolean = false) => {
     if (!ocrData?.id) return;
+    
+    // Check for duplicates first if not forcing
+    if (!force) {
+      const exists = await checkTrxExists(reference);
+      if (exists) {
+        setShowDuplicateWarning(true);
+        return;
+      }
+    }
+
     setIsPosting(true);
     const res = await postOcrEntry(ocrData.id, { vendor, amount, date, reference, method });
-    if (res.success) {
+    if (res?.success) {
       toast.success(`Transaction ${res.trxId} posted successfully!`);
+      setShowDuplicateWarning(false);
     } else {
-      toast.error("Failed to post transaction");
+      toast.error(res?.error || "Failed to post transaction");
     }
     setIsPosting(false);
+  };
+
+  const handleCancel = () => {
+    if (ocrData) {
+      setVendor(ocrData.vendor || "");
+      setDate(ocrData.date || "");
+      setAmount(ocrData.amount || "");
+      setReference(ocrData.reference || "");
+    }
+    setIsEditing(false);
   };
 
   const filteredByKeterangan = transactions.filter(trx => {
@@ -206,6 +221,7 @@ export default function FinancePage() {
                         "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all",
                         isEditing && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
                       )}
+                      placeholder="e.g. PT Mega Indah"
                       type="text" 
                       value={vendor}
                       onChange={(e) => setVendor(e.target.value)}
@@ -224,6 +240,7 @@ export default function FinancePage() {
                         "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all",
                         isEditing && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
                       )}
+                      placeholder="DD/MM/YYYY"
                       type="text" 
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
@@ -240,6 +257,7 @@ export default function FinancePage() {
                     <span className="absolute left-5 top-4 text-slate-400 font-bold">Rp</span>
                     <input 
                       disabled={!isEditing}
+                      placeholder="0"
                       className={cn(
                         "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-xl rounded-xl pl-14 pr-12 py-4 border-2 border-orange-500/20 focus:ring-2 focus:ring-primary/20 outline-none font-black transition-all",
                         isEditing && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
@@ -277,6 +295,7 @@ export default function FinancePage() {
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Reference No</label>
                   <input 
                     disabled={!isEditing}
+                    placeholder="TRX-XXXXX"
                     className={cn(
                       "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-mono font-bold transition-all",
                       isEditing && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
@@ -291,25 +310,28 @@ export default function FinancePage() {
 
             <div className="mt-12 flex gap-4">
               <button 
-                onClick={() => setIsEditing(!isEditing)}
+                onClick={() => isEditing ? handleCancel() : setIsEditing(true)}
                 className={cn(
                   "flex-1 rounded-xl py-4 text-sm font-bold transition-all",
                   isEditing 
-                    ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-xl" 
+                    ? "bg-red-500 text-white shadow-xl hover:bg-red-600" 
                     : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200"
                 )}
               >
-                {isEditing ? "Finish Editing" : "Edit Details"}
+                {isEditing ? "Cancel" : "Edit Details"}
               </button>
               <button 
-                onClick={handlePost}
+                onClick={() => isEditing ? handleSave() : handlePost()}
                 disabled={isPosting}
                 className={cn(
-                  "flex-[2] bg-gradient-to-r from-primary to-blue-700 text-white rounded-xl py-4 text-sm font-bold hover:opacity-90 transition-all shadow-lg shadow-blue-500/25",
+                  "flex-[2] text-white rounded-xl py-4 text-sm font-bold transition-all shadow-lg",
+                  isEditing 
+                    ? "bg-green-500 hover:bg-green-600 shadow-green-500/20" 
+                    : "bg-gradient-to-r from-primary to-blue-700 hover:opacity-90 shadow-blue-500/25",
                   isPosting && "opacity-50 cursor-not-allowed"
                 )}
               >
-                {isPosting ? "Posting..." : "Confirm & Post Entry"}
+                {isPosting ? "Processing..." : (isEditing ? "Finish & Save Changes" : "Confirm & Post Entry")}
               </button>
             </div>
           </div>
@@ -570,6 +592,47 @@ export default function FinancePage() {
           )}
         </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {showDuplicateWarning && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 pointer-events-none"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-12 max-w-md w-full shadow-[0_40px_80px_-15px_rgba(0,0,0,0.3)] border border-slate-200 dark:border-slate-800 text-center relative overflow-hidden pointer-events-auto"
+            >
+              <div className="absolute top-0 left-0 right-0 h-2 bg-orange-500"></div>
+              <div className="w-16 h-16 bg-orange-50 dark:bg-orange-500/10 rounded-2xl flex items-center justify-center mx-auto mb-8 rotate-12">
+                <AlertCircle size={32} className="text-orange-500 -rotate-12" />
+              </div>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 mb-3 tracking-tight">DUPLICATE DETECTED</h3>
+              <p className="text-slate-500 text-sm font-medium mb-10 leading-relaxed px-4">
+                Reference <span className="font-mono font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{reference}</span> is already in use. Please verify to avoid double bookkeeping.
+              </p>
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => handlePost(true)}
+                  className="w-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-2xl py-4 text-xs font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl"
+                >
+                  Post Anyway
+                </button>
+                <button 
+                  onClick={() => setShowDuplicateWarning(false)}
+                  className="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-2xl py-4 text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                >
+                  Edit Reference
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

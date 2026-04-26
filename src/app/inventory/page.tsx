@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Warehouse,
   Search,
+  RotateCcw,
+  Loader2,
   ChevronDown,
   MoreVertical,
   CheckCircle2,
@@ -16,12 +18,15 @@ import {
   Wifi,
   ShieldCheck,
   ShieldX,
-  Calendar
+  Calendar,
+  X,
+  Plus
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getAssetRoster, getStockAssets } from "@/actions/db";
+import { getAssetRoster, getStockAssets, getWarehouses, createAsset, deleteAsset, updateAssetCondition, deployAsset } from "@/actions/db";
 import { cn } from "@/lib/utils";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { toast } from "sonner";
 
 const IconMap = {
   "trending-up": Cpu,
@@ -38,16 +43,21 @@ const ConditionIcon = {
 };
 
 export default function InventoryPage() {
-  const { data: assetRoster = [], isLoading: loadingAssets } = useQuery({ 
+  const { data: assetRoster = [], isLoading: loadingAssets, refetch: refetchAssets } = useQuery({ 
     queryKey: ['assetRoster'], 
     queryFn: getAssetRoster,
     refetchInterval: 60000
   });
 
-  const { data: stockAssets = [], isLoading: loadingStock } = useQuery({ 
+  const { data: stockAssets = [], isLoading: loadingStock, refetch: refetchStock } = useQuery({ 
     queryKey: ['stockAssets'], 
     queryFn: getStockAssets,
     refetchInterval: 60000
+  });
+  
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['warehouses'],
+    queryFn: getWarehouses
   });
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,20 +65,46 @@ export default function InventoryPage() {
   const [selectedCondition, setSelectedCondition] = useState("All");
   const [selectedOwnership, setSelectedOwnership] = useState("All");
   const [selectedUsage, setSelectedUsage] = useState("All");
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [activeActionMenu, setActiveActionMenu] = useState<string | null>(null);
+  const actionMenuRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const itemsPerPage = 10;
 
+  // Form State
+  const [newAsset, setNewAsset] = useState<{
+    sn: string;
+    mac: string;
+    type: string;
+    location: string;
+    condition: string;
+    kepemilikan: string;
+    latitude?: number;
+    longitude?: number;
+  }>({
+    sn: '', mac: '', type: 'Router', location: '', condition: 'Good', kepemilikan: 'Dimiliki'
+  });
+
   useEffect(() => {
     setMounted(true);
+    
+    function handleClickOutside(event: MouseEvent) {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
+        setActiveActionMenu(null);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const dynamicStats = useMemo(() => {
     const total = assetRoster.length + stockAssets.length;
-    const active = assetRoster.filter(a => a.condition === "Good").length;
-    const faulty = assetRoster.filter(a => a.condition === "Broken" || a.condition === "Maintenance").length;
+    const active = assetRoster.filter((a: any) => a.condition === "Good").length;
+    const faulty = assetRoster.filter((a: any) => a.condition === "Broken" || a.condition === "Maintenance").length;
     const stock = stockAssets.length;
-    const owned = assetRoster.filter(a => a.kepemilikan === "Dimiliki" || !a.kepemilikan).length;
-    const sold = assetRoster.filter(a => a.kepemilikan === "Telah Dijual").length;
+    const owned = assetRoster.filter((a: any) => a.kepemilikan === "Dimiliki" || !a.kepemilikan).length;
+    const sold = assetRoster.filter((a: any) => a.kepemilikan === "Telah Dijual").length;
 
     const deploymentRate = total > 0 ? Math.round((active / total) * 100) : 0;
 
@@ -136,6 +172,7 @@ export default function InventoryPage() {
       const conditionMatch = selectedCondition === "All" || asset.condition === selectedCondition;
       const ownershipMatch = selectedOwnership === "All" || asset.kepemilikan === selectedOwnership || (selectedOwnership === "Dimiliki" && !asset.kepemilikan);
       const usageMatch = selectedUsage === "All" || (selectedUsage === "Stock" && !asset.is_used) || (selectedUsage === "In Use" && asset.is_used);
+      
       return typeMatch && conditionMatch && ownershipMatch && usageMatch;
     });
   }, [selectedType, selectedCondition, selectedOwnership, selectedUsage, mounted, allAssets]);
@@ -149,13 +186,77 @@ export default function InventoryPage() {
     }
   };
 
+  const handleResetFilters = () => {
+    setSelectedType("All");
+    setSelectedCondition("All");
+    setSelectedOwnership("All");
+    setSelectedUsage("All");
+    setCurrentPage(1);
+  };
+
+  const handleRegisterAsset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await createAsset(newAsset);
+    if (res.success) {
+      toast.success("Asset registered successfully!");
+      setIsRegisterModalOpen(false);
+      setNewAsset({ sn: '', mac: '', type: 'Router', location: '', condition: 'Good', kepemilikan: 'Dimiliki', latitude: undefined, longitude: undefined });
+      refetchAssets();
+      refetchStock();
+    } else {
+      toast.error("Failed to register asset.");
+    }
+  };
+
+  const handleDeleteAsset = async (sn: string) => {
+    if (confirm("Are you sure you want to delete this asset?")) {
+      const res = await deleteAsset(sn);
+      if (res.success) {
+        toast.success("Asset deleted.");
+        refetchAssets();
+        refetchStock();
+      }
+    }
+    setActiveActionMenu(null);
+  };
+
+  const [deployingAssetSn, setDeployingAssetSn] = useState<string | null>(null);
+  const [deployData, setDeployData] = useState({ warehouse: '', city: '', province: '', latitude: -6.2088, longitude: 106.8456 });
+
+  const handleDeploy = async (sn: string) => {
+    const fullLocation = `${deployData.warehouse}, ${deployData.city}, ${deployData.province}`;
+    const res = await deployAsset(sn, { 
+      location: fullLocation, 
+      latitude: deployData.latitude || 0, 
+      longitude: deployData.longitude || 0 
+    });
+    if (res.success) {
+      toast.success("Asset deployed and moved to roster!");
+      setDeployingAssetSn(null);
+      setActiveActionMenu(null);
+      refetchAssets();
+      refetchStock();
+    } else {
+      toast.error("Failed to deploy asset.");
+    }
+  };
+
+  const handleUpdateCondition = async (sn: string, condition: string) => {
+    const res = await updateAssetCondition(sn, condition);
+    if (res.success) {
+      toast.success(`Asset marked as ${condition}`);
+      refetchAssets();
+      refetchStock();
+    }
+    setActiveActionMenu(null);
+  };
+
   if (loadingAssets || loadingStock) {
     return <div className="h-full w-full flex items-center justify-center"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="text-slate-500 font-medium">Loading Inventory Data...</p></div></div>;
   }
 
   return (
-
-    <div className="space-y-10">
+    <main className="min-h-screen bg-slate-50 dark:bg-[#0f172a] p-4 md:p-6 pb-20 flex flex-col gap-10">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
@@ -164,23 +265,10 @@ export default function InventoryPage() {
         </div>
         <div className="flex items-center gap-3">
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="p-4 text-slate-400 hover:text-primary rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800"
-          >
-            <Search size={22} />
-          </motion.button>
-          <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="
-              bg-primary 
-              text-primary-foreground
-              px-8 py-4 rounded-2xl font-black text-sm
-              shadow-lg shadow-primary/20
-              hover:opacity-95 transition-all
-            "
-          // className="bg-primary text-white px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-primary/20 hover:opacity-95 transition-all"
+            onClick={() => setIsRegisterModalOpen(true)}
+            className="bg-primary text-primary-foreground px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-primary/20 hover:opacity-95 transition-all"
           >
             Register New Asset
           </motion.button>
@@ -243,196 +331,324 @@ export default function InventoryPage() {
         transition={{ delay: 0.4 }}
         className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
       >
-        <div className="p-10 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Asset Roster</h3>
-            <p className="text-sm font-medium text-slate-500 mt-1">Detailed list of managed network components.</p>
+        <div className="p-6 md:p-8 border-b border-slate-200 dark:border-slate-800 flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-6">
+          <div className="shrink-0">
+            <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Asset Roster</h3>
+            <p className="text-[12px] font-medium text-slate-500 mt-0.5">Detailed list of managed network components.</p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="relative group">
-              <select
-                value={selectedType}
-                onChange={(e) => {
-                  setSelectedType(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-12 shadow-sm"
-              >
-                <option value="All">All Types</option>
-                <option value="Router">Routers</option>
-                <option value="Switch">Switches</option>
-                <option value="Server">Servers</option>
-                <option value="Access Point">Access Points</option>
-                <option value="OLT">OLT</option>
-                <option value="ONT">ONT</option>
-                <option value="ODP">ODP</option>
-              </select>
-              <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            </div>
-            <div className="relative group">
-              <select
-                value={selectedCondition}
-                onChange={(e) => {
-                  setSelectedCondition(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-12 shadow-sm"
-              >
-                <option value="All">All Conditions</option>
-                <option value="Good">Healthy</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="Broken">Broken</option>
-              </select>
-              <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            </div>
-            <div className="relative group">
-              <select
-                value={selectedUsage}
-                onChange={(e) => {
-                  setSelectedUsage(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-12 shadow-sm"
-              >
-                <option value="All">All Status</option>
-                <option value="Stock">Ready Stock</option>
-                <option value="In Use">In Use</option>
-              </select>
-              <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            </div>
-            <div className="relative group">
-              <select
-                value={selectedOwnership}
-                onChange={(e) => {
-                  setSelectedOwnership(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3.5 text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-12 shadow-sm"
-              >
-                <option value="All">Semua Kepemilikan</option>
-                <option value="Dimiliki">Dimiliki</option>
-                <option value="Telah Dijual">Telah Dijual</option>
-              </select>
-              <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full 2xl:w-auto">
+            <motion.button
+              whileHover={{ scale: 1.05, rotate: -45 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleResetFilters}
+              className="w-full sm:w-auto p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-primary rounded-xl border border-slate-200 dark:border-slate-800 transition-all shadow-sm flex items-center justify-center gap-2 group shrink-0"
+              title="Reset Filters"
+            >
+              <RotateCcw size={16} className="group-hover:text-primary transition-colors" />
+              <span className="text-[9px] font-black uppercase tracking-widest">Reset</span>
+            </motion.button>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full 2xl:w-auto">
+              <div className="relative group min-w-0">
+                <select
+                  value={selectedType}
+                  onChange={(e) => {
+                    setSelectedType(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-8 shadow-sm"
+                >
+                  <option value="All">All Types</option>
+                  <option value="Router">Routers</option>
+                  <option value="Switch">Switches</option>
+                  <option value="Server">Servers</option>
+                  <option value="Access Point">Access Points</option>
+                  <option value="OLT">OLT</option>
+                  <option value="ONT">ONT</option>
+                  <option value="ODP">ODP</option>
+                </select>
+                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+              
+              <div className="relative group min-w-0">
+                <select
+                  value={selectedCondition}
+                  onChange={(e) => {
+                    setSelectedCondition(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-8 shadow-sm"
+                >
+                  <option value="All">All Conditions</option>
+                  <option value="Good">Healthy</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="Broken">Broken</option>
+                </select>
+                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+
+              <div className="relative group min-w-0">
+                <select
+                  value={selectedUsage}
+                  onChange={(e) => {
+                    setSelectedUsage(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-8 shadow-sm"
+                >
+                  <option value="All">All Status</option>
+                  <option value="Stock">Ready Stock</option>
+                  <option value="In Use">In Use</option>
+                </select>
+                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+
+              <div className="relative group min-w-0">
+                <select
+                  value={selectedOwnership}
+                  onChange={(e) => {
+                    setSelectedOwnership(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-8 shadow-sm"
+                >
+                  <option value="All">Ownership</option>
+                  <option value="Dimiliki">Dimiliki</option>
+                  <option value="Telah Dijual">Sold</option>
+                </select>
+                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-800/50">
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Asset Details</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Category</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Condition</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Kepemilikan</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Location</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+                <th className="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Asset Details</th>
+                <th className="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Category</th>
+                <th className="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Condition</th>
+                <th className="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Kepemilikan</th>
+                <th className="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Location</th>
+                <th className="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              <AnimatePresence mode="wait">
-                {paginatedAssets.map((asset) => {
+              <AnimatePresence mode="popLayout">
+                {paginatedAssets.map((asset, index) => {
                   const CondIcon = ConditionIcon[asset.condition as keyof typeof ConditionIcon] || AlertCircle;
                   return (
                     <motion.tr
                       key={asset.sn}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 10 }}
-                      className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group"
+                      layout
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group relative"
                     >
-                      <td className="px-10 py-8">
-                        <div className="flex items-center gap-5">
-                          <div className="relative">
-                            <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                              {asset.type === "Router" && <Router size={28} />}
-                              {asset.type === "Switch" && <Box size={28} />}
-                              {asset.type === "Core Switch" && <Box size={28} />}
-                              {asset.type === "Server" && <Cpu size={28} />}
-                              {asset.type === "Access Point" && <Wifi size={28} />}
-                              {asset.type === "OLT" && <Cpu size={28} />}
-                              {asset.type === "ONT" && <Smartphone size={28} />}
-                              {asset.type === "ODP" && <Box size={28} />}
-                            </div>
-                            {asset.color && (
-                              <div 
-                                className="absolute -bottom-1 -right-1 w-5 h-5 rounded-lg border-2 border-white dark:border-slate-900 shadow-sm"
-                                style={{ backgroundColor: asset.color.toLowerCase() }}
-                                title={`Color: ${asset.color}`}
-                              />
-                            )}
+                      <td className="px-6 py-6">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all shrink-0">
+                            {asset.type === "Router" && <Router size={24} />}
+                            {asset.type === "Switch" && <Box size={24} />}
+                            {asset.type === "Server" && <Cpu size={24} />}
+                            {asset.type === "Access Point" && <Wifi size={24} />}
+                            {asset.type === "OLT" && <Cpu size={24} />}
+                            {asset.type === "ONT" && <Smartphone size={24} />}
+                            {asset.type === "ODP" && <Box size={24} />}
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-black text-slate-900 dark:text-slate-100 text-lg">{asset.sn}</p>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-black text-slate-900 dark:text-slate-100 text-base truncate">{asset.sn}</p>
                               <span className={cn(
-                                "text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-tight",
+                                "text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tight",
                                 asset.isStock ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
                               )}>
-                                {asset.isStock ? "In Stock" : "Deployed"}
+                                {asset.isStock ? "Stock" : "Deployed"}
                               </span>
                             </div>
-                            <p className="text-[11px] font-bold text-slate-400 uppercase mt-0.5 tracking-tighter">{asset.mac}</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5 tracking-tighter truncate">{asset.mac}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-10 py-8">
-                        <span className="text-[10px] font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg uppercase tracking-wider">
+                      <td className="px-6 py-6">
+                        <span className="text-[9px] font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg uppercase tracking-wider">
                           {asset.type}
                         </span>
                       </td>
-                      <td className="px-10 py-8">
+                      <td className="px-6 py-6">
                         <div className={cn(
-                          "flex items-center gap-2 text-[10px] font-black uppercase px-4 py-2 rounded-full w-fit",
-                          asset.condition === "Good" ? "bg-green-100 text-green-700 shadow-sm shadow-green-100/50" :
-                            asset.condition === "Maintenance" ? "bg-blue-100 text-blue-700 shadow-sm shadow-blue-100/50" :
-                              asset.condition === "Warning" ? "bg-orange-100 text-orange-700 shadow-sm shadow-orange-100/50" :
-                                "bg-red-100 text-red-700 shadow-sm shadow-red-100/50"
+                          "flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit",
+                          asset.condition === "Good" ? "bg-green-100 text-green-700" :
+                          asset.condition === "Maintenance" ? "bg-blue-100 text-blue-700" :
+                          asset.condition === "Warning" ? "bg-orange-100 text-orange-700" :
+                          "bg-red-100 text-red-700"
                         )}>
-                          <CondIcon size={14} />
+                          <CondIcon size={12} />
                           {asset.condition}
                         </div>
                       </td>
-                      <td className="px-10 py-8">
+                      <td className="px-6 py-6">
                         <div className="flex items-center gap-2">
                           {(asset.kepemilikan === "Dimiliki" || !asset.kepemilikan) ? (
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase px-4 py-2 rounded-full w-fit bg-emerald-100 text-emerald-700 shadow-sm shadow-emerald-100/50">
-                              <ShieldCheck size={14} />
+                            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit bg-emerald-100 text-emerald-700">
+                              <ShieldCheck size={12} />
                               Dimiliki
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase px-4 py-2 rounded-full w-fit bg-red-100 text-red-700 shadow-sm shadow-red-100/50">
-                              <ShieldX size={14} />
-                              Telah Dijual
+                            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit bg-red-100 text-red-700">
+                              <ShieldX size={12} />
+                              Sold
                             </div>
                           )}
                         </div>
-                        {asset.tanggal_perubahan && (
-                          <div className="flex items-center gap-1 mt-1 text-[9px] text-slate-400">
-                            <Calendar size={10} />
-                            {new Date(asset.tanggal_perubahan).toLocaleDateString('id-ID')}
-                          </div>
-                        )}
                       </td>
-                      <td className="px-10 py-8">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{asset.location || "Unset"}</span>
-                          {asset.latitude && asset.longitude && (
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">
-                              {asset.latitude}, {asset.longitude}
-                            </span>
-                          )}
+                      <td className="px-6 py-6">
+                        <div className="flex flex-col min-w-[120px]">
+                          <span className="text-[13px] font-bold text-slate-700 dark:text-slate-300 leading-tight">
+                            {asset.location ? (
+                              <span className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-pulse shrink-0" />
+                                {asset.location}
+                              </span>
+                            ) : "Warehouse"}
+                          </span>
+                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5 bg-slate-50 dark:bg-slate-800/50 w-fit px-1.5 py-0.5 rounded-md">
+                            ZONE 4 / {asset.type === 'OLT' ? 'CORE' : 'DIST'}
+                          </span>
                         </div>
                       </td>
-                      <td className="px-10 py-8 text-right">
-                        <motion.button
-                          whileHover={{ scale: 1.15, rotate: 90 }}
-                          whileTap={{ scale: 0.9 }}
-                          className="p-3 text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                        >
-                          <MoreVertical size={24} />
-                        </motion.button>
+                      <td className="px-6 py-6 text-right relative">
+                        <div ref={activeActionMenu === asset.sn ? actionMenuRef : null} className="inline-block">
+                          <motion.button
+                            whileHover={{ scale: 1.15, rotate: 90 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setActiveActionMenu(activeActionMenu === asset.sn ? null : asset.sn)}
+                            className="p-2 text-slate-300 hover:text-primary transition-colors"
+                          >
+                            <MoreVertical size={20} />
+                          </motion.button>
+                          
+                          <AnimatePresence>
+                            {activeActionMenu === asset.sn && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: (index >= Math.floor(paginatedAssets.length / 2) && paginatedAssets.length > 1) ? -10 : 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: (index >= Math.floor(paginatedAssets.length / 2) && paginatedAssets.length > 1) ? -10 : 10 }}
+                                className={cn(
+                                  "absolute right-0 z-50 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 text-left origin-right",
+                                  (index >= Math.floor(paginatedAssets.length / 2) && paginatedAssets.length > 1) ? "bottom-full mb-2" : "top-full mt-1"
+                                )}
+                              >
+                                {asset.isStock ? (
+                                  <div className="p-2 space-y-2">
+                                    {deployingAssetSn === asset.sn ? (
+                                      <div className="space-y-2 p-1">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase px-1">Deploy Details</p>
+                                        <input 
+                                          type="text" 
+                                          placeholder="Warehouse Name" 
+                                          className="w-full px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                                          value={deployData.warehouse}
+                                          onChange={(e) => setDeployData({...deployData, warehouse: e.target.value})}
+                                        />
+                                        <div className="flex gap-2">
+                                          <input 
+                                            type="text" 
+                                            placeholder="City" 
+                                            className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                                            value={deployData.city}
+                                            onChange={(e) => setDeployData({...deployData, city: e.target.value})}
+                                          />
+                                          <input 
+                                            type="text" 
+                                            placeholder="Province" 
+                                            className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                                            value={deployData.province}
+                                            onChange={(e) => setDeployData({...deployData, province: e.target.value})}
+                                          />
+                                        </div>
+                                        <div className="flex gap-2">
+                                          <input 
+                                            type="number" 
+                                            placeholder="Lat" 
+                                            step="any"
+                                            className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                                            value={isNaN(deployData.latitude) ? '' : deployData.latitude}
+                                            onChange={(e) => {
+                                              const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                                              setDeployData({...deployData, latitude: val});
+                                            }}
+                                          />
+                                          <input 
+                                            type="number" 
+                                            placeholder="Lng" 
+                                            step="any"
+                                            className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                                            value={isNaN(deployData.longitude) ? '' : deployData.longitude}
+                                            onChange={(e) => {
+                                              const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                                              setDeployData({...deployData, longitude: val});
+                                            }}
+                                          />
+                                        </div>
+                                        <div className="flex gap-2 pt-1">
+                                          <button 
+                                            onClick={() => setDeployingAssetSn(null)}
+                                            className="flex-1 py-2 text-[10px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+                                          >
+                                            Cancel
+                                          </button>
+                                          <button 
+                                            onClick={() => handleDeploy(asset.sn)}
+                                            className="flex-1 py-2 text-[10px] font-bold bg-primary text-white rounded-lg hover:opacity-90 shadow-lg shadow-primary/20 transition-all"
+                                          >
+                                            Confirm
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <button 
+                                        onClick={() => {
+                                          setDeployingAssetSn(asset.sn);
+                                        setDeployData({ 
+                                          warehouse: asset.location || '', 
+                                          city: '', 
+                                          province: '', 
+                                          latitude: asset.latitude || -6.2088, 
+                                          longitude: asset.longitude || 106.8456 
+                                        });
+                                        }} 
+                                        className="w-full text-left px-4 py-3 text-xs font-bold text-primary hover:bg-primary/5 rounded-xl transition-all flex items-center gap-3"
+                                      >
+                                        <Wifi size={14} /> Use Asset
+                                      </button>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <>
+                                    {(asset.kepemilikan === 'Dimiliki' || !asset.kepemilikan) && (
+                                      <>
+                                        <button onClick={() => handleUpdateCondition(asset.sn, 'Good')} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all flex items-center gap-3">
+                                          <CheckCircle2 size={14} className="text-emerald-500" /> Mark Healthy
+                                        </button>
+                                        <button onClick={() => handleUpdateCondition(asset.sn, 'Maintenance')} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all flex items-center gap-3">
+                                          <Wrench size={14} className="text-blue-500" /> Maintenance
+                                        </button>
+                                        <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+                                      </>
+                                    )}
+                                  </>
+                                )}
+                                <button onClick={() => handleDeleteAsset(asset.sn)} className="w-full text-left px-4 py-3 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all flex items-center gap-3">
+                                  <AlertCircle size={14} /> Delete Asset
+                                </button>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </td>
                     </motion.tr>
                   );
@@ -448,44 +664,105 @@ export default function InventoryPage() {
             Showing <span className="text-slate-900 dark:text-slate-100">{paginatedAssets.length}</span> of <span className="text-slate-900 dark:text-slate-100">{filteredAssets.length}</span> assets
           </p>
           <div className="flex gap-3">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-6 py-3 bg-white dark:bg-slate-900 rounded-2xl text-xs font-black text-slate-600 dark:text-slate-300 disabled:opacity-30 transition-all border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary/30"
-            >
-              Previous
-            </motion.button>
-            <div className="flex items-center gap-1.5">
-              <input 
-                type="text"
-                key={`inv-page-${currentPage}`}
-                defaultValue={currentPage}
-                onBlur={(e) => {
-                  const val = parseInt(e.target.value);
-                  if (!isNaN(val) && val >= 1 && val <= totalPages) handlePageChange(val);
-                  else e.target.value = String(currentPage);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                }}
-                className="w-10 h-10 text-center rounded-xl text-xs font-black bg-primary text-white shadow-lg shadow-primary/20 border-none outline-none"
-              />
-              <span className="text-xs font-black text-slate-400">/ {totalPages}</span>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="px-6 py-3 bg-primary text-white rounded-2xl text-xs font-black shadow-lg shadow-primary/20 disabled:opacity-30 transition-all"
-            >
-              Next
-            </motion.button>
+            <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-6 py-3 bg-white dark:bg-slate-900 rounded-2xl text-xs font-black text-slate-600 dark:text-slate-300 disabled:opacity-30 border border-slate-200 dark:border-slate-800 shadow-sm transition-all">Previous</button>
+            <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-6 py-3 bg-primary text-white rounded-2xl text-xs font-black shadow-lg shadow-primary/20 disabled:opacity-30 transition-all">Next</button>
           </div>
         </div>
       </motion.section>
-    </div>
+
+      {/* Register Sidebar (Fixed Gap & Adaptive Height) */}
+      <AnimatePresence>
+        {isRegisterModalOpen && (
+          <div className="fixed top-0 right-0 z-[100] p-0 pointer-events-none">
+            <motion.div
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-md bg-white dark:bg-slate-900 h-fit max-h-screen shadow-[-20px_20px_60px_rgba(0,0,0,0.15)] rounded-bl-[3.5rem] border-l border-b border-slate-200 dark:border-slate-800 p-8 md:p-10 pointer-events-auto flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Register Asset</h3>
+                  <p className="text-xs font-medium text-slate-500 mt-1">Add hardware to infrastructure.</p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setIsRegisterModalOpen(false)}
+                  className="p-2 text-slate-400 hover:text-primary transition-colors"
+                >
+                  <X size={24} />
+                </motion.button>
+              </div>
+              
+              <form onSubmit={handleRegisterAsset} className="space-y-6 overflow-y-auto custom-scrollbar pr-2">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-slate-400 px-1">Serial Number</label>
+                    <input required type="text" placeholder="SN-..." className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all" value={newAsset.sn} onChange={e => setNewAsset({...newAsset, sn: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-slate-400 px-1">MAC Address</label>
+                    <input required type="text" placeholder="00:1A:..." className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all" value={newAsset.mac} onChange={e => setNewAsset({...newAsset, mac: e.target.value})} />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-slate-400 px-1">Device Type</label>
+                    <div className="relative">
+                      <select className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none" value={newAsset.type} onChange={e => setNewAsset({...newAsset, type: e.target.value})}>
+                        <option value="Router">Router</option>
+                        <option value="Switch">Switch</option>
+                        <option value="OLT">OLT</option>
+                        <option value="ONT">ONT</option>
+                        <option value="Server">Server</option>
+                      </select>
+                      <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-slate-400 px-1">Location / Warehouse</label>
+                    <div className="relative">
+                      <select 
+                        required
+                        className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none" 
+                        value={newAsset.location.split(',')[0]} 
+                        onChange={e => {
+                          const wh = warehouses.find((w: any) => w.warehouse_name === e.target.value);
+                          if (wh) {
+                            setNewAsset({
+                              ...newAsset, 
+                              location: wh.warehouse_name,
+                              latitude: Number(wh.latitude),
+                              longitude: Number(wh.longitude)
+                            });
+                          }
+                        }}
+                      >
+                        <option value="" disabled>Select Warehouse</option>
+                        {warehouses.map((wh: any) => (
+                          <option key={wh.warehouse_name} value={wh.warehouse_name}>
+                            {wh.warehouse_name} ({wh.city_name.trim()})
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 pt-6 border-t border-slate-100 dark:border-slate-800 mt-6">
+                  <button type="submit" className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 transition-all hover:opacity-90 flex items-center justify-center gap-2">
+                    <Plus size={18} /> Register Asset
+                  </button>
+                  <button type="button" onClick={() => setIsRegisterModalOpen(false)} className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-sm transition-all hover:bg-slate-200">Cancel</button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </main>
   );
 }

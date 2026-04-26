@@ -1,100 +1,1446 @@
-// ISP-FinTrack: Master Mock Data (Static Fallback)
-// ==============================================================================
-// File ini digunakan sebagai cadangan (fallback) jika database tidak terhubung.
-// Memastikan aplikasi tetap menampilkan data yang kaya saat dijalankan di 
-// lingkungan tanpa database (seperti preview GitHub).
-// Data ini telah disesuaikan untuk periode Januari - Oktober 2026.
-// ==============================================================================
-
-export const MOCK_ADMIN = {
-  id: 1,
-  fullName: "Alex Rivera",
-  email: "admin@company.com",
-  role: "Senior Administrator",
-  department: "Infrastructure & Ops",
-  image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-};
-
-export const MOCK_SERVICE_TIERS = [
-  { id: 1, name: 'Basic', speed: '20', unit: 'Mbps', price: 'Rp 150.000', fup: '500 GB', type: 'standard', icon: 'wifi' },
-  { id: 2, name: 'Standard', speed: '50', unit: 'Mbps', price: 'Rp 250.000', fup: '1 TB', type: 'secondary', icon: 'speed' },
-  { id: 3, name: 'Premium', speed: '100', unit: 'Mbps', price: 'Rp 400.000', fup: 'Unlimited', type: 'featured', icon: 'rocket' },
-  { id: 4, name: 'Gamers Node', speed: '200', unit: 'Mbps', price: 'Rp 750.000', fup: 'Unlimited', type: 'priority', icon: 'gamepad' }
-];
 
 export const MOCK_CUSTOMERS = [
-  // Jan - Mar
-  { id: 'CT001', name: "Ahmad Subarjo", email: "ahmad@example.com", service: "Premium", province: "Jawa Barat", status: "Active", createdAt: "2026-01-15", address: "Jl. Merdeka No. 12", city: "Bandung" },
-  { id: 'CT002', name: "Siti Aminah", email: "siti@example.com", service: "Standard", province: "Jawa Tengah", status: "Active", createdAt: "2026-01-20", address: "Jl. Diponegoro No. 8", city: "Semarang" },
-  { id: 'CT003', name: "Budi Santoso", email: "budi@corp.com", service: "Basic", province: "Jawa Timur", status: "Inactive", createdAt: "2026-02-05", address: "Jl. Sudirman No. 45", city: "Surabaya" },
-  { id: 'CT004', name: "Diana Putri", email: "diana@example.com", service: "Gamers", province: "DKI Jakarta", status: "Active", createdAt: "2026-03-10", address: "Jl. Thamrin No. 1", city: "Jakarta Pusat" },
-  
-  // Apr - Jun
-  { id: 'CT005', name: "Eko Prasetyo", email: "eko@gamers.net", service: "Gamers", province: "Jawa Barat", status: "Active", createdAt: "2026-04-12", address: "Jl. Asia Afrika No. 10", city: "Bandung" },
-  { id: 'CT006', name: "Linda Wijaya", email: "linda@example.com", service: "Premium", province: "Bali", status: "Active", createdAt: "2026-05-18", address: "Jl. Kuta No. 88", city: "Denpasar" },
-  { id: 'CT007', name: "Rizky Ramadhan", email: "rizky@example.com", service: "Standard", province: "Sumatera Utara", status: "Active", createdAt: "2026-06-22", address: "Jl. Medan No. 5", city: "Medan" },
-  
-  // Jul - Sep
-  { id: 'CT008', name: "Maya Sari", email: "maya@example.com", service: "Basic", province: "Sulawesi Selatan", status: "Active", createdAt: "2026-07-05", address: "Jl. Makassar No. 12", city: "Makassar" },
-  { id: 'CT009', name: "Andi Wijaya", email: "andi@example.com", service: "Premium", province: "Jawa Barat", status: "Active", createdAt: "2026-08-14", address: "Jl. Braga No. 20", city: "Bandung" },
-  { id: 'CT010', name: "Siska Pratama", email: "siska@example.com", service: "Standard", province: "DKI Jakarta", status: "Active", createdAt: "2026-09-02", address: "Jl. Gatot Subroto", city: "Jakarta Selatan" },
-  
-  // Oct
-  { id: 'CT114', name: "Syfi'", email: "syfi@example.com", service: "Gamers", province: "DKI Jakarta", status: "Active", createdAt: "2026-10-21", address: "Jl. Pasar Minggu No. 14", city: "Jakarta Selatan" },
+  {
+    "id": "CT001",
+    "name": "Ahmad Subarjo",
+    "service": "Premium",
+    "address": "Jl. Merdeka No. 12",
+    "village": "Giri Mekar",
+    "district": "Cilengkrang",
+    "city": "Bandung",
+    "province": "Jawa Barat",
+    "status": "Active",
+    "createdAt": "2026-01-15",
+    "no_telp": null
+  },
+  {
+    "id": "CT002",
+    "name": "Siti Aminah",
+    "service": "Standard",
+    "address": "Jl. Sudirman No. 45",
+    "village": "Senayan",
+    "district": "Kebayoran Baru",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-02-20",
+    "no_telp": null
+  },
+  {
+    "id": "CT003",
+    "name": "Budi Santoso",
+    "service": "Basic",
+    "address": "Jl. Diponegoro No. 8",
+    "village": "Tegalsari",
+    "district": "Candisari",
+    "city": "Semarang",
+    "province": "Jawa Tengah",
+    "status": "Inactive",
+    "createdAt": "2026-03-10",
+    "no_telp": null
+  },
+  {
+    "id": "CT004",
+    "name": "Dewi Lestari",
+    "service": "Gamers",
+    "address": "Jl. Gajah Mada No. 21",
+    "village": "Keputran",
+    "district": "Tegalsari",
+    "city": "Surabaya",
+    "province": "Jawa Timur",
+    "status": "Active",
+    "createdAt": "2026-04-05",
+    "no_telp": null
+  },
+  {
+    "id": "CT005",
+    "name": "Eko Prasetyo",
+    "service": "Premium",
+    "address": "Jl. Malioboro No. 99",
+    "village": "Sosromenduran",
+    "district": "Gedongtengen",
+    "city": "Yogyakarta",
+    "province": "DI Yogyakarta",
+    "status": "Active",
+    "createdAt": "2026-05-12",
+    "no_telp": null
+  },
+  {
+    "id": "CT006",
+    "name": "Farah Quinn",
+    "service": "Standard",
+    "address": "Jl. Sunset Road No. 7",
+    "village": "Seminyak",
+    "district": "Kuta",
+    "city": "Badung",
+    "province": "Bali",
+    "status": "Active",
+    "createdAt": "2026-06-18",
+    "no_telp": null
+  },
+  {
+    "id": "CT007",
+    "name": "Guntur Pratama",
+    "service": "Basic",
+    "address": "Jl. Gatot Subroto No. 33",
+    "village": "Sei Sikambing",
+    "district": "Medan Helvetia",
+    "city": "Medan",
+    "province": "Sumatera Utara",
+    "status": "Active",
+    "createdAt": "2026-07-22",
+    "no_telp": null
+  },
+  {
+    "id": "CT008",
+    "name": "Hani Safitri",
+    "service": "Gamers",
+    "address": "Jl. Pahlawan No. 5",
+    "village": "Klampis Ngasem",
+    "district": "Sukolilo",
+    "city": "Surabaya",
+    "province": "Jawa Timur",
+    "status": "Active",
+    "createdAt": "2026-08-30",
+    "no_telp": null
+  },
+  {
+    "id": "CT009",
+    "name": "Indra Wijaya",
+    "service": "Premium",
+    "address": "Jl. Asia Afrika No. 10",
+    "village": "Braga",
+    "district": "Sumur Bandung",
+    "city": "Bandung",
+    "province": "Jawa Barat",
+    "status": "Active",
+    "createdAt": "2026-09-05",
+    "no_telp": null
+  },
+  {
+    "id": "CT010",
+    "name": "Joko Susilo",
+    "service": "Basic",
+    "address": "Jl. Ahmad Yani No. 55",
+    "village": "Cempaka Putih",
+    "district": "Cempaka Putih",
+    "city": "Jakarta Pusat",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-09-10",
+    "no_telp": null
+  },
+  {
+    "id": "CT011",
+    "name": "Kartika Sari",
+    "service": "Standard",
+    "address": "Jl. Raya Darmo No. 88",
+    "village": "Darmo",
+    "district": "Wonokromo",
+    "city": "Surabaya",
+    "province": "Jawa Timur",
+    "status": "Active",
+    "createdAt": "2026-09-15",
+    "no_telp": null
+  },
+  {
+    "id": "CT012",
+    "name": "Lukman Hakim",
+    "service": "Gamers",
+    "address": "Jl. Urip Sumoharjo No. 3",
+    "village": "Pandanaran",
+    "district": "Semarang Tengah",
+    "city": "Semarang",
+    "province": "Jawa Tengah",
+    "status": "Active",
+    "createdAt": "2026-09-20",
+    "no_telp": null
+  },
+  {
+    "id": "CT013",
+    "name": "Maya Putri",
+    "service": "Premium",
+    "address": "Jl. Palagan No. 77",
+    "village": "Sariharjo",
+    "district": "Ngaglik",
+    "city": "Sleman",
+    "province": "DI Yogyakarta",
+    "status": "Active",
+    "createdAt": "2026-10-01",
+    "no_telp": null
+  },
+  {
+    "id": "CT014",
+    "name": "Nanda Saputra",
+    "service": "Basic",
+    "address": "Jl. Imam Bonjol No. 23",
+    "village": "Pemecutan",
+    "district": "Denpasar Barat",
+    "city": "Denpasar",
+    "province": "Bali",
+    "status": "Active",
+    "createdAt": "2026-10-02",
+    "no_telp": null
+  },
+  {
+    "id": "CT015",
+    "name": "Oki Prabowo",
+    "service": "Standard",
+    "address": "Jl. Sisingamangaraja No. 90",
+    "village": "Harjosari",
+    "district": "Medan Amplas",
+    "city": "Medan",
+    "province": "Sumatera Utara",
+    "status": "Active",
+    "createdAt": "2026-10-03",
+    "no_telp": null
+  },
+  {
+    "id": "CT016",
+    "name": "Putri Ayu",
+    "service": "Gamers",
+    "address": "Jl. Cihampelas No. 11",
+    "village": "Cipaganti",
+    "district": "Coblong",
+    "city": "Bandung",
+    "province": "Jawa Barat",
+    "status": "Active",
+    "createdAt": "2026-10-04",
+    "no_telp": null
+  },
+  {
+    "id": "CT017",
+    "name": "Rizky Ananda",
+    "service": "Premium",
+    "address": "Jl. Thamrin No. 1",
+    "village": "Menteng",
+    "district": "Menteng",
+    "city": "Jakarta Pusat",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-10-05",
+    "no_telp": null
+  },
+  {
+    "id": "CT018",
+    "name": "Salsa Nabila",
+    "service": "Standard",
+    "address": "Jl. Ahmad Dahlan No. 44",
+    "village": "Notoprajan",
+    "district": "Ngampilan",
+    "city": "Yogyakarta",
+    "province": "DI Yogyakarta",
+    "status": "Active",
+    "createdAt": "2026-10-06",
+    "no_telp": null
+  },
+  {
+    "id": "CT019",
+    "name": "Taufik Hidayat",
+    "service": "Basic",
+    "address": "Jl. Dipatiukur No. 66",
+    "village": "Lebakgede",
+    "district": "Coblong",
+    "city": "Bandung",
+    "province": "Jawa Barat",
+    "status": "Active",
+    "createdAt": "2026-10-07",
+    "no_telp": null
+  },
+  {
+    "id": "CT020",
+    "name": "Umi Kalsum",
+    "service": "Gamers",
+    "address": "Jl. Kapten Tendean No. 17",
+    "village": "Mampang",
+    "district": "Mampang Prapatan",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-10-08",
+    "no_telp": null
+  },
+  {
+    "id": "CT021",
+    "name": "Vina Oktaviani",
+    "service": "Premium",
+    "address": "Jl. Kaliurang No. 101",
+    "village": "Condongcatur",
+    "district": "Depok",
+    "city": "Sleman",
+    "province": "DI Yogyakarta",
+    "status": "Active",
+    "createdAt": "2026-10-09",
+    "no_telp": null
+  },
+  {
+    "id": "CT022",
+    "name": "Wahyu Setiawan",
+    "service": "Basic",
+    "address": "Jl. Manyar No. 28",
+    "village": "Manyar Sabrangan",
+    "district": "Mulyorejo",
+    "city": "Surabaya",
+    "province": "Jawa Timur",
+    "status": "Active",
+    "createdAt": "2026-10-10",
+    "no_telp": null
+  },
+  {
+    "id": "CT023",
+    "name": "Yusuf Maulana",
+    "service": "Standard",
+    "address": "Jl. Gatot Subroto No. 120",
+    "village": "Cibangkong",
+    "district": "Batununggal",
+    "city": "Bandung",
+    "province": "Jawa Barat",
+    "status": "Active",
+    "createdAt": "2026-10-11",
+    "no_telp": null
+  },
+  {
+    "id": "CT024",
+    "name": "Zahra Fitri",
+    "service": "Gamers",
+    "address": "Jl. Sudirman No. 200",
+    "village": "Karet",
+    "district": "Setiabudi",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-10-12",
+    "no_telp": null
+  },
+  {
+    "id": "CT025",
+    "name": "Agus Salim",
+    "service": "Premium",
+    "address": "Jl. Veteran No. 2",
+    "village": "Blimbing",
+    "district": "Blimbing",
+    "city": "Malang",
+    "province": "Jawa Timur",
+    "status": "Active",
+    "createdAt": "2026-10-13",
+    "no_telp": null
+  },
+  {
+    "id": "CT026",
+    "name": "Bella Maharani",
+    "service": "Standard",
+    "address": "Jl. Sudirman No. 77",
+    "village": "Pekanbaru Kota",
+    "district": "Sukajadi",
+    "city": "Pekanbaru",
+    "province": "Riau",
+    "status": "Active",
+    "createdAt": "2026-10-14",
+    "no_telp": null
+  },
+  {
+    "id": "CT027",
+    "name": "Cahyo Nugroho",
+    "service": "Basic",
+    "address": "Jl. Adi Sucipto No. 18",
+    "village": "Manahan",
+    "district": "Banjarsari",
+    "city": "Solo",
+    "province": "Jawa Tengah",
+    "status": "Active",
+    "createdAt": "2026-10-15",
+    "no_telp": null
+  },
+  {
+    "id": "CT028",
+    "name": "Dian Permata",
+    "service": "Gamers",
+    "address": "Jl. Riau No. 56",
+    "village": "Citarum",
+    "district": "Bandung Wetan",
+    "city": "Bandung",
+    "province": "Jawa Barat",
+    "status": "Active",
+    "createdAt": "2026-10-16",
+    "no_telp": null
+  },
+  {
+    "id": "CT047",
+    "name": "Muhammad Syafiul Huda",
+    "service": "Basic",
+    "address": "Jl. Pasar Minggu No. 14",
+    "village": "Pejaten Timur",
+    "district": "Pasar Minggu",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Inactive",
+    "createdAt": "2026-04-27 00:43:17.807506+07",
+    "no_telp": "089507687822"
+  },
+  {
+    "id": "CT097",
+    "name": "Fikri Ramadhan",
+    "service": "Premium",
+    "address": "Jl. Ahmad Yani No. 10",
+    "village": "Karang Anyar",
+    "district": "Tarakan Barat",
+    "city": "Tarakan",
+    "province": "Kalimantan Utara",
+    "status": "Active",
+    "createdAt": "2026-10-17",
+    "no_telp": null
+  },
+  {
+    "id": "CT098",
+    "name": "Gina Safira",
+    "service": "Standard",
+    "address": "Jl. Teuku Umar No. 23",
+    "village": "Sepinggan",
+    "district": "Balikpapan Selatan",
+    "city": "Balikpapan",
+    "province": "Kalimantan Timur",
+    "status": "Active",
+    "createdAt": "2026-10-18",
+    "no_telp": null
+  },
+  {
+    "id": "CT099",
+    "name": "Hendra Kurniawan",
+    "service": "Basic",
+    "address": "Jl. Hasanuddin No. 5",
+    "village": "Losari",
+    "district": "Ujung Pandang",
+    "city": "Makassar",
+    "province": "Sulawesi Selatan",
+    "status": "Active",
+    "createdAt": "2026-10-19",
+    "no_telp": null
+  },
+  {
+    "id": "CT100",
+    "name": "Intan Permatasari",
+    "service": "Gamers",
+    "address": "Jl. Sam Ratulangi No. 88",
+    "village": "Titiwungen",
+    "district": "Sario",
+    "city": "Manado",
+    "province": "Sulawesi Utara",
+    "status": "Active",
+    "createdAt": "2026-10-20",
+    "no_telp": null
+  },
+  {
+    "id": "CT101",
+    "name": "TEST CUSTOMER DYNAMIC",
+    "service": "Basic",
+    "address": "Jl. Test No. 1",
+    "village": "DKI Jakarta",
+    "district": "Jakarta Pusat",
+    "city": "Jakarta Pusat",
+    "province": "DKI Jakarta",
+    "status": "Inactive",
+    "createdAt": "2026-10-21",
+    "no_telp": null
+  },
+  {
+    "id": "CT102",
+    "name": "Rahmat Hidayat",
+    "service": "Standard",
+    "address": "Jl. Ahmad Yani No. 12",
+    "village": "Melayu",
+    "district": "Banjarmasin Tengah",
+    "city": "Banjarmasin",
+    "province": "Kalimantan Selatan",
+    "status": "Active",
+    "createdAt": "2026-10-21",
+    "no_telp": null
+  },
+  {
+    "id": "CT103",
+    "name": "Rafi Pratama",
+    "service": "Premium",
+    "address": "Jl. Kemang Raya No. 12",
+    "village": "Kemang",
+    "district": "Mampang Prapatan",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-10-21",
+    "no_telp": null
+  },
+  {
+    "id": "CT104",
+    "name": "Dina Maharani",
+    "service": "Standard",
+    "address": "Jl. Cipete Raya No. 45",
+    "village": "Cipete Selatan",
+    "district": "Cilandak",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-10-21",
+    "no_telp": null
+  },
+  {
+    "id": "CT105",
+    "name": "Fajar Nugraha",
+    "service": "Basic",
+    "address": "Jl. Tebet Barat No. 8",
+    "village": "Tebet Barat",
+    "district": "Tebet",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-10-21",
+    "no_telp": null
+  },
+  {
+    "id": "CT106",
+    "name": "Nabila Putri",
+    "service": "Gamers",
+    "address": "Jl. Panglima Polim No. 21",
+    "village": "Melawai",
+    "district": "Kebayoran Baru",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-10-21",
+    "no_telp": null
+  },
+  {
+    "id": "CT107",
+    "name": "Yoga Saputra",
+    "service": "Premium",
+    "address": "Jl. Ampera Raya No. 99",
+    "village": "Ragunan",
+    "district": "Pasar Minggu",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-10-21",
+    "no_telp": null
+  },
+  {
+    "id": "CT108",
+    "name": "Sari Oktaviani",
+    "service": "Standard",
+    "address": "Jl. Bintaro Utama No. 7",
+    "village": "Pesanggrahan",
+    "district": "Pesanggrahan",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-10-21",
+    "no_telp": null
+  },
+  {
+    "id": "CT109",
+    "name": "Andi Kurniawan",
+    "service": "Basic",
+    "address": "Jl. Radio Dalam No. 33",
+    "village": "Gandaria Utara",
+    "district": "Kebayoran Baru",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-10-21",
+    "no_telp": null
+  },
+  {
+    "id": "CT110",
+    "name": "Maya Salsabila",
+    "service": "Gamers",
+    "address": "Jl. Fatmawati No. 5",
+    "village": "Cilandak Barat",
+    "district": "Cilandak",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Inactive",
+    "createdAt": "2026-10-21",
+    "no_telp": null
+  },
+  {
+    "id": "CT111",
+    "name": "Bagus Wicaksono",
+    "service": "Premium",
+    "address": "Jl. TB Simatupang No. 88",
+    "village": "Lebak Bulus",
+    "district": "Cilandak",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Inactive",
+    "createdAt": "2026-10-21",
+    "no_telp": null
+  },
+  {
+    "id": "CT112",
+    "name": "Putri Anindya",
+    "service": "Standard",
+    "address": "Jl. Pasar Minggu No. 14",
+    "village": "Pejaten Timur",
+    "district": "Pasar Minggu",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Inactive",
+    "createdAt": "2026-10-21",
+    "no_telp": null
+  },
+  {
+    "id": "CT113",
+    "name": "Huda",
+    "service": "Gamers",
+    "address": "Jl. Pasar Minggu No. 14",
+    "village": "Pejaten Timur",
+    "district": "Pasar Minggu",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-10-21",
+    "no_telp": null
+  },
+  {
+    "id": "CT114",
+    "name": "Syfi'",
+    "service": "Gamers",
+    "address": "Jl. Pasar Minggu No. 14",
+    "village": "Pejaten Timur",
+    "district": "Pasar Minggu",
+    "city": "Jakarta Selatan",
+    "province": "DKI Jakarta",
+    "status": "Active",
+    "createdAt": "2026-04-26",
+    "no_telp": null
+  }
 ];
 
-// Total Revenue Target: ~Rp 11.1M (distributed Jan-Oct)
 export const MOCK_TRANSACTIONS = [
-  // Jan (Total ~1M)
-  { id: 'TRX-CT001-J', method: 'Bank Transfer', amount: 'Rp 400.000', status: 'Verified', timestamp: '2026-01-25T10:00:00Z', type: 'bank', keterangan: 'pemasukan' },
-  { id: 'TRX-CT002-J', method: 'QRIS Dynamic', amount: 'Rp 600.000', status: 'Verified', timestamp: '2026-01-28T14:30:00Z', type: 'qris', keterangan: 'pemasukan' },
-  
-  // Feb (Total ~1M)
-  { id: 'TRX-CT001-F', method: 'Bank Transfer', amount: 'Rp 400.000', status: 'Verified', timestamp: '2026-02-25T10:00:00Z', type: 'bank', keterangan: 'pemasukan' },
-  { id: 'TRX-CT003-F', method: 'QRIS Dynamic', amount: 'Rp 600.000', status: 'Verified', timestamp: '2026-02-28T14:30:00Z', type: 'qris', keterangan: 'pemasukan' },
-
-  // Mar - Sep (Simulated constant revenue for graphs)
-  ...Array.from({ length: 7 }).flatMap((_, i) => [
-    { id: `TRX-GEN-A-${i}`, method: 'Bank Transfer', amount: 'Rp 500.000', status: 'Verified', timestamp: `2026-0${i+3}-15T10:00:00Z`, type: 'bank', keterangan: 'pemasukan' },
-    { id: `TRX-GEN-B-${i}`, method: 'QRIS Dynamic', amount: 'Rp 600.000', status: 'Verified', timestamp: `2026-0${i+3}-25T14:00:00Z`, type: 'qris', keterangan: 'pemasukan' },
-  ]),
-
-  // Oct (Final Boost ~1.4M)
-  { id: 'TRX-CT114', method: 'Bank Transfer', amount: 'Rp 750.000', status: 'Verified', timestamp: '2026-10-22T09:00:00Z', type: 'bank', keterangan: 'pemasukan' },
-  { id: 'TRX-OCT-B', method: 'QRIS Dynamic', amount: 'Rp 650.000', status: 'Verified', timestamp: '2026-10-25T16:00:00Z', type: 'qris', keterangan: 'pemasukan' },
-
-  // Expenses across the year
-  { id: 'EXP-MARK-1', method: 'Bank Transfer', amount: 'Rp 1.500.000', status: 'Verified', timestamp: '2026-04-01T10:00:00Z', type: 'bank', keterangan: 'pengeluaran' },
-  { id: 'EXP-INFRA-1', method: 'Bank Transfer', amount: 'Rp 2.000.000', status: 'Verified', timestamp: '2026-06-15T10:00:00Z', type: 'bank', keterangan: 'pengeluaran' },
-  { id: 'EXP-OPER-1', method: 'Bank Transfer', amount: 'Rp 500.000', status: 'Verified', timestamp: '2026-08-20T10:00:00Z', type: 'bank', keterangan: 'pengeluaran' },
+  {
+    "id": "TRX-CT103",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 400.000",
+    "status": "Verified",
+    "timestamp": "2026-10-21T22:10:23.254Z",
+    "type": "e-wallet",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Selatan"
+  },
+  {
+    "id": "TRX-CT105",
+    "method": "E-Wallet Payment",
+    "amount": "Rp 150.000",
+    "status": "Verified",
+    "timestamp": "2026-10-21T19:47:39.947Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Selatan"
+  },
+  {
+    "id": "TRX-CT106",
+    "method": "E-Wallet Payment",
+    "amount": "Rp 750.000",
+    "status": "Verified",
+    "timestamp": "2026-10-21T18:41:00.202Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Selatan"
+  },
+  {
+    "id": "TRX-CT113",
+    "method": "E-Wallet Payment",
+    "amount": "Rp 750.000",
+    "status": "Verified",
+    "timestamp": "2026-10-21T05:10:47.270Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Selatan"
+  },
+  {
+    "id": "TRX-CT108",
+    "method": "Bank Transfer",
+    "amount": "Rp 250.000",
+    "status": "Verified",
+    "timestamp": "2026-10-21T04:46:37.094Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Selatan"
+  },
+  {
+    "id": "TRX-CT102",
+    "method": "Bank Transfer",
+    "amount": "Rp 250.000",
+    "status": "Verified",
+    "timestamp": "2026-10-21T02:53:47.992Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Banjarmasin"
+  },
+  {
+    "id": "TRX-CT107",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 400.000",
+    "status": "Verified",
+    "timestamp": "2026-10-21T01:42:48.814Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Selatan"
+  },
+  {
+    "id": "TRX-CT104",
+    "method": "Bank Transfer",
+    "amount": "Rp 250.000",
+    "status": "Verified",
+    "timestamp": "2026-10-21T01:21:53.527Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Selatan"
+  },
+  {
+    "id": "TRX-CT109",
+    "method": "E-Wallet Payment",
+    "amount": "Rp 150.000",
+    "status": "Verified",
+    "timestamp": "2026-10-21T00:11:33.906Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Selatan"
+  },
+  {
+    "id": "TRX-CT100",
+    "method": "Bank Transfer",
+    "amount": "Rp 750.000",
+    "status": "Verified",
+    "timestamp": "2026-10-20T18:14:57.380Z",
+    "type": "e-wallet",
+    "keterangan": "pemasukan",
+    "city": "Manado"
+  },
+  {
+    "id": "TRX-CT099",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 150.000",
+    "status": "Verified",
+    "timestamp": "2026-10-19T22:13:10.015Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Makassar"
+  },
+  {
+    "id": "TRX-CT098",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 250.000",
+    "status": "Verified",
+    "timestamp": "2026-10-18T19:17:25.306Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Balikpapan"
+  },
+  {
+    "id": "TRX-CT097",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 400.000",
+    "status": "Verified",
+    "timestamp": "2026-10-17T17:17:08.168Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Tarakan"
+  },
+  {
+    "id": "TRX-CT028",
+    "method": "Bank Transfer",
+    "amount": "Rp 750.000",
+    "status": "Verified",
+    "timestamp": "2026-10-16T02:37:35.485Z",
+    "type": "e-wallet",
+    "keterangan": "pemasukan",
+    "city": "Bandung"
+  },
+  {
+    "id": "TRX-CT027",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 150.000",
+    "status": "Verified",
+    "timestamp": "2026-10-15T21:40:53.145Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Solo"
+  },
+  {
+    "id": "TRX-CT026",
+    "method": "Bank Transfer",
+    "amount": "Rp 250.000",
+    "status": "Verified",
+    "timestamp": "2026-10-14T19:41:32.771Z",
+    "type": "e-wallet",
+    "keterangan": "pemasukan",
+    "city": "Pekanbaru"
+  },
+  {
+    "id": "TRX-CT025",
+    "method": "E-Wallet Payment",
+    "amount": "Rp 400.000",
+    "status": "Verified",
+    "timestamp": "2026-10-13T00:30:23.121Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Malang"
+  },
+  {
+    "id": "TRX-CT024",
+    "method": "E-Wallet Payment",
+    "amount": "Rp 750.000",
+    "status": "Verified",
+    "timestamp": "2026-10-12T02:54:51.909Z",
+    "type": "e-wallet",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Selatan"
+  },
+  {
+    "id": "TRX-CT023",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 250.000",
+    "status": "Verified",
+    "timestamp": "2026-10-11T08:53:39.293Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Bandung"
+  },
+  {
+    "id": "TRX-CT022",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 150.000",
+    "status": "Verified",
+    "timestamp": "2026-10-10T19:27:06.300Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Surabaya"
+  },
+  {
+    "id": "TRX-CT021",
+    "method": "E-Wallet Payment",
+    "amount": "Rp 400.000",
+    "status": "Verified",
+    "timestamp": "2026-10-09T03:28:08.926Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Sleman"
+  },
+  {
+    "id": "TRX-CT020",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 750.000",
+    "status": "Verified",
+    "timestamp": "2026-10-08T09:01:58.234Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Selatan"
+  },
+  {
+    "id": "TRX-CT019",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 150.000",
+    "status": "Verified",
+    "timestamp": "2026-10-07T02:42:22.774Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Bandung"
+  },
+  {
+    "id": "TRX-CT018",
+    "method": "Bank Transfer",
+    "amount": "Rp 250.000",
+    "status": "Verified",
+    "timestamp": "2026-10-06T16:19:04.644Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Yogyakarta"
+  },
+  {
+    "id": "TRX-CT017",
+    "method": "E-Wallet Payment",
+    "amount": "Rp 400.000",
+    "status": "Verified",
+    "timestamp": "2026-10-05T23:33:07.902Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Pusat"
+  },
+  {
+    "id": "TRX-CT016",
+    "method": "Bank Transfer",
+    "amount": "Rp 750.000",
+    "status": "Verified",
+    "timestamp": "2026-10-04T22:43:56.273Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Bandung"
+  },
+  {
+    "id": "TRX-CT015",
+    "method": "E-Wallet Payment",
+    "amount": "Rp 250.000",
+    "status": "Verified",
+    "timestamp": "2026-10-03T00:27:03.267Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Medan"
+  },
+  {
+    "id": "TRX-CT014",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 150.000",
+    "status": "Verified",
+    "timestamp": "2026-10-02T15:56:26.424Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Denpasar"
+  },
+  {
+    "id": "TRX-CT013",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 400.000",
+    "status": "Verified",
+    "timestamp": "2026-10-01T14:14:35.396Z",
+    "type": "e-wallet",
+    "keterangan": "pemasukan",
+    "city": "Sleman"
+  },
+  {
+    "id": "TRX-CT012",
+    "method": "Bank Transfer",
+    "amount": "Rp 750.000",
+    "status": "Verified",
+    "timestamp": "2026-09-20T12:34:58.224Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Semarang"
+  },
+  {
+    "id": "TRX-CT011",
+    "method": "Bank Transfer",
+    "amount": "Rp 250.000",
+    "status": "Verified",
+    "timestamp": "2026-09-15T08:43:55.850Z",
+    "type": "e-wallet",
+    "keterangan": "pemasukan",
+    "city": "Surabaya"
+  },
+  {
+    "id": "TRX-CT010",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 150.000",
+    "status": "Verified",
+    "timestamp": "2026-09-10T17:42:58.511Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Pusat"
+  },
+  {
+    "id": "TRX-CT009",
+    "method": "Bank Transfer",
+    "amount": "Rp 400.000",
+    "status": "Verified",
+    "timestamp": "2026-09-05T10:37:48.856Z",
+    "type": "e-wallet",
+    "keterangan": "pemasukan",
+    "city": "Bandung"
+  },
+  {
+    "id": "TRX-CT008",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 750.000",
+    "status": "Verified",
+    "timestamp": "2026-08-30T14:08:02.675Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Surabaya"
+  },
+  {
+    "id": "TRX-CT007",
+    "method": "E-Wallet Payment",
+    "amount": "Rp 150.000",
+    "status": "Verified",
+    "timestamp": "2026-07-22T08:29:07.002Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Medan"
+  },
+  {
+    "id": "TRX-CT006",
+    "method": "E-Wallet Payment",
+    "amount": "Rp 250.000",
+    "status": "Verified",
+    "timestamp": "2026-06-18T00:52:39.210Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Badung"
+  },
+  {
+    "id": "TRX-CT005",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 400.000",
+    "status": "Verified",
+    "timestamp": "2026-05-12T14:04:12.406Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Yogyakarta"
+  },
+  {
+    "id": "TRX-CT114",
+    "method": "E-Wallet Payment",
+    "amount": "Rp 750,000",
+    "status": "Verified",
+    "timestamp": "2026-04-25T17:00:00.000Z",
+    "type": "e-wallet",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Selatan"
+  },
+  {
+    "id": "OUT-2",
+    "method": "Bank Transfer",
+    "amount": "Rp -500.000",
+    "status": "Verified",
+    "timestamp": "2026-04-15T03:28:08.926Z",
+    "type": "Marketing",
+    "keterangan": "pengeluaran",
+    "city": "Bandung"
+  },
+  {
+    "id": "OUT-3",
+    "method": "Bank Transfer",
+    "amount": "Rp -250.000",
+    "status": "Verified",
+    "timestamp": "2026-04-10T03:28:08.926Z",
+    "type": "Infrastructure",
+    "keterangan": "pengeluaran",
+    "city": "Semarang"
+  },
+  {
+    "id": "TRX-CT004",
+    "method": "Bank Transfer",
+    "amount": "Rp 750.000",
+    "status": "Verified",
+    "timestamp": "2026-04-05T18:03:11.599Z",
+    "type": "qris",
+    "keterangan": "pemasukan",
+    "city": "Surabaya"
+  },
+  {
+    "id": "OUT-4",
+    "method": "Bank Transfer",
+    "amount": "Rp -120.000",
+    "status": "Verified",
+    "timestamp": "2026-04-05T03:28:08.926Z",
+    "type": "Operational",
+    "keterangan": "pengeluaran",
+    "city": "Surabaya"
+  },
+  {
+    "id": "OUT-5",
+    "method": "Bank Transfer",
+    "amount": "Rp -150.000",
+    "status": "Verified",
+    "timestamp": "2026-04-01T03:28:08.926Z",
+    "type": "Marketing",
+    "keterangan": "pengeluaran",
+    "city": "Jakarta Pusat"
+  },
+  {
+    "id": "OUT-1",
+    "method": "Bank Transfer",
+    "amount": "Rp -150.000",
+    "status": "Verified",
+    "timestamp": "2026-04-01T03:28:08.926Z",
+    "type": "Marketing",
+    "keterangan": "pengeluaran",
+    "city": "Jakarta Selatan"
+  },
+  {
+    "id": "TRX-CT002",
+    "method": "Bank Transfer",
+    "amount": "Rp 250.000",
+    "status": "Verified",
+    "timestamp": "2026-02-20T10:09:09.007Z",
+    "type": "e-wallet",
+    "keterangan": "pemasukan",
+    "city": "Jakarta Selatan"
+  },
+  {
+    "id": "TRX-CT001",
+    "method": "QRIS Dynamic",
+    "amount": "Rp 400.000",
+    "status": "Verified",
+    "timestamp": "2026-01-15T15:27:42.335Z",
+    "type": "bank",
+    "keterangan": "pemasukan",
+    "city": "Bandung"
+  }
 ];
 
-export const MOCK_EXPENSES = [
-  { id: 1, category: 'Marketing', amount: 1500000, date: '2026-04-01', description: 'Facebook Ads Jan-Apr' },
-  { id: 2, category: 'Infrastructure', amount: 2000000, date: '2026-06-15', description: 'Data Center Rental' },
-  { id: 3, category: 'Operations', amount: 500000, date: '2026-08-20', description: 'Office Utilities' }
+export const MOCK_SERVICE_TIERS = [
+  {
+    "id": 1,
+    "name": "Basic",
+    "speed": "20",
+    "unit": "Mbps",
+    "price": "Rp 150.000",
+    "fup": "500 GB",
+    "type": "standard",
+    "icon": "wifi"
+  },
+  {
+    "id": 2,
+    "name": "Standard",
+    "speed": "50",
+    "unit": "Mbps",
+    "price": "Rp 250.000",
+    "fup": "1 TB",
+    "type": "secondary",
+    "icon": "speed"
+  },
+  {
+    "id": 3,
+    "name": "Premium",
+    "speed": "100",
+    "unit": "Mbps",
+    "price": "Rp 400.000",
+    "fup": "Unlimited",
+    "type": "featured",
+    "icon": "rocket"
+  },
+  {
+    "id": 4,
+    "name": "Gamers",
+    "speed": "200",
+    "unit": "Mbps",
+    "price": "Rp 750.000",
+    "fup": "Unlimited",
+    "type": "priority",
+    "icon": "gamepad"
+  }
 ];
 
 export const MOCK_ASSETS = [
-  { id: 1, sn: 'SN-8924-A1B2', mac: '00:1A:2B:3C:4D:5E', type: 'ONT', location: 'Customer Site, Bandung', condition: 'Good', latitude: -6.2088, longitude: 106.8456, status: 'Online', kepemilikan: 'Dimiliki', tanggal_perubahan: '2026-01-10' },
-  { id: 2, sn: 'SN-1045-C9D8', mac: '00:1A:2B:3C:4D:5F', type: 'OLT', location: 'Core Pop, Jakarta', condition: 'Maintenance', latitude: -6.9175, longitude: 107.6191, status: 'Maintenance', kepemilikan: 'Dimiliki', tanggal_perubahan: '2026-02-15' }
+  {
+    "id": 1,
+    "sn": "SN-8924-A1B2",
+    "mac": "00:1A:2B:3C:4D:5E",
+    "type": "ONT",
+    "location": "Warehouse Main, DKI Jakarta",
+    "condition": "Good",
+    "color": "bg-[#e8f5e9] text-[#1b5e20] dot-[#2e7d32]",
+    "latitude": -6.2088,
+    "longitude": 106.8456,
+    "status": "Online",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-01-10"
+  },
+  {
+    "id": 2,
+    "sn": "SN-1045-C9D8",
+    "mac": "00:1A:2B:3C:4D:5F",
+    "type": "OLT",
+    "location": "Warehouse West, Bandung, Jawa Barat",
+    "condition": "Good",
+    "color": "bg-[#fff8e1] text-[#f57f17] dot-[#fbc02d]",
+    "latitude": -6.9175,
+    "longitude": 107.6191,
+    "status": "Maintenance",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-04-26 23:48:20.120148+07"
+  },
+  {
+    "id": 3,
+    "sn": "SN-9932-X7Y6",
+    "mac": "00:1A:2B:3C:4D:6A",
+    "type": "ODP",
+    "location": "Warehouse West, Surabaya, Jawa Timur",
+    "condition": "Broken",
+    "color": "bg-[#ffebee] text-[#c62828] dot-[#d32f2f]",
+    "latitude": -7.2575,
+    "longitude": 112.7521,
+    "status": "Offline",
+    "kepemilikan": "Telah Dijual",
+    "tanggal_perubahan": "2026-06-20"
+  },
+  {
+    "id": 4,
+    "sn": "SN-7712-H3K9",
+    "mac": "00:1A:2B:3C:4D:6B",
+    "type": "ONT",
+    "location": "Warehouse East, Medan, Sumatera Utara",
+    "condition": "Good",
+    "color": "bg-[#e8f5e9] text-[#1b5e20] dot-[#2e7d32]",
+    "latitude": 3.5952,
+    "longitude": 98.6722,
+    "status": "Online",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-03-01"
+  },
+  {
+    "id": 5,
+    "sn": "SN-6651-P0Q4",
+    "mac": "00:1A:2B:3C:4D:6C",
+    "type": "OLT",
+    "location": "Warehouse Main, Makassar, Sulawesi Selatan",
+    "condition": "Good",
+    "color": "bg-[#fff8e1] text-[#f57f17] dot-[#fbc02d]",
+    "latitude": -5.1476,
+    "longitude": 119.4327,
+    "status": "Maintenance",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-07-12"
+  },
+  {
+    "id": 6,
+    "sn": "SN-5523-L8M2",
+    "mac": "00:1A:2B:3C:4D:6D",
+    "type": "ODP",
+    "location": "Warehouse South, Bali",
+    "condition": "Broken",
+    "color": "bg-[#ffebee] text-[#c62828] dot-[#d32f2f]",
+    "latitude": -8.4095,
+    "longitude": 115.1889,
+    "status": "Offline",
+    "kepemilikan": "Telah Dijual",
+    "tanggal_perubahan": "2026-08-05"
+  },
+  {
+    "id": 7,
+    "sn": "SN-4389-R7T1",
+    "mac": "00:1A:2B:3C:4D:6E",
+    "type": "ONT",
+    "location": "Warehouse West, Semarang, Jawa Tengah",
+    "condition": "Good",
+    "color": "bg-[#e8f5e9] text-[#1b5e20] dot-[#2e7d32]",
+    "latitude": -6.9667,
+    "longitude": 110.4167,
+    "status": "Online",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-04-18"
+  },
+  {
+    "id": 8,
+    "sn": "SN-3201-Z4X8",
+    "mac": "00:1A:2B:3C:4D:6F",
+    "type": "OLT",
+    "location": "Warehouse East, Yogyakarta, DI Yogyakarta",
+    "condition": "Maintenance",
+    "color": "bg-[#fff8e1] text-[#f57f17] dot-[#fbc02d]",
+    "latitude": -7.7956,
+    "longitude": 110.3695,
+    "status": "Maintenance",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-05-22"
+  },
+  {
+    "id": 9,
+    "sn": "SN-2198-V6B3",
+    "mac": "00:1A:2B:3C:4D:70",
+    "type": "ODP",
+    "location": "Warehouse Main, Malang, Jawa Timur",
+    "condition": "Good",
+    "color": "bg-[#e8f5e9] text-[#1b5e20] dot-[#2e7d32]",
+    "latitude": -7.9839,
+    "longitude": 112.6214,
+    "status": "Online",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-02-28"
+  },
+  {
+    "id": 10,
+    "sn": "SN-1876-N2C5",
+    "mac": "00:1A:2B:3C:4D:71",
+    "type": "ONT",
+    "location": "Warehouse South, Pekanbaru, Riau",
+    "condition": "Broken",
+    "color": "bg-[#ffebee] text-[#c62828] dot-[#d32f2f]",
+    "latitude": 0.5071,
+    "longitude": 101.4478,
+    "status": "Offline",
+    "kepemilikan": "Telah Dijual",
+    "tanggal_perubahan": "2026-09-15"
+  },
+  {
+    "id": 11,
+    "sn": "SN-1467-D5E9",
+    "mac": "00:1A:2B:3C:4D:72",
+    "type": "OLT",
+    "location": "Warehouse West, Balikpapan, Kalimantan Timur",
+    "condition": "Good",
+    "color": "bg-[#e8f5e9] text-[#1b5e20] dot-[#2e7d32]",
+    "latitude": -1.2654,
+    "longitude": 116.8312,
+    "status": "Online",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-06-01"
+  },
+  {
+    "id": 12,
+    "sn": "SN-1309-F8G1",
+    "mac": "00:1A:2B:3C:4D:73",
+    "type": "ODP",
+    "location": "Warehouse East, Solo, Jawa Tengah",
+    "condition": "Maintenance",
+    "color": "bg-[#fff8e1] text-[#f57f17] dot-[#fbc02d]",
+    "latitude": -7.5666,
+    "longitude": 110.8167,
+    "status": "Maintenance",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-03-14"
+  },
+  {
+    "id": 23,
+    "sn": "SN-1309-ABC",
+    "mac": "00:1A:2B:3C:7D:77",
+    "type": "Server",
+    "location": "Warehouse West, Pontianak, Kalimantan Barat",
+    "condition": "Good",
+    "color": "White",
+    "latitude": 0.2788,
+    "longitude": 111.4753,
+    "status": "Online",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-04-27 00:07:54.814389+07"
+  },
+  {
+    "id": 24,
+    "sn": "STK-ODP-003",
+    "mac": "00:1A:2B:3C:4D:73",
+    "type": "ODP",
+    "location": "Warehouse West, Soppeng, Sulawesi Selatan",
+    "condition": "Good",
+    "color": "bg-[#e8f5e9] text-[#1b5e20]",
+    "latitude": -3.64467,
+    "longitude": 119.94719,
+    "status": "Online",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-04-27 00:13:46.540083+07"
+  }
 ];
 
 export const MOCK_STOCK = [
-  { id: 1, sn: 'SN-STOCK-001', mac: '00:FF:2B:3C:4D:01', type: 'ONT', location: 'Main Warehouse', condition: 'Good', latitude: -6.2000, longitude: 106.8000, status: 'Online', kepemilikan: 'Dimiliki', tanggal_perubahan: '2026-04-01', is_used: false },
-  { id: 2, sn: 'SN-STOCK-002', mac: '00:FF:2B:3C:4D:02', type: 'Router', location: 'Main Warehouse', condition: 'Good', latitude: -6.2000, longitude: 106.8000, status: 'Online', kepemilikan: 'Dimiliki', tanggal_perubahan: '2026-04-01', is_used: true }
-];
-
-export const MOCK_NOTIFICATIONS = [
-  { id: 1, category: 'Finance', title: 'New transaction detected', message: 'Incoming payment of Rp 750,000 from Syfi\' has been verified.', type: 'transaction', is_unread: true, created_at: new Date().toISOString() },
-  { id: 2, category: 'System', title: 'Welcome to FinTrack', message: 'Database synchronized successfully.', type: 'system', is_unread: false, created_at: new Date(Date.now() - 3600000).toISOString() }
+  {
+    "id": 13,
+    "sn": "STK-ONT-001",
+    "mac": "00:1A:2B:3C:4D:71",
+    "type": "ONT",
+    "location": "Warehouse Main",
+    "condition": "Good",
+    "color": "bg-[#e8f5e9] text-[#1b5e20]",
+    "latitude": -6.2088,
+    "longitude": 106.8456,
+    "status": "Offline",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-04-20",
+    "is_used": "false"
+  },
+  {
+    "id": 14,
+    "sn": "STK-OLT-002",
+    "mac": "00:1A:2B:3C:4D:72",
+    "type": "OLT",
+    "location": "Warehouse Main",
+    "condition": "Good",
+    "color": "bg-[#e8f5e9] text-[#1b5e20]",
+    "latitude": -6.2088,
+    "longitude": 106.8456,
+    "status": "Offline",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-04-21",
+    "is_used": "false"
+  },
+  {
+    "id": 16,
+    "sn": "STK-RTR-004",
+    "mac": "00:1A:2B:3C:4D:74",
+    "type": "Router",
+    "location": "Warehouse Main",
+    "condition": "Good",
+    "color": "bg-[#e8f5e9] text-[#1b5e20]",
+    "latitude": -6.2088,
+    "longitude": 106.8456,
+    "status": "Offline",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-04-23",
+    "is_used": "false"
+  },
+  {
+    "id": 17,
+    "sn": "STK-ONT-005",
+    "mac": "00:1A:2B:3C:4D:75",
+    "type": "ONT",
+    "location": "Warehouse Main",
+    "condition": "Good",
+    "color": "bg-[#e8f5e9] text-[#1b5e20]",
+    "latitude": -6.2088,
+    "longitude": 106.8456,
+    "status": "Offline",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-04-24",
+    "is_used": "false"
+  },
+  {
+    "id": 19,
+    "sn": "SN-1309-ZZZ",
+    "mac": "00:1A:2B:3C:9D:99",
+    "type": "ONT",
+    "location": "Warehouse Main",
+    "condition": "Good",
+    "color": "White",
+    "latitude": -6.2088,
+    "longitude": 106.8166,
+    "status": "Offline",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-04-26 23:19:03.098879+07",
+    "is_used": "false"
+  },
+  {
+    "id": 20,
+    "sn": "SN-1309-XYZ",
+    "mac": "00:1A:2B:3C:8D:88",
+    "type": "Server",
+    "location": "Warehouse Main",
+    "condition": "Good",
+    "color": "White",
+    "latitude": -6.2088,
+    "longitude": 106.8456,
+    "status": "Offline",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-04-26 23:22:11.510281+07",
+    "is_used": "false"
+  },
+  {
+    "id": 22,
+    "sn": "SN-1309-TTT",
+    "mac": "00:1A:2B:3C:6D:66",
+    "type": "Server",
+    "location": "Warehouse South",
+    "condition": "Good",
+    "color": "White",
+    "latitude": -8.4095,
+    "longitude": 115.1889,
+    "status": "Offline",
+    "kepemilikan": "Dimiliki",
+    "tanggal_perubahan": "2026-04-26 23:34:31.810228+07",
+    "is_used": "false"
+  }
 ];
 
 export const MOCK_OCR = {
-  image: 'https://images.unsplash.com/photo-1554224155-1696413565d3?auto=format&fit=crop&q=80&w=1000',
-  confidence: '98.5%',
-  vendor: 'PT Mega Indah Solusindo',
-  date: '21 Oct 2026',
-  amount: '1,250,000',
-  reference: 'TRX-99420-BIS'
+  id: "ocr_1",
+  image: "https://images.unsplash.com/photo-1554224155-169746991c99?q=80&w=2000&auto=format&fit=crop",
+  vendor: "PT Mega Indah Solusindo",
+  date: "31 Des 2026",
+  amount: "1.250.000",
+  reference: "TRX-CT113",
+  confidence: "94.2%",
+  method: "Bank Transfer"
+};
+
+export const MOCK_ADMIN = {
+  fullName: "Ahmad Jaelani",
+  email: "ahmad.j@ispfintrack.id",
+  role: "Chief Technology Officer",
+  department: "Infrastructure & Core Network",
+  image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2000&auto=format&fit=crop"
 };

@@ -239,3 +239,357 @@ FROM ProvinceStats ps
 LEFT JOIN RegionalIncome ri ON ps.province = ri.province
 CROSS JOIN TotalExpenses te
 ORDER BY "Net Profit" DESC;
+
+
+
+-- persentase total revenue
+WITH MonthlyStats AS (
+    -- 1. Menghitung statistik dasar per bulan
+    SELECT 
+        TO_CHAR(timestamp, 'YYYY-MM') as month,
+        SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) as revenue,
+        COUNT(DISTINCT CASE WHEN status = 'Verified' THEN id END) as tx_count
+    FROM transactions 
+    WHERE status = 'Verified' AND keterangan = 'pemasukan'
+    GROUP BY 1
+),
+LatestMonth AS (
+    -- 2. Mengambil data bulan paling baru (Oktober)
+    SELECT * FROM MonthlyStats ORDER BY month DESC LIMIT 1
+),
+BenchmarkStats AS (
+    -- 3. Menghitung rata-rata dari Januari s/d bulan sebelum terakhir (Jan-Sep)
+    SELECT 
+        AVG(revenue) as avg_revenue
+    FROM MonthlyStats
+    WHERE month < (SELECT month FROM LatestMonth)
+)
+-- 4. Menghitung Persentase Tren
+SELECT 
+    l.month as "Bulan Terbaru",
+    l.revenue as "Revenue Oktober",
+    b.avg_revenue as "Rata-rata Jan-Sep",
+    -- Rumus Persentase: ((Terbaru / Rata-rata) - 1) * 100
+    ROUND(
+        ((l.revenue / NULLIF(b.avg_revenue, 0)) - 1) * 100, 2
+    ) as "Revenue Trend %"
+FROM LatestMonth l, BenchmarkStats b;
+
+
+-- persentase ARPU
+WITH MonthlyData AS (
+    SELECT
+        m.month_date,
+        TO_CHAR(m.month_date,'YYYY-MM') AS month,
+        m.revenue,
+        (
+            SELECT COUNT(*)
+            FROM customers c
+            WHERE c.status = 'Active'
+            AND date_trunc('month', c."createdAt"::date)
+                <= m.month_date
+        ) AS active_customers
+    FROM (
+        SELECT
+            date_trunc('month', t.timestamp) AS month_date,
+            SUM(
+                CAST(
+                    REPLACE(
+                        REPLACE(
+                            REPLACE(t.amount,'Rp ',''),
+                        '.',''),
+                    ',','') AS BIGINT
+                )
+            ) AS revenue
+        FROM transactions t
+        WHERE t.status='Verified'
+          AND t.keterangan='pemasukan'
+        GROUP BY 1
+    ) m
+),
+ARPU_Monthly AS (
+    SELECT
+        month,
+        revenue / NULLIF(active_customers,0) AS arpu
+    FROM MonthlyData
+),
+LatestARPU AS (
+    SELECT *
+    FROM ARPU_Monthly
+    ORDER BY month DESC
+    LIMIT 1
+),
+BenchmarkARPU AS (
+    SELECT AVG(arpu) AS avg_arpu
+    FROM ARPU_Monthly
+    WHERE month < (SELECT month FROM LatestARPU)
+)
+SELECT
+    l.month AS "Bulan Terbaru",
+    l.arpu AS "ARPU Terbaru",
+    b.avg_arpu AS "Rata-rata ARPU Sebelumnya",
+    ROUND(
+        ((l.arpu / NULLIF(b.avg_arpu,0)) - 1) * 100,
+        2
+    ) AS "ARPU Trend %"
+FROM LatestARPU l
+CROSS JOIN BenchmarkARPU b;
+
+-- Persemtase CAC
+WITH monthly_expenses AS (
+    SELECT
+        to_char(date::date, 'YYYY-MM') as month_period,
+        SUM(ABS(amount::numeric)) as total_cost
+    FROM expenses
+    GROUP BY 1
+),
+monthly_customers AS (
+    SELECT
+        to_char("createdAt"::date, 'YYYY-MM') as month_period,
+        COUNT(*) as total_new_customers
+    FROM customers
+    GROUP BY 1
+)
+SELECT
+    e.month_period,
+    e.total_cost,
+    c.total_new_customers,
+    (e.total_cost / NULLIF(c.total_new_customers, 0)) as CAC
+FROM monthly_expenses e
+LEFT JOIN monthly_customers c ON e.month_period = c.month_period
+ORDER BY e.month_period;
+
+
+-- CHURN RATE
+WITH ChurnData AS (
+    SELECT
+        -- 1. Hitung Rasio Churn Jan-Sep (Benchmark)
+        (
+            SELECT COUNT(*) FROM customers
+            WHERE status = 'Inactive'
+              AND "createdAt"::date BETWEEN '2026-01-01' AND '2026-09-30'
+        )::numeric / NULLIF((SELECT COUNT(*) FROM customers), 0) * 100 as benchmark_rate,
+
+        -- 2. Hitung Rasio Churn Oktober (Latest)
+        select (
+            SELECT COUNT(*) FROM customers
+            WHERE status = 'Inactive'
+              AND "createdAt"::date BETWEEN '2026-10-01' AND '2026-10-31'
+        )::numeric / NULLIF((SELECT COUNT(*) FROM customers), 0) * 100 as latest_rate,
+
+        -- 3. Hitung Churn Rate Keseluruhan (Untuk Angka Utama)
+        (
+            SELECT COUNT(*) FROM customers
+            WHERE status = 'Inactive'
+        )::numeric / NULLIF((SELECT COUNT(*) FROM customers), 0) * 100 as overall_rate
+)
+SELECT
+    -- Angka Utama (Yang tampil besar di dashboard)
+    ROUND(overall_rate, 2) || '%' as "Churn Rate (Overall)",
+
+    -- Persentase Tren (Rasio perbandingan)
+    -- Jika Oktober (4 orang) vs Jan-Sep (1 orang), hasilnya +400.0%
+    '+' || ROUND((latest_rate / NULLIF(benchmark_rate, 0)) * 100, 1) || '%' as "Churn Trend"
+FROM ChurnData;
+
+
+
+WITH MonthlyRevenue AS (
+    -- 1. Hitung pendapatan per bulan
+    SELECT
+        TO_CHAR(timestamp, 'YYYY-MM') as month,
+        SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) as monthly_amount
+    FROM transactions
+    WHERE status = 'Verified' AND keterangan = 'pemasukan'
+    GROUP BY 1
+),
+RevenueMetrics AS (
+    SELECT
+        -- Pendapatan Bulan Oktober (Latest)
+        (SELECT monthly_amount FROM MonthlyRevenue WHERE month = '2026-10') as october_revenue,
+
+        -- Rata-rata Pendapatan Januari - September (Benchmark)
+        (SELECT AVG(monthly_amount) FROM MonthlyRevenue WHERE month < '2026-10') as avg_prev_revenue,
+
+        -- Total Seluruh Pendapatan (Angka Utama)
+        (SELECT SUM(monthly_amount) FROM MonthlyRevenue) as total_annual_revenue
+)
+SELECT
+    -- Angka Utama: Total Revenue Tahunan
+    'Rp ' || TO_CHAR(total_annual_revenue, 'FM999,999,999,999') as "Total Revenue (Overall)",
+
+    -- Persentase Tren: ((Oktober / Rata-rata Jan-Sep) - 1) * 100
+    -- Menghasilkan +1591.4% jika Oktober jauh lebih besar dari rata-rata bulan sebelumnya
+    '+' || ROUND(
+        ((october_revenue / NULLIF(avg_prev_revenue, 0)) - 1) * 100,
+    1) || '%' as "Revenue Trend %"
+FROM RevenueMetrics;
+
+
+
+WITH MonthlyBase AS (
+    -- 1. Kumpulkan Pendapatan & Pengeluaran per Bulan
+    SELECT
+        TO_CHAR(t.timestamp, 'YYYY-MM') as month,
+        SUM(CASE WHEN t.keterangan = 'pemasukan' THEN
+            CAST(REPLACE(REPLACE(REPLACE(t.amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT) ELSE 0 END) as revenue,
+        (
+            SELECT SUM(ABS(amount::numeric))
+            FROM expenses e
+            WHERE TO_CHAR(e.date, 'YYYY-MM') = TO_CHAR(t.timestamp, 'YYYY-MM')
+        ) + SUM(CASE WHEN t.keterangan = 'pengeluaran' THEN
+            CAST(REPLACE(REPLACE(REPLACE(t.amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT) ELSE 0 END) as total_exp
+    FROM transactions t
+    WHERE t.status = 'Verified'
+    GROUP BY 1
+),
+CalculatedMetrics AS (
+    -- 2. Hitung Profit & Margin per Bulan
+    SELECT
+        month,
+        revenue as mrr,
+        (revenue - total_exp) as net_profit,
+        CASE WHEN revenue > 0 THEN ((revenue - total_exp) / revenue::numeric) * 100 ELSE 0 END as ebitda_margin
+    FROM MonthlyBase
+),
+FinalAnalysis AS (
+    -- 3. Pisahkan Data Oktober (Latest) vs Rata-rata Jan-Sep (Benchmark)
+    SELECT
+        -- Data Oktober
+        (SELECT mrr FROM CalculatedMetrics WHERE month = '2026-10') as oct_mrr,
+        (SELECT ebitda_margin FROM CalculatedMetrics WHERE month = '2026-10') as oct_margin,
+        (SELECT net_profit FROM CalculatedMetrics WHERE month = '2026-10') as oct_profit,
+
+        -- Benchmark (Rata-rata Jan - Sep)
+        (SELECT AVG(mrr) FROM CalculatedMetrics WHERE month < '2026-10') as avg_prev_mrr,
+        (SELECT AVG(ebitda_margin) FROM CalculatedMetrics WHERE month < '2026-10') as avg_prev_margin,
+        (SELECT AVG(net_profit) FROM CalculatedMetrics WHERE month < '2026-10') as avg_prev_profit
+)
+SELECT
+    -- MRR & Tren
+    'Rp ' || TO_CHAR(oct_mrr, 'FM999,999,999,999') as "MRR (October)",
+    '+' || ROUND(((oct_mrr / NULLIF(avg_prev_mrr, 0)) - 1) * 100, 1) || '%' as "MRR Trend",
+
+    -- EBITDA Margin & Tren
+    ROUND(oct_margin, 1) || '%' as "EBITDA Margin (October)",
+    '+' || ROUND(((oct_margin / NULLIF(avg_prev_margin, 0)) - 1) * 100, 1) || '%' as "EBITDA Margin Trend",
+
+    -- Net Profit & Tren
+    'Rp ' || TO_CHAR(oct_profit, 'FM999,999,999,999') as "Net Profit (October)",
+    '+' || ROUND(((oct_profit / NULLIF(avg_prev_profit, 0)) - 1) * 100, 1) || '%' as "Net Profit Trend"
+FROM FinalAnalysis;
+
+
+
+-- Profitability
+-- EBITDA
+WITH MonthSeries AS (
+    SELECT DISTINCT TO_CHAR(date_trunc('month', d), 'YYYY-MM') as month
+    FROM (
+        SELECT timestamp as d FROM transactions WHERE status = 'Verified'
+        UNION
+        SELECT date as d FROM expenses
+    ) sub
+),
+MonthlyStats AS (
+    SELECT
+        m.month,
+        -- PENDAPATAN (Harus Positif)
+        COALESCE((
+            SELECT SUM(ABS(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)))
+            FROM transactions t
+            WHERE status = 'Verified' AND keterangan = 'pemasukan' AND TO_CHAR(t.timestamp, 'YYYY-MM') = m.month
+        ), 0) as revenue,
+
+        -- PENGELUARAN (Kita paksa jadi POSITIF dengan ABS agar bisa dikurangi)
+        COALESCE((
+            SELECT SUM(ABS(amount::numeric))
+            FROM expenses e WHERE TO_CHAR(e.date, 'YYYY-MM') = m.month
+        ), 0) +
+        COALESCE((
+            SELECT SUM(ABS(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)))
+            FROM transactions t
+            WHERE status = 'Verified' AND keterangan = 'pengeluaran' AND TO_CHAR(t.timestamp, 'YYYY-MM') = m.month
+        ), 0) as total_exp
+    FROM MonthSeries m
+),
+CalculatedMonths AS (
+    SELECT
+        month,
+        revenue,
+        total_exp,
+        (revenue - total_exp) as profit,
+        CASE WHEN revenue > 0 THEN ((revenue - total_exp) / revenue::numeric) * 100 ELSE 0 END as margin
+    FROM MonthlyStats
+),
+EbitdaAnalysis AS (
+    SELECT
+        -- EBITDA Margin Keseluruhan
+        ( (SUM(revenue) - SUM(total_exp)) / NULLIF(SUM(revenue), 0) ) * 100 as overall_ebitda,
+
+        -- Data Tren (Oktober vs Jan-Sep)
+        (SELECT margin FROM CalculatedMonths WHERE month = '2026-10') as oct_margin,
+        (SELECT AVG(margin) FROM CalculatedMonths WHERE month < '2026-10') as benchmark_margin
+    FROM CalculatedMonths
+)
+SELECT
+    -- Angka Utama
+    ROUND(overall_ebitda, 1) || '%' as "EBITDA Margin (Annual)",
+
+    -- Tren
+    '+' || ROUND(((oct_margin / NULLIF(benchmark_margin, 0)) - 1) * 100, 1) || '%' as "EBITDA Trend %"
+FROM EbitdaAnalysis;
+
+
+-- Net Profit
+WITH MonthSeries AS (
+    SELECT DISTINCT TO_CHAR(date_trunc('month', d), 'YYYY-MM') as month
+    FROM (
+        SELECT timestamp as d FROM transactions WHERE status = 'Verified'
+        UNION
+        SELECT date as d FROM expenses
+    ) sub
+),
+MonthlyStats AS (
+    SELECT
+        m.month,
+        -- PENDAPATAN (Hanya yang terkait customer)
+        COALESCE((
+            SELECT SUM(ABS(CAST(REPLACE(REPLACE(REPLACE(t.amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)))
+            FROM transactions t
+            JOIN customers c ON CAST(c.id AS TEXT) = CAST(split_part(t.id,'-',2) AS TEXT)
+            WHERE t.status = 'Verified' AND t.keterangan = 'pemasukan'
+              AND TO_CHAR(t.timestamp, 'YYYY-MM') = m.month
+        ), 0) as revenue,
+
+        -- PENGELUARAN (Tabel Expenses + Transaksi Pengeluaran yang HARUS terkait customer agar sinkron Web)
+        COALESCE((
+            SELECT SUM(ABS(amount::numeric)) FROM expenses e
+            WHERE TO_CHAR(e.date, 'YYYY-MM') = m.month
+        ), 0) +
+        COALESCE((
+            SELECT SUM(ABS(CAST(REPLACE(REPLACE(REPLACE(t.amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)))
+            FROM transactions t
+            JOIN customers c ON CAST(c.id AS TEXT) = CAST(split_part(t.id,'-',2) AS TEXT) -- TAMBAHKAN JOIN INI
+            WHERE t.status = 'Verified' AND t.keterangan = 'pengeluaran'
+              AND TO_CHAR(t.timestamp, 'YYYY-MM') = m.month
+        ), 0) as total_exp
+    FROM MonthSeries m
+),
+CalculatedMonths AS (
+    SELECT
+        month,
+        (revenue - total_exp) as monthly_net_profit
+    FROM MonthlyStats
+),
+NetProfitAnalysis AS (
+    SELECT
+        SUM(monthly_net_profit) as annual_net_profit,
+        (SELECT monthly_net_profit FROM CalculatedMonths WHERE month = '2026-10') as oct_profit,
+        (SELECT AVG(monthly_net_profit) FROM CalculatedMonths WHERE month < '2026-10') as benchmark_profit
+    FROM CalculatedMonths
+)
+SELECT
+    'Rp ' || TO_CHAR(annual_net_profit / 1000000.0, 'FM999,999.90') || 'M' as "Net Profit (Annual Total)",
+    '+' || ROUND(((oct_profit / NULLIF(benchmark_profit, 0)) - 1) * 100, 1) || '%' as "Net Profit Trend %"
+FROM NetProfitAnalysis;
