@@ -36,11 +36,57 @@ export async function getStockAssets() {
 
 export async function getCustomers() {
   try {
-    const res = await query('SELECT * FROM customers ORDER BY id ASC');
+    const res = await query(`
+      SELECT *,
+        CASE 
+          WHEN status = 'Active' AND 
+               EXTRACT(DAY FROM "createdAt"::timestamp) = EXTRACT(DAY FROM (NOW() + INTERVAL '1 day'))
+          THEN true ELSE false 
+        END as is_grace_period,
+        EXTRACT(DAY FROM "createdAt"::timestamp) as due_day
+      FROM customers 
+      ORDER BY id ASC
+    `);
     return res.rows.length > 0 ? res.rows : Mock.MOCK_CUSTOMERS;
   } catch (e) {
     console.error("DB Error: getCustomers", e);
     return Mock.MOCK_CUSTOMERS;
+  }
+}
+
+export async function auditCustomerGracePeriod() {
+  try {
+    // 1. Mark as Inactive if TODAY is their due date and no payment in last 25 days
+    // We use 25 days as a buffer for monthly payments
+    const res = await query(`
+      UPDATE customers
+      SET status = 'Inactive'
+      WHERE status = 'Active'
+        AND EXTRACT(DAY FROM "createdAt"::timestamp) = EXTRACT(DAY FROM NOW())
+        AND NOT EXISTS (
+          SELECT 1 FROM transactions t
+          WHERE t.status = 'Verified'
+            AND split_part(t.id, '-', 2) = customers.id
+            AND t.timestamp::timestamp >= NOW() - INTERVAL '25 days'
+        )
+      RETURNING id
+    `);
+    
+    if (res.rows.length > 0) {
+      // Create notification for disconnected customers
+      for (const row of res.rows) {
+        await query(`
+          INSERT INTO notifications (type, category, title, message, created_at, is_unread)
+          VALUES ('warning', 'billing', 'Customer Suspended', 'Customer ' || $1 || ' has been set to Inactive due to unpaid bill.', NOW(), true)
+        `, [row.id]);
+      }
+    }
+
+    revalidatePath('/service-tiers');
+    return { success: true, count: res.rows.length };
+  } catch (e) {
+    console.error("DB Error: auditCustomerGracePeriod", e);
+    return { success: false, error: String(e) };
   }
 }
 

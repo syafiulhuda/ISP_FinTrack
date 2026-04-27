@@ -24,6 +24,13 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getAssetRoster, getStockAssets, getWarehouses, createAsset, deleteAsset, updateAssetCondition, deployAsset } from "@/actions/db";
+import { 
+  getMapAssets, 
+  addMapNode, 
+  dispatchTechnician, 
+  getMaintenanceHistory,
+  resolveMaintenance
+} from "@/actions/map";
 import { cn } from "@/lib/utils";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -85,12 +92,22 @@ export default function InventoryPage() {
     sn: '', mac: '', type: 'Router', location: '', condition: 'Good', kepemilikan: 'Dimiliki'
   });
 
+  const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
+  const [resolvingAssetSn, setResolvingAssetSn] = useState<string | null>(null);
+  const [techName, setTechName] = useState("");
+  const [techDesc, setTechDesc] = useState("");
+  const [isResolving, setIsResolving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deletingAssetSn, setDeletingAssetSn] = useState<string | null>(null);
+
   useEffect(() => {
     setMounted(true);
     
     function handleClickOutside(event: MouseEvent) {
       if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
         setActiveActionMenu(null);
+        setIsResolving(false); // Reset resolving when clicking outside
+        setIsDeleting(false); // Reset deleting when clicking outside
       }
     }
     
@@ -208,15 +225,21 @@ export default function InventoryPage() {
     }
   };
 
-  const handleDeleteAsset = async (sn: string) => {
-    if (confirm("Are you sure you want to delete this asset?")) {
-      const res = await deleteAsset(sn);
-      if (res.success) {
-        toast.success("Asset deleted.");
-        refetchAssets();
-        refetchStock();
-      }
+  const handleDeleteAsset = (sn: string) => {
+    setDeletingAssetSn(sn);
+    setIsDeleting(true);
+  };
+
+  const handleFinalDelete = async () => {
+    if (!deletingAssetSn) return;
+    const res = await deleteAsset(deletingAssetSn);
+    if (res.success) {
+      toast.success("Asset deleted permanently.");
+      refetchAssets();
+      refetchStock();
     }
+    setIsDeleting(false);
+    setDeletingAssetSn(null);
     setActiveActionMenu(null);
   };
 
@@ -242,13 +265,38 @@ export default function InventoryPage() {
   };
 
   const handleUpdateCondition = async (sn: string, condition: string) => {
-    const res = await updateAssetCondition(sn, condition);
+    if (condition === 'Good') {
+      setResolvingAssetSn(sn);
+      setIsResolving(true);
+    } else {
+      const res = await updateAssetCondition(sn, condition);
+      if (res.success) {
+        toast.success(`Asset marked as ${condition}`);
+        refetchAssets();
+        refetchStock();
+      }
+      setActiveActionMenu(null);
+    }
+  };
+
+  const handleResolveMaintenance = async () => {
+    if (!resolvingAssetSn || !techName || !techDesc) {
+      toast.error("Please fill in technician details.");
+      return;
+    }
+    const res = await resolveMaintenance(resolvingAssetSn, techName, techDesc);
     if (res.success) {
-      toast.success(`Asset marked as ${condition}`);
+      toast.success("Maintenance resolved!");
+      setIsResolving(false);
+      setActiveActionMenu(null);
+      setResolvingAssetSn(null);
+      setTechName("");
+      setTechDesc("");
       refetchAssets();
       refetchStock();
+    } else {
+      toast.error("Failed to resolve.");
     }
-    setActiveActionMenu(null);
   };
 
   if (loadingAssets || loadingStock) {
@@ -329,7 +377,7 @@ export default function InventoryPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
+        className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-slate-800"
       >
         <div className="p-6 md:p-8 border-b border-slate-200 dark:border-slate-800 flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-6">
           <div className="shrink-0">
@@ -339,7 +387,7 @@ export default function InventoryPage() {
           
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full 2xl:w-auto">
             <motion.button
-              whileHover={{ scale: 1.05, rotate: -45 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleResetFilters}
               className="w-full sm:w-auto p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-primary rounded-xl border border-slate-200 dark:border-slate-800 transition-all shadow-sm flex items-center justify-center gap-2 group shrink-0"
@@ -423,7 +471,7 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto min-h-[400px]">
+        <div className="overflow-visible min-h-[400px]">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-800/50">
@@ -533,119 +581,180 @@ export default function InventoryPage() {
                           
                           <AnimatePresence>
                             {activeActionMenu === asset.sn && (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.95, y: (index >= Math.floor(paginatedAssets.length / 2) && paginatedAssets.length > 1) ? -10 : 10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: (index >= Math.floor(paginatedAssets.length / 2) && paginatedAssets.length > 1) ? -10 : 10 }}
-                                className={cn(
-                                  "absolute right-0 z-50 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 text-left origin-right",
-                                  (index >= Math.floor(paginatedAssets.length / 2) && paginatedAssets.length > 1) ? "bottom-full mb-2" : "top-full mt-1"
-                                )}
-                              >
-                                {asset.isStock ? (
-                                  <div className="p-2 space-y-2">
-                                    {deployingAssetSn === asset.sn ? (
-                                      <div className="space-y-2 p-1">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase px-1">Deploy Details</p>
-                                        <input 
-                                          type="text" 
-                                          placeholder="Warehouse Name" 
-                                          className="w-full px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                          value={deployData.warehouse}
-                                          onChange={(e) => setDeployData({...deployData, warehouse: e.target.value})}
-                                        />
-                                        <div className="flex gap-2">
-                                          <input 
-                                            type="text" 
-                                            placeholder="City" 
-                                            className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                            value={deployData.city}
-                                            onChange={(e) => setDeployData({...deployData, city: e.target.value})}
-                                          />
-                                          <input 
-                                            type="text" 
-                                            placeholder="Province" 
-                                            className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                            value={deployData.province}
-                                            onChange={(e) => setDeployData({...deployData, province: e.target.value})}
-                                          />
+                              <div className="absolute right-0 z-50 flex items-start gap-2">
+                                {/* The Action Menu itself */}
+                                {!isResolving && (
+                                  <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    className={cn(
+                                      "w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-2 text-left origin-right",
+                                      (index >= Math.floor(paginatedAssets.length / 2) && paginatedAssets.length > 1) ? "bottom-full mb-2" : "top-full mt-1"
+                                    )}
+                                  >
+                                    {!isDeleting ? (
+                                      <>
+                                        {asset.isStock ? (
+                                          <div className="p-2 space-y-2">
+                                            {deployingAssetSn === asset.sn ? (
+                                              <div className="space-y-2 p-1">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase px-1">Deploy Details</p>
+                                                <input 
+                                                  type="text" 
+                                                  placeholder="Warehouse Name" 
+                                                  className="w-full px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                                                  value={deployData.warehouse}
+                                                  onChange={(e) => setDeployData({...deployData, warehouse: e.target.value})}
+                                                />
+                                                <div className="flex gap-2">
+                                                  <input 
+                                                    type="text" 
+                                                    placeholder="City" 
+                                                    className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                                                    value={deployData.city}
+                                                    onChange={(e) => setDeployData({...deployData, city: e.target.value})}
+                                                  />
+                                                  <input 
+                                                    type="text" 
+                                                    placeholder="Province" 
+                                                    className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                                                    value={deployData.province}
+                                                    onChange={(e) => setDeployData({...deployData, province: e.target.value})}
+                                                  />
+                                                </div>
+                                                <div className="flex gap-2 pt-1">
+                                                  <button 
+                                                    onClick={() => setDeployingAssetSn(null)}
+                                                    className="flex-1 py-2 text-[10px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+                                                  >
+                                                    Cancel
+                                                  </button>
+                                                  <button 
+                                                    onClick={() => handleDeploy(asset.sn)}
+                                                    className="flex-1 py-2 text-[10px] font-bold bg-primary text-white rounded-lg hover:opacity-90 shadow-lg shadow-primary/20 transition-all"
+                                                  >
+                                                    Confirm
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            ) : (
+                                              <button 
+                                                onClick={() => {
+                                                  setDeployingAssetSn(asset.sn);
+                                                  setDeployData({ 
+                                                    warehouse: asset.location || '', 
+                                                    city: '', 
+                                                    province: '', 
+                                                    latitude: asset.latitude || -6.2088, 
+                                                    longitude: asset.longitude || 106.8456 
+                                                  });
+                                                }} 
+                                                className="w-full text-left px-4 py-3 text-xs font-bold text-primary hover:bg-primary/5 rounded-xl transition-all flex items-center gap-3"
+                                              >
+                                                <Wifi size={14} /> Use Asset
+                                              </button>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <>
+                                            {(asset.kepemilikan === 'Dimiliki' || !asset.kepemilikan) && (
+                                              <>
+                                                {asset.condition === 'Maintenance' && (
+                                                  <button onClick={() => handleUpdateCondition(asset.sn, 'Good')} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all flex items-center gap-3">
+                                                    <CheckCircle2 size={14} className="text-emerald-500" /> Mark Healthy
+                                                  </button>
+                                                )}
+                                                {asset.condition === 'Good' && (
+                                                  <button onClick={() => handleUpdateCondition(asset.sn, 'Maintenance')} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all flex items-center gap-3">
+                                                    <Wrench size={14} className="text-blue-500" /> Maintenance
+                                                  </button>
+                                                )}
+                                                <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+                                              </>
+                                            )}
+                                            <button onClick={() => handleDeleteAsset(asset.sn)} className="w-full text-left px-4 py-3 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all flex items-center gap-3">
+                                              <AlertCircle size={14} /> Delete Asset
+                                            </button>
+                                          </>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <div className="p-3">
+                                        <div className="flex items-center gap-2 mb-3 text-rose-500">
+                                          <AlertCircle size={16} />
+                                          <span className="text-[10px] font-black uppercase tracking-tight">Confirm Delete</span>
                                         </div>
-                                        <div className="flex gap-2">
-                                          <input 
-                                            type="number" 
-                                            placeholder="Lat" 
-                                            step="any"
-                                            className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                            value={isNaN(deployData.latitude) ? '' : deployData.latitude}
-                                            onChange={(e) => {
-                                              const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
-                                              setDeployData({...deployData, latitude: val});
-                                            }}
-                                          />
-                                          <input 
-                                            type="number" 
-                                            placeholder="Lng" 
-                                            step="any"
-                                            className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700"
-                                            value={isNaN(deployData.longitude) ? '' : deployData.longitude}
-                                            onChange={(e) => {
-                                              const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
-                                              setDeployData({...deployData, longitude: val});
-                                            }}
-                                          />
-                                        </div>
-                                        <div className="flex gap-2 pt-1">
+                                        <p className="text-[9px] font-medium text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
+                                          This action will permanently remove asset <span className="font-bold text-slate-900 dark:text-white">{asset.sn}</span>. This action cannot be undone.
+                                        </p>
+                                        <div className="flex flex-col gap-2">
                                           <button 
-                                            onClick={() => setDeployingAssetSn(null)}
-                                            className="flex-1 py-2 text-[10px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+                                            onClick={handleFinalDelete}
+                                            className="w-full py-2.5 bg-rose-600 text-white rounded-xl text-[10px] font-black shadow-lg shadow-rose-500/20 hover:opacity-90 transition-all uppercase"
+                                          >
+                                            Delete Permanently
+                                          </button>
+                                          <button 
+                                            onClick={() => setIsDeleting(false)}
+                                            className="w-full py-2 text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                                           >
                                             Cancel
                                           </button>
-                                          <button 
-                                            onClick={() => handleDeploy(asset.sn)}
-                                            className="flex-1 py-2 text-[10px] font-bold bg-primary text-white rounded-lg hover:opacity-90 shadow-lg shadow-primary/20 transition-all"
-                                          >
-                                            Confirm
-                                          </button>
                                         </div>
                                       </div>
-                                    ) : (
-                                      <button 
-                                        onClick={() => {
-                                          setDeployingAssetSn(asset.sn);
-                                        setDeployData({ 
-                                          warehouse: asset.location || '', 
-                                          city: '', 
-                                          province: '', 
-                                          latitude: asset.latitude || -6.2088, 
-                                          longitude: asset.longitude || 106.8456 
-                                        });
-                                        }} 
-                                        className="w-full text-left px-4 py-3 text-xs font-bold text-primary hover:bg-primary/5 rounded-xl transition-all flex items-center gap-3"
-                                      >
-                                        <Wifi size={14} /> Use Asset
-                                      </button>
                                     )}
-                                  </div>
-                                ) : (
-                                  <>
-                                    {(asset.kepemilikan === 'Dimiliki' || !asset.kepemilikan) && (
-                                      <>
-                                        <button onClick={() => handleUpdateCondition(asset.sn, 'Good')} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all flex items-center gap-3">
-                                          <CheckCircle2 size={14} className="text-emerald-500" /> Mark Healthy
-                                        </button>
-                                        <button onClick={() => handleUpdateCondition(asset.sn, 'Maintenance')} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all flex items-center gap-3">
-                                          <Wrench size={14} className="text-blue-500" /> Maintenance
-                                        </button>
-                                        <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
-                                      </>
-                                    )}
-                                  </>
+                                  </motion.div>
                                 )}
-                                <button onClick={() => handleDeleteAsset(asset.sn)} className="w-full text-left px-4 py-3 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all flex items-center gap-3">
-                                  <AlertCircle size={14} /> Delete Asset
-                                </button>
-                              </motion.div>
+
+                                {/* Contextual Audit Form (anchored side-by-side) */}
+                                {isResolving && resolvingAssetSn === asset.sn && (
+                                  <motion.div
+                                    initial={{ opacity: 0, x: 20, scale: 0.9 }}
+                                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                                    exit={{ opacity: 0, x: 20, scale: 0.9 }}
+                                    className={cn(
+                                      "w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-6 text-left origin-right",
+                                      (index >= Math.floor(paginatedAssets.length / 2) && paginatedAssets.length > 1) ? "bottom-0" : "top-0"
+                                    )}
+                                  >
+                                    <div className="flex justify-between items-center mb-4">
+                                      <h4 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter">Audit Resolution</h4>
+                                      <button onClick={() => setIsResolving(false)} className="text-slate-400 hover:text-red-500 transition-colors">
+                                        <X size={16}/>
+                                      </button>
+                                    </div>
+                                    <div className="space-y-4">
+                                      <div className="space-y-1">
+                                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Technician</label>
+                                        <input 
+                                          type="text" 
+                                          placeholder="Name"
+                                          value={techName}
+                                          onChange={(e) => setTechName(e.target.value)}
+                                          className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Details</label>
+                                        <textarea 
+                                          placeholder="Resolution details..."
+                                          rows={2}
+                                          value={techDesc}
+                                          onChange={(e) => setTechDesc(e.target.value)}
+                                          className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none"
+                                        />
+                                      </div>
+                                      <button 
+                                        onClick={handleResolveMaintenance}
+                                        className="w-full py-3 bg-emerald-600 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-500/20 hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                                      >
+                                        <CheckCircle2 size={14} /> Mark Healthy
+                                      </button>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </div>
                             )}
                           </AnimatePresence>
                         </div>

@@ -15,10 +15,12 @@ import {
   CheckCircle2,
   ChevronDown,
   Phone,
-  RefreshCw
+  RefreshCw,
+  AlertTriangle,
+  ZapOff
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getServiceTiers, createCustomer } from "@/actions/db";
+import { getCustomers, getServiceTiers, createCustomer, auditCustomerGracePeriod } from "@/actions/db";
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -56,6 +58,27 @@ export default function ServiceTiersPage() {
     address: ''
   });
 
+  const [isAuditing, setIsAuditing] = useState(false);
+  const [showAuditConfirm, setShowAuditConfirm] = useState(false);
+
+  const handleRunAudit = async () => {
+    setShowAuditConfirm(false);
+    setIsAuditing(true);
+    const res = await auditCustomerGracePeriod();
+    if (res.success) {
+      const count = res.count ?? 0;
+      if (count > 0) {
+        toast.success(`Audit complete! ${count} customers suspended.`);
+      } else {
+        toast.info("Audit complete. No customers were due for suspension today.");
+      }
+      refetchCustomers();
+    } else {
+      toast.error("Audit failed.");
+    }
+    setIsAuditing(false);
+  };
+
   const handleAddCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await createCustomer(newCustomer);
@@ -80,6 +103,7 @@ export default function ServiceTiersPage() {
       
       const matchesStatus = 
         statusFilter === "All" || 
+        (statusFilter === "grace" && cust.is_grace_period) ||
         (cust.status?.toLowerCase() === statusFilter.toLowerCase());
 
       return matchesSearch && matchesStatus;
@@ -203,8 +227,8 @@ export default function ServiceTiersPage() {
       </div>
 
       {/* Customer List Section */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-visible">
+        <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-20">
           <div className="flex-1">
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Customer Directory</h3>
             <p className="text-sm font-medium text-slate-500 mt-1">Search and manage your active subscriber base.</p>
@@ -218,6 +242,14 @@ export default function ServiceTiersPage() {
             >
               <RefreshCw size={18} className={cn(isRefetching && "animate-spin")} />
             </button>
+            <button 
+              onClick={() => setShowAuditConfirm(true)}
+              disabled={isAuditing}
+              className="p-2.5 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/50 rounded-xl text-orange-600 hover:bg-orange-100 transition-all shadow-sm"
+              title="Run Grace Period Audit"
+            >
+              <ZapOff size={18} className={cn(isAuditing && "animate-pulse")} />
+            </button>
             <div className="relative w-full sm:w-auto">
               <select
                 value={statusFilter}
@@ -230,6 +262,7 @@ export default function ServiceTiersPage() {
                 <option value="All">All Subscribers</option>
                 <option value="active">Active Only</option>
                 <option value="inactive">Inactive Only</option>
+                <option value="grace">Grace Period (Due Tomorrow)</option>
               </select>
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -252,8 +285,8 @@ export default function ServiceTiersPage() {
           </div>
         </div>
 
-        <div className="w-full overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="w-full overflow-visible relative z-0">
+          <div className="overflow-visible">
             <table className="w-full text-left border-collapse table-fixed min-w-[1000px]">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50">
@@ -287,6 +320,11 @@ export default function ServiceTiersPage() {
                         )}></div>
                         {cust.status || 'Active'}
                       </div>
+                      {cust.is_grace_period && (
+                        <div className="mt-1 flex items-center gap-1 text-[8px] font-black text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded-md uppercase tracking-tighter w-fit">
+                          <AlertTriangle size={8} /> Due Tomorrow
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex flex-col gap-0.5">
@@ -525,6 +563,62 @@ export default function ServiceTiersPage() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Centered Glassmorphism Audit Confirmation */}
+      <AnimatePresence>
+        {showAuditConfirm && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
+            {/* Transparent click-capture overlay (no dimming) */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-transparent"
+              onClick={() => setShowAuditConfirm(false)}
+            />
+            
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 20 }}
+              className="relative w-full max-w-sm bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[3rem] p-10 shadow-[0_30px_100px_rgba(0,0,0,0.25)] border border-white/50 dark:border-slate-700/50"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-rose-600 rounded-[2rem] flex items-center justify-center text-white shadow-lg shadow-orange-500/30 mb-8 rotate-12">
+                  <ZapOff size={36} />
+                </div>
+                
+                <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight mb-3">Execute Billing Audit</h3>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed mb-10">
+                  Ready to process today&apos;s disconnects? This will <span className="text-orange-600 font-bold">automatically suspend</span> access for customers with outstanding bills.
+                </p>
+                
+                <div className="flex flex-col gap-4 w-full">
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleRunAudit}
+                    className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-orange-500/30 hover:bg-orange-500 transition-all flex items-center justify-center gap-2"
+                  >
+                    CONFIRM & DISCONNECT
+                  </motion.button>
+                  
+                  <button
+                    onClick={() => setShowAuditConfirm(false)}
+                    className="w-full py-5 bg-slate-100/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 rounded-2xl font-black text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                  >
+                    KEEP AS ACTIVE
+                  </button>
+                </div>
+              </div>
+
+              {/* Decorative background element */}
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-orange-500/10 blur-3xl rounded-full -z-10" />
+              <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full -z-10" />
             </motion.div>
           </div>
         )}

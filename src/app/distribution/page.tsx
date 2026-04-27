@@ -2,13 +2,14 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
 
 import { 
   Map as LucideMap, 
   Activity, 
   AlertTriangle, 
-  Plus, 
   Search as SearchIcon, 
   Settings as SettingsIcon,
   X as XIcon,
@@ -23,10 +24,17 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize,
-  Navigation
+  Navigation,
+  Check,
+  Server as ServerIcon
 } from "lucide-react";
 import dynamic from 'next/dynamic';
-import { getMapAssets } from "@/actions/map";
+import { 
+  getMapAssets, 
+  addMapNode, 
+  dispatchTechnician, 
+  getMaintenanceHistory 
+} from "@/actions/map";
 import { cn } from "@/lib/utils";
 
 const IndonesiaMap = dynamic(() => import('@/components/map/IndonesiaMap'), { 
@@ -40,6 +48,19 @@ export default function DistributionMapPage() {
   const [mounted, setMounted] = useState(false);
   const [zoom, setZoom] = useState(5);
   const [center, setCenter] = useState<[number, number] | null>(null);
+  const [isLayersOpen, setIsLayersOpen] = useState(false);
+  const [activeLayers, setActiveLayers] = useState({
+    OLT: true,
+    ODP: true,
+    ONT: true,
+    Server: true,
+    Good: true,
+    Maintenance: false
+  });
+  const [maintenanceHistory, setMaintenanceHistory] = useState<any[]>([]);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setMounted(true);
@@ -58,34 +79,38 @@ export default function DistributionMapPage() {
   });
 
   const filteredAssets = useMemo(() => {
-    return assets.filter(a => 
-      a.sn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      a.location.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [assets, searchQuery]);
+    const typeFilters = ['OLT', 'ODP', 'ONT', 'Server'];
+    const statusFilters = ['Good', 'Maintenance'];
+
+    const activeTypeFilters = typeFilters.filter(t => activeLayers[t as keyof typeof activeLayers]);
+    const activeStatusFilters = statusFilters.filter(s => activeLayers[s as keyof typeof activeLayers]);
+
+    return assets.filter(a => {
+      const matchesSearch = a.sn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            a.location.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesType = activeTypeFilters.length === 0 || activeTypeFilters.includes(a.type);
+      
+      // If no status filters are active, show all standard statuses (Good + Maintenance)
+      // Otherwise, show only the active ones.
+      // Note: 'Online' in DB corresponds to 'Good' in UI
+      const assetStatus = a.status === 'Online' ? 'Good' : a.status;
+      const matchesStatus = activeStatusFilters.length === 0 || activeStatusFilters.includes(assetStatus);
+      
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [assets, searchQuery, activeLayers]);
 
   const nodeStats = useMemo(() => {
     return {
-      olt: assets.filter(a => a.type === 'OLT').length,
-      odp: assets.filter(a => a.type === 'ODP').length,
-      ont: assets.filter(a => a.type === 'ONT').length
+      olt: filteredAssets.filter(a => a.type === 'OLT').length,
+      odp: filteredAssets.filter(a => a.type === 'ODP').length,
+      ont: filteredAssets.filter(a => a.type === 'ONT').length,
+      server: filteredAssets.filter(a => a.type === 'Server').length
     };
-  }, [assets]);
+  }, [filteredAssets]);
 
-  // Coordinate mapping function (normalizes lat/lng to percentage for SVG)
-  // This is a simplified version for a static city-view background
-  const getCoordinates = (lat: number, lng: number) => {
-    // Global Bounding Box for World Map Image
-    const latMin = -90.0;
-    const latMax = 90.0;
-    const lngMin = -180.0;
-    const lngMax = 180.0;
-    
-    const x = ((lng - lngMin) / (lngMax - lngMin)) * 100;
-    const y = ((latMax - lat) / (latMax - latMin)) * 100;
-    
-    return { x: `${x}%`, y: `${y}%` };
-  };
+
 
   if (!mounted) return null;
 
@@ -126,6 +151,57 @@ export default function DistributionMapPage() {
               zoom={zoom}
               center={center}
             />
+          </div>
+
+          {/* Top Right Control - Layers */}
+          <div className="absolute top-6 right-6 z-10 pointer-events-auto">
+            <div className="relative">
+              <button 
+                onClick={() => setIsLayersOpen(!isLayersOpen)}
+                className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-900 dark:text-slate-100 px-6 py-3 rounded-2xl text-xs font-black shadow-xl border border-slate-200/50 dark:border-slate-800/50 flex items-center gap-3 hover:bg-white dark:hover:bg-slate-900 transition-all"
+              >
+                <Filter size={18} className="text-primary" />
+                Layers
+              </button>
+              
+              <AnimatePresence>
+                {isLayersOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    className="absolute top-full mt-3 right-0 w-52 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-6 z-50"
+                  >
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Filter Viewport</p>
+                    <div className="space-y-3">
+                      {['OLT', 'ODP', 'ONT', 'Server', 'Good', 'Maintenance'].map((layer) => (
+                        <label key={layer} className="flex items-center gap-3 cursor-pointer group">
+                          <div className="relative flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={activeLayers[layer as keyof typeof activeLayers]}
+                              onChange={() => setActiveLayers(prev => ({ ...prev, [layer]: !prev[layer as keyof typeof activeLayers] }))}
+                              className="peer h-5 w-5 cursor-pointer appearance-none rounded-lg border-2 border-slate-300 dark:border-slate-700 transition-all checked:bg-blue-600 checked:border-blue-600"
+                            />
+                            <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                              <Check size={12} strokeWidth={4} />
+                            </div>
+                          </div>
+                          <span className={cn(
+                            "text-[13px] font-bold tracking-tight transition-colors",
+                            activeLayers[layer as keyof typeof activeLayers] 
+                              ? (layer === 'Maintenance' ? "text-amber-500" : layer === 'Good' ? "text-emerald-500" : "text-slate-900 dark:text-white")
+                              : "text-slate-400 dark:text-slate-600 group-hover:text-slate-500"
+                          )}>
+                            {layer}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
         {/* Floating Legend */}
@@ -173,36 +249,30 @@ export default function DistributionMapPage() {
                 </div>
                 <span className="text-[10px] font-bold text-slate-400">{String(nodeStats.ont).padStart(2, '0')} units</span>
               </div>
+              <div className="flex items-center justify-between group">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                    <ServerIcon size={16} />
+                  </div>
+                  <span className="text-[12px] font-bold">Core Server</span>
+                </div>
+                <span className="text-[10px] font-bold text-slate-400">{String(nodeStats.server).padStart(2, '0')} units</span>
+              </div>
               
               <hr className="border-slate-200 dark:border-slate-800 my-4"/>
               
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col items-center gap-1">
                   <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                  <span className="text-[9px] font-bold text-slate-500 uppercase">Stable</span>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase">Good</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-                  <span className="text-[9px] font-bold text-slate-500 uppercase">Warning</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
-                  <span className="text-[9px] font-bold text-slate-500 uppercase">Outage</span>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase">Maint.</span>
                 </div>
               </div>
             </div>
           </motion.div>
-          
-          <div className="flex gap-2 pointer-events-auto">
-            <button className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-blue-500/20 flex items-center gap-2 hover:bg-blue-700 transition-all">
-              <Plus size={16} />
-              Add Node
-            </button>
-            <button className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 px-5 py-2.5 rounded-xl text-xs font-black shadow-lg flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-              <Filter size={16} />
-              Layers
-            </button>
-          </div>
         </div>
 
         {/* Selected Node Drawer & Location Card */}
@@ -431,11 +501,29 @@ export default function DistributionMapPage() {
                 </div>
 
                 <div className="p-8 bg-slate-50/50 dark:bg-slate-800/30 space-y-3">
-                  <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-500/20 hover:translate-y-[-2px] transition-all flex items-center justify-center gap-3">
+                  <button 
+                    onClick={async () => {
+                      const res = await dispatchTechnician(selectedNode.id, selectedNode.sn);
+                      if (res.success) {
+                        toast.success("Technician dispatched successfully!");
+                        queryClient.invalidateQueries({ queryKey: ['map-assets'] });
+                      } else {
+                        toast.error("Failed to dispatch technician.");
+                      }
+                    }}
+                    className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-500/20 hover:translate-y-[-2px] transition-all flex items-center justify-center gap-3"
+                  >
                     <Activity size={18} />
                     Dispatch Technician
                   </button>
-                  <button className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 py-4 rounded-2xl font-black text-sm border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                  <button 
+                    onClick={async () => {
+                      const history = await getMaintenanceHistory(selectedNode.id);
+                      setMaintenanceHistory(history);
+                      setIsHistoryModalOpen(true);
+                    }}
+                    className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 py-4 rounded-2xl font-black text-sm border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                  >
                     View Maintenance History
                   </button>
                 </div>
@@ -455,7 +543,9 @@ export default function DistributionMapPage() {
               <Activity size={24} />
             </div>
             <div>
-              <p className="text-2xl font-black leading-none tracking-tighter">94.2%</p>
+              <p className="text-2xl font-black leading-none tracking-tighter">
+                {assets.length > 0 ? ((assets.filter(a => a.status === 'Online').length / assets.length) * 100).toFixed(1) : 0}%
+              </p>
               <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Network Health</p>
             </div>
           </motion.div>
@@ -469,7 +559,9 @@ export default function DistributionMapPage() {
               <AlertTriangle size={24} />
             </div>
             <div>
-              <p className="text-2xl font-black leading-none tracking-tighter text-red-600">03</p>
+              <p className="text-2xl font-black leading-none tracking-tighter text-red-600">
+                {String(assets.filter(a => a.status !== 'Online').length).padStart(2, '0')}
+              </p>
               <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Active Outages</p>
             </div>
           </motion.div>
@@ -504,6 +596,61 @@ export default function DistributionMapPage() {
           </div>
         </div>
       </div>
+
+
+      {/* Maintenance History Modal */}
+      <AnimatePresence>
+        {isHistoryModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsHistoryModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col max-h-[80vh]"
+            >
+              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 sticky top-0 z-10">
+                <div>
+                  <h3 className="text-2xl font-black tracking-tight">Maintenance Logs</h3>
+                  <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Asset: {selectedNode?.sn}</p>
+                </div>
+                <button onClick={() => setIsHistoryModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                  <XIcon size={20} />
+                </button>
+              </div>
+              <div className="p-8 overflow-y-auto flex-1 scrollbar-hide">
+                {maintenanceHistory.length > 0 ? (
+                  <div className="space-y-6">
+                    {maintenanceHistory.map((item, idx) => (
+                      <div key={item.id} className="relative pl-8 border-l-2 border-slate-100 dark:border-slate-800 pb-6 last:pb-0">
+                        <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-4 border-white dark:border-slate-900 shadow-sm" />
+                        <div className="bg-slate-50 dark:bg-slate-800/30 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                          <div className="flex justify-between items-start mb-2">
+                            <p className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter">{item.technician_name}</p>
+                            <span className="text-[10px] font-bold text-slate-400">{new Date(item.date).toLocaleString()}</span>
+                          </div>
+                          <p className="text-sm font-bold leading-relaxed">{item.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                    <Activity size={48} className="mb-4 opacity-20" />
+                    <p className="font-bold italic">No maintenance history found</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

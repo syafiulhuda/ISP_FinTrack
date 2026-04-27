@@ -3,15 +3,26 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-// Fix for default marker icons in Leaflet with Next.js
-const icon = L.icon({
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
+// Helper to create colored marker icons
+const createStatusIcon = (status: string) => {
+  const color = status === 'Online' ? '#10b981' : 
+                status === 'Maintenance' ? '#f59e0b' : 
+                '#ef4444';
+  
+  return L.divIcon({
+    html: `
+      <div class="relative flex items-center justify-center">
+        <div class="absolute w-8 h-8 rounded-full bg-white dark:bg-slate-900 shadow-xl opacity-20 animate-ping"></div>
+        <div class="relative w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 shadow-lg" style="background-color: ${color}"></div>
+      </div>
+    `,
+    className: 'custom-status-icon',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  });
+};
 
 interface IndonesiaMapProps {
   assets: any[];
@@ -38,7 +49,21 @@ function ChangeView({ center, zoom }: { center: [number, number] | null | undefi
 }
 
 export default function IndonesiaMap({ assets, onSelectNode, selectedNode, zoom = 5, center: propsCenter }: IndonesiaMapProps) {
+  const [isMounted, setIsMounted] = useState(false);
   const defaultCenter: [number, number] = [-2.5489, 118.0149]; // Indonesia Center
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
+
+  if (!isMounted) {
+    return (
+      <div className="w-full h-full bg-slate-900 flex items-center justify-center text-slate-500 font-black">
+        PREPARING MAP CONTAINER...
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full relative" id="map-parent">
@@ -57,9 +82,9 @@ export default function IndonesiaMap({ assets, onSelectNode, selectedNode, zoom 
         
         {assets.map((asset) => (
           <Marker
-            key={`${asset.id}-${asset.latitude}-${asset.longitude}`}
+            key={asset.id}
             position={[parseFloat(asset.latitude), parseFloat(asset.longitude)]}
-            icon={icon}
+            icon={createStatusIcon(asset.status)}
             eventHandlers={{
               click: () => onSelectNode(asset),
             }}

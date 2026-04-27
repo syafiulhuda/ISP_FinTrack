@@ -306,7 +306,7 @@ export default function ProfitabilityPage() {
         .filter((tx: any) => tx.status === "Verified" && tx.keterangan === "pemasukan" && isInRange(tx.timestamp))
         .map((tx: any) => {
           // Ambil bagian setelah 'TRX-' atau 'TRX-CT'
-          const fullId = tx.id?.split('-').slice(1).join('-'); // CT001
+          const fullId = tx.id?.split('-')[1]; // CT001
           return fullId;
         })
         .filter(Boolean)
