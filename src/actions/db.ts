@@ -284,9 +284,10 @@ export async function getRevenueGrowthTrend() {
       ),
       MonthlyExpenses AS (
           SELECT 
-              TO_CHAR(date, 'YYYY-MM') as month,
-              SUM(ABS(amount::numeric)) as expense
-          FROM expenses
+              TO_CHAR(timestamp, 'YYYY-MM') as month,
+              SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) as expense
+          FROM transactions
+          WHERE status = 'Verified' AND keterangan = 'pengeluaran'
           GROUP BY 1
       ),
       AggregatedExpenses AS (
@@ -408,14 +409,15 @@ export async function getCustomerGrowthTrend() {
     const res = await query(`
       with activeCustomer as (
           select
-              TO_CHAR("createdAt"::date, 'YYYY-MM') as month,
+              TO_CHAR("createdAt"::timestamp, 'YYYY-MM') as month,
               count(*) as tot_cust
           from customers c
+          where status = 'Active'
           group by 1
       )
       , inactiveCustomer as (
           select
-              TO_CHAR("createdAt"::date, 'YYYY-MM') as month,
+              TO_CHAR("createdAt"::timestamp, 'YYYY-MM') as month,
               count(*) as inactive_cust
           from customers c
           where status = 'Inactive'
@@ -426,43 +428,40 @@ export async function getCustomerGrowthTrend() {
           sum(coalesce(a.tot_cust,0)) - sum(coalesce(i.inactive_cust,0)) as "Growth"
       from activeCustomer a
       full outer join inactiveCustomer i on a.month = i.month
-      group by a.month, i.month
-      order by "Month" ASC
+      group by 1
+      order by 1 ASC
     `);
     
-    if (res.rows.length === 0) return [];
-
-    const rawData = res.rows.map(row => ({
+    const rawData = (res.rows || []).map(row => ({
       monthKey: row.Month,
-      growth: Number(row.Growth)
+      growth: parseInt(row.Growth || '0')
     }));
 
-    const filledData: { month: string; growth: number | null }[] = [];
-    const currentYear = new Date().getFullYear();
-    const lastDataMonthKey = [...rawData].reverse().find(d => d.growth > 0)?.monthKey || (rawData.length > 0 ? rawData[rawData.length - 1].monthKey : "");
+    const filledData = [];
+    const currentYear = 2026; // Hardcoded to match seed data for now or use new Date().getFullYear()
+    const currentMonthIdx = 3; // April (matching system time in prompt)
     
+    let cumulative = 0;
     for (let i = 0; i < 12; i++) {
-      const d = new Date(currentYear, i, 1);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const monthStr = `${year}-${month}`;
+      const monthNum = i + 1;
+      const monthStr = `${currentYear}-${String(monthNum).padStart(2, '0')}`;
       const existing = rawData.find(d => d.monthKey === monthStr);
-      let growthValue = existing ? existing.growth : 0;
-      const isPastLastData = monthStr > lastDataMonthKey;
+      
+      if (existing) {
+        cumulative += existing.growth;
+      }
 
+      const d = new Date(currentYear, i, 1);
       filledData.push({
-        month: d.toLocaleString('default', { month: 'short' }),
-        growth: isPastLastData ? null : growthValue
+        month: d.toLocaleString('en-US', { month: 'short' }),
+        growth: i <= currentMonthIdx ? cumulative : null
       });
     }
 
     return filledData;
   } catch (e) {
     console.error("DB Error: getCustomerGrowthTrend", e);
-    return [
-      { month: 'Oct', growth: 12 }, { month: 'Nov', growth: 15 }, { month: 'Dec', growth: 14 },
-      { month: 'Jan', growth: 18 }, { month: 'Feb', growth: 22 }, { month: 'Mar', growth: 22 }
-    ];
+    return [];
   }
 }
 

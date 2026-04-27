@@ -164,26 +164,35 @@ export default function Dashboard() {
   const dynamicData = useMemo(() => {
     const activeCustomers = customerList.filter(c => c.status === "Active");
     
+    const extractMonth = (dateVal: any) => {
+      if (!dateVal) return "";
+      try {
+        const d = new Date(dateVal);
+        if (isNaN(d.getTime())) return String(dateVal).slice(0, 7);
+        return d.toISOString().slice(0, 7);
+      } catch (e) {
+        return "";
+      }
+    };
+
     const getMonthStats = (monthStr: string) => {
-      const txs = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pemasukan" && t.timestamp && String(t.timestamp).startsWith(monthStr));
-      const rev = txs.reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
+      const txs = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pemasukan" && extractMonth(t.timestamp) === monthStr);
+      const rev = txs.reduce((sum, t) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
       
-      // Get only NEW customers in this specific month
-      const newCustsInMonth = customerList.filter((c: any) => c.createdAt && String(c.createdAt).startsWith(monthStr)).length;
-      const totalCustsAtEnd = customerList.filter((c: any) => c.createdAt && String(c.createdAt) <= `${monthStr}-31`).length;
-      const inactiveInMonth = customerList.filter((c: any) => c.status === "Inactive" && c.createdAt && String(c.createdAt).startsWith(monthStr)).length;
+      const newCustsInMonth = customerList.filter((c: any) => extractMonth(c.createdAt) === monthStr).length;
+      const totalCustsAtEnd = customerList.filter((c: any) => extractMonth(c.createdAt) <= monthStr).length;
+      const inactiveInMonth = customerList.filter((c: any) => c.status === "Inactive" && extractMonth(c.createdAt) === monthStr).length;
       
-      const activeCount = customerList.filter((c: any) => c.status === "Active" && c.createdAt && String(c.createdAt) <= `${monthStr}-31`).length;
+      const activeCount = customerList.filter((c: any) => c.status === "Active" && extractMonth(c.createdAt) <= monthStr).length;
       const arpu = activeCount > 0 ? rev / activeCount : 0;
       
-      const exps = expenseList.filter((e: any) => e.date && String(e.date).startsWith(monthStr));
-      const txExps = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pengeluaran" && t.timestamp && String(t.timestamp).startsWith(monthStr));
+      const exps = expenseList.filter((e: any) => extractMonth(e.date) === monthStr);
+      const txExps = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pengeluaran" && extractMonth(t.timestamp) === monthStr);
       
       const totalExp = 
         exps.reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0) +
-        txExps.reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
+        txExps.reduce((sum, t) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
       
-      // CAC = Expenses in month / NEW customers in month
       const cac = newCustsInMonth > 0 ? totalExp / newCustsInMonth : 0;
       const churn = totalCustsAtEnd > 0 ? (inactiveInMonth / totalCustsAtEnd) * 100 : 0;
 
@@ -213,8 +222,8 @@ export default function Dashboard() {
 
     // --- CALCULATE ANNUAL ARPU (Average of Monthly ARPUs) ---
     const allMonths = Array.from(new Set([
-      ...transactions.map(t => String(t.timestamp).slice(0, 7)),
-      ...customerList.map(c => String(c.createdAt).slice(0, 7))
+      ...transactions.map(t => extractMonth(t.timestamp)),
+      ...customerList.map(c => extractMonth(c.createdAt))
     ])).filter(m => m.match(/^\d{4}-\d{2}$/)).sort();
 
     const monthlyStatsList = allMonths.map(mStr => getMonthStats(mStr));
@@ -229,7 +238,7 @@ export default function Dashboard() {
     // CAC (Cumulative)
     const totalAbsExpense = expenseList.reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0) +
                            transactions.filter(t => t.status === "Verified" && t.keterangan === "pengeluaran")
-                                     .reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
+                                     .reduce((sum, t) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
     const cacVal = totalCustomersCount > 0 ? totalAbsExpense / totalCustomersCount : 0;
 
     const distribution = serviceTiers.map(tier => {
@@ -292,7 +301,8 @@ export default function Dashboard() {
     // 1. Find the latest month that actually has transaction data
     const monthsWithData = transactions
       .filter(t => t.status === "Verified" && t.keterangan === "pemasukan")
-      .map(t => String(t.timestamp).slice(0, 7))
+      .map(t => extractMonth(t.timestamp))
+      .filter(m => m.match(/^\d{4}-\d{2}$/))
       .sort();
     
     const latestMonthStr = monthsWithData.length > 0 ? monthsWithData[monthsWithData.length - 1] : "2026-04";
@@ -612,8 +622,22 @@ export default function Dashboard() {
                     {kpi.icon === "user-minus" && <UserMinus size={20} />}
                     {kpi.icon === "wallet" && <Wallet size={20} />}
                   </div>
-                  <div className="flex items-center gap-1 text-[11px] font-black px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                    <ArrowUp size={10} /> {kpi.trend}
+                  <div className={cn(
+                    "flex items-center gap-1 text-[11px] font-black px-2 py-1 rounded-full",
+                    kpi.trend === "0%" || kpi.trend === "0.0%"
+                      ? "bg-slate-100 text-slate-500"
+                      : kpi.trendType === "up" 
+                        ? (kpi.name === "CAC" || kpi.name === "Churn Rate" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700")
+                        : (kpi.name === "CAC" || kpi.name === "Churn Rate" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")
+                  )}>
+                    {kpi.trend === "0%" || kpi.trend === "0.0%" ? (
+                      <Minus size={10} />
+                    ) : kpi.trendType === "up" ? (
+                      <ArrowUp size={10} />
+                    ) : (
+                      <ArrowDown size={10} />
+                    )}
+                    {kpi.trend === "0%" || kpi.trend === "0.0%" ? "~" : kpi.trend}
                   </div>
                 </div>
                 <div>
