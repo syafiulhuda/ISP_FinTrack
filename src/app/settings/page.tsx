@@ -127,13 +127,13 @@ export default function SettingsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
           >
             <motion.div 
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xl flex flex-col items-center max-w-sm w-full mx-4"
+              className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col items-center max-w-sm w-full mx-4 pointer-events-auto"
             >
               {showSuccess ? (
                 <>
@@ -175,7 +175,7 @@ export default function SettingsPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsAddManagerOpen(false)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              className="absolute inset-0"
             />
             <motion.div 
               initial={{ scale: 0.9, y: 20, opacity: 0 }}
@@ -227,7 +227,14 @@ export default function SettingsPage() {
                     <select 
                       className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none"
                       value={newAdmin.role}
-                      onChange={(e) => setNewAdmin({ ...newAdmin, role: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewAdmin({ 
+                          ...newAdmin, 
+                          role: val,
+                          department: val === 'Owner' ? 'Owner' : newAdmin.department
+                        });
+                      }}
                     >
                       <option>Manager</option>
                       <option>Owner</option>
@@ -245,6 +252,7 @@ export default function SettingsPage() {
                       <option>Operations</option>
                       <option>Finance</option>
                       <option>Technical</option>
+                      {newAdmin.role === 'Owner' && <option>Owner</option>}
                     </select>
                   </div>
                 </div>

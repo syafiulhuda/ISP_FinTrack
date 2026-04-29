@@ -185,9 +185,43 @@ export async function createAdmin(data: { nama: string, email: string, role: str
   }
 }
 
+export async function createNotification(data: { category: string, title: string, message: string, type: string, action_label?: string }) {
+  try {
+    const res = await query(`
+      INSERT INTO notifications (category, title, message, type, is_unread, action_label, created_at)
+      VALUES ($1, $2, $3, $4, true, $5, NOW())
+      RETURNING *
+    `, [data.category, data.title, data.message, data.type, data.action_label || null]);
+    return res.rows[0];
+  } catch (e) {
+    console.error("DB Error: createNotification", e);
+    throw e;
+  }
+}
+
+export async function deleteNotification(id: number) {
+  try {
+    await query('UPDATE notifications SET is_hidden = true WHERE id = $1', [id]);
+    return { success: true };
+  } catch (e) {
+    console.error("DB Error: deleteNotification", e);
+    throw e;
+  }
+}
+
+export async function hideAllNotifications() {
+  try {
+    await query('UPDATE notifications SET is_hidden = true');
+    return { success: true };
+  } catch (e) {
+    console.error("DB Error: hideAllNotifications", e);
+    throw e;
+  }
+}
+
 export async function getNotifications() {
   try {
-    const res = await query('SELECT *, is_unread::boolean as is_unread FROM notifications ORDER BY id DESC');
+    const res = await query('SELECT *, is_unread::boolean as is_unread FROM notifications WHERE is_hidden = false OR is_hidden IS NULL ORDER BY id DESC');
     const data = res.rows.length > 0 ? res.rows : Mock.MOCK_NOTIFICATIONS;
     return data.map(row => ({
       ...row,
@@ -230,19 +264,6 @@ export async function getExpenses() {
   }
 }
 
-export async function createNotification(type: string, title: string, message: string) {
-  try {
-    const res = await query(`
-      INSERT INTO notifications (type, category, title, message, created_at, is_unread)
-      VALUES ($1, $1, $2, $3, NOW(), true)
-      RETURNING *
-    `, [type, title, message]);
-    return res.rows[0];
-  } catch (e) {
-    console.error("DB Error: createNotification", e);
-    return { id: Math.random(), type, title, message, created_at: new Date().toISOString(), is_unread: true };
-  }
-}
 
 export async function updateOcrData(id: number, data: { vendor: string, date: string, amount: string, reference: string }) {
   try {

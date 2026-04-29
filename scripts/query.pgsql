@@ -1,1 +1,1 @@
-SELECT name, "createdAt" FROM customers ORDER BY "createdAt" DESC LIMIT 10;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN DEFAULT FALSE;
