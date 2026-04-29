@@ -11,7 +11,6 @@ import {
   Wallet,
   Clock,
   ExternalLink,
-  Download,
   Minus,
   ArrowUpRight,
   X,
@@ -39,8 +38,6 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import jsPDF from "jspdf";
-import { domToPng } from "modern-screenshot";
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -106,8 +103,6 @@ export default function Dashboard() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [minutesAgo, setMinutesAgo] = useState(0);
   const [isRoadmapOpen, setIsRoadmapOpen] = useState(false);
-  const [isDownloadConfirmOpen, setIsDownloadConfirmOpen] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -186,12 +181,9 @@ export default function Dashboard() {
       const activeCount = customerList.filter((c: any) => c.status === "Active" && extractMonth(c.createdAt) <= monthStr).length;
       const arpu = activeCount > 0 ? rev / activeCount : 0;
       
-      const exps = expenseList.filter((e: any) => extractMonth(e.date) === monthStr);
       const txExps = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pengeluaran" && extractMonth(t.timestamp) === monthStr);
       
-      const totalExp = 
-        exps.reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0) +
-        txExps.reduce((sum, t) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
+      const totalExp = txExps.reduce((sum, t) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
       
       const cac = newCustsInMonth > 0 ? totalExp / newCustsInMonth : 0;
       const churn = totalCustsAtEnd > 0 ? (inactiveInMonth / totalCustsAtEnd) * 100 : 0;
@@ -296,7 +288,7 @@ export default function Dashboard() {
     }
     */
 
-    // --- NEW TREND LOGIC: Latest Month vs Average of Previous Months ---
+    // --- NEW TREND LOGIC: Month-over-Month (MoM) ---
     
     // 1. Find the latest month that actually has transaction data
     const monthsWithData = transactions
@@ -308,64 +300,35 @@ export default function Dashboard() {
     const latestMonthStr = monthsWithData.length > 0 ? monthsWithData[monthsWithData.length - 1] : "2026-04";
     const [year, month] = latestMonthStr.split('-').map(Number);
     
-    // 2. Get stats for the latest month
+    // 2. Get stats for the latest month (Month N)
     const latestStats = getMonthStats(latestMonthStr);
     
-    // 3. Calculate average for all previous months in the same year (e.g., Jan to Sep if latest is Oct)
-    let prevTotalStats = { rev: 0, arpu: 0, cac: 0, churn: 0, count: 0 };
-    
-    for (let m = 1; m < month; m++) {
-      const mStr = `${year}-${String(m).padStart(2, '0')}`;
-      const stats = getMonthStats(mStr);
-      if (stats.rev > 0 || stats.totalExp > 0) {
-        prevTotalStats.rev += stats.rev;
-        prevTotalStats.arpu += stats.arpu;
-        prevTotalStats.cac += stats.cac;
-        prevTotalStats.churn += stats.churn;
-        prevTotalStats.count++;
-      }
+    // 3. Get stats for the EXACT previous month (Month N-1) for MoM calculation
+    let prevMonthStr = "";
+    if (month === 1) {
+      prevMonthStr = `${year - 1}-12`;
+    } else {
+      prevMonthStr = `${year}-${String(month - 1).padStart(2, '0')}`;
     }
-    
-    const avgPrevStats = {
-      rev: prevTotalStats.count > 0 ? prevTotalStats.rev / prevTotalStats.count : 0,
-      arpu: prevTotalStats.count > 0 ? prevTotalStats.arpu / prevTotalStats.count : 0,
-      cac: prevTotalStats.count > 0 ? prevTotalStats.cac / prevTotalStats.count : 0,
-      churn: prevTotalStats.count > 0 ? prevTotalStats.churn / prevTotalStats.count : 0,
-    };
+    const prevStats = getMonthStats(prevMonthStr);
 
-    // --- SPECIAL CHURN TREND LOGIC (Matching your SQL) ---
-    const getChurnForRange = (startDateStr: string, endDateStr: string) => {
-      const start = new Date(startDateStr);
-      const end = new Date(endDateStr);
-      
-      const inactivesInRange = customerList.filter(c => {
-        const cDate = new Date(c.createdAt);
-        return c.status === "Inactive" && cDate >= start && cDate <= end;
-      }).length;
-      
-      return customerList.length > 0 ? (inactivesInRange / customerList.length) * 100 : 0;
-    };
-
-    // 1. Benchmark: Churn Rate Jan - Sep
-    const benchmarkChurn = getChurnForRange('2026-01-01', '2026-09-30');
-    
-    // 2. Current: Churn Rate Oct
-    const octoberChurn = getChurnForRange('2026-10-01', '2026-10-31');
-
-    const calculateTrend = (current: number, benchmark: number) => {
-      if (benchmark === 0) return current > 0 ? "+100%" : "0%";
-      const diff = ((current / benchmark) - 1) * 100;
+    const calculateTrend = (current: number, previous: number) => {
+      if (previous === 0) return current > 0 ? "+100%" : "0%";
+      const diff = ((current / previous) - 1) * 100;
       return `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%`;
     };
 
-    // Special Ratio Trend for Churn: (Current / Benchmark) * 100
-    const calculateRatioTrend = (current: number, benchmark: number) => {
-      if (benchmark === 0) return current > 0 ? "+100%" : "0%";
-      const ratio = (current / benchmark) * 100;
+    // Special Ratio Trend for Churn: (Current / Previous) * 100
+    // Actually, MoM churn trend should also be calculated normally (current - prev) / prev
+    // or just the difference if it's already a percentage. But keeping ratio logic if preferred:
+    const calculateRatioTrend = (current: number, previous: number) => {
+      if (previous === 0) return current > 0 ? "+100%" : "0%";
+      const ratio = (current / previous) * 100;
       return `+${ratio.toFixed(1)}%`;
     };
 
-    const churnTrendLabel = calculateRatioTrend(octoberChurn, benchmarkChurn);
+    // Using standard MoM percentage difference for Churn
+    const churnTrendLabel = calculateTrend(latestStats.churn, prevStats.churn);
 
     // --- 4. PREPARE FINAL KPI VALUES ---
     
@@ -390,48 +353,32 @@ export default function Dashboard() {
       trendData: trendData,
       growthTrend: customerGrowthTrend,
       trends: {
-        arpu: calculateTrend(latestStats.arpu, avgPrevStats.arpu),
-        cac: calculateTrend(latestStats.cac, avgPrevStats.cac),
+        arpu: calculateTrend(latestStats.arpu, prevStats.arpu),
+        cac: calculateTrend(latestStats.cac, prevStats.cac),
         churn: churnTrendLabel,
-        revenue: calculateTrend(latestStats.rev, avgPrevStats.rev)
-      }
+        revenue: calculateTrend(latestStats.rev, prevStats.rev)
+      },
+      currentPeriod: (() => {
+        const customerDates = customerList
+          .map(c => new Date(c.createdAt))
+          .filter(d => !isNaN(d.getTime()))
+          .sort((a, b) => b.getTime() - a.getTime());
+        
+        const latestDate = customerDates.length > 0 ? customerDates[0] : new Date();
+        const monthName = latestDate.toLocaleString("en-US", { month: "short" });
+        const quarter = Math.floor(latestDate.getMonth() / 3) + 1;
+        return `Q${quarter} ${monthName} ${latestDate.getFullYear()}`;
+      })()
     };
   }, [customerList, serviceTiers, expenseList, transactions, trendData, customerGrowthTrend]);
 
   const kpis = [
     { name: "ARPU", value: dynamicData.arpu, trend: dynamicData.trends.arpu, trendType: dynamicData.trends.arpu.startsWith('+') ? "up" : "down", icon: "user" },
-    { name: "CAC", value: dynamicData.cac, trend: dynamicData.trends.cac, trendType: dynamicData.trends.cac.startsWith('-') ? "up" : "down", icon: "dollar" }, // Lower CAC is 'up' in terms of performance
-    { name: "Churn Rate", value: dynamicData.churnRate, trend: dynamicData.trends.churn, trendType: dynamicData.trends.churn.startsWith('-') ? "up" : "down", icon: "user-minus" }, // Lower Churn is 'up'
+    { name: "CAC", value: dynamicData.cac, trend: dynamicData.trends.cac, trendType: dynamicData.trends.cac.startsWith('+') ? "up" : "down", icon: "dollar" },
+    { name: "Churn Rate", value: dynamicData.churnRate, trend: dynamicData.trends.churn, trendType: dynamicData.trends.churn.startsWith('+') ? "up" : "down", icon: "user-minus" },
     { name: "Total Revenue", value: dynamicData.totalRevenue, trend: dynamicData.trends.revenue, trendType: dynamicData.trends.revenue.startsWith('+') ? "up" : "down", icon: "wallet" },
   ];
 
-  const handleDownload = async () => {
-    if (!dashboardRef.current) return;
-    setIsDownloadConfirmOpen(false);
-    setIsDownloading(true);
-    
-    try {
-      const dataUrl = await domToPng(dashboardRef.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        style: {
-          borderRadius: '0'
-        }
-      });
-      
-      const pdf = new jsPDF("p", "mm", "a4");
-      const imgProps = pdf.getImageProperties(dataUrl);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
-      pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`ISP-FinTrack-Dashboard-${new Date().toISOString().split('T')[0]}.pdf`);
-    } catch (error) {
-      console.error("Failed to generate PDF:", error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
 
   if (loadingCustomers || loadingTiers || loadingExpenses || loadingTx || loadingTrend) {
     return (
@@ -507,47 +454,6 @@ export default function Dashboard() {
             </motion.div>
           </div>
         )}
-
-        {/* Download Confirmation Modal */}
-        {isDownloadConfirmOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsDownloadConfirmOpen(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-10 text-center"
-            >
-              <div className="w-20 h-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mx-auto mb-6">
-                <Download size={40} />
-              </div>
-              <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 mb-2">Export Dashboard?</h3>
-              <p className="text-slate-500 font-medium mb-8 leading-relaxed">
-                System will generate a high-resolution PDF report of the current executive overview. This process may take a few seconds.
-              </p>
-              <div className="flex flex-col gap-3">
-                <button 
-                  onClick={handleDownload}
-                  className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 transition-all"
-                >
-                  Confirm & Download
-                </button>
-                <button 
-                  onClick={() => setIsDownloadConfirmOpen(false)}
-                  className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
       </AnimatePresence>
 
       <div ref={dashboardRef} className="space-y-8 pb-10">
@@ -574,27 +480,10 @@ export default function Dashboard() {
               <div className="text-right hidden sm:block">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Period</p>
                 <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {(() => {
-                    const now = new Date();
-                    const month = now.toLocaleString("en-US", { month: "short" });
-                    const year = now.getFullYear();
-                    const quarter = Math.floor(now.getMonth() / 3) + 1;
-
-                    return `Q${quarter} ${month} ${year}`;
-                  })()}
+                  {dynamicData.currentPeriod}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setIsDownloadConfirmOpen(true)}
-                  disabled={isDownloading}
-                  className={cn(
-                    "p-3 text-slate-400 hover:text-primary rounded-xl hover:bg-slate-100 transition-colors",
-                    isDownloading && "animate-pulse cursor-not-allowed"
-                  )}
-                >
-                  <Download size={20} />
-                </button>
                 <button 
                   onClick={() => router.push('/profitability')}
                   className="bg-primary text-white p-3 rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all"

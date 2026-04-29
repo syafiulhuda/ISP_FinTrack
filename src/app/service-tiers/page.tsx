@@ -20,7 +20,7 @@ import {
   ZapOff
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getServiceTiers, createCustomer, auditCustomerGracePeriod } from "@/actions/db";
+import { getCustomers, getServiceTiers, createCustomer, auditCustomerGracePeriod, createServiceTier } from "@/actions/db";
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -38,7 +38,25 @@ export default function ServiceTiersPage() {
     queryFn: getCustomers,
     staleTime: 0
   });
-  const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
+  const { data: serviceTiersRaw = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
+
+  // Ensure Gamers package is always included in the UI if not present in DB
+  const serviceTiers = useMemo(() => {
+    const tiers = [...serviceTiersRaw];
+    if (!tiers.find(t => t.name.toLowerCase().includes('gamers'))) {
+      tiers.push({
+        id: 999,
+        name: "Gamers",
+        speed: "200",
+        unit: "Mbps",
+        price: "Rp 750.000",
+        fup: "Unlimited",
+        type: "priority",
+        icon: "gamepad"
+      });
+    }
+    return tiers;
+  }, [serviceTiersRaw]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -57,6 +75,19 @@ export default function ServiceTiersPage() {
     village: '',
     address: ''
   });
+
+  const [isAddTierModalOpen, setIsAddTierModalOpen] = useState(false);
+  const [newTier, setNewTier] = useState({
+    name: '',
+    speed: '',
+    unit: 'Mbps',
+    price: '',
+    fup: '',
+    type: 'secondary',
+    icon: 'wifi'
+  });
+
+  const { refetch: refetchTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
 
   const [isAuditing, setIsAuditing] = useState(false);
   const [showAuditConfirm, setShowAuditConfirm] = useState(false);
@@ -89,6 +120,19 @@ export default function ServiceTiersPage() {
       refetchCustomers();
     } else {
       toast.error(res?.error || "Failed to register customer.");
+    }
+  };
+
+  const handleAddTier = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await createServiceTier(newTier);
+    if (res?.success) {
+      toast.success(`Service Plan ${res.tier.name} created!`);
+      setIsAddTierModalOpen(false);
+      setNewTier({ name: '', speed: '', unit: 'Mbps', price: '', fup: '', type: 'secondary', icon: 'wifi' });
+      refetchTiers();
+    } else {
+      toast.error(res?.error || "Failed to create service plan.");
     }
   };
 
@@ -143,10 +187,10 @@ export default function ServiceTiersPage() {
   return (
     <div className="space-y-10">
       {/* Hero Section */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6">
         <div>
-          <h2 className="text-5xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Active Packages</h2>
-          <p className="text-lg font-medium text-slate-500 mt-2">Manage broadband tiers and subscriber distribution.</p>
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Active Packages</h2>
+          <p className="text-base md:text-lg font-medium text-slate-500 mt-2">Manage broadband tiers and subscriber distribution.</p>
         </div>
         <div className="flex items-center gap-4">
           <motion.button
@@ -160,8 +204,8 @@ export default function ServiceTiersPage() {
         </div>
       </div>
 
-      {/* Bento Grid: Service Tiers */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Horizontal Scroll: Service Tiers */}
+      <div className="flex overflow-x-auto pb-6 gap-6 no-scrollbar">
         {serviceTiers.map((tier, index) => {
           const Icon = IconMap[tier.icon as keyof typeof IconMap] || Wifi;
           const isFeatured = tier.type === "featured";
@@ -174,7 +218,7 @@ export default function ServiceTiersPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               className={cn(
-                "p-6 rounded-xl relative overflow-hidden transition-all duration-300 hover:-translate-y-1 shadow-sm border border-slate-200 dark:border-slate-800",
+                "p-6 rounded-xl relative overflow-hidden transition-all duration-300 hover:-translate-y-1 shadow-sm border border-slate-200 dark:border-slate-800 min-w-[280px] flex-shrink-0",
                 isFeatured 
                   ? "bg-gradient-to-br from-primary to-blue-700 text-white shadow-blue-500/20" 
                   : "bg-white dark:bg-slate-900"
@@ -224,10 +268,26 @@ export default function ServiceTiersPage() {
             </motion.div>
           );
         })}
+
+        {/* Add New Tier Card */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setIsAddTierModalOpen(true)}
+          className="flex-shrink-0 min-w-[280px] p-6 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-4 hover:border-primary hover:bg-primary/5 transition-all group"
+        >
+          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+            <Plus size={24} />
+          </div>
+          <div className="text-center">
+            <p className="font-bold text-slate-900 dark:text-slate-100">Add New Plan</p>
+            <p className="text-xs text-slate-500">Expand your service offerings</p>
+          </div>
+        </motion.button>
       </div>
 
       {/* Customer List Section */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-visible">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-20">
           <div className="flex-1">
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Customer Directory</h3>
@@ -285,8 +345,8 @@ export default function ServiceTiersPage() {
           </div>
         </div>
 
-        <div className="w-full overflow-visible relative z-0">
-          <div className="overflow-visible">
+        <div className="w-full overflow-x-auto relative z-0">
+          <div>
             <table className="w-full text-left border-collapse table-fixed min-w-[1000px]">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50">
@@ -557,6 +617,156 @@ export default function ServiceTiersPage() {
                   <button 
                     type="button"
                     onClick={() => setIsAddModalOpen(false)}
+                    className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-sm transition-all hover:bg-slate-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Tier Sidebar */}
+      <AnimatePresence>
+        {isAddTierModalOpen && (
+          <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
+            <motion.div 
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="absolute top-0 right-0 w-full max-w-md bg-white dark:bg-slate-900 h-fit max-h-screen shadow-[-20px_20px_60px_rgba(0,0,0,0.15)] rounded-bl-[3.5rem] border-l border-b border-slate-200 dark:border-slate-800 p-8 md:p-10 pointer-events-auto flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Add New Service</h3>
+                  <p className="text-xs font-medium text-slate-500 mt-1">Configure a new internet plan for your customers.</p>
+                </div>
+                <motion.button 
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setIsAddTierModalOpen(false)} 
+                  className="p-2 text-slate-400 hover:text-primary transition-colors"
+                >
+                  <X size={24} />
+                </motion.button>
+              </div>
+
+              <form onSubmit={handleAddTier} className="space-y-6 overflow-y-auto px-1 pr-3 custom-scrollbar">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Plan Name</label>
+                    <input 
+                      required
+                      type="text" 
+                      placeholder="e.g. Ultra Gaming"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                      value={newTier.name}
+                      onChange={(e) => setNewTier({...newTier, name: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Speed Value</label>
+                      <input 
+                        required
+                        type="text" 
+                        placeholder="e.g. 300"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                        value={newTier.speed}
+                        onChange={(e) => setNewTier({...newTier, speed: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Unit</label>
+                      <div className="relative">
+                        <select 
+                          className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none"
+                          value={newTier.unit}
+                          onChange={(e) => setNewTier({...newTier, unit: e.target.value})}
+                        >
+                          <option value="Mbps">Mbps</option>
+                          <option value="Gbps">Gbps</option>
+                        </select>
+                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Price (string)</label>
+                      <input 
+                        required
+                        type="text" 
+                        placeholder="e.g. Rp 900.000"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                        value={newTier.price}
+                        onChange={(e) => setNewTier({...newTier, price: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">FUP Limit</label>
+                      <input 
+                        required
+                        type="text" 
+                        placeholder="e.g. 2 TB or Unlimited"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                        value={newTier.fup}
+                        onChange={(e) => setNewTier({...newTier, fup: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Package Type</label>
+                      <div className="relative">
+                        <select 
+                          className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none"
+                          value={newTier.type}
+                          onChange={(e) => setNewTier({...newTier, type: e.target.value})}
+                        >
+                          <option value="standard">Standard</option>
+                          <option value="secondary">Secondary</option>
+                          <option value="featured">Featured (Blue Gradient)</option>
+                          <option value="priority">Priority (Orange Badge)</option>
+                        </select>
+                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Icon</label>
+                      <div className="relative">
+                        <select 
+                          className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none"
+                          value={newTier.icon}
+                          onChange={(e) => setNewTier({...newTier, icon: e.target.value})}
+                        >
+                          <option value="wifi">WiFi</option>
+                          <option value="speed">Zap/Speed</option>
+                          <option value="rocket">Rocket</option>
+                          <option value="gamepad">Gamepad</option>
+                        </select>
+                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 pt-6 border-t border-slate-100 dark:border-slate-800 mt-6">
+                  <button 
+                    type="submit"
+                    className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 transition-all hover:opacity-90 flex items-center justify-center gap-2"
+                  >
+                    <Plus size={18} /> Create Service Plan
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setIsAddTierModalOpen(false)}
                     className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-sm transition-all hover:bg-slate-200"
                   >
                     Cancel

@@ -351,24 +351,14 @@ export async function getRevenueGrowthTrend() {
 }
 
 export async function getServiceMix(province?: string) {
-  const targetServices = ['Premium', 'Standard', 'Basic', 'Gamers'];
-  
-  const getMockData = () => {
-    const filteredMock = province && province !== "All Regions"
-      ? Mock.MOCK_CUSTOMERS.filter(c => c.province === province)
-      : Mock.MOCK_CUSTOMERS;
-
-    const counts: Record<string, number> = { 'Premium': 0, 'Standard': 0, 'Basic': 0, 'Gamers': 0 };
-    filteredMock.forEach(c => {
-      const name = c.service === 'Gamers Node' ? 'Gamers' : c.service;
-      if (targetServices.includes(name)) {
-        counts[name] = (counts[name] || 0) + 1;
-      }
-    });
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  };
-
   try {
+    // 1. Get all available tiers from DB
+    const tiersRes = await query('SELECT name FROM service_tiers');
+    const tierNames = tiersRes.rows.length > 0 
+      ? tiersRes.rows.map(r => r.name)
+      : ['Premium', 'Standard', 'Basic', 'Gamers'];
+
+    // 2. Aggregate customers by service name
     let sql = `
       SELECT 
         CASE 
@@ -377,7 +367,7 @@ export async function getServiceMix(province?: string) {
         END as service_name, 
         COUNT(*) as count 
       FROM customers
-      WHERE TRIM(service) IN ('Premium', 'Standard', 'Basic', 'Gamers Node', 'Gamers')
+      WHERE 1=1
     `;
     const params = [];
     
@@ -390,17 +380,41 @@ export async function getServiceMix(province?: string) {
     
     const res = await query(sql, params);
     
-    if (res.rows && res.rows.length > 0) {
-      return res.rows.map(row => ({
-        name: row.service_name,
-        value: parseInt(row.count)
-      }));
-    }
-
-    return getMockData();
+    // 3. Return all tiers, filling 0 for those with no customers
+    return tierNames.map(name => {
+      const row = res.rows.find(r => r.service_name.toLowerCase() === name.toLowerCase());
+      return {
+        name,
+        value: row ? parseInt(row.count) : 0
+      };
+    });
   } catch (e) {
     console.error("DB Error: getServiceMix", e);
-    return getMockData();
+    return Mock.MOCK_SERVICE_TIERS.map(t => ({ name: t.name, value: 0 }));
+  }
+}
+
+export async function createServiceTier(data: { 
+  name: string, 
+  speed: string, 
+  unit: string, 
+  price: string, 
+  fup: string, 
+  type: string, 
+  icon: string 
+}) {
+  try {
+    const res = await query(`
+      INSERT INTO service_tiers (name, speed, unit, price, fup, type, icon)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `, [data.name, data.speed, data.unit, data.price, data.fup, data.type, data.icon]);
+    revalidatePath('/service-tiers');
+    revalidatePath('/profitability');
+    return { success: true, tier: res.rows[0] };
+  } catch (e) {
+    console.error("DB Error: createServiceTier", e);
+    return { success: false, error: String(e) };
   }
 }
 

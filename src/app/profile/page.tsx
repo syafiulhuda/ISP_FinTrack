@@ -129,7 +129,7 @@ export default function ProfilePage() {
               Internal Profile
             </span>
             <h2 className="text-4xl font-bold tracking-tighter text-slate-900 dark:text-slate-100 mt-1">
-              User Profile
+              {profileData.fullName}
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-lg mt-1">
               Manage your administrative identity and security preferences.

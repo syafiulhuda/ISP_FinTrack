@@ -11,7 +11,6 @@ import {
   BarChart3,
   Calendar,
   Filter,
-  Download,
   ChevronDown,
   Minus,
   Search,
@@ -19,8 +18,6 @@ import {
   X,
   RotateCcw
 } from "lucide-react";
-import jsPDF from "jspdf";
-import { domToPng } from "modern-screenshot";
 import { 
   BarChart, 
   Bar, 
@@ -60,14 +57,10 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export default function ProfitabilityPage() {
   const [selectedProvince, setSelectedProvince] = useState("All Regions");
-  const [startDate, setStartDate] = useState("2026-01-01");
-  const [endDate, setEndDate] = useState("2026-12-31");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-
-  const handleResetDates = () => {
-    setStartDate("2026-01-01");
-    setEndDate("2026-12-31");
-  };
+  const [datesInitialized, setDatesInitialized] = useState(false);
 
   const { data: customerList = [], isLoading: loadingCustomers } = useQuery({ queryKey: ['customers'], queryFn: getCustomers });
   const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
@@ -78,6 +71,60 @@ export default function ProfitabilityPage() {
     refetchInterval: 60000 
   });
 
+  const handleResetDates = useCallback(() => {
+    if (!transactions.length && !expenseList.length && !customerList.length) return;
+    
+    // Find min and max dates from all data
+    let minDateStr = "9999-12-31";
+    let maxDateStr = "0000-01-01";
+    
+    const updateMinMax = (val: any) => {
+      if (!val) return;
+      let d = "";
+      if (typeof val === "string") {
+        d = val.substring(0, 10);
+      } else if (val instanceof Date) {
+        d = val.toISOString().substring(0, 10);
+      } else {
+        d = String(val).substring(0, 10);
+      }
+      
+      if (!d || d.length < 10) return;
+      if (d < minDateStr) minDateStr = d;
+      if (d > maxDateStr) maxDateStr = d;
+    };
+    
+    transactions.forEach((t: any) => updateMinMax(t.timestamp));
+    expenseList.forEach((e: any) => updateMinMax(e.date));
+    customerList.forEach((c: any) => updateMinMax(c.createdAt || c.registration_date));
+    
+    if (minDateStr === "9999-12-31") {
+      minDateStr = "2026-01-01";
+      maxDateStr = "2026-12-31";
+    }
+    
+    const minYear = parseInt(minDateStr.substring(0, 4));
+    const maxYear = parseInt(maxDateStr.substring(0, 4));
+    
+    // If data spans decades/multiple years (difference > 1), default to maxYear's start and end
+    if (maxYear - minYear >= 1) {
+      setStartDate(`${maxYear}-01-01`);
+      // Use the maxDateStr or the end of the maxYear
+      setEndDate(maxDateStr);
+    } else {
+      setStartDate(minDateStr);
+      setEndDate(maxDateStr);
+    }
+  }, [transactions, expenseList, customerList]);
+
+  // Initialize dates once data is loaded
+  useEffect(() => {
+    if (!datesInitialized && (transactions.length > 0 || expenseList.length > 0 || customerList.length > 0)) {
+      handleResetDates();
+      setDatesInitialized(true);
+    }
+  }, [transactions, expenseList, customerList, datesInitialized, handleResetDates]);
+
   const provinces = useMemo(() => [
     "All Regions",
     ...Array.from(new Set(customerList.map((c: any) => c.province))).sort()
@@ -85,8 +132,6 @@ export default function ProfitabilityPage() {
 
   const [mounted, setMounted] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isDownloadConfirmOpen, setIsDownloadConfirmOpen] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
 
@@ -400,13 +445,16 @@ export default function ProfitabilityPage() {
       return c.province === selectedProvince;
     });
 
-    const targetServices = ['Premium', 'Standard', 'Basic', 'Gamers'];
-    const serviceCounts: Record<string, number> = { 'Premium': 0, 'Standard': 0, 'Basic': 0, 'Gamers': 0 };
+    const targetServices = serviceTiers.map((t: any) => t.name);
+    const serviceCounts: Record<string, number> = {};
+    targetServices.forEach((name: string) => {
+      serviceCounts[name] = 0;
+    });
     
     activeCustomers.forEach((c: any) => {
       const name = c.service === 'Gamers Node' ? 'Gamers' : c.service;
-      if (targetServices.includes(name)) {
-        serviceCounts[name] = (serviceCounts[name] || 0) + 1;
+      if (serviceCounts.hasOwnProperty(name)) {
+        serviceCounts[name] += 1;
       }
     });
 
@@ -442,8 +490,7 @@ export default function ProfitabilityPage() {
     transactions
       .filter((tx: any) => {
         const isVerified = tx.status === "Verified" && tx.keterangan === "pemasukan";
-        const matchesMonth = getLocalDate(tx.timestamp).startsWith(latestMonth);
-        if (!isVerified || !matchesMonth) return false;
+        if (!isVerified || !isInRange(tx.timestamp)) return false;
         
         if (isAllRegions) return true;
         const idSuffix = tx.id?.split('-')[1];
@@ -455,13 +502,38 @@ export default function ProfitabilityPage() {
         incomeByType[type] = (incomeByType[type] || 0) + (tx.numericAmount || 0);
       });
 
-    // B. Dari General Expenses (Allocated)
+    // B & C. Gabungan Expenses & Transactions (Berdasarkan Query SQL Join)
+    // Dasar: expenses e LEFT JOIN transactions t ON e.id = TRX-ID
     expenseList
       .filter((exp: any) => isInRange(exp.date))
       .forEach((exp: any) => {
-        const type = exp.category || "Operational";
-        const amount = Math.abs(exp.amount || 0) * allocationFactor;
-        expenseByType[type] = (expenseByType[type] || 0) + amount;
+        // Cari transaksi yang match (split_part(t.id,'-',2) = e.id)
+        const matchingTx = transactions.find((tx: any) => 
+          tx.keterangan === "pengeluaran" && 
+          tx.id?.split('-')[1] === String(exp.id)
+        );
+
+        if (matchingTx) {
+          // 1. Jika ada match, filter berdasarkan Region Transaksi tersebut
+          let matchesRegion = isAllRegions;
+          if (!matchesRegion) {
+            const cityProvince = getProvinceFromCity(matchingTx.city);
+            const idSuffixForCust = matchingTx.id?.split('-')[1];
+            const customer = customerList.find((c: any) => String(c.id) === idSuffixForCust);
+            matchesRegion = cityProvince === selectedProvince || customer?.province === selectedProvince;
+          }
+
+          if (matchesRegion) {
+            // Gunakan t.type sesuai query
+            const type = matchingTx.type || exp.category || "Other Expense";
+            expenseByType[type] = (expenseByType[type] || 0) + Math.abs(exp.amount || 0);
+          }
+        } else {
+          // 2. Jika tidak ada match (Left Join), gunakan category & allocation factor (Default)
+          const type = exp.category || "Operational";
+          const amount = Math.abs(exp.amount || 0) * (isAllRegions ? 1 : allocationFactor);
+          expenseByType[type] = (expenseByType[type] || 0) + amount;
+        }
       });
 
     const waterfallData = [
@@ -506,24 +578,6 @@ export default function ProfitabilityPage() {
     [searchQuery, provinces]
   );
 
-  const handleDownload = async () => {
-    if (!pageRef.current) return;
-    setIsDownloadConfirmOpen(false);
-    setIsDownloading(true);
-    try {
-      const dataUrl = await domToPng(pageRef.current, { scale: 2, backgroundColor: "#ffffff" });
-      const pdf = new jsPDF("p", "mm", "a4");
-      const imgProps = pdf.getImageProperties(dataUrl);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`ISP-Profitability-Report-${new Date().toISOString().split('T')[0]}.pdf`);
-    } catch (error) {
-      console.error("Download failed", error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
 
   if (loadingCustomers || loadingTiers || loadingExpenses || loadingTx) {
     return <div className="h-full w-full flex items-center justify-center animate-pulse text-slate-500 font-medium">Loading Profitability Data...</div>;
@@ -534,20 +588,6 @@ export default function ProfitabilityPage() {
   return (
     <div className="relative">
       <AnimatePresence>
-        {isDownloadConfirmOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsDownloadConfirmOpen(false)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-10 text-center">
-              <div className="w-20 h-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mx-auto mb-6"><Download size={40} /></div>
-              <h3 className="text-2xl font-black mb-2">Export Analysis?</h3>
-              <p className="text-slate-500 mb-8 leading-relaxed">System will generate a detailed report for {selectedProvince}.</p>
-              <div className="flex flex-col gap-3">
-                <button onClick={handleDownload} className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl hover:opacity-90 transition-all">Confirm & Download</button>
-                <button onClick={() => setIsDownloadConfirmOpen(false)} className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded-2xl font-black text-sm hover:bg-slate-200 transition-all">Cancel</button>
-              </div>
-            </motion.div>
-          </div>
-        )}
       </AnimatePresence>
 
       <div ref={pageRef} className="space-y-10 pb-10">
@@ -595,9 +635,6 @@ export default function ProfitabilityPage() {
                 )}
               </AnimatePresence>
             </div>
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setIsDownloadConfirmOpen(true)} className={cn("p-4 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20", isDownloading && "animate-pulse")}>
-              <Download size={20} />
-            </motion.button>
           </div>
         </div>
 
@@ -649,7 +686,7 @@ export default function ProfitabilityPage() {
                     cursor={{ fill: 'transparent' }} 
                     content={({ active, payload }) => active && payload && payload.length && (
                       <div className="bg-slate-900 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl border border-white/10 backdrop-blur-md">
-                        <p className="opacity-60 mb-1">{payload[0].name}</p>
+                        <p className="opacity-60 mb-1 uppercase tracking-tighter">{payload[0].payload.name}</p>
                         <p className="text-sm font-black">Rp {Math.abs(Number(payload[0].value)).toLocaleString()}</p>
                       </div>
                     )} 
