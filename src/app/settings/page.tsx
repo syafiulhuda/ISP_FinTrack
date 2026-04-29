@@ -8,7 +8,21 @@ import {
   X,
   Mail,
   Lock,
-  BadgeCheck
+  BadgeCheck,
+  SlidersHorizontal, 
+  Palette, 
+  Puzzle, 
+  Users, 
+  Info, 
+  ImagePlus, 
+  Pipette, 
+  Landmark, 
+  MessageSquare, 
+  FileScan, 
+  ShieldCheck, 
+  MoreVertical,
+  Loader2,
+  CheckCircle2
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAdminList, createAdmin } from "@/actions/db";
