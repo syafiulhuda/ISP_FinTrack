@@ -1,21 +1,21 @@
 
 export const MOCK_CUSTOMERS = [
   {
-    "id": "CT001",
-    "name": "Ahmad Subarjo",
+    "id": "CT115",
+    "name": "xyz",
     "service": "Premium",
-    "address": "Jl. Merdeka No. 12",
+    "address": "Jl. Baru No. 1",
     "village": "Giri Mekar",
     "district": "Cilengkrang",
     "city": "Bandung",
     "province": "Jawa Barat",
     "status": "Active",
-    "createdAt": "2026-01-15",
+    "createdAt": "2026-04-28",
     "no_telp": null
   },
   {
-    "id": "CT002",
-    "name": "Siti Aminah",
+    "id": "CT116",
+    "name": "Bayu Pangestu",
     "service": "Standard",
     "address": "Jl. Sudirman No. 45",
     "village": "Senayan",
@@ -23,20 +23,20 @@ export const MOCK_CUSTOMERS = [
     "city": "Jakarta Selatan",
     "province": "DKI Jakarta",
     "status": "Active",
-    "createdAt": "2026-02-20",
+    "createdAt": "2026-04-24",
     "no_telp": null
   },
   {
-    "id": "CT003",
-    "name": "Budi Santoso",
+    "id": "CT117",
+    "name": "Siti Setiawan",
     "service": "Basic",
     "address": "Jl. Diponegoro No. 8",
     "village": "Tegalsari",
     "district": "Candisari",
     "city": "Semarang",
     "province": "Jawa Tengah",
-    "status": "Inactive",
-    "createdAt": "2026-03-10",
+    "status": "Active",
+    "createdAt": "2026-04-22",
     "no_telp": null
   },
   {
@@ -2434,9 +2434,9 @@ export const MOCK_OCR = {
 };
 
 export const MOCK_ADMIN = {
-  fullName: "Ahmad Jaelani",
-  email: "ahmad.j@ispfintrack.id",
-  role: "Chief Technology Officer",
-  department: "Infrastructure & Core Network",
-  image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2000&auto=format&fit=crop"
+  fullName: "Super Admin",
+  email: "admin@isp-fintrack.com",
+  role: "General Manager",
+  department: "Executive",
+  image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=256&h=256"
 };

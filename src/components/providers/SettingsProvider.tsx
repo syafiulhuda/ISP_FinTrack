@@ -7,6 +7,8 @@ interface SettingsState {
   appSubtitle: string;
   accentColor: string;
   appLogo: string;
+  timezone: string;
+  language: string;
 }
 
 interface SettingsContextType {
@@ -19,6 +21,8 @@ const defaultSettings: SettingsState = {
   appSubtitle: "Enterprise Finance",
   accentColor: "blue",
   appLogo: "",
+  timezone: "UTC +08:00 Singapore Time",
+  language: "English (Universal)",
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

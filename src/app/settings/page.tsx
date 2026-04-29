@@ -4,21 +4,15 @@ import { useState, useEffect, useRef } from "react";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useSettings } from "@/components/providers/SettingsProvider";
 import { 
-  SlidersHorizontal, 
-  Palette, 
-  Puzzle, 
-  Users, 
-  Info, 
-  ImagePlus, 
-  Pipette, 
-  Landmark, 
-  MessageSquare, 
-  FileScan, 
-  ShieldCheck, 
-  MoreVertical,
-  Loader2,
-  CheckCircle2
+  Settings,
+  X,
+  Mail,
+  Lock,
+  BadgeCheck
 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getAdminList, createAdmin } from "@/actions/db";
+import { cn } from "@/lib/utils";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -40,13 +34,33 @@ export default function SettingsPage() {
     appSubtitle: settings.appSubtitle,
     accentColor: settings.accentColor,
     appLogo: settings.appLogo,
+    timezone: settings.timezone || 'UTC +08:00 Singapore Time',
+    language: settings.language || 'English (Universal)',
   });
 
   const colorPickerRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
+  const [activeTab, setActiveTab] = useState<'general' | 'branding' | 'integrations' | 'users'>('general');
   const [isSaving, setIsSaving] = useState(false);
   const [isDiscarding, setIsDiscarding] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isAddManagerOpen, setIsAddManagerOpen] = useState(false);
+  const [newAdmin, setNewAdmin] = useState({ nama: '', email: '', role: 'Manager', department: 'Operations', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=256&h=256' });
+
+  const { data: adminList = [] } = useQuery({
+    queryKey: ['adminList'],
+    queryFn: getAdminList
+  });
+
+  const createAdminMutation = useMutation({
+    mutationFn: createAdmin,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminList'] });
+      setIsAddManagerOpen(false);
+      setNewAdmin({ nama: '', email: '', role: 'Manager', department: 'Operations', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=256&h=256' });
+    }
+  });
 
   useEffect(() => {
     setFormData({
@@ -54,6 +68,8 @@ export default function SettingsPage() {
       appSubtitle: settings.appSubtitle,
       accentColor: settings.accentColor,
       appLogo: settings.appLogo,
+      timezone: settings.timezone || 'UTC +08:00 Singapore Time',
+      language: settings.language || 'English (Universal)',
     });
   }, [settings]);
 
@@ -75,6 +91,8 @@ export default function SettingsPage() {
         appSubtitle: settings.appSubtitle,
         accentColor: settings.accentColor,
         appLogo: settings.appLogo,
+        timezone: settings.timezone || 'UTC +08:00 Singapore Time',
+        language: settings.language || 'English (Universal)',
       });
       setIsDiscarding(false);
     }, 800);
@@ -135,6 +153,100 @@ export default function SettingsPage() {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {isAddManagerOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAddManagerOpen(false)}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+            >
+              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Add New Manager</h3>
+                <button onClick={() => setIsAddManagerOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
+                  <X size={20} />
+                </button>
+              </div>
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  createAdminMutation.mutate(newAdmin);
+                }}
+                className="p-8 space-y-4"
+              >
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                    <Users size={12} /> Full Name
+                  </label>
+                  <input 
+                    required
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                    value={newAdmin.nama}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, nama: e.target.value })}
+                    placeholder="e.g. John Doe"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                    <Mail size={12} /> Email Address
+                  </label>
+                  <input 
+                    required
+                    type="email"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                    value={newAdmin.email}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
+                    placeholder="john@example.com"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Role</label>
+                    <select 
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none"
+                      value={newAdmin.role}
+                      onChange={(e) => setNewAdmin({ ...newAdmin, role: e.target.value })}
+                    >
+                      <option>Manager</option>
+                      <option>Owner</option>
+                      <option>Admin</option>
+                      <option>Support</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Department</label>
+                    <select 
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none"
+                      value={newAdmin.department}
+                      onChange={(e) => setNewAdmin({ ...newAdmin, department: e.target.value })}
+                    >
+                      <option>Operations</option>
+                      <option>Finance</option>
+                      <option>Technical</option>
+                    </select>
+                  </div>
+                </div>
+                <button 
+                  type="submit"
+                  disabled={createAdminMutation.isPending}
+                  className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                >
+                  {createAdminMutation.isPending ? <Loader2 className="animate-spin" size={18} /> : "Create Manager"}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     <motion.div 
       variants={containerVariants}
       initial="hidden"
@@ -153,19 +265,51 @@ export default function SettingsPage() {
         
         {/* Left Nav: Category Selection */}
         <motion.nav variants={itemVariants} className="lg:col-span-3 flex flex-col gap-2 p-1 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <button className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-slate-800 text-primary font-bold shadow-sm transition-all border border-slate-200 dark:border-slate-700">
+          <button 
+            onClick={() => setActiveTab('general')}
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold",
+              activeTab === 'general' 
+                ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700" 
+                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+            )}
+          >
             <SlidersHorizontal size={18} />
             General
           </button>
-          <button className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all text-slate-500 font-medium">
+          <button 
+            onClick={() => setActiveTab('branding')}
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold",
+              activeTab === 'branding' 
+                ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700" 
+                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+            )}
+          >
             <Palette size={18} />
             Branding
           </button>
-          <button className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all text-slate-500 font-medium">
+          <button 
+            onClick={() => setActiveTab('integrations')}
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold",
+              activeTab === 'integrations' 
+                ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700" 
+                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+            )}
+          >
             <Puzzle size={18} />
             Integrations
           </button>
-          <button className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all text-slate-500 font-medium">
+          <button 
+            onClick={() => setActiveTab('users')}
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold",
+              activeTab === 'users' 
+                ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700" 
+                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+            )}
+          >
             <Users size={18} />
             User Management
           </button>
@@ -175,60 +319,70 @@ export default function SettingsPage() {
         <div className="lg:col-span-9 space-y-6">
           
           {/* Section 1: General Info */}
-          <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 relative overflow-hidden group shadow-sm">
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
-              <Info className="text-primary" size={20} />
-              Application Configuration
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  App Name
-                </label>
-                <input 
-                  className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-slate-900 dark:text-slate-100 font-medium transition-all" 
-                  type="text" 
-                  value={formData.appName}
-                  onChange={(e) => setFormData({ ...formData, appName: e.target.value })}
-                />
+          {activeTab === 'general' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 relative overflow-hidden group shadow-sm">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                <Info className="text-primary" size={20} />
+                Application Configuration
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    App Name
+                  </label>
+                  <input 
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-slate-900 dark:text-slate-100 font-medium transition-all" 
+                    type="text" 
+                    value={formData.appName}
+                    onChange={(e) => setFormData({ ...formData, appName: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    App Subtitle
+                  </label>
+                  <input 
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-slate-900 dark:text-slate-100 font-medium transition-all" 
+                    type="text" 
+                    value={formData.appSubtitle}
+                    onChange={(e) => setFormData({ ...formData, appSubtitle: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Default Timezone
+                  </label>
+                  <select 
+                    value={formData.timezone}
+                    onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none outline-none"
+                  >
+                    <option>UTC -05:00 Eastern Time</option>
+                    <option>UTC +00:00 Greenwich Mean Time</option>
+                    <option>UTC +08:00 Singapore Time</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    System Language
+                  </label>
+                  <select 
+                    value={formData.language}
+                    onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none outline-none"
+                  >
+                    <option>English (Universal)</option>
+                    <option>Spanish (ES)</option>
+                    <option>French (FR)</option>
+                  </select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  App Subtitle
-                </label>
-                <input 
-                  className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-slate-900 dark:text-slate-100 font-medium transition-all" 
-                  type="text" 
-                  value={formData.appSubtitle}
-                  onChange={(e) => setFormData({ ...formData, appSubtitle: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Default Timezone
-                </label>
-                <select className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none">
-                  <option>UTC -05:00 Eastern Time</option>
-                  <option>UTC +00:00 Greenwich Mean Time</option>
-                  <option>UTC +08:00 Singapore Time</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  System Language
-                </label>
-                <select className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none">
-                  <option>English (Universal)</option>
-                  <option>Spanish (ES)</option>
-                  <option>French (FR)</option>
-                </select>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
 
-          {/* Section 2: Branding (Bento Style) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          {/* Section 2: Branding */}
+          {activeTab === 'branding' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
                 <Palette className="text-primary" size={20} />
                 Visual Identity
@@ -254,22 +408,20 @@ export default function SettingsPage() {
                 <div className="space-y-3">
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Accent Color</p>
                   <div className="flex gap-3">
-                    <button 
-                      onClick={() => setFormData({ ...formData, accentColor: 'blue' })}
-                      className={`w-8 h-8 rounded-full bg-blue-600 transition-all ${formData.accentColor === 'blue' ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 ring-blue-600 opacity-100' : 'opacity-60 hover:opacity-100'}`}
-                    ></button>
-                    <button 
-                      onClick={() => setFormData({ ...formData, accentColor: 'indigo' })}
-                      className={`w-8 h-8 rounded-full bg-indigo-600 transition-all ${formData.accentColor === 'indigo' ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 ring-indigo-600 opacity-100' : 'opacity-60 hover:opacity-100'}`}
-                    ></button>
-                    <button 
-                      onClick={() => setFormData({ ...formData, accentColor: 'emerald' })}
-                      className={`w-8 h-8 rounded-full bg-emerald-600 transition-all ${formData.accentColor === 'emerald' ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 ring-emerald-600 opacity-100' : 'opacity-60 hover:opacity-100'}`}
-                    ></button>
-                    <button 
-                      onClick={() => setFormData({ ...formData, accentColor: 'amber' })}
-                      className={`w-8 h-8 rounded-full bg-amber-600 transition-all ${formData.accentColor === 'amber' ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 ring-amber-600 opacity-100' : 'opacity-60 hover:opacity-100'}`}
-                    ></button>
+                    {['blue', 'indigo', 'emerald', 'amber'].map((color) => (
+                      <button 
+                        key={color}
+                        onClick={() => setFormData({ ...formData, accentColor: color })}
+                        className={cn(
+                          "w-8 h-8 rounded-full transition-all",
+                          color === 'blue' && "bg-blue-600",
+                          color === 'indigo' && "bg-indigo-600",
+                          color === 'emerald' && "bg-emerald-600",
+                          color === 'amber' && "bg-amber-600",
+                          formData.accentColor === color ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 opacity-100' : 'opacity-60 hover:opacity-100'
+                        )}
+                      />
+                    ))}
                     <div 
                       onClick={() => colorPickerRef.current?.click()}
                       className={`w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-slate-500 relative ${formData.accentColor.startsWith('#') ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 opacity-100' : 'opacity-60'}`}
@@ -288,88 +440,74 @@ export default function SettingsPage() {
                 </div>
               </div>
             </motion.div>
+          )}
 
-            {/* Section 3: Integrations (Status Checklist) */}
-            <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 border-l-4 border-l-primary shadow-sm">
+          {/* Section 3: Integrations */}
+          {activeTab === 'integrations' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 border-l-4 border-l-primary shadow-sm">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
                 <Puzzle className="text-primary" size={20} />
                 Core Service Status
               </h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <Landmark className="text-slate-400" size={18} />
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">Bank API Gateway</span>
+                {[
+                  { name: "Bank API Gateway", icon: Landmark, status: "CONNECTED", color: "bg-blue-50 text-primary", dotColor: "bg-primary" },
+                  { name: "WhatsApp Gateway", icon: MessageSquare, status: "DISCONNECTED", color: "bg-red-50 text-red-600", dotColor: "bg-red-600" },
+                  { name: "OCR Processor", icon: FileScan, status: "IDLE", color: "bg-orange-50 text-orange-600", dotColor: "bg-orange-500" },
+                ].map((item) => (
+                  <div key={item.name} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <item.icon className="text-slate-400" size={18} />
+                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.name}</span>
+                    </div>
+                    <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest", item.color)}>
+                      <span className={cn("w-1.5 h-1.5 rounded-full", item.dotColor, item.status === "CONNECTED" && "animate-pulse")}></span>
+                      {item.status}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-primary text-[10px] font-black tracking-widest">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                    CONNECTED
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <MessageSquare className="text-slate-400" size={18} />
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">WhatsApp Gateway</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-900/30 text-red-600 text-[10px] font-black tracking-widest">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
-                    DISCONNECTED
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <FileScan className="text-slate-400" size={18} />
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">OCR Processor</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 dark:bg-orange-900/30 text-orange-600 text-[10px] font-black tracking-widest">
-                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
-                    IDLE
-                  </div>
-                </div>
+                ))}
               </div>
             </motion.div>
-          </div>
+          )}
 
           {/* Section 4: User Management */}
-          <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
-                <ShieldCheck className="text-primary" size={20} />
-                Active Administrators
-              </h3>
-              <button className="text-primary font-bold text-sm hover:underline">Add New Manager</button>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-2xl transition-all group">
-                <div className="flex items-center gap-4">
-                  <img 
-                    alt="Admin Profile" 
-                    className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCA5haV6tNaCkQuE5uWxaBqfA_BrmG9oAIi1Iz8dl2bpVIi70VO4F7pZc6cXpfhQ_ZRn8YFeJJiiNPw-6X6G7ZEVN3r_P6x1G-rhuQquiuT8Ad0j_GdqGY6Yw7-Q7GINHeeJwuS18ayXURA8U0tmaraxlqtzialMiJKGgfcyTkvvTliv8M7sf0jvYEqLAQKMKG8uM_u-mUf5IHgURO7GRPYCajFeqP9VQbdD6-bv2a8MNcfRHEIQAw6bN8ODyxT61Tl0ukeVvlvrMo"
-                  />
-                  <div>
-                    <p className="font-bold text-sm text-slate-900 dark:text-slate-100">Adrian Sterling</p>
-                    <p className="text-xs text-slate-500">Owner • Last active 2m ago</p>
-                  </div>
-                </div>
-                <MoreVertical className="text-slate-400 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" size={18} />
+          {activeTab === 'users' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <ShieldCheck className="text-primary" size={20} />
+                  Active Administrators
+                </h3>
+                <button 
+                  onClick={() => setIsAddManagerOpen(true)}
+                  className="text-primary font-bold text-sm hover:underline"
+                >
+                  Add New Manager
+                </button>
               </div>
-              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-2xl transition-all group">
-                <div className="flex items-center gap-4">
-                  <img 
-                    alt="Admin Profile" 
-                    className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4lG48mutyjq7_x5Nv3FgbB-fwSfQrB5_PcvCmtdp_XlN-fp23w5NxRkeZcIjfN2RcIq_eLrWaHPr7RzlE5kYQ2HyXzKhnngmzUQcKE0mjv-1wWdYRkPRr2t7J_E3zFmL13v0C9uqmO6ldoBIzobTIlvrr3dkbKROZ7A2M4BGD1BACiJ1QR5j8-wFMVtGUP662X_--KLlfF3XWfFHDeV5HpCJeeT3z0S_-iw_EcGN8SEnh1ZXQISJM3ORD0O_Jv5SVJeJkHYNONgc"
-                  />
-                  <div>
-                    <p className="font-bold text-sm text-slate-900 dark:text-slate-100">Lydia Vance</p>
-                    <p className="text-xs text-slate-500">Billing Manager • Last active 4h ago</p>
+              <div className="space-y-2">
+                {adminList.map((admin: any) => (
+                  <div key={admin.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-2xl transition-all group">
+                    <div className="flex items-center gap-4">
+                      <img 
+                        alt={admin.nama} 
+                        className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" 
+                        src={admin.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.nama)}&background=random`}
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-sm text-slate-900 dark:text-slate-100">{admin.nama}</p>
+                          {admin.role === 'Owner' && <BadgeCheck size={14} className="text-primary" />}
+                        </div>
+                        <p className="text-xs text-slate-500">{admin.role} • {admin.department}</p>
+                      </div>
+                    </div>
+                    <MoreVertical className="text-slate-400 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" size={18} />
                   </div>
-                </div>
-                <MoreVertical className="text-slate-400 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" size={18} />
+                ))}
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
 
           {/* Actions */}
           <motion.div variants={itemVariants} className="flex items-center justify-end gap-4 py-8">

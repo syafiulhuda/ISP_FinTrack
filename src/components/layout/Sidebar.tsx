@@ -8,7 +8,6 @@ import {
   CreditCard, 
   Package, 
   Map, 
-  HelpCircle, 
   Power,
   Plus,
   Bell,
@@ -30,7 +29,6 @@ const navigation = [
 ];
 
 const footerNavigation = [
-  { name: "Support", href: "/support", icon: HelpCircle },
   { name: "Logout", href: "/logout", icon: Power },
 ];
 

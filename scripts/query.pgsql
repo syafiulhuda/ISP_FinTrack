@@ -1,1 +1,1 @@
-SELECT id, nama, image FROM admin;
+SELECT name, "createdAt" FROM customers ORDER BY "createdAt" DESC LIMIT 10;

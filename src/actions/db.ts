@@ -153,6 +153,38 @@ export async function updateAdminProfile(data: { fullName: string, email: string
   }
 }
 
+export async function getAdminList() {
+  try {
+    const res = await query('SELECT id, nama, email, role, department, image, nickname FROM admin ORDER BY id ASC');
+    return res.rows;
+  } catch (e) {
+    console.error("DB Error: getAdminList", e);
+    // Map fallback to match DB column names
+    return [{
+      id: 1,
+      nama: Mock.MOCK_ADMIN.fullName,
+      email: Mock.MOCK_ADMIN.email,
+      role: Mock.MOCK_ADMIN.role,
+      department: Mock.MOCK_ADMIN.department,
+      image: Mock.MOCK_ADMIN.image
+    }];
+  }
+}
+
+export async function createAdmin(data: { nama: string, email: string, role: string, department: string, image: string }) {
+  try {
+    const res = await query(`
+      INSERT INTO admin (nama, email, role, department, image, password)
+      VALUES ($1, $2, $3, $4, $5, 'admin123')
+      RETURNING id, nama, email, role, department, image
+    `, [data.nama, data.email, data.role, data.department, data.image]);
+    return res.rows[0];
+  } catch (e) {
+    console.error("DB Error: createAdmin", e);
+    throw e;
+  }
+}
+
 export async function getNotifications() {
   try {
     const res = await query('SELECT *, is_unread::boolean as is_unread FROM notifications ORDER BY id DESC');
