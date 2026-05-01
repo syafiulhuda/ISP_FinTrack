@@ -9,7 +9,7 @@ import {
   ChevronLeft 
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getServiceTiers, getAssetRoster, getInvoices } from "@/actions/db";
+import { getCustomers, getServiceTiers, getAssetRoster, getInvoices, getAgingMVData } from "@/actions/db";
 import { cn } from "@/lib/utils";
 import { useState, useMemo, useEffect } from "react";
 
@@ -25,6 +25,7 @@ export default function RegionalAnalysisPage() {
   const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers, refetchInterval: 60000 });
   const { data: assetRoster = [], isLoading: loadingAssets } = useQuery({ queryKey: ['assetRoster'], queryFn: getAssetRoster, refetchInterval: 60000 });
   const { data: invoicesList = [], isLoading: loadingInvoices } = useQuery({ queryKey: ['invoices'], queryFn: getInvoices, refetchInterval: 60000 });
+  const { data: agingMVData = [], isLoading: loadingMV } = useQuery({ queryKey: ['agingMV'], queryFn: getAgingMVData, refetchInterval: 60000 });
 
 
   const assetSummary = useMemo(() => {
@@ -134,21 +135,37 @@ export default function RegionalAnalysisPage() {
       let aging61_90 = 0;
       let aging90Plus = 0;
 
-      const today = new Date();
-      villageInvoices.forEach(inv => {
-        const dueDate = new Date(inv.due_date);
-        const diffTime = Math.abs(today.getTime() - dueDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        const amount = Number(inv.amount) || 0;
-        if (diffDays <= 30) aging0_30 += amount;
-        else if (diffDays <= 60) aging31_60 += amount;
-        else if (diffDays <= 90) aging61_90 += amount;
-        else aging90Plus += amount;
-      });
-
-      // Fallback to simulation if no real invoices exist for the village
-      if (villageInvoices.length === 0) {
+      // 3. Integrate Materialized View Data (Prioritize MV over simulation)
+      const mvNode = agingMVData.find((m: any) => m.NODE === v.node);
+      
+      if (mvNode) {
+        // Data ditemukan di MV (Data Riil)
+        aging0_30 = Number(mvNode["REAL 0-30 DAYS"]) || 0;
+        aging31_60 = Number(mvNode["REAL 31-60 DAYS"]) || 0;
+        aging61_90 = Number(mvNode["REAL 61-90 DAYS"]) || 0;
+        aging90Plus = Number(mvNode["REAL 90+ DAYS"]) || 0;
+      } else if (agingMVData.length > 0) {
+        // Jika MV sudah ada isinya tapi NODE ini tidak ada, artinya piutangnya memang 0 (LUNAS)
+        aging0_30 = 0;
+        aging31_60 = 0;
+        aging61_90 = 0;
+        aging90Plus = 0;
+      } else if (villageInvoices.length > 0) {
+        // Fallback ke tabel invoices manual jika MV belum pernah di-refresh
+        const today = new Date();
+        villageInvoices.forEach(inv => {
+          const dueDate = new Date(inv.due_date);
+          const diffTime = Math.abs(today.getTime() - dueDate.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          const amount = Number(inv.amount) || 0;
+          if (diffDays <= 30) aging0_30 += amount;
+          else if (diffDays <= 60) aging31_60 += amount;
+          else if (diffDays <= 90) aging61_90 += amount;
+          else aging90Plus += amount;
+        });
+      } else {
+        // Terakhir, gunakan simulasi hanya jika database benar-benar kosong (Fresh Install)
         aging0_30 = v.revenue * 0.8;
         aging31_60 = v.revenue * 0.12;
         aging61_90 = v.revenue * 0.05;
@@ -169,8 +186,21 @@ export default function RegionalAnalysisPage() {
           critical: aging90Plus > (v.revenue * 0.1)
         }
       };
+    }).sort((a, b) => {
+      // Hitung total piutang untuk pengurutan
+      const totalA = (parseFloat(a.aging["0-30"].replace(/[^0-9]/g, '')) || 0) +
+                     (parseFloat(a.aging["31-60"].replace(/[^0-9]/g, '')) || 0) +
+                     (parseFloat(a.aging["61-90"].replace(/[^0-9]/g, '')) || 0) +
+                     (parseFloat(a.aging["90Plus"].replace(/[^0-9]/g, '')) || 0);
+      
+      const totalB = (parseFloat(b.aging["0-30"].replace(/[^0-9]/g, '')) || 0) +
+                     (parseFloat(b.aging["31-60"].replace(/[^0-9]/g, '')) || 0) +
+                     (parseFloat(b.aging["61-90"].replace(/[^0-9]/g, '')) || 0) +
+                     (parseFloat(b.aging["90Plus"].replace(/[^0-9]/g, '')) || 0);
+      
+      return totalB - totalA; // Terbesar ke terkecil
     }).filter(v => v.node.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [selectedProvince, selectedCity, selectedDistrict, selectedSubDistrict, searchQuery, customerList, serviceTiers, mounted, invoicesList]);
+  }, [selectedProvince, selectedCity, selectedDistrict, selectedSubDistrict, searchQuery, customerList, serviceTiers, mounted, invoicesList, agingMVData]);
 
   const paginatedProfit = dynamicData.slice((profitPage - 1) * itemsPerPage, profitPage * itemsPerPage);
   const totalProfitPages = Math.ceil(dynamicData.length / itemsPerPage);
@@ -178,7 +208,7 @@ export default function RegionalAnalysisPage() {
   const paginatedAging = dynamicData.slice((agingPage - 1) * itemsPerPage, agingPage * itemsPerPage);
   const totalAgingPages = Math.ceil(dynamicData.length / itemsPerPage);
 
-  if (loadingCustomers || loadingTiers || loadingAssets || loadingInvoices) {
+  if (loadingCustomers || loadingTiers || loadingAssets || loadingInvoices || loadingMV) {
     return <div className="h-full w-full flex items-center justify-center"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="text-slate-500 font-medium">Loading Regional Data...</p></div></div>;
   }
 

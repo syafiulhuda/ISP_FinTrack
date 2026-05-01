@@ -39,6 +39,8 @@ export interface Transaction {
   keterangan?: string;
   type?: string;
   isWarning?: boolean;
+  linked_id?: string;
+  city?: string;
 }
 
 export interface ServiceTier {

@@ -33,7 +33,7 @@ import {
   Area
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getServiceTiers, getExpenses, getTransactions, createNotification, getRevenueGrowthTrend, getCustomerGrowthTrend } from "@/actions/db";
+import { getCustomers, getServiceTiers, getExpenses, getTransactions, createNotification, getRevenueGrowthTrend, getCustomerGrowthTrend, getInactiveCust } from "@/actions/db";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
@@ -97,6 +97,10 @@ export default function Dashboard() {
   const { data: customerGrowthTrend = [], isLoading: loadingGrowth } = useQuery({
     queryKey: ['customerGrowthTrend'],
     queryFn: getCustomerGrowthTrend
+  });
+  const { data: inactiveCust = [], isLoading: loadingInactive } = useQuery({
+    queryKey: ['inactiveCust'],
+    queryFn: getInactiveCust
   });
 
   const [mounted, setMounted] = useState(false);
@@ -171,27 +175,53 @@ export default function Dashboard() {
     };
 
     const getMonthStats = (monthStr: string) => {
-      const txs = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pemasukan" && extractMonth(t.timestamp) === monthStr);
+      // 1. Revenue: Verified pemasukan in month
+      const txs = transactions.filter((t: any) => 
+        t.status === "Verified" && 
+        t.keterangan === "pemasukan" && 
+        extractMonth(t.timestamp) === monthStr
+      );
       const rev = txs.reduce((sum, t) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
       
-      const newCustsInMonth = customerList.filter((c: any) => extractMonth(c.createdAt) === monthStr).length;
-      const totalCustsAtEnd = customerList.filter((c: any) => extractMonth(c.createdAt) <= monthStr).length;
-      const inactiveInMonth = customerList.filter((c: any) => c.status === "Inactive" && extractMonth(c.createdAt) === monthStr).length;
+      // 2. Active Count (for ARPU denominator): status='Active' AND createdAt <= month
+      const activeCount = customerList.filter((c: any) => 
+        c.status === "Active" && 
+        extractMonth(c.createdAt) <= monthStr
+      ).length;
       
-      const activeCount = customerList.filter((c: any) => c.status === "Active" && extractMonth(c.createdAt) <= monthStr).length;
       const arpu = activeCount > 0 ? rev / activeCount : 0;
       
-      const txExps = transactions.filter((t: any) => t.status === "Verified" && t.keterangan === "pengeluaran" && extractMonth(t.timestamp) === monthStr);
-      
+      // 3. Expense: Verified pengeluaran in month
+      const txExps = transactions.filter((t: any) => 
+        t.status === "Verified" && 
+        t.keterangan === "pengeluaran" && 
+        extractMonth(t.timestamp) === monthStr
+      );
       const totalExp = txExps.reduce((sum, t) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
       
+      // 4. New Customers: createdAt in month
+      const newCustsInMonth = customerList.filter((c: any) => 
+        extractMonth(c.createdAt) === monthStr
+      ).length;
+      
       const cac = newCustsInMonth > 0 ? totalExp / newCustsInMonth : 0;
+      
+      // 5. Inactive this month: From inactive_cust table
+      const inactiveInMonth = inactiveCust.filter((ic: any) => 
+        extractMonth(ic.inactiveat) === monthStr
+      ).length;
+      
+      // 6. Total Customers (Churn denominator): status='Active' AND createdAt <= month
+      // User SQL uses: (SELECT COUNT(*) FROM customers WHERE status = 'Active' and TO_CHAR("createdAt"::date, 'YYYY-MM') <= m.month)
+      const totalCustsAtEnd = activeCount; 
+      
       const churn = totalCustsAtEnd > 0 ? (inactiveInMonth / totalCustsAtEnd) * 100 : 0;
 
       return { rev, arpu, cac, churn, totalExp, newCusts: newCustsInMonth };
     };
 
     const calculateRevenue = () => {
+      const activeCustomers = customerList.filter(c => c.status === "Active");
       const estimatedRevenue = activeCustomers.reduce((sum, customer) => {
         const tier = serviceTiers.find(t => {
           const sName = customer.service?.toLowerCase();
@@ -209,29 +239,6 @@ export default function Dashboard() {
 
       return estimatedRevenue > 0 ? estimatedRevenue : totalVerifiedRevenue;
     };
-
-    const currentRevenue = calculateRevenue();
-
-    // --- CALCULATE ANNUAL ARPU (Average of Monthly ARPUs) ---
-    const allMonths = Array.from(new Set([
-      ...transactions.map(t => extractMonth(t.timestamp)),
-      ...customerList.map(c => extractMonth(c.createdAt))
-    ])).filter(m => m.match(/^\d{4}-\d{2}$/)).sort();
-
-    const monthlyStatsList = allMonths.map(mStr => getMonthStats(mStr));
-    const arpuValues = monthlyStatsList.map(s => s.arpu).filter(v => v > 0);
-    const currentARPU = arpuValues.length > 0 ? arpuValues.reduce((a, b) => a + b, 0) / arpuValues.length : 0;
-
-    // Churn Rate (Cumulative)
-    const totalCustomersCount = customerList.length;
-    const inactiveCustomersCount = customerList.filter(c => c.status === "Inactive").length;
-    const churnRateVal = totalCustomersCount > 0 ? (inactiveCustomersCount / totalCustomersCount) * 100 : 0;
-
-    // CAC (Cumulative)
-    const totalAbsExpense = expenseList.reduce((sum: number, e: any) => sum + Math.abs(Number(e.amount) || 0), 0) +
-                           transactions.filter(t => t.status === "Verified" && t.keterangan === "pengeluaran")
-                                     .reduce((sum, t) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
-    const cacVal = totalCustomersCount > 0 ? totalAbsExpense / totalCustomersCount : 0;
 
     const distribution = serviceTiers.map(tier => {
       const count = activeCustomers.filter(c => {
@@ -255,8 +262,6 @@ export default function Dashboard() {
       };
     });
 
-
-
     const formatCompactNumber = (number: number) => {
       if (number >= 1000000000) return `Rp ${(number / 1000000000).toFixed(2)}B`;
       if (number >= 1000000) return `Rp ${(number / 1000000).toFixed(2)}M`;
@@ -264,46 +269,19 @@ export default function Dashboard() {
       return `Rp ${number.toFixed(0)}`;
     };
 
-    // Generate dynamic trend data for the last 6 months (Now using DB-provided data)
-    /* 
-    const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-    const currentYear = new Date().getFullYear();
-    const currentMonthIdx = new Date().getMonth();
-    
-    const trendData = [];
-    for (let i = 5; i >= 0; i--) {
-      let mIdx = currentMonthIdx - i;
-      let year = currentYear;
-      if (mIdx < 0) {
-        mIdx += 12;
-        year -= 1;
-      }
-      const monthStr = `${year}-${months[mIdx]}`;
-      const stats = getMonthStats(monthStr);
-      trendData.push({
-        month: new Date(year, mIdx).toLocaleString('default', { month: 'short' }),
-        revenue: stats.rev,
-        expenses: stats.totalExp
-      });
-    }
-    */
-
-    // --- NEW TREND LOGIC: Month-over-Month (MoM) ---
-    
-    // 1. Find the latest month that actually has transaction data
+    // --- CALCULATE TRENDS ---
     const monthsWithData = transactions
       .filter(t => t.status === "Verified" && t.keterangan === "pemasukan")
       .map(t => extractMonth(t.timestamp))
       .filter(m => m.match(/^\d{4}-\d{2}$/))
       .sort();
     
-    const latestMonthStr = monthsWithData.length > 0 ? monthsWithData[monthsWithData.length - 1] : "2026-04";
+    // Default to 2026-05 and 2026-04 for consistency with user SQL
+    const latestMonthStr = monthsWithData.length > 0 ? monthsWithData[monthsWithData.length - 1] : "2026-05";
     const [year, month] = latestMonthStr.split('-').map(Number);
     
-    // 2. Get stats for the latest month (Month N)
     const latestStats = getMonthStats(latestMonthStr);
     
-    // 3. Get stats for the EXACT previous month (Month N-1) for MoM calculation
     let prevMonthStr = "";
     if (month === 1) {
       prevMonthStr = `${year - 1}-12`;
@@ -313,58 +291,69 @@ export default function Dashboard() {
     const prevStats = getMonthStats(prevMonthStr);
 
     const calculateTrend = (current: number, previous: number) => {
-      if (previous === 0) return current > 0 ? "+100%" : "0%";
+      if (previous === 0) return current > 0 ? `+${current.toFixed(1)}%` : "0%";
       const diff = ((current / previous) - 1) * 100;
       return `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%`;
     };
 
-    // Special Ratio Trend for Churn: (Current / Previous) * 100
-    // Actually, MoM churn trend should also be calculated normally (current - prev) / prev
-    // or just the difference if it's already a percentage. But keeping ratio logic if preferred:
-    const calculateRatioTrend = (current: number, previous: number) => {
-      if (previous === 0) return current > 0 ? "+100%" : "0%";
-      const ratio = (current / previous) * 100;
-      return `+${ratio.toFixed(1)}%`;
-    };
+    // CAC Display Logic (Match SQL CASE)
+    let cacDisplay = `Rp ${latestStats.cac.toLocaleString('id-ID').replace(/,/g, '.')}`;
+    if (latestStats.newCusts === 0) {
+      cacDisplay = latestStats.totalExp > 0 ? "N/A" : "Rp 0";
+    }
 
-    // Using standard MoM percentage difference for Churn
-    const churnTrendLabel = calculateTrend(latestStats.churn, prevStats.churn);
+    // CAC Trend Logic (Match SQL CASE)
+    let cacTrend = calculateTrend(latestStats.cac, prevStats.cac);
+    if (latestStats.newCusts === 0 || prevStats.newCusts === 0) {
+      cacTrend = "-";
+    }
 
-    // --- 4. PREPARE FINAL KPI VALUES ---
+    // Churn Trend Logic (Percentage Points Difference)
+    const churnDiff = latestStats.churn - prevStats.churn;
+    const churnTrendLabel = `${churnDiff >= 0 ? '+' : ''}${churnDiff.toFixed(1)}%`;
+
+    const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+    const currentYear = new Date().getFullYear();
+    const currentMonthIdx = new Date().getMonth();
     
-    // Total Revenue: Latest Month (October)
-    const bigRevenue = latestStats.rev; 
-    
-    // ARPU: Latest Month (October)
-    const bigARPU = latestStats.arpu; 
-    
-    // CAC: Latest Month (October)
-    const bigCAC = latestStats.cac; 
-    
-    // Churn Rate: Latest Month (October)
-    const bigChurn = latestStats.churn;
+    const calculatedTrendData = [];
+    for (let i = 5; i >= 0; i--) {
+      let mIdx = currentMonthIdx - i;
+      let year = currentYear;
+      if (mIdx < 0) {
+        mIdx += 12;
+        year -= 1;
+      }
+      const monthStr = `${year}-${months[mIdx]}`;
+      const stats = getMonthStats(monthStr);
+      calculatedTrendData.push({
+        month: new Date(year, mIdx).toLocaleString('default', { month: 'short' }),
+        revenue: stats.rev,
+        expenses: stats.totalExp
+      });
+    }
 
     return {
-      arpu: formatCompactNumber(bigARPU),
-      totalRevenue: formatCompactNumber(bigRevenue),
-      churnRate: `${bigChurn.toFixed(1)}%`,
-      cac: formatCompactNumber(bigCAC),
+      arpu: `Rp ${(latestStats.arpu / 1000).toFixed(1)}k`,
+      totalRevenue: formatCompactNumber(latestStats.rev),
+      churnRate: `${latestStats.churn.toFixed(1)}%`,
+      cac: cacDisplay,
       distribution: distribution,
-      trendData: trendData,
+      trendData: calculatedTrendData,
       growthTrend: customerGrowthTrend,
       trends: {
         arpu: calculateTrend(latestStats.arpu, prevStats.arpu),
-        cac: calculateTrend(latestStats.cac, prevStats.cac),
+        cac: cacTrend,
         churn: churnTrendLabel,
         revenue: calculateTrend(latestStats.rev, prevStats.rev)
       },
       currentPeriod: (() => {
-        const customerDates = customerList
-          .map(c => new Date(c.createdAt || ""))
+        const trxDates = transactions
+          .map(t => new Date(t.timestamp || ""))
           .filter(d => !isNaN(d.getTime()))
           .sort((a, b) => b.getTime() - a.getTime());
         
-        const latestDate = customerDates.length > 0 ? customerDates[0] : new Date();
+        const latestDate = trxDates.length > 0 ? trxDates[0] : new Date();
         const monthName = latestDate.toLocaleString("en-US", { month: "short" });
         const quarter = Math.floor(latestDate.getMonth() / 3) + 1;
         return `Q${quarter} ${monthName} ${latestDate.getFullYear()}`;
@@ -373,14 +362,38 @@ export default function Dashboard() {
   }, [customerList, serviceTiers, expenseList, transactions, trendData, customerGrowthTrend]);
 
   const kpis = [
-    { name: "ARPU", value: dynamicData.arpu, trend: dynamicData.trends.arpu, trendType: dynamicData.trends.arpu.startsWith('+') ? "up" : "down", icon: "user" },
-    { name: "CAC", value: dynamicData.cac, trend: dynamicData.trends.cac, trendType: dynamicData.trends.cac.startsWith('+') ? "up" : "down", icon: "dollar" },
-    { name: "Churn Rate", value: dynamicData.churnRate, trend: dynamicData.trends.churn, trendType: dynamicData.trends.churn.startsWith('+') ? "up" : "down", icon: "user-minus" },
-    { name: "Total Revenue", value: dynamicData.totalRevenue, trend: dynamicData.trends.revenue, trendType: dynamicData.trends.revenue.startsWith('+') ? "up" : "down", icon: "wallet" },
+    { 
+      name: "ARPU", 
+      value: dynamicData.arpu, 
+      trend: dynamicData.trends.arpu, 
+      trendType: dynamicData.trends.arpu.includes('0.0%') || dynamicData.trends.arpu === "0%" ? "neutral" : (dynamicData.trends.arpu.startsWith('+') ? "up" : "down"), 
+      icon: "user" 
+    },
+    { 
+      name: "CAC", 
+      value: dynamicData.cac, 
+      trend: dynamicData.trends.cac, 
+      trendType: (dynamicData.trends.cac === "-" || dynamicData.trends.cac === "0%" || dynamicData.trends.cac.includes('0.0%')) ? "neutral" : (dynamicData.trends.cac.startsWith('+') ? "up" : "down"), 
+      icon: "dollar" 
+    },
+    { 
+      name: "Churn Rate", 
+      value: dynamicData.churnRate, 
+      trend: dynamicData.trends.churn, 
+      trendType: (dynamicData.trends.churn === "0%" || dynamicData.trends.churn.includes('0.0%') || dynamicData.trends.churn === "-") ? "neutral" : (dynamicData.trends.churn.startsWith('+') ? "up" : "down"), 
+      icon: "user-minus" 
+    },
+    { 
+      name: "Total Revenue", 
+      value: dynamicData.totalRevenue, 
+      trend: dynamicData.trends.revenue, 
+      trendType: (dynamicData.trends.revenue === "0%" || dynamicData.trends.revenue.includes('0.0%')) ? "neutral" : (dynamicData.trends.revenue.startsWith('+') ? "up" : "down"), 
+      icon: "wallet" 
+    },
   ];
 
 
-  if (loadingCustomers || loadingTiers || loadingExpenses || loadingTx || loadingTrend) {
+  if (loadingCustomers || loadingTiers || loadingExpenses || loadingTx || loadingTrend || loadingInactive) {
     return (
       <div className="min-h-[70vh] w-full flex flex-col items-center justify-center">
         <div className="animate-pulse flex flex-col items-center gap-4">
@@ -513,20 +526,20 @@ export default function Dashboard() {
                   </div>
                   <div className={cn(
                     "flex items-center gap-1 text-[11px] font-black px-2 py-1 rounded-full",
-                    kpi.trend === "0%" || kpi.trend === "0.0%"
+                    kpi.trendType === "neutral"
                       ? "bg-slate-100 text-slate-500"
                       : kpi.trendType === "up" 
                         ? (kpi.name === "CAC" || kpi.name === "Churn Rate" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700")
                         : (kpi.name === "CAC" || kpi.name === "Churn Rate" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")
                   )}>
-                    {kpi.trend === "0%" || kpi.trend === "0.0%" ? (
-                      <Minus size={10} />
+                    {kpi.trendType === "neutral" ? (
+                      <span className="text-xs opacity-60">~</span>
                     ) : kpi.trendType === "up" ? (
                       <ArrowUp size={10} />
                     ) : (
                       <ArrowDown size={10} />
                     )}
-                    {kpi.trend === "0%" || kpi.trend === "0.0%" ? "~" : kpi.trend}
+                    {kpi.trendType === "neutral" && (kpi.trend === "0%" || kpi.trend === "0.0%") ? "0%" : kpi.trend}
                   </div>
                 </div>
                 <div>

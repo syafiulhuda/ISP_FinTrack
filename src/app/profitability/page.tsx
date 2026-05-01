@@ -367,6 +367,10 @@ export default function ProfitabilityPage() {
     const activeCount = customerList.filter((c: any) => {
       const joinDate = getLocalDate(c.createdAt || c.registration_date);
       if (joinDate > endDate) return false;
+      
+      // Fix: Only count customers who are currently 'Active'
+      if (c.status !== "Active") return false;
+      
       const hasTxInRange = activeCustomerIdsInRange.has(String(c.id));
       if (!hasTxInRange) return false;
       if (isAllRegions) return true;
@@ -439,6 +443,9 @@ export default function ProfitabilityPage() {
 
     // 4. Service Plan Mix (Sekarang mengikuti Filter Tanggal & Region)
     const activeCustomers = customerList.filter((c: any) => {
+      // Fix: Only include customers who are currently 'Active'
+      if (c.status !== "Active") return false;
+      
       const isActiveInRange = activeCustomerIdsInRange.has(String(c.id));
       if (!isActiveInRange) return false;
       if (isAllRegions) return true;

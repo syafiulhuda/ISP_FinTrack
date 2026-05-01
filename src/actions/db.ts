@@ -41,21 +41,25 @@ export async function getCustomers(): Promise<Customer[]> {
     const res = await query(`
       SELECT c.*,
         CASE 
-          WHEN c.status = 'Active' AND 
-               EXTRACT(DAY FROM c."createdAt"::timestamp) = EXTRACT(DAY FROM (NOW() + INTERVAL '1 day'))
+          WHEN c.status = 'Active' AND (
+            EXTRACT(DAY FROM (c."createdAt"::timestamptz AT TIME ZONE 'Asia/Jakarta')) =
+            EXTRACT(DAY FROM (NOW() AT TIME ZONE 'Asia/Jakarta' + INTERVAL '1 day'))
+            OR
+            c."createdAt"::timestamptz < (NOW() - INTERVAL '1 month')
+          )
+          -- Pengecekan Pembayaran (Berlaku untuk kedua kondisi di atas)
+          AND NOT EXISTS (
+            SELECT 1 FROM transactions t
+            WHERE split_part(t.id, '-', 2) = c.id
+              AND t.keterangan = 'pemasukan'
+              AND t.status = 'Verified'
+              AND EXTRACT(MONTH FROM (t.timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(MONTH FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
+              AND EXTRACT(YEAR FROM (t.timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(YEAR FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
+          )
           THEN true 
-          WHEN c.status = 'Active' AND 
-               c."createdAt"::timestamp < (NOW() - INTERVAL '1 month') AND
-               (SELECT COUNT(*) FROM transactions t 
-                WHERE split_part(t.id, '-', 2) = c.id 
-                AND t.keterangan = 'pemasukan'
-                AND EXTRACT(MONTH FROM t.timestamp::timestamp) = EXTRACT(MONTH FROM NOW())
-                AND EXTRACT(YEAR FROM t.timestamp::timestamp) = EXTRACT(YEAR FROM NOW())
-               ) = 0
-          THEN true
           ELSE false 
         END as is_grace_period,
-        EXTRACT(DAY FROM c."createdAt"::timestamp) as due_day
+        EXTRACT(DAY FROM (c."createdAt"::timestamptz AT TIME ZONE 'Asia/Jakarta')) as due_day
       FROM customers c
       ORDER BY c.id ASC
     `);
@@ -63,6 +67,16 @@ export async function getCustomers(): Promise<Customer[]> {
   } catch (e) {
     console.error("DB Error: getCustomers", e);
     return Mock.MOCK_CUSTOMERS as Customer[];
+  }
+}
+
+export async function getInactiveCust() {
+  try {
+    const res = await query('SELECT * FROM inactive_cust ORDER BY inactiveat DESC');
+    return res.rows;
+  } catch (e) {
+    console.error("DB Error: getInactiveCust", e);
+    return [];
   }
 }
 
@@ -308,7 +322,18 @@ export async function updateOcrData(id: string | number, data: { vendor: string,
   }
 }
 
-export async function postOcrEntry(ocrId: string | number, data: { vendor: string, amount: string, date: string, reference: string, method: string }) {
+export async function postOcrEntry(ocrId: string | number, data: { 
+  vendor: string, 
+  amount: string, 
+  date: string, 
+  reference: string, 
+  method: string, 
+  keterangan?: string,
+  purchaseType?: string,
+  serialNumber?: string,
+  macNumber?: string,
+  location?: string
+}) {
   try {
     // 1. Sanitize Date (Convert Indonesian months to English for PostgreSQL)
     let sanitizedDate = data.date;
@@ -326,38 +351,136 @@ export async function postOcrEntry(ocrId: string | number, data: { vendor: strin
     const timestamp = isNaN(Date.parse(sanitizedDate)) ? new Date().toISOString() : sanitizedDate;
 
     // 2. Fix Sequence (Prevent Duplicate Key Errors in Trigger)
-    // Ini akan mensinkronkan sekuens ID agar trigger tidak bentrok.
     try {
       await query(`SELECT setval(pg_get_serial_sequence('notifications', 'id'), (SELECT MAX(id) FROM notifications))`);
     } catch (seqError) {
       console.warn("Sequence sync skipped or failed (might be non-serial):", seqError);
     }
 
-    // 3. Insert into transactions
-    // Menggunakan data.reference sebagai ID sesuai ketentuan (misal: TRX-CT113)
-    const trxId = data.reference || `TRX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-    
-    await query(`
-      INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan)
-      VALUES ($1, $2, $3, 'Verified', $4, 'bank', 'pemasukan')
-    `, [trxId, data.method, `Rp ${data.amount}`, timestamp]);
+    // Format amount with dots as thousands separator (Rp 5.000.000)
+    const cleanNumeric = data.amount.replace(/[^0-9]/g, '');
+    const formattedAmount = `Rp ${Number(cleanNumeric).toLocaleString('id-ID').replace(/,/g, '.')}`;
 
-    const customerId = trxId.includes('-') ? trxId.split('-')[1] : null;
-    if (customerId) {
-      // Trigger-like: Create a Paid invoice automatically
-      const numericAmount = Number(data.amount.replace(/[^0-9]/g, ''));
+    // Lookup city from warehouse_location based on location
+    let trxCity = '';
+    const cleanLoc = (data.location || '').replace(/©/g, '').trim();
+    if (data.keterangan === 'pengeluaran' && cleanLoc) {
+      try {
+        const cityRes = await query('SELECT city FROM warehouse_location WHERE location = $1 LIMIT 1', [cleanLoc]);
+        if (cityRes.rows.length > 0) {
+          trxCity = cityRes.rows[0].city;
+        }
+      } catch (e) {
+        console.warn("City lookup failed:", e);
+      }
+    }
+
+    let trxId = '';
+
+    if (data.keterangan === 'pengeluaran') {
+      // ===== EXPENSE FLOW: Insert expenses FIRST, then transactions =====
+      const transactionType = data.purchaseType || 'Lainnya';
+
+      // 3a. Insert into expenses table FIRST to get the auto-generated ID
+      const expenseRes = await query(`
+        INSERT INTO expenses (category, amount, date, description, city)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+      `, [transactionType, Number(cleanNumeric), timestamp, '', trxCity || null]);
+
+      const expenseId = expenseRes.rows[0].id;
+
+      // 3b. Construct transaction ID using the expense primary key
+      // Extract date suffix from the reference placeholder (e.g., "OUT-AUTO-20260430" → "20260430")
+      const datePart = (data.reference || '').replace(/^OUT-AUTO-/, '');
+      trxId = `OUT-${expenseId}-${datePart}`;
+
+      // 3c. Update the expense description with the actual transaction ID
+      await query('UPDATE expenses SET description = $1 WHERE id = $2', [trxId, expenseId]);
+
+      // 3d. Insert into transactions with the synced ID
       await query(`
-        INSERT INTO invoices (customer_id, amount, due_date, status)
-        VALUES ($1, $2, $3, 'Paid')
-      `, [customerId, numericAmount, timestamp]);
+        INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, city)
+        VALUES ($1, $2, $3, 'Verified', $4, $5, $6, $7)
+      `, [trxId, data.method, formattedAmount, timestamp, transactionType, 'pengeluaran', trxCity || null]);
+
+    } else {
+      // ===== INCOME FLOW: Insert transactions directly =====
+      trxId = data.reference || `TRX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+      await query(`
+        INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, city)
+        VALUES ($1, $2, $3, 'Verified', $4, $5, $6, $7)
+      `, [trxId, data.method, formattedAmount, timestamp, 'Tagihan', 'pemasukan', null]);
+
+      // Handle Customer Invoices
+      const customerId = trxId.includes('-') ? trxId.split('-')[1] : null;
+      if (customerId) {
+        await query(`
+          INSERT INTO invoices (customer_id, amount, due_date, status)
+          VALUES ($1, $2, $3, 'Paid')
+        `, [customerId, Number(cleanNumeric), timestamp]);
+      }
+    }
+
+    // 5. AUTO-INSERT TO STOCK_ASSET_ROSTER (TRIGGER-LIKE)
+    const equipmentTypes = ['ONT', 'SERVER', 'ODP', 'OLT'];
+    if (data.keterangan === 'pengeluaran' && data.purchaseType && equipmentTypes.includes(data.purchaseType.toUpperCase())) {
+      const cleanLocation = cleanLoc || 'Warehouse Main';
+
+      const locationCoords: Record<string, { lat: string, long: string }> = {
+        'Warehouse Main': { lat: '-6.2088', long: '106.8166' },
+        'Warehouse South': { lat: '-8.4095', long: '115.1889' },
+        'Warehouse East': { lat: '-3.1317', long: '130.0577' },
+        'Warehouse West': { lat: '3.3537', long: '97.5727' },
+        'Warehouse North': { lat: '1.8519', long: '106.9461' }
+      };
+
+      const coords = locationCoords[cleanLocation] || locationCoords['Warehouse Main'];
+      const cleanMac = (data.macNumber || '-').replace(/©/g, '').trim();
+      const cleanSn = (data.serialNumber || '-').replace(/©/g, '').trim();
+
+      const now = new Date();
+      const tzOffset = '+07';
+      const pgTimestamp = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0') + ' ' +
+        String(now.getHours()).padStart(2, '0') + ':' +
+        String(now.getMinutes()).padStart(2, '0') + ':' +
+        String(now.getSeconds()).padStart(2, '0') + '.' +
+        String(now.getMilliseconds()).padStart(3, '0') + '000' + tzOffset;
+
+      const stockIdRes = await query('SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM stock_asset_roster');
+      const nextStockId = stockIdRes.rows[0].next_id;
+
+      await query(`
+        INSERT INTO stock_asset_roster (
+          id, sn, mac, type, location, condition, status, kepemilikan, is_used, latitude, longitude, tanggal_perubahan
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      `, [
+        nextStockId, 
+        cleanSn,
+        cleanMac,
+        data.purchaseType, 
+        cleanLocation, 
+        'Good', 
+        'Offline', 
+        'Dimiliki', 
+        false, 
+        coords.lat, 
+        coords.long, 
+        pgTimestamp
+      ]);
     }
 
     revalidatePath('/finance');
-    revalidatePath('/notifications');
+    revalidatePath('/assets');
+    revalidatePath('/inventory');
     return { success: true, trxId };
   } catch (e) {
     console.error("DB Error: postOcrEntry", e);
-    return { success: false, error: String(e) };
+    return { success: false, error: (e as Error).message };
   }
 }
 
@@ -713,5 +836,47 @@ export async function checkTrxExists(reference: string) {
   } catch (e) {
     console.error("DB Error: checkTrxExists", e);
     return false;
+  }
+}
+export async function getNextExpenseId(): Promise<string> {
+  try {
+    // Peek at the next sequence value WITHOUT advancing it
+    // This way, when the trigger calls nextval() during INSERT, it gets this exact number
+    const res = await query(`
+      SELECT last_value + CASE WHEN is_called THEN 1 ELSE 0 END as next_id 
+      FROM expenses_id_seq
+    `);
+    const nextId = res.rows[0].next_id;
+    return `OUT-${nextId}`;
+  } catch (e) {
+    console.error("DB Error: getNextExpenseId", e);
+    try {
+      const fallback = await query("SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM expenses");
+      return `OUT-${fallback.rows[0].next_id}`;
+    } catch {
+      return "OUT-1";
+    }
+  }
+}
+
+export async function refreshAgingMV() {
+  try {
+    console.log("CRON: Refreshing ar_aging_mv...");
+    await query('REFRESH MATERIALIZED VIEW ar_aging_mv');
+    console.log("CRON: ar_aging_mv refreshed successfully.");
+    return { success: true };
+  } catch (e) {
+    console.error("DB Error: refreshAgingMV", e);
+    return { success: false, error: String(e) };
+  }
+}
+
+export async function getAgingMVData() {
+  try {
+    const res = await query('SELECT * FROM ar_aging_mv');
+    return res.rows;
+  } catch (e) {
+    console.error("DB Error: getAgingMVData", e);
+    return [];
   }
 }

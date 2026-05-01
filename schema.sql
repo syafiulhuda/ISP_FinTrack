@@ -81,15 +81,27 @@ CREATE FUNCTION public.notify_new_transaction() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
       BEGIN
-        INSERT INTO notifications (category, title, message, type, is_unread, action_label)
-        VALUES (
-          'Finance',
-          'New transaction detected',
-          'Incoming payment of ' || NEW.amount || ' via ' || NEW.method || ' has been logged.',
-          'transaction',
-          true,
-          'View Details'
-        );
+        IF NEW.keterangan = 'pengeluaran' THEN
+          INSERT INTO notifications (category, title, message, type, is_unread, action_label)
+          VALUES (
+            'Finance',
+            'New expense recorded',
+            'Outgoing expense of ' || NEW.amount || ' via ' || NEW.method || ' has been logged.',
+            'transaction',
+            true,
+            'View Details'
+          );
+        ELSE
+          INSERT INTO notifications (category, title, message, type, is_unread, action_label)
+          VALUES (
+            'Finance',
+            'New transaction detected',
+            'Incoming payment of ' || NEW.amount || ' via ' || NEW.method || ' has been logged.',
+            'transaction',
+            true,
+            'View Details'
+          );
+        END IF;
         RETURN NEW;
       END;
       $$;
