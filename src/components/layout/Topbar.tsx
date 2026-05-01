@@ -4,14 +4,21 @@ import { Menu, Search, Bell, Settings, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { getAdminProfile } from "@/actions/db";
+import { getAdminProfile, getNotifications } from "@/actions/db";
 
-export function Topbar() {
+export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { theme, toggleTheme } = useTheme();
   const { data: adminProfile } = useQuery({
     queryKey: ['adminProfile'],
     queryFn: getAdminProfile
   });
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: getNotifications,
+    refetchInterval: 10000
+  });
+
+  const unreadCount = notifications.filter((n: any) => n.is_unread).length;
 
   return (
     <header className="fixed top-0 right-0 left-0 md:left-64 z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0px_12px_32px_rgba(25,28,30,0.06)] flex items-center justify-between px-6 h-16 w-auto">
@@ -19,7 +26,7 @@ export function Topbar() {
       <div className="flex items-center space-x-4">
         {/* Mobile Menu */}
         <div className="flex items-center md:hidden space-x-4">
-          <button className="text-on-surface">
+          <button className="text-on-surface" onClick={onMenuClick}>
             <Menu size={24} />
           </button>
           <span className="text-xl font-bold tracking-tight text-blue-700 dark:text-blue-500">ISP-FinTrack</span>
@@ -50,8 +57,11 @@ export function Topbar() {
             type="text"
           />
         </div>
-        <Link href="/notifications" className="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 rounded-full active:opacity-80">
+        <Link href="/notifications" className="relative text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 rounded-full active:opacity-80">
           <Bell size={20} />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-50 dark:border-slate-900"></span>
+          )}
         </Link>
         <Link href="/settings" className="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 rounded-full active:opacity-80">
           <Settings size={20} />

@@ -117,11 +117,12 @@ export default function InventoryPage() {
 
   const dynamicStats = useMemo(() => {
     const total = assetRoster.length + stockAssets.length;
-    const active = assetRoster.filter((a: any) => a.condition === "Good").length;
-    const faulty = assetRoster.filter((a: any) => a.condition === "Broken" || a.condition === "Maintenance").length;
+    const active = assetRoster.filter((a: any) => a.condition === "Good" && a.kepemilikan !== "Dijual" && a.kepemilikan !== "Telah Dijual").length;
+    const faulty = assetRoster.filter((a: any) => (a.condition === "Broken" || a.condition === "Maintenance" || a.condition === "Warning") && a.kepemilikan !== "Dijual" && a.kepemilikan !== "Telah Dijual").length;
     const stock = stockAssets.length;
     const owned = assetRoster.filter((a: any) => a.kepemilikan === "Dimiliki" || !a.kepemilikan).length;
-    const sold = assetRoster.filter((a: any) => a.kepemilikan === "Telah Dijual").length;
+    const rented = assetRoster.filter((a: any) => a.kepemilikan === "Sewa").length;
+    const sold = assetRoster.filter((a: any) => a.kepemilikan === "Dijual" || a.kepemilikan === "Telah Dijual").length;
 
     const deploymentRate = total > 0 ? Math.round((active / total) * 100) : 0;
 
@@ -167,6 +168,14 @@ export default function InventoryPage() {
         isAlert: false
       },
       {
+        label: "Sewa",
+        value: mounted ? rented.toLocaleString() : "---",
+        trend: "Aset sewa",
+        trendIcon: "check-circle",
+        color: "bg-blue-500/10",
+        isAlert: false
+      },
+      {
         label: "Telah Dijual",
         value: mounted ? sold.toLocaleString() : "---",
         trend: sold > 0 ? "Archived" : "None sold",
@@ -187,7 +196,19 @@ export default function InventoryPage() {
     return allAssets.filter(asset => {
       const typeMatch = selectedType === "All" || asset.type === selectedType;
       const conditionMatch = selectedCondition === "All" || asset.condition === selectedCondition;
-      const ownershipMatch = selectedOwnership === "All" || asset.kepemilikan === selectedOwnership || (selectedOwnership === "Dimiliki" && !asset.kepemilikan);
+      const isSold = asset.kepemilikan === "Dijual" || asset.kepemilikan === "Telah Dijual";
+      
+      // Ownership logic: Sold assets only show when specifically filtered for "Sold"
+      let ownershipMatch = false;
+      if (selectedOwnership === "All") {
+        ownershipMatch = !isSold; // Hidden by default in "All"
+      } else if (selectedOwnership === "Dijual") {
+        ownershipMatch = isSold; // Show ONLY sold assets
+      } else {
+        // Specific filters (Dimiliki, Sewa) - naturally shouldn't match sold anyway
+        ownershipMatch = asset.kepemilikan === selectedOwnership || (selectedOwnership === "Dimiliki" && !asset.kepemilikan);
+      }
+      
       const usageMatch = selectedUsage === "All" || (selectedUsage === "Stock" && !asset.is_used) || (selectedUsage === "In Use" && asset.is_used);
       
       return typeMatch && conditionMatch && ownershipMatch && usageMatch;
@@ -431,7 +452,6 @@ export default function InventoryPage() {
                   <option value="All">All Conditions</option>
                   <option value="Good">Healthy</option>
                   <option value="Maintenance">Maintenance</option>
-                  <option value="Broken">Broken</option>
                 </select>
                 <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
@@ -463,7 +483,8 @@ export default function InventoryPage() {
                 >
                   <option value="All">Ownership</option>
                   <option value="Dimiliki">Dimiliki</option>
-                  <option value="Telah Dijual">Sold</option>
+                  <option value="Sewa">Sewa</option>
+                  <option value="Dijual">Sold</option>
                 </select>
                 <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
@@ -510,12 +531,16 @@ export default function InventoryPage() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="font-black text-slate-900 dark:text-slate-100 text-base truncate">{asset.sn}</p>
-                              <span className={cn(
-                                "text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tight",
-                                asset.isStock ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
-                              )}>
-                                {asset.isStock ? "Stock" : "Deployed"}
-                              </span>
+                              {!asset.isStock && asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual" && (
+                                <span className="bg-blue-100 text-blue-700 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tight">
+                                  Deployed
+                                </span>
+                              )}
+                              {asset.isStock && (
+                                <span className="bg-amber-100 text-amber-700 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tight">
+                                  Stock
+                                </span>
+                              )}
                             </div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5 tracking-tighter truncate">{asset.mac}</p>
                           </div>
@@ -527,16 +552,20 @@ export default function InventoryPage() {
                         </span>
                       </td>
                       <td className="px-6 py-6">
-                        <div className={cn(
-                          "flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit",
-                          asset.condition === "Good" ? "bg-green-100 text-green-700" :
-                          asset.condition === "Maintenance" ? "bg-blue-100 text-blue-700" :
-                          asset.condition === "Warning" ? "bg-orange-100 text-orange-700" :
-                          "bg-red-100 text-red-700"
-                        )}>
-                          <CondIcon size={12} />
-                          {asset.condition}
-                        </div>
+                        {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") ? (
+                          <div className={cn(
+                            "flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit",
+                            asset.condition === "Good" ? "bg-green-100 text-green-700" :
+                            asset.condition === "Maintenance" ? "bg-blue-100 text-blue-700" :
+                            asset.condition === "Warning" ? "bg-orange-100 text-orange-700" :
+                            "bg-red-100 text-red-700"
+                          )}>
+                            <CondIcon size={12} />
+                            {asset.condition}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] font-bold text-slate-300 italic">---</span>
+                        )}
                       </td>
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-2">
@@ -544,6 +573,11 @@ export default function InventoryPage() {
                             <div className="flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit bg-emerald-100 text-emerald-700">
                               <ShieldCheck size={12} />
                               Dimiliki
+                            </div>
+                          ) : asset.kepemilikan === "Sewa" ? (
+                            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit bg-blue-100 text-blue-700">
+                              <ShieldCheck size={12} />
+                              Sewa
                             </div>
                           ) : (
                             <div className="flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit bg-red-100 text-red-700">
@@ -569,15 +603,16 @@ export default function InventoryPage() {
                         </div>
                       </td>
                       <td className="px-6 py-6 text-right relative">
-                        <div ref={activeActionMenu === asset.sn ? actionMenuRef : null} className="inline-block">
-                          <motion.button
-                            whileHover={{ scale: 1.15, rotate: 90 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => setActiveActionMenu(activeActionMenu === asset.sn ? null : asset.sn)}
-                            className="p-2 text-slate-300 hover:text-primary transition-colors"
-                          >
-                            <MoreVertical size={20} />
-                          </motion.button>
+                        {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") ? (
+                          <div ref={activeActionMenu === asset.sn ? actionMenuRef : null} className="inline-block">
+                            <motion.button
+                              whileHover={{ scale: 1.15, rotate: 90 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => setActiveActionMenu(activeActionMenu === asset.sn ? null : asset.sn)}
+                              className="p-2 text-slate-300 hover:text-primary transition-colors"
+                            >
+                              <MoreVertical size={20} />
+                            </motion.button>
                           
                           <AnimatePresence>
                             {activeActionMenu === asset.sn && (
@@ -758,6 +793,9 @@ export default function InventoryPage() {
                             )}
                           </AnimatePresence>
                         </div>
+                        ) : (
+                          <span className="text-[10px] font-bold text-slate-300 italic pr-2">No Action</span>
+                        )}
                       </td>
                     </motion.tr>
                   );

@@ -296,7 +296,7 @@ export default function ProfitabilityPage() {
 
     // --- 3. Analysis ---
     const allMonths = Array.from(new Set([
-      ...transactions.filter(t => isInRange(t.timestamp)).map((t: any) => getLocalDate(t.timestamp).slice(0, 7)),
+      ...transactions.filter(t => isInRange(t.timestamp as any)).map((t: any) => getLocalDate(typeof t.timestamp === 'object' && t.timestamp ? t.timestamp.toISOString() : (t.timestamp || "")).slice(0, 7)),
       ...expenseList.filter(e => isInRange(e.date)).map((e: any) => getLocalDate(e.date).slice(0, 7))
     ])).filter(m => m.match(/^\d{4}-\d{2}$/)).sort();
 
@@ -517,7 +517,7 @@ export default function ProfitabilityPage() {
           // 1. Jika ada match, filter berdasarkan Region Transaksi tersebut
           let matchesRegion = isAllRegions;
           if (!matchesRegion) {
-            const cityProvince = getProvinceFromCity(matchingTx.city);
+            const cityProvince = getProvinceFromCity((matchingTx as any).city);
             const idSuffixForCust = matchingTx.id?.split('-')[1];
             const customer = customerList.find((c: any) => String(c.id) === idSuffixForCust);
             matchesRegion = cityProvince === selectedProvince || customer?.province === selectedProvince;

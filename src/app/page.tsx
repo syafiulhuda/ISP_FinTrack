@@ -360,7 +360,7 @@ export default function Dashboard() {
       },
       currentPeriod: (() => {
         const customerDates = customerList
-          .map(c => new Date(c.createdAt))
+          .map(c => new Date(c.createdAt || ""))
           .filter(d => !isNaN(d.getTime()))
           .sort((a, b) => b.getTime() - a.getTime());
         

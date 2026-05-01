@@ -19,7 +19,6 @@ import {
   Database,
   Cpu,
   ChevronRight,
-  User,
   Clock,
   ZoomIn,
   ZoomOut,
@@ -55,7 +54,7 @@ export default function DistributionMapPage() {
     ONT: true,
     Server: true,
     Good: true,
-    Maintenance: false
+    Maintenance: true
   });
   const [maintenanceHistory, setMaintenanceHistory] = useState<any[]>([]);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -75,7 +74,9 @@ export default function DistributionMapPage() {
   const { data: assets = [], isLoading } = useQuery({
     queryKey: ['map-assets'],
     queryFn: () => getMapAssets(),
-    refetchInterval: 60000,
+    refetchInterval: 30000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const filteredAssets = useMemo(() => {
@@ -91,11 +92,13 @@ export default function DistributionMapPage() {
       
       const matchesType = activeTypeFilters.length === 0 || activeTypeFilters.includes(a.type);
       
-      // If no status filters are active, show all standard statuses (Good + Maintenance)
-      // Otherwise, show only the active ones.
-      // Note: 'Online' in DB corresponds to 'Good' in UI
-      const assetStatus = a.status === 'Online' ? 'Good' : a.status;
-      const matchesStatus = activeStatusFilters.length === 0 || activeStatusFilters.includes(assetStatus);
+      // Map DB condition to UI filter labels (case-insensitive)
+      const rawCondition = (a.condition || a.status || '').toLowerCase();
+      const assetStatus = rawCondition === 'good' || rawCondition === 'online' ? 'Good' 
+                        : rawCondition === 'maintenance' || rawCondition === 'maint.' ? 'Maintenance'
+                        : 'Good'; // Fallback
+      // If no status filters are checked, hide everything
+      const matchesStatus = activeStatusFilters.length > 0 && activeStatusFilters.includes(assetStatus);
       
       return matchesSearch && matchesType && matchesStatus;
     });
@@ -190,7 +193,7 @@ export default function DistributionMapPage() {
                           <span className={cn(
                             "text-[13px] font-bold tracking-tight transition-colors",
                             activeLayers[layer as keyof typeof activeLayers] 
-                              ? (layer === 'Maintenance' ? "text-amber-500" : layer === 'Good' ? "text-emerald-500" : "text-slate-900 dark:text-white")
+                              ? (layer === 'Maintenance' ? "text-amber-500" : layer === 'Warning' ? "text-red-500" : layer === 'Good' ? "text-emerald-500" : "text-slate-900 dark:text-white")
                               : "text-slate-400 dark:text-slate-600 group-hover:text-slate-500"
                           )}>
                             {layer}
@@ -358,7 +361,8 @@ export default function DistributionMapPage() {
                         "text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full",
                         selectedNode.status === 'Online' ? "bg-green-100 dark:bg-green-900/30 text-green-600" :
                         selectedNode.status === 'Maintenance' ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" :
-                        "bg-red-100 dark:bg-red-900/30 text-red-600"
+                        selectedNode.status === 'Warning' ? "bg-red-100 dark:bg-red-900/30 text-red-600" :
+                        "bg-slate-100 dark:bg-slate-900/30 text-slate-600"
                       )}>
                         {selectedNode.status} Node
                       </span>
@@ -544,7 +548,7 @@ export default function DistributionMapPage() {
             </div>
             <div>
               <p className="text-2xl font-black leading-none tracking-tighter">
-                {assets.length > 0 ? ((assets.filter(a => a.status === 'Online').length / assets.length) * 100).toFixed(1) : 0}%
+                {assets.length > 0 ? ((assets.filter(a => (a.condition || a.status) === 'Good' || (a.condition || a.status) === 'Online').length / assets.length) * 100).toFixed(1) : 0}%
               </p>
               <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Network Health</p>
             </div>
@@ -560,7 +564,7 @@ export default function DistributionMapPage() {
             </div>
             <div>
               <p className="text-2xl font-black leading-none tracking-tighter text-red-600">
-                {String(assets.filter(a => a.status !== 'Online').length).padStart(2, '0')}
+                {String(assets.filter(a => (a.condition || a.status) !== 'Good' && (a.condition || a.status) !== 'Online').length).padStart(2, '0')}
               </p>
               <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Active Outages</p>
             </div>

@@ -2,6 +2,7 @@
 
 import { query } from '@/lib/db';
 import { createSession, destroySession } from '@/lib/auth';
+import bcrypt from 'bcryptjs';
 
 export async function loginAction(email: string, password: string): Promise<{ success: boolean; error?: string }> {
   try {
@@ -16,7 +17,8 @@ export async function loginAction(email: string, password: string): Promise<{ su
 
     const admin = res.rows[0];
 
-    if (admin.password !== password) {
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
       return { success: false, error: 'Password salah.' };
     }
 

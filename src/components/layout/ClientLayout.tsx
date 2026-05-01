@@ -6,8 +6,11 @@ import { Topbar } from "@/components/layout/Topbar";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { SettingsProvider } from "@/components/providers/SettingsProvider";
 import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/logout";
 
@@ -27,9 +30,10 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     <SettingsProvider>
       <ThemeProvider>
         <div className="flex min-h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-950">
-          <Sidebar />
+          <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
           <div className="flex-1 flex flex-col min-w-0 relative md:pl-64 transition-all duration-300">
-            <Topbar />
+            <Topbar onMenuClick={() => setIsMobileMenuOpen(true)} />
+
             <main className="flex-1 overflow-y-auto pt-24 pb-12 px-6 lg:px-8">
               <div className="max-w-7xl mx-auto w-full">
                 <AnimatePresence mode="wait">

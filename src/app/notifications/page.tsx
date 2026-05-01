@@ -1,13 +1,12 @@
 "use client";
 
 import { motion, Variants } from "framer-motion";
-import { Banknote, FileScan, AlertTriangle, Clock, ShieldCheck, Loader2, Plus, Trash2, X, BellPlus, Send } from "lucide-react";
+import { Banknote, FileScan, AlertTriangle, Clock, ShieldCheck, Loader2, Trash2, Server, CheckCircle } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   getNotifications, 
   markNotificationAsRead, 
   markAllNotificationsAsRead,
-  createNotification,
   deleteNotification,
   hideAllNotifications
 } from "@/actions/db";
@@ -35,6 +34,8 @@ const typeConfig: Record<string, { icon: any, color: string, bg: string }> = {
   hardware: { icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
   backup: { icon: Clock, color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-200 dark:bg-slate-800' },
   audit: { icon: ShieldCheck, color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-200 dark:bg-slate-800' },
+  system: { icon: Server, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+  success: { icon: CheckCircle, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' },
 };
 
 const containerVariants: Variants = {
@@ -56,16 +57,7 @@ export default function NotificationsPage() {
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: getNotifications,
-    refetchInterval: 60000, // Refresh otomatis setiap 60 detik
-  });
-
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newNotif, setNewNotif] = useState({
-    category: 'Finance',
-    title: '',
-    message: '',
-    type: 'transaction',
-    action_label: ''
+    refetchInterval: 60000,
   });
 
   const [pageMap, setPageMap] = useState<Record<string, number>>({
@@ -76,18 +68,20 @@ export default function NotificationsPage() {
 
   const itemsPerPage = 5;
 
+  // --- Mutations ---
+
   const markReadMutation = useMutation({
     mutationFn: markNotificationAsRead,
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['notifications'] });
-      const previousNotifications = queryClient.getQueryData(['notifications']);
+      const prev = queryClient.getQueryData(['notifications']);
       queryClient.setQueryData(['notifications'], (old: any) => 
         old?.map((n: any) => n.id === id ? { ...n, is_unread: false } : n)
       );
-      return { previousNotifications };
+      return { prev };
     },
-    onError: (err, id, context: any) => {
-      queryClient.setQueryData(['notifications'], context.previousNotifications);
+    onError: (_err, _id, context: any) => {
+      queryClient.setQueryData(['notifications'], context.prev);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -98,14 +92,14 @@ export default function NotificationsPage() {
     mutationFn: markAllNotificationsAsRead,
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ['notifications'] });
-      const previousNotifications = queryClient.getQueryData(['notifications']);
+      const prev = queryClient.getQueryData(['notifications']);
       queryClient.setQueryData(['notifications'], (old: any) => 
         old?.map((n: any) => ({ ...n, is_unread: false }))
       );
-      return { previousNotifications };
+      return { prev };
     },
-    onError: (err, variables, context: any) => {
-      queryClient.setQueryData(['notifications'], context.previousNotifications);
+    onError: (_err, _vars, context: any) => {
+      queryClient.setQueryData(['notifications'], context.prev);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -114,32 +108,40 @@ export default function NotificationsPage() {
 
   const hideAllMutation = useMutation({
     mutationFn: hideAllNotifications,
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      const prev = queryClient.getQueryData(['notifications']);
+      // Optimistic: clear all from UI immediately
+      queryClient.setQueryData(['notifications'], []);
+      return { prev };
+    },
+    onError: (_err, _vars, context: any) => {
+      queryClient.setQueryData(['notifications'], context.prev);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteNotification,
-    onSuccess: () => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      const prev = queryClient.getQueryData(['notifications']);
+      queryClient.setQueryData(['notifications'], (old: any) => 
+        old?.filter((n: any) => n.id !== id)
+      );
+      return { prev };
+    },
+    onError: (_err, _id, context: any) => {
+      queryClient.setQueryData(['notifications'], context.prev);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }
   });
 
-  const createMutation = useMutation({
-    mutationFn: (data: { category: string, title: string, message: string, type: string, action_label?: string }) => createNotification(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      setIsCreateModalOpen(false);
-      setNewNotif({
-        category: 'Finance',
-        title: '',
-        message: '',
-        type: 'transaction',
-        action_label: ''
-      });
-    }
-  });
+  // --- Render ---
 
   if (isLoading) {
     return (
@@ -167,25 +169,27 @@ export default function NotificationsPage() {
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Notifications
           </h2>
-          <p className="text-sm text-slate-500 mt-1">Manage system alerts and manual broadcasts</p>
+          <p className="text-sm text-slate-500 mt-1">Manage system alerts and broadcasts</p>
         </div>
         <div className="flex items-center gap-4">
+          {unreadAlerts > 0 && (
+            <button 
+              onClick={() => markAllReadMutation.mutate()}
+              disabled={markAllReadMutation.isPending}
+              className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-widest disabled:opacity-50"
+            >
+              Mark All as Read
+            </button>
+          )}
           <button 
             onClick={() => {
-              if (confirm('Clear all notifications? History will be preserved in database.')) {
+              if (confirm('Clear all notifications from this view? Data will be preserved in the database.')) {
                 hideAllMutation.mutate();
               }
             }}
             className="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest"
           >
             Clear All
-          </button>
-          <button 
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-          >
-            <BellPlus size={18} />
-            <span>Create Notification</span>
           </button>
         </div>
       </motion.div>
@@ -229,17 +233,6 @@ export default function NotificationsPage() {
                   <span className={`w-2 h-2 rounded-full ${cat === 'Finance' ? 'bg-primary' : cat === 'Inventory' ? 'bg-orange-500' : 'bg-slate-400'}`}></span>
                   {cat}
                 </h3>
-                <div className="flex items-center gap-4">
-                  {cat === 'Finance' && unreadAlerts > 0 && (
-                    <button 
-                      onClick={() => markAllReadMutation.mutate()}
-                      className="text-xs font-semibold text-primary hover:underline disabled:opacity-50"
-                      disabled={markAllReadMutation.isPending}
-                    >
-                      Mark all as read
-                    </button>
-                  )}
-                </div>
               </div>
               
               <div className="space-y-3">
@@ -250,10 +243,10 @@ export default function NotificationsPage() {
                   return (
                     <div 
                       key={notif.id}
-                      className={`group transition-all rounded-2xl p-5 flex flex-col sm:flex-row items-start gap-5 relative overflow-hidden border shadow-sm ${
+                      className={`group transition-all duration-300 rounded-2xl p-5 flex flex-col sm:flex-row items-start gap-5 relative overflow-hidden border shadow-sm ${
                         notif.is_unread 
                           ? 'bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800' 
-                          : 'bg-slate-50/50 dark:bg-slate-900/20 border-transparent opacity-75'
+                          : 'bg-slate-50/50 dark:bg-slate-900/20 border-transparent opacity-60'
                       }`}
                     >
                       {notif.is_unread && (
@@ -359,118 +352,6 @@ export default function NotificationsPage() {
           );
         })}
       </div>
-
-      {/* Create Notification Modal */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            onClick={() => setIsCreateModalOpen(false)}
-          />
-          <motion.div 
-            initial={{ scale: 0.9, y: 20, opacity: 0 }}
-            animate={{ scale: 1, y: 0, opacity: 1 }}
-            className="relative bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
-          >
-            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Broadcast Notification</h3>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">Manual Alert System</p>
-              </div>
-              <button onClick={() => setIsCreateModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
-                <X size={20} />
-              </button>
-            </div>
-            
-            <form 
-              onSubmit={(e) => {
-                e.preventDefault();
-                createMutation.mutate(newNotif);
-              }}
-              className="p-8 space-y-6"
-            >
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Category</label>
-                  <select 
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-bold text-sm"
-                    value={newNotif.category}
-                    onChange={(e) => setNewNotif({ ...newNotif, category: e.target.value })}
-                  >
-                    <option>Finance</option>
-                    <option>Inventory</option>
-                    <option>System</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Type</label>
-                  <select 
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-bold text-sm"
-                    value={newNotif.type}
-                    onChange={(e) => setNewNotif({ ...newNotif, type: e.target.value })}
-                  >
-                    <option value="transaction">Transaction</option>
-                    <option value="ocr">OCR Scan</option>
-                    <option value="hardware">Hardware Alert</option>
-                    <option value="backup">System Backup</option>
-                    <option value="audit">Security Audit</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Subject / Title</label>
-                <input 
-                  required
-                  placeholder="Enter notification title..."
-                  className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-bold text-sm"
-                  value={newNotif.title}
-                  onChange={(e) => setNewNotif({ ...newNotif, title: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Broadcast Message</label>
-                <textarea 
-                  required
-                  rows={3}
-                  placeholder="Type your message here..."
-                  className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-bold text-sm resize-none"
-                  value={newNotif.message}
-                  onChange={(e) => setNewNotif({ ...newNotif, message: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Action Label (Optional)</label>
-                <input 
-                  placeholder="e.g. View Invoice, Review Specs"
-                  className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-bold text-sm"
-                  value={newNotif.action_label}
-                  onChange={(e) => setNewNotif({ ...newNotif, action_label: e.target.value })}
-                />
-              </div>
-
-              <button 
-                type="submit"
-                disabled={createMutation.isPending}
-                className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {createMutation.isPending ? (
-                  <Loader2 className="animate-spin" size={18} />
-                ) : (
-                  <>
-                    <Send size={18} />
-                    <span>Send Broadcast</span>
-                  </>
-                )}
-              </button>
-            </form>
-          </motion.div>
-        </div>
-      )}
     </motion.div>
   );
 }

@@ -140,14 +140,14 @@ export default function ServiceTiersPage() {
   const filteredCustomers = useMemo(() => {
     return customerList.filter(cust => {
       const matchesSearch = 
-        cust.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (cust.name || cust.nama || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         cust.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cust.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (cust.city || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (cust.service && cust.service.toLowerCase().includes(searchQuery.toLowerCase()));
       
       const matchesStatus = 
         statusFilter === "All" || 
-        (statusFilter === "grace" && cust.is_grace_period) ||
+        (statusFilter === "grace" && (cust as any).is_grace_period) ||
         (cust.status?.toLowerCase() === statusFilter.toLowerCase());
 
       return matchesSearch && matchesStatus;

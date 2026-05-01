@@ -3,24 +3,26 @@
 import { query } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import * as Mock from '@/lib/mockData';
+import bcrypt from 'bcryptjs';
+import { ServiceTier, Asset, Customer, Transaction, OcrData, Notification, Admin, Invoice } from '@/types';
 
-export async function getServiceTiers() {
+export async function getServiceTiers(): Promise<ServiceTier[]> {
   try {
     const res = await query('SELECT * FROM service_tiers ORDER BY id ASC');
-    return res.rows.length > 0 ? res.rows : Mock.MOCK_SERVICE_TIERS;
+    return res.rows.length > 0 ? res.rows as ServiceTier[] : Mock.MOCK_SERVICE_TIERS as ServiceTier[];
   } catch (e) {
     console.error("DB Error: getServiceTiers", e);
-    return Mock.MOCK_SERVICE_TIERS;
+    return Mock.MOCK_SERVICE_TIERS as ServiceTier[];
   }
 }
 
-export async function getAssetRoster() {
+export async function getAssetRoster(): Promise<Asset[]> {
   try {
     const res = await query('SELECT * FROM asset_roster ORDER BY id ASC');
-    return res.rows.length > 0 ? res.rows : Mock.MOCK_ASSETS;
+    return res.rows.length > 0 ? res.rows as Asset[] : Mock.MOCK_ASSETS as Asset[];
   } catch (e) {
     console.error("DB Error: getAssetRoster", e);
-    return Mock.MOCK_ASSETS;
+    return Mock.MOCK_ASSETS as Asset[];
   }
 }
 
@@ -34,23 +36,33 @@ export async function getStockAssets() {
   }
 }
 
-export async function getCustomers() {
+export async function getCustomers(): Promise<Customer[]> {
   try {
     const res = await query(`
-      SELECT *,
+      SELECT c.*,
         CASE 
-          WHEN status = 'Active' AND 
-               EXTRACT(DAY FROM "createdAt"::timestamp) = EXTRACT(DAY FROM (NOW() + INTERVAL '1 day'))
-          THEN true ELSE false 
+          WHEN c.status = 'Active' AND 
+               EXTRACT(DAY FROM c."createdAt"::timestamp) = EXTRACT(DAY FROM (NOW() + INTERVAL '1 day'))
+          THEN true 
+          WHEN c.status = 'Active' AND 
+               c."createdAt"::timestamp < (NOW() - INTERVAL '1 month') AND
+               (SELECT COUNT(*) FROM transactions t 
+                WHERE split_part(t.id, '-', 2) = c.id 
+                AND t.keterangan = 'pemasukan'
+                AND EXTRACT(MONTH FROM t.timestamp::timestamp) = EXTRACT(MONTH FROM NOW())
+                AND EXTRACT(YEAR FROM t.timestamp::timestamp) = EXTRACT(YEAR FROM NOW())
+               ) = 0
+          THEN true
+          ELSE false 
         END as is_grace_period,
-        EXTRACT(DAY FROM "createdAt"::timestamp) as due_day
-      FROM customers 
-      ORDER BY id ASC
+        EXTRACT(DAY FROM c."createdAt"::timestamp) as due_day
+      FROM customers c
+      ORDER BY c.id ASC
     `);
-    return res.rows.length > 0 ? res.rows : Mock.MOCK_CUSTOMERS;
+    return res.rows.length > 0 ? res.rows as Customer[] : Mock.MOCK_CUSTOMERS as Customer[];
   } catch (e) {
     console.error("DB Error: getCustomers", e);
-    return Mock.MOCK_CUSTOMERS;
+    return Mock.MOCK_CUSTOMERS as Customer[];
   }
 }
 
@@ -90,7 +102,7 @@ export async function auditCustomerGracePeriod() {
   }
 }
 
-export async function getTransactions() {
+export async function getTransactions(): Promise<(Transaction & { numericAmount?: number })[]> {
   try {
     const res = await query(`
       SELECT 
@@ -106,35 +118,35 @@ export async function getTransactions() {
     return data.map(r => ({
       ...r,
       amount: r.amount || 'Rp 0',
-      numericAmount: parseInt(r.amount?.replace(/[^0-9]/g, '') || '0'),
+      numericAmount: parseInt((r.amount || '').replace(/[^0-9]/g, '') || '0'),
       timestamp: r.timestamp ? new Date(r.timestamp).toISOString() : new Date().toISOString()
-    }));
+    })) as (Transaction & { numericAmount?: number })[];
   } catch (e) {
     console.error("DB Error: getTransactions", e);
     return Mock.MOCK_TRANSACTIONS.map(r => ({
       ...r,
       numericAmount: parseInt(r.amount.replace(/[^0-9]/g, '')),
-    }));
+    })) as (Transaction & { numericAmount?: number })[];
   }
 }
 
-export async function getOcrData() {
+export async function getOcrData(): Promise<OcrData> {
   try {
     const res = await query('SELECT * FROM ocr_data LIMIT 1');
-    return res.rows[0] || Mock.MOCK_OCR;
+    return res.rows[0] as OcrData || Mock.MOCK_OCR as OcrData;
   } catch (e) {
     console.error("DB Error: getOcrData", e);
-    return Mock.MOCK_OCR;
+    return Mock.MOCK_OCR as OcrData;
   }
 }
 
-export async function getAdminProfile() {
+export async function getAdminProfile(): Promise<Admin & { fullName: string }> {
   try {
     const res = await query('SELECT id, nama as "fullName", email, role, department, image FROM admin LIMIT 1');
-    return res.rows[0] || Mock.MOCK_ADMIN;
+    return res.rows[0] as Admin & { fullName: string } || Mock.MOCK_ADMIN as Admin & { fullName: string };
   } catch (e) {
     console.error("DB Error: getAdminProfile", e);
-    return Mock.MOCK_ADMIN;
+    return Mock.MOCK_ADMIN as Admin & { fullName: string };
   }
 }
 
@@ -153,10 +165,10 @@ export async function updateAdminProfile(data: { fullName: string, email: string
   }
 }
 
-export async function getAdminList() {
+export async function getAdminList(): Promise<Admin[]> {
   try {
     const res = await query('SELECT id, nama, email, role, department, image, nickname FROM admin ORDER BY id ASC');
-    return res.rows;
+    return res.rows as Admin[];
   } catch (e) {
     console.error("DB Error: getAdminList", e);
     // Map fallback to match DB column names
@@ -173,11 +185,12 @@ export async function getAdminList() {
 
 export async function createAdmin(data: { nama: string, email: string, role: string, department: string, image: string }) {
   try {
+    const hashedPassword = await bcrypt.hash('admin123', 10);
     const res = await query(`
       INSERT INTO admin (nama, email, role, department, image, password)
-      VALUES ($1, $2, $3, $4, $5, 'admin123')
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING id, nama, email, role, department, image
-    `, [data.nama, data.email, data.role, data.department, data.image]);
+    `, [data.nama, data.email, data.role, data.department, data.image, hashedPassword]);
     return res.rows[0];
   } catch (e) {
     console.error("DB Error: createAdmin", e);
@@ -219,17 +232,19 @@ export async function hideAllNotifications() {
   }
 }
 
-export async function getNotifications() {
+export async function getNotifications(): Promise<Notification[]> {
   try {
-    const res = await query('SELECT *, is_unread::boolean as is_unread FROM notifications WHERE is_hidden = false OR is_hidden IS NULL ORDER BY id DESC');
-    const data = res.rows.length > 0 ? res.rows : Mock.MOCK_NOTIFICATIONS;
+    const res = await query('SELECT id, category, title, message, type, is_unread, action_label, created_at, is_hidden FROM notifications WHERE is_hidden = false OR is_hidden IS NULL ORDER BY id DESC');
+    const data = res.rows;
+    console.log(`DB: Fetched ${data.length} notifications. Unread count: ${data.filter(n => n.is_unread).length}`);
     return data.map(row => ({
       ...row,
+      is_unread: row.is_unread === true || row.is_unread === 't' || row.is_unread === 'true' || row.is_unread === 1,
       created_at: row.created_at ? new Date(row.created_at).toISOString() : null
-    }));
+    })) as Notification[];
   } catch (e) {
     console.error("DB Error: getNotifications", e);
-    return Mock.MOCK_NOTIFICATIONS;
+    return [];
   }
 }
 
@@ -244,11 +259,23 @@ export async function markNotificationAsRead(id: number) {
 
 export async function markAllNotificationsAsRead() {
   try {
-    await query('UPDATE notifications SET is_unread = false');
+    const res = await query('UPDATE notifications SET is_unread = false');
+    console.log(`DB: Marked all as read. Rows affected: ${res.rowCount}`);
+    revalidatePath('/notifications');
   } catch (e) {
     console.error("DB Error: markAllNotificationsAsRead", e);
   }
   return { success: true };
+}
+
+export async function getInvoices(): Promise<Invoice[]> {
+  try {
+    const res = await query('SELECT * FROM invoices ORDER BY id DESC');
+    return res.rows as Invoice[];
+  } catch (e) {
+    console.error("DB Error: getInvoices", e);
+    return [];
+  }
 }
 
 export async function getExpenses() {
@@ -265,7 +292,7 @@ export async function getExpenses() {
 }
 
 
-export async function updateOcrData(id: number, data: { vendor: string, date: string, amount: string, reference: string }) {
+export async function updateOcrData(id: string | number, data: { vendor: string, date: string, amount: string, reference: string }) {
   try {
     const res = await query(`
       UPDATE ocr_data 
@@ -281,7 +308,7 @@ export async function updateOcrData(id: number, data: { vendor: string, date: st
   }
 }
 
-export async function postOcrEntry(ocrId: number, data: { vendor: string, amount: string, date: string, reference: string, method: string }) {
+export async function postOcrEntry(ocrId: string | number, data: { vendor: string, amount: string, date: string, reference: string, method: string }) {
   try {
     // 1. Sanitize Date (Convert Indonesian months to English for PostgreSQL)
     let sanitizedDate = data.date;
@@ -314,6 +341,16 @@ export async function postOcrEntry(ocrId: number, data: { vendor: string, amount
       INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan)
       VALUES ($1, $2, $3, 'Verified', $4, 'bank', 'pemasukan')
     `, [trxId, data.method, `Rp ${data.amount}`, timestamp]);
+
+    const customerId = trxId.includes('-') ? trxId.split('-')[1] : null;
+    if (customerId) {
+      // Trigger-like: Create a Paid invoice automatically
+      const numericAmount = Number(data.amount.replace(/[^0-9]/g, ''));
+      await query(`
+        INSERT INTO invoices (customer_id, amount, due_date, status)
+        VALUES ($1, $2, $3, 'Paid')
+      `, [customerId, numericAmount, timestamp]);
+    }
 
     revalidatePath('/finance');
     revalidatePath('/notifications');

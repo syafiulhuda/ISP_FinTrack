@@ -2,13 +2,15 @@
 
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { useEffect, useState } from 'react';
 
 // Helper to create colored marker icons
 const createStatusIcon = (status: string) => {
-  const color = status === 'Online' ? '#10b981' : 
-                status === 'Maintenance' ? '#f59e0b' : 
+  const s = (status || '').toLowerCase();
+  const color = (s === 'online' || s === 'good') ? '#10b981' : 
+                (s === 'maintenance' || s === 'maint.') ? '#f59e0b' : 
+                s === 'warning' ? '#ef4444' :
+                s === 'offline' ? '#64748b' :
                 '#ef4444';
   
   return L.divIcon({
@@ -39,7 +41,11 @@ function ChangeView({ center, zoom }: { center: [number, number] | null | undefi
     if (!map) return;
 
     if (center) {
-      map.setView(center, zoom, { animate: true });
+      // Use setView with a slight delay to ensure the container is ready
+      const timeoutId = setTimeout(() => {
+        map.setView(center, zoom, { animate: true });
+      }, 0);
+      return () => clearTimeout(timeoutId);
     } else {
       map.setZoom(zoom, { animate: true });
     }
@@ -49,31 +55,17 @@ function ChangeView({ center, zoom }: { center: [number, number] | null | undefi
 }
 
 export default function IndonesiaMap({ assets, onSelectNode, selectedNode, zoom = 5, center: propsCenter }: IndonesiaMapProps) {
-  const [isMounted, setIsMounted] = useState(false);
   const defaultCenter: [number, number] = [-2.5489, 118.0149]; // Indonesia Center
-
-  useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
-
-  if (!isMounted) {
-    return (
-      <div className="w-full h-full bg-slate-900 flex items-center justify-center text-slate-500 font-black">
-        PREPARING MAP CONTAINER...
-      </div>
-    );
-  }
 
   return (
     <div className="w-full h-full relative" id="map-parent">
       <MapContainer 
-        key="indonesia-map-container"
         center={defaultCenter} 
         zoom={zoom} 
         style={{ height: '100%', width: '100%', background: '#0f172a' }}
         zoomControl={false}
         scrollWheelZoom={true}
+        // Removing key to prevent unnecessary unmounts
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -82,9 +74,9 @@ export default function IndonesiaMap({ assets, onSelectNode, selectedNode, zoom 
         
         {assets.map((asset) => (
           <Marker
-            key={asset.id}
+            key={`marker-${asset.id}`} // More unique key
             position={[parseFloat(asset.latitude), parseFloat(asset.longitude)]}
-            icon={createStatusIcon(asset.status)}
+            icon={createStatusIcon(asset.condition || asset.status)}
             eventHandlers={{
               click: () => onSelectNode(asset),
             }}

@@ -22,7 +22,7 @@ export async function getMapAssets() {
       FROM asset_roster 
       WHERE latitude IS NOT NULL 
         AND longitude IS NOT NULL
-        AND (kepemilikan = 'Dimiliki' OR kepemilikan IS NULL)
+        AND (kepemilikan NOT IN ('Dijual', 'Telah Dijual') OR kepemilikan IS NULL)
       ORDER BY id ASC
     `);
     return res.rows.length > 0 ? res.rows : MOCK_ASSETS;

@@ -11,7 +11,8 @@ import {
   Power,
   Plus,
   Bell,
-  Settings
+  Settings,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -32,9 +33,10 @@ const footerNavigation = [
   { name: "Logout", href: "/logout", icon: Power },
 ];
 
-export function Sidebar() {
+export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const { settings } = useSettings();
+
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   interface ThemeConfig {
@@ -68,7 +70,28 @@ export function Sidebar() {
   } : colorMap.blue);
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-64 z-40 bg-slate-100 dark:bg-slate-950 flex flex-col h-full p-4 space-y-2 hidden md:flex border-r border-slate-200 dark:border-slate-800">
+    <>
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      <aside className={cn(
+        "fixed left-0 top-0 bottom-0 w-64 z-50 bg-slate-100 dark:bg-slate-950 flex-col h-full p-4 space-y-2 border-r border-slate-200 dark:border-slate-800 transition-transform duration-300 md:flex md:translate-x-0 shadow-2xl md:shadow-none",
+        isOpen ? "flex translate-x-0" : "-translate-x-full hidden"
+      )}>
+        {/* Mobile Close Button */}
+        {isOpen && (
+          <button 
+            onClick={onClose}
+            className="absolute right-4 top-4 p-2 md:hidden text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full z-50"
+          >
+            <X size={20} />
+          </button>
+        )}
       {/* Header */}
       <div className="mb-8 px-4 flex items-center space-x-3">
         <motion.div 
@@ -153,6 +176,7 @@ export function Sidebar() {
           </Link>
         ))}
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

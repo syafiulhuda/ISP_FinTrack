@@ -9,7 +9,7 @@ import {
   ChevronLeft 
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getServiceTiers, getAssetRoster } from "@/actions/db";
+import { getCustomers, getServiceTiers, getAssetRoster, getInvoices } from "@/actions/db";
 import { cn } from "@/lib/utils";
 import { useState, useMemo, useEffect } from "react";
 
@@ -24,6 +24,8 @@ export default function RegionalAnalysisPage() {
   const { data: customerList = [], isLoading: loadingCustomers } = useQuery({ queryKey: ['customers'], queryFn: getCustomers, refetchInterval: 60000 });
   const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers, refetchInterval: 60000 });
   const { data: assetRoster = [], isLoading: loadingAssets } = useQuery({ queryKey: ['assetRoster'], queryFn: getAssetRoster, refetchInterval: 60000 });
+  const { data: invoicesList = [], isLoading: loadingInvoices } = useQuery({ queryKey: ['invoices'], queryFn: getInvoices, refetchInterval: 60000 });
+
 
   const assetSummary = useMemo(() => {
     const filteredAssets = assetRoster.filter(a => {
@@ -37,13 +39,24 @@ export default function RegionalAnalysisPage() {
       // If no specific selection, include all
       if (!matchTarget) return true;
 
+      const loc = a.location.toLowerCase();
+      // Clean target from formal prefixes (e.g. "Kota Bandung" -> "bandung")
+      const cleanTarget = matchTarget.replace(/^(Kota|Kabupaten|Kecamatan|Kelurahan|Provinsi)\s+/i, '').toLowerCase();
+
       // Fuzzy match against the location string
-      return a.location.toLowerCase().includes(matchTarget.toLowerCase());
+      return loc.includes(cleanTarget);
     });
 
-    const owned = filteredAssets.filter(a => a.kepemilikan === 'Dimiliki' || !a.kepemilikan).length;
-    const sold = filteredAssets.filter(a => a.kepemilikan === 'Telah Dijual').length;
-    return { total: filteredAssets.length, owned, sold };
+    const online = filteredAssets.filter(a => (a.status || '').toLowerCase() === 'online').length;
+    const offline = filteredAssets.filter(a => (a.status || '').toLowerCase() === 'offline').length;
+    const sold = assetRoster.filter(a => a.kepemilikan === 'Dijual' || a.kepemilikan === 'Telah Dijual').length;
+    
+    return { 
+      total: filteredAssets.length, 
+      online, 
+      offline,
+      sold 
+    };
   }, [assetRoster, selectedProvince, selectedCity, selectedDistrict, selectedSubDistrict]);
 
   const [profitPage, setProfitPage] = useState(1);
@@ -113,10 +126,34 @@ export default function RegionalAnalysisPage() {
       const status = arpu >= 200000 ? "OPTIMAL" : "ACTION NEEDED";
       const color = status === "OPTIMAL" ? "bg-blue-100 text-blue-600" : "bg-orange-100 text-orange-600";
       
-      const aging0_30 = v.revenue * 0.8;
-      const aging31_60 = v.revenue * 0.12;
-      const aging61_90 = v.revenue * 0.05;
-      const aging90Plus = v.revenue * 0.03 + (v.inactiveCount * 150000);
+      const customerIds = filtered.filter(c => (c.village || "Other") === v.node).map(c => c.id);
+      const villageInvoices = invoicesList.filter(inv => customerIds.includes(inv.customer_id) && inv.status === 'Unpaid');
+      
+      let aging0_30 = 0;
+      let aging31_60 = 0;
+      let aging61_90 = 0;
+      let aging90Plus = 0;
+
+      const today = new Date();
+      villageInvoices.forEach(inv => {
+        const dueDate = new Date(inv.due_date);
+        const diffTime = Math.abs(today.getTime() - dueDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        const amount = Number(inv.amount) || 0;
+        if (diffDays <= 30) aging0_30 += amount;
+        else if (diffDays <= 60) aging31_60 += amount;
+        else if (diffDays <= 90) aging61_90 += amount;
+        else aging90Plus += amount;
+      });
+
+      // Fallback to simulation if no real invoices exist for the village
+      if (villageInvoices.length === 0) {
+        aging0_30 = v.revenue * 0.8;
+        aging31_60 = v.revenue * 0.12;
+        aging61_90 = v.revenue * 0.05;
+        aging90Plus = v.revenue * 0.03 + (v.inactiveCount * 150000);
+      }
 
       return {
         ...v,
@@ -133,7 +170,7 @@ export default function RegionalAnalysisPage() {
         }
       };
     }).filter(v => v.node.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [selectedProvince, selectedCity, selectedDistrict, selectedSubDistrict, searchQuery, customerList, serviceTiers, mounted]);
+  }, [selectedProvince, selectedCity, selectedDistrict, selectedSubDistrict, searchQuery, customerList, serviceTiers, mounted, invoicesList]);
 
   const paginatedProfit = dynamicData.slice((profitPage - 1) * itemsPerPage, profitPage * itemsPerPage);
   const totalProfitPages = Math.ceil(dynamicData.length / itemsPerPage);
@@ -141,7 +178,7 @@ export default function RegionalAnalysisPage() {
   const paginatedAging = dynamicData.slice((agingPage - 1) * itemsPerPage, agingPage * itemsPerPage);
   const totalAgingPages = Math.ceil(dynamicData.length / itemsPerPage);
 
-  if (loadingCustomers || loadingTiers || loadingAssets) {
+  if (loadingCustomers || loadingTiers || loadingAssets || loadingInvoices) {
     return <div className="h-full w-full flex items-center justify-center"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="text-slate-500 font-medium">Loading Regional Data...</p></div></div>;
   }
 
@@ -231,12 +268,12 @@ export default function RegionalAnalysisPage() {
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Total Aset</p>
           </div>
           <div className="bg-emerald-50 dark:bg-emerald-900/10 p-5 rounded-2xl border border-emerald-200/50 dark:border-emerald-700/50 text-center">
-            <p className="text-3xl font-black text-emerald-600">{mounted ? assetSummary.owned : '---'}</p>
-            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Dimiliki</p>
+            <p className="text-3xl font-black text-emerald-600">{mounted ? assetSummary.online : '---'}</p>
+            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Online</p>
           </div>
-          <div className="bg-red-50 dark:bg-red-900/10 p-5 rounded-2xl border border-red-200/50 dark:border-red-700/50 text-center">
-            <p className="text-3xl font-black text-red-600">{mounted ? assetSummary.sold : '---'}</p>
-            <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mt-1">Telah Dijual</p>
+          <div className="bg-rose-50 dark:bg-rose-900/10 p-5 rounded-2xl border border-rose-200/50 dark:border-rose-700/50 text-center">
+            <p className="text-3xl font-black text-rose-600">{mounted ? assetSummary.sold : '---'}</p>
+            <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mt-1">Sold</p>
           </div>
         </div>
       </div>

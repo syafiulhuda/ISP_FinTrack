@@ -15,12 +15,16 @@ import {
   ChevronLeft,
   X,
   Search,
-  Filter as FilterIcon
+  Filter as FilterIcon,
+  Download,
+  FileText
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getTransactions, getOcrData, updateOcrData, postOcrEntry, checkTrxExists } from "@/actions/db";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { exportToPDF, exportToExcel } from "@/lib/exportUtils";
+import Tesseract from 'tesseract.js';
 
 export default function FinancePage() {
   const { data: transactions = [], isLoading: loadingTx } = useQuery({ 
@@ -53,7 +57,7 @@ export default function FinancePage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
     e.preventDefault();
     let files: FileList | null = null;
     
@@ -64,11 +68,34 @@ export default function FinancePage() {
     }
 
     if (files && files[0]) {
-      toast.success("File uploaded successfully! Starting AI analysis...");
-      // Mock AI processing delay
-      setTimeout(() => {
-        toast.info("AI Analysis complete. Please verify the extracted data.");
-      }, 2000);
+      const file = files[0];
+      toast.success("File uploaded successfully! Starting AI analysis...", { duration: 3000 });
+      setIsEditing(true);
+
+      try {
+        const worker = await Tesseract.createWorker('eng');
+        const ret = await worker.recognize(file);
+        const text = ret.data.text;
+        
+        // Improved regex parsing to handle various receipt formats
+        const amountMatch = text.match(/(?:Rp|IDR|Total|Amount|Rp\.)[\s\:\.]*([\d\,\.]+)/i);
+        const dateMatch = text.match(/(\d{1,2}[\/\-\s](?:\d{1,2}|[A-Za-z]{3,})[\/\-\s]\d{2,4})/);
+        const refMatch = text.match(/(?:TRX|Ref|No|Reff)[\s\:\-\#]*([A-Za-z0-9\-]{5,})/i);
+
+        if (amountMatch) setAmount(amountMatch[1].replace(/[^0-9]/g, ''));
+        if (dateMatch) setDate(dateMatch[1]);
+        if (refMatch) setReference(refMatch[0].toUpperCase());
+        
+        // Vendor guess (first long word/line)
+        const lines = text.split('\n').filter(l => l.trim().length > 3);
+        if (lines.length > 0) setVendor(lines[0].trim());
+
+        await worker.terminate();
+        toast.success("AI Analysis complete. Please verify the extracted data.");
+      } catch (err) {
+        console.error(err);
+        toast.error("OCR failed. Please enter data manually.");
+      }
     }
   };
 
@@ -392,6 +419,23 @@ export default function FinancePage() {
               </select>
               <FilterIcon size={12} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
+            
+            <div className="flex gap-2">
+              <button 
+                onClick={() => exportToPDF('finance-table', 'finance_report.pdf')}
+                className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 transition-colors"
+                title="Export to PDF"
+              >
+                <FileText size={18} />
+              </button>
+              <button 
+                onClick={() => exportToExcel(filteredByKeterangan, 'finance_report.xlsx')}
+                className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 p-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 transition-colors"
+                title="Export to Excel"
+              >
+                <Download size={18} />
+              </button>
+            </div>
           </div>
           <button 
             onClick={() => setIsModalOpen(true)}
@@ -401,7 +445,7 @@ export default function FinancePage() {
           </button>
         </div>
         
-        <div className="space-y-3">
+        <div id="finance-table" className="space-y-3 bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl">
           {/* Table Header */}
           <div className="grid grid-cols-12 gap-4 px-8 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
             <div className="col-span-2">ID</div>
@@ -571,7 +615,9 @@ export default function FinancePage() {
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-black text-slate-900 dark:text-slate-100">{trx.amount}</p>
-                          <p className="text-[9px] font-medium text-slate-400">{trx.timestamp}</p>
+                          <p className="text-[9px] font-medium text-slate-400">
+                            {typeof trx.timestamp === 'object' && trx.timestamp !== null ? (trx.timestamp as Date).toLocaleString('id-ID') : trx.timestamp}
+                          </p>
                         </div>
                       </div>
                     ))}

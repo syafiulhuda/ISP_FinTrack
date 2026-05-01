@@ -1,1 +1,1 @@
-ALTER TABLE notifications ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN DEFAULT FALSE;
+SELECT location FROM asset_roster LIMIT 20;
