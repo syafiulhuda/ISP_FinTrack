@@ -42,10 +42,16 @@ export async function getCustomers(): Promise<Customer[]> {
       SELECT c.*,
         CASE 
           WHEN c.status = 'Active' AND (
+            -- Kondisi 1: Jatuh tempo BESOK (H-1)
             EXTRACT(DAY FROM (c."createdAt"::timestamptz AT TIME ZONE 'Asia/Jakarta')) =
             EXTRACT(DAY FROM (NOW() AT TIME ZONE 'Asia/Jakarta' + INTERVAL '1 day'))
             OR
-            c."createdAt"::timestamptz < (NOW() - INTERVAL '1 month')
+            -- Kondisi 2: Sudah melewati tanggal jatuh tempo bulan ini
+            EXTRACT(DAY FROM (c."createdAt"::timestamptz AT TIME ZONE 'Asia/Jakarta')) <=
+            EXTRACT(DAY FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
+            OR
+            -- Kondisi 3: Pelanggan lama (daftar sebelum bulan ini) yang belum bayar bulan ini
+            date_trunc('month', c."createdAt"::timestamptz) < date_trunc('month', NOW())
           )
           -- Pengecekan Pembayaran (Berlaku untuk kedua kondisi di atas)
           AND NOT EXISTS (
