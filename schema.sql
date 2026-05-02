@@ -48,32 +48,6 @@ CREATE FUNCTION public.notify_asset_condition() RETURNS trigger
 ALTER FUNCTION public.notify_asset_condition() OWNER TO postgres;
 
 --
--- Name: notify_asset_condition_change(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.notify_asset_condition_change() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    IF (NEW.condition <> 'Good') THEN
-        INSERT INTO notifications (category, title, message, type, is_unread, action_label)
-        VALUES (
-            'Inventory', 
-            'Hardware ' || NEW.sn || ' reported ' || NEW.condition, 
-            'Asset type ' || NEW.type || ' at ' || NEW.location || ' requires attention. Condition: ' || NEW.condition, 
-            'hardware', 
-            true, 
-            'Schedule Dispatch'
-        );
-    END IF;
-    RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION public.notify_asset_condition_change() OWNER TO postgres;
-
---
 -- Name: notify_new_transaction(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -572,13 +546,6 @@ ALTER TABLE ONLY public.service_tiers
 
 ALTER TABLE ONLY public.stock_asset_roster
     ADD CONSTRAINT stock_asset_roster_pkey PRIMARY KEY (id);
-
-
---
--- Name: asset_roster trg_asset_condition; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER trg_asset_condition AFTER UPDATE OF condition ON public.asset_roster FOR EACH ROW EXECUTE FUNCTION public.notify_asset_condition_change();
 
 
 --

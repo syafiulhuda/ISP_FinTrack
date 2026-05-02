@@ -297,7 +297,7 @@ export default function Dashboard() {
     };
 
     // CAC Display Logic (Match SQL CASE)
-    let cacDisplay = `Rp ${latestStats.cac.toLocaleString('id-ID').replace(/,/g, '.')}`;
+    let cacDisplay = formatCompactNumber(latestStats.cac);
     if (latestStats.newCusts === 0) {
       cacDisplay = latestStats.totalExp > 0 ? "N/A" : "Rp 0";
     }
@@ -334,7 +334,7 @@ export default function Dashboard() {
     }
 
     return {
-      arpu: `Rp ${(latestStats.arpu / 1000).toFixed(1)}k`,
+      arpu: formatCompactNumber(latestStats.arpu),
       totalRevenue: formatCompactNumber(latestStats.rev),
       churnRate: `${latestStats.churn.toFixed(1)}%`,
       cac: cacDisplay,

@@ -3,6 +3,7 @@
 import { query } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import * as Mock from '@/lib/mockData';
+import { createSession, destroySession, getSession } from "@/lib/auth";
 import bcrypt from 'bcryptjs';
 import { ServiceTier, Asset, Customer, Transaction, OcrData, Notification, Admin, Invoice } from '@/types';
 
@@ -162,8 +163,17 @@ export async function getOcrData(): Promise<OcrData> {
 
 export async function getAdminProfile(): Promise<Admin & { fullName: string }> {
   try {
-    const res = await query('SELECT id, nama as "fullName", email, role, department, image FROM admin LIMIT 1');
-    return res.rows[0] as Admin & { fullName: string } || Mock.MOCK_ADMIN as Admin & { fullName: string };
+    const adminId = await getSession();
+    if (!adminId) {
+      return Mock.MOCK_ADMIN as Admin & { fullName: string };
+    }
+
+    const res = await query('SELECT id, nama as "fullName", email, role, department, image FROM admin WHERE id = $1', [adminId]);
+    if (res.rows.length === 0) {
+      return Mock.MOCK_ADMIN as Admin & { fullName: string };
+    }
+    
+    return res.rows[0] as Admin & { fullName: string };
   } catch (e) {
     console.error("DB Error: getAdminProfile", e);
     return Mock.MOCK_ADMIN as Admin & { fullName: string };
@@ -172,12 +182,15 @@ export async function getAdminProfile(): Promise<Admin & { fullName: string }> {
 
 export async function updateAdminProfile(data: { fullName: string, email: string, role: string, department: string, image: string }) {
   try {
+    const adminId = await getSession();
+    if (!adminId) throw new Error("Unauthorized");
+
     const res = await query(`
       UPDATE admin 
       SET nama = $1, email = $2, role = $3, department = $4, image = $5
-      WHERE id = (SELECT id FROM admin LIMIT 1)
+      WHERE id = $6
       RETURNING id, nama as "fullName", email, role, department, image
-    `, [data.fullName, data.email, data.role, data.department, data.image]);
+    `, [data.fullName, data.email, data.role, data.department, data.image, adminId]);
     return res.rows[0];
   } catch (e) {
     console.error("DB Error: updateAdminProfile", e);

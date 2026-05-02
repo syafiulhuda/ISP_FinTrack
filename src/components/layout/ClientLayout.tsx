@@ -12,7 +12,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const pathname = usePathname();
-  const isAuthPage = pathname === "/login" || pathname === "/logout";
+  const isAuthPage = pathname === "/login" || pathname === "/logout" || pathname.startsWith("/reset-password");
 
   if (isAuthPage) {
     return (
