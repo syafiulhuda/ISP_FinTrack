@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCustomers, getServiceTiers, getAssetRoster, getInvoices, getAgingMVData } from "@/actions/db";
 import { cn } from "@/lib/utils";
 import { useState, useMemo, useEffect } from "react";
+import { LoadingState } from "@/components/LoadingState";
 
 export default function RegionalAnalysisPage() {
   const [selectedProvince, setSelectedProvince] = useState("All Provinces");
@@ -209,7 +210,7 @@ export default function RegionalAnalysisPage() {
   const totalAgingPages = Math.ceil(dynamicData.length / itemsPerPage);
 
   if (loadingCustomers || loadingTiers || loadingAssets || loadingInvoices || loadingMV) {
-    return <div className="h-full w-full flex items-center justify-center"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="text-slate-500 font-medium">Loading Regional Data...</p></div></div>;
+    return <LoadingState message="Mengkalkulasi analisis regional..." />;
   }
 
   return (

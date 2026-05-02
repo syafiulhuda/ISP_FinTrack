@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { SettingsProvider } from "@/components/providers/SettingsProvider";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -36,20 +37,22 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
             <main className="flex-1 overflow-y-auto pt-24 pb-12 px-6 lg:px-8">
               <div className="max-w-7xl mx-auto w-full">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={pathname}
-                    initial={{ opacity: 0, y: 8, scale: 0.99, filter: "blur(8px)" }}
-                    animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, y: -8, scale: 0.99, filter: "blur(8px)" }}
-                    transition={{ 
-                      duration: 0.4, 
-                      ease: [0.22, 1, 0.36, 1] 
-                    }}
-                  >
-                    {children}
-                  </motion.div>
-                </AnimatePresence>
+                <ErrorBoundary>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={pathname}
+                      initial={{ opacity: 0, y: 8, scale: 0.99, filter: "blur(8px)" }}
+                      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, y: -8, scale: 0.99, filter: "blur(8px)" }}
+                      transition={{ 
+                        duration: 0.4, 
+                        ease: [0.22, 1, 0.36, 1] 
+                      }}
+                    >
+                      {children}
+                    </motion.div>
+                  </AnimatePresence>
+                </ErrorBoundary>
               </div>
             </main>
           </div>

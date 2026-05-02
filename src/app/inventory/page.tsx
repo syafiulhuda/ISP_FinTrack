@@ -34,6 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { LoadingState } from "@/components/LoadingState";
 
 const IconMap = {
   "trending-up": Cpu,
@@ -321,7 +322,7 @@ export default function InventoryPage() {
   };
 
   if (loadingAssets || loadingStock) {
-    return <div className="h-full w-full flex items-center justify-center"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="text-slate-500 font-medium">Loading Inventory Data...</p></div></div>;
+    return <LoadingState message="Memuat data inventaris..." />;
   }
 
   return (

@@ -12,6 +12,8 @@ import {
 } from "@/actions/db";
 
 import { useState } from "react";
+import { LoadingState } from "@/components/LoadingState";
+import { toast } from "sonner";
 
 function timeAgo(date: string | Date) {
   const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
@@ -144,11 +146,7 @@ export default function NotificationsPage() {
   // --- Render ---
 
   if (isLoading) {
-    return (
-      <div className="h-[70vh] flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary w-10 h-10" />
-      </div>
-    );
+    return <LoadingState message="Mengambil pemberitahuan..." />;
   }
 
   const unreadAlerts = notifications.filter((n: any) => n.is_unread).length;
@@ -267,7 +265,9 @@ export default function NotificationsPage() {
                         </p>
                         <div className="mt-4 flex gap-2">
                           {notif.action_label && (
-                            <button className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+                            <button 
+                              onClick={() => toast.info("Fitur ini segera hadir 🚀")}
+                              className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
                               cat === 'Finance' ? 'bg-primary text-primary-foreground hover:bg-blue-600' : 
                               cat === 'Inventory' ? 'bg-orange-500 text-white hover:bg-orange-600' :
                               'bg-purple-600 text-white hover:bg-purple-700'

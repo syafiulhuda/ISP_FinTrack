@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { exportToExcel } from "@/lib/exportUtils";
 import Tesseract from 'tesseract.js';
+import { LoadingState } from "@/components/LoadingState";
 
 export default function FinancePage() {
   const { data: transactions = [], isLoading: loadingTx } = useQuery({ 
@@ -302,7 +303,7 @@ export default function FinancePage() {
   );
 
   if (loadingTx || loadingOcr || !ocrData) {
-    return <div className="h-full w-full flex items-center justify-center"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="text-slate-500 font-medium">Loading Finance Data...</p></div></div>;
+    return <LoadingState message="Menganalisis data keuangan..." />;
   }
 
   return (

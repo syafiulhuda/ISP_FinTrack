@@ -1,210 +1,3 @@
--- Validasi TOTAL REVENUE (MoM)
--- Logic: ((Revenue April / Revenue Maret) - 1) * 100
-
-WITH MonthlyRevenue AS (
-    SELECT
-        TO_CHAR(timestamp, 'YYYY-MM') as month,
-        SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) as revenue
-    FROM transactions
-    WHERE status = 'Verified' AND keterangan = 'pemasukan'
-    GROUP BY 1
-)
-SELECT
-    cur.revenue as "Revenue April",
-    prev.revenue as "Revenue March",
-    ROUND(((cur.revenue / NULLIF(prev.revenue, 0)) - 1) * 100, 1) || '%' as "Trend MoM %"
-FROM
-    (SELECT revenue FROM MonthlyRevenue WHERE month = '2026-04') cur,
-    (SELECT revenue FROM MonthlyRevenue WHERE month = '2026-03') prev;
-
-
--- Validasi ARPU (MoM)
--- Logic: Total Pendapatan Bulan N / Total Active User (Kumulatif hingga Bulan N)
-WITH ARPU_Stats AS (
-    SELECT
-        '2026-04' as month,
-        (SELECT SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) FROM transactions WHERE status = 'Verified' AND keterangan = 'pemasukan' AND TO_CHAR(timestamp, 'YYYY-MM') = '2026-04') /
-        NULLIF((SELECT COUNT(*) FROM customers WHERE status = 'Active' AND TO_CHAR("createdAt"::date, 'YYYY-MM') <= '2026-04'), 0) as arpu
-    UNION ALL
-    SELECT
-        '2026-03' as month,
-        (SELECT SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) FROM transactions WHERE status = 'Verified' AND keterangan = 'pemasukan' AND TO_CHAR(timestamp, 'YYYY-MM') = '2026-03') /
-        NULLIF((SELECT COUNT(*) FROM customers WHERE status = 'Active' AND TO_CHAR("createdAt"::date, 'YYYY-MM') <= '2026-03'), 0) as arpu
-)
-SELECT
-    (SELECT arpu FROM ARPU_Stats WHERE month = '2026-04') as "ARPU April",
-    (SELECT arpu FROM ARPU_Stats WHERE month = '2026-03') as "ARPU March",
-    ROUND((((SELECT arpu FROM ARPU_Stats WHERE month = '2026-04') / NULLIF((SELECT arpu FROM ARPU_Stats WHERE month = '2026-03'), 0)) - 1) * 100, 1) || '%' as "Trend MoM %";
-
-
--- Validasi CAC (MoM)
--- Logic: Menggunakan nilai transactions berstatus pengeluaran bulanan / Total User Baru di bulan tersebut.
-WITH CAC_Stats AS (
-    SELECT
-        '2026-04' as month,
-        (SELECT SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) FROM transactions WHERE status = 'Verified' AND keterangan = 'pengeluaran' AND TO_CHAR(timestamp, 'YYYY-MM') = '2026-04') /
-        NULLIF((SELECT COUNT(*) FROM customers WHERE TO_CHAR("createdAt"::date, 'YYYY-MM') = '2026-04'), 0) as cac
-    UNION ALL
-    SELECT
-        '2026-03' as month,
-        (SELECT SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) FROM transactions WHERE status = 'Verified' AND keterangan = 'pengeluaran' AND TO_CHAR(timestamp, 'YYYY-MM') = '2026-03') /
-        NULLIF((SELECT COUNT(*) FROM customers WHERE TO_CHAR("createdAt"::date, 'YYYY-MM') = '2026-03'), 0) as cac
-)
-SELECT
-    (SELECT cac FROM CAC_Stats WHERE month = '2026-04') as "CAC April",
-    (SELECT cac FROM CAC_Stats WHERE month = '2026-03') as "CAC March",
-    ROUND((((SELECT cac FROM CAC_Stats WHERE month = '2026-04') / NULLIF((SELECT cac FROM CAC_Stats WHERE month = '2026-03'), 0)) - 1) * 100, 1) || '%' as "Trend MoM %";
-
-
--- Validasi CHURN RATE (MoM)
--- Logic: Customer Inactive di bulan terkait / Total Customer (Kumulatif hingga bulan tersebut).
-WITH Churn_Stats AS (
-    SELECT
-        '2026-04' as month,
-        (SELECT COUNT(*) FROM customers WHERE status = 'Inactive' AND TO_CHAR("createdAt"::date, 'YYYY-MM') = '2026-04')::numeric /
-        NULLIF((SELECT COUNT(*) FROM customers WHERE TO_CHAR("createdAt"::date, 'YYYY-MM') <= '2026-04'), 0) * 100 as churn_rate
-    UNION ALL
-    SELECT
-        '2026-03' as month,
-        (SELECT COUNT(*) FROM customers WHERE status = 'Inactive' AND TO_CHAR("createdAt"::date, 'YYYY-MM') = '2026-03')::numeric /
-        NULLIF((SELECT COUNT(*) FROM customers WHERE TO_CHAR("createdAt"::date, 'YYYY-MM') <= '2026-03'), 0) * 100 as churn_rate
-)
-SELECT
-    (SELECT churn_rate FROM Churn_Stats WHERE month = '2026-04') as "Churn April",
-    (SELECT churn_rate FROM Churn_Stats WHERE month = '2026-03') as "Churn March",
-    ROUND((((SELECT churn_rate FROM Churn_Stats WHERE month = '2026-04') / NULLIF((SELECT churn_rate FROM Churn_Stats WHERE month = '2026-03'), 0)) - 1) * 100, 1) || '%' as "Trend MoM %";
-
-
--- Validasi MRR, EBITDA, & NET PROFIT (Latest Month)
-WITH Filters AS (
-    SELECT
-        '2026-01-01'::date as start_date,
-        '2026-12-31'::date as end_date,
-        'All Regions' as selected_region -- Ubah untuk tes spesifik region (misal: 'DKI Jakarta')
-),
-FilteredTransactions AS (
-    SELECT t.*, c.province
-    FROM transactions t
-    LEFT JOIN customers c ON split_part(t.id, '-', 2) = CAST(c.id AS TEXT)
-    CROSS JOIN Filters f
-    WHERE t.status = 'Verified'
-      AND t.timestamp::date >= f.start_date
-      AND t.timestamp::date <= f.end_date
-      AND (f.selected_region = 'All Regions' OR c.province = f.selected_region)
-),
-LatestMonth AS (
-    SELECT TO_CHAR(MAX(timestamp), 'YYYY-MM') as month_str
-    FROM FilteredTransactions
-),
-LatestMetrics AS (
-    SELECT
-        (SELECT SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT))
-         FROM FilteredTransactions
-         WHERE keterangan = 'pemasukan' AND TO_CHAR(timestamp, 'YYYY-MM') = (SELECT month_str FROM LatestMonth)
-        ) as mrr_revenue,
-
-        (SELECT SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT))
-         FROM FilteredTransactions
-         WHERE keterangan = 'pengeluaran' AND TO_CHAR(timestamp, 'YYYY-MM') = (SELECT month_str FROM LatestMonth)
-        ) as tx_expenses
-)
-SELECT
-    COALESCE(mrr_revenue, 0) as "MRR (Verified)",
-    COALESCE(mrr_revenue, 0) - COALESCE(tx_expenses, 0) as "NET PROFIT",
-    ROUND(((COALESCE(mrr_revenue, 0) - COALESCE(tx_expenses, 0))::numeric / NULLIF(mrr_revenue, 0)) * 100, 1) || '%' as "EBITDA MARGIN"
-FROM LatestMetrics;
-
-
--- Validasi ACTIVE & INACTIVE USERS
-WITH Filters AS (
-    SELECT '2026-01-01'::date as start_date, '2026-12-31'::date as end_date, 'All Regions' as selected_region
-),
-ActiveDalamRange AS (
-    -- User yg melakukan pembayaran terverifikasi di range tsb
-    SELECT DISTINCT split_part(t.id, '-', 2) as cust_id
-    FROM transactions t
-    CROSS JOIN Filters f
-    WHERE t.status = 'Verified' AND t.keterangan = 'pemasukan'
-      AND t.timestamp::date >= f.start_date AND t.timestamp::date <= f.end_date
-)
-SELECT
-    (SELECT COUNT(*) FROM customers c CROSS JOIN Filters f
-     WHERE (c."createdAt"::date <= f.end_date OR c.registration_date::date <= f.end_date)
-       AND (f.selected_region = 'All Regions' OR c.province = f.selected_region)
-       AND CAST(c.id AS TEXT) IN (SELECT cust_id FROM ActiveDalamRange)
-    ) as "ACTIVE USERS (Paying)",
-
-    (SELECT COUNT(*) FROM customers c CROSS JOIN Filters f
-     WHERE (c."createdAt"::date <= f.end_date OR c.registration_date::date <= f.end_date)
-       AND (f.selected_region = 'All Regions' OR c.province = f.selected_region)
-       AND c.status IN ('Inactive', 'Non-Active')
-    ) as "INACTIVE USERS"
-;
-
-
--- Validasi CHART WATERFALL (Selama Range Terpilih)
-WITH Filters AS (
-    SELECT '2026-01-01'::date as start_date, '2026-12-31'::date as end_date, 'All Regions' as selected_region
-),
-TotalCustomers AS (SELECT COUNT(*) as total FROM customers),
-RegionCustomers AS (
-    SELECT COUNT(*) as total FROM customers c CROSS JOIN Filters f WHERE c.province = f.selected_region OR f.selected_region = 'All Regions'
-),
-AllocationFactor AS (
-    SELECT CASE
-        WHEN (SELECT selected_region FROM Filters) = 'All Regions' THEN 1.0
-        ELSE (SELECT total FROM RegionCustomers)::numeric / NULLIF((SELECT total FROM TotalCustomers), 0)
-    END as factor
-)
-SELECT
-    type as "Component",
-    SUM(CAST(REPLACE(REPLACE(REPLACE(t.amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) as "Value (Rp)",
-    'Income' as "Type"
-FROM transactions t
-LEFT JOIN customers c ON split_part(t.id, '-', 2) = CAST(c.id AS TEXT)
-CROSS JOIN Filters f
-WHERE t.status = 'Verified' AND t.keterangan = 'pemasukan'
-  AND t.timestamp::date >= f.start_date AND t.timestamp::date <= f.end_date
-  AND (f.selected_region = 'All Regions' OR c.province = f.selected_region)
-GROUP BY type
-
-UNION ALL
-
-SELECT
-    category as "Component",
-    -SUM(ABS(e.amount::numeric) * (SELECT factor FROM AllocationFactor)) as "Value (Rp)",
-    'Expense (Allocated)' as "Type"
-FROM expenses e
-CROSS JOIN Filters f
-WHERE e.date::date >= f.start_date AND e.date::date <= f.end_date
-GROUP BY category;
-
-
--- Validasi SERVICE PLAN MIX
-WITH Filters AS (
-    SELECT '2026-01-01'::date as start_date, '2026-12-31'::date as end_date, 'All Regions' as selected_region
-),
-ActiveDalamRange AS (
-    SELECT DISTINCT split_part(t.id, '-', 2) as cust_id
-    FROM transactions t
-    CROSS JOIN Filters f
-    WHERE t.status = 'Verified' AND t.keterangan = 'pemasukan'
-      AND t.timestamp::date >= f.start_date AND t.timestamp::date <= f.end_date
-)
-SELECT 
-    CASE WHEN service = 'Gamers Node' THEN 'Gamers' ELSE service END as "Plan",
-    COUNT(*) as "Total Users",
-    ROUND((COUNT(*)::numeric / SUM(COUNT(*)) OVER()) * 100, 1) || '%' as "Distribution %"
-FROM customers c
-CROSS JOIN Filters f
-WHERE CAST(c.id AS TEXT) IN (SELECT cust_id FROM ActiveDalamRange)
-  AND (c."createdAt"::date <= f.end_date OR c.registration_date::date <= f.end_date)
-  AND (f.selected_region = 'All Regions' OR c.province = f.selected_region)
-  AND (service IN ('Premium', 'Standard', 'Basic') OR service = 'Gamers Node')
-GROUP BY 1
-ORDER BY "Total Users" DESC;
-
-
 -- Daftar pelanggan yang akan jatuh tempo
 SELECT
     c.id,
@@ -237,95 +30,254 @@ ORDER BY due_day ASC;
 
 
 -- Kumulatif ARPU, CAC, CHURN RATE, dan TOTAL REVENUE
-WITH ExecutiveMetrics AS (
+-- ISP-FinTrack Unified Executive Dashboard Query
+-- Location: isp-fintrack-web/scripts/query.pgsql
+-- Logic: Single-pass calculation for all KPIs, Trends, and Chart Data.
+
+WITH RECURSIVE MonthSeries AS (
+    -- 1. Generate month axis for 2026
+    SELECT '2026-01' as month
+    UNION ALL
+    SELECT TO_CHAR((month || '-01')::date + interval '1 month', 'YYYY-MM')
+    FROM MonthSeries
+    WHERE month < '2026-12'
+),
+MonthlyRawData AS (
+    -- 2. Aggregate raw counts and verified transaction sums per month
+    SELECT 
+        m.month,
+        -- Revenue (Verified Pemasukan)
+        COALESCE((
+            SELECT SUM((regexp_replace(amount, '[^0-9]', '', 'g'))::numeric) 
+            FROM transactions t
+            WHERE t.status = 'Verified' 
+              AND t.keterangan = 'pemasukan' 
+              AND TO_CHAR(t.timestamp, 'YYYY-MM') = m.month
+        ), 0) as raw_revenue,
+        
+        -- Expenses (Verified Pengeluaran)
+        COALESCE((
+            SELECT SUM((regexp_replace(amount, '[^0-9]', '', 'g'))::numeric) 
+            FROM transactions t
+            WHERE t.status = 'Verified' 
+              AND t.keterangan = 'pengeluaran' 
+              AND TO_CHAR(t.timestamp, 'YYYY-MM') = m.month
+        ), 0) as raw_expenses,
+        
+        -- Customer Metrics
+        (SELECT COUNT(*) FROM customers WHERE TO_CHAR("createdAt"::date, 'YYYY-MM') = m.month) as new_customers,
+        (SELECT COUNT(*) FROM customers WHERE status = 'Active' AND TO_CHAR("createdAt"::date, 'YYYY-MM') <= m.month) as cumulative_active,
+        (SELECT COUNT(*) FROM inactive_cust WHERE TO_CHAR(inactiveat::date, 'YYYY-MM') = m.month) as churned_this_month
+    FROM MonthSeries m
+),
+CalculatedKPIs AS (
+    -- 3. Calculate core KPIs (ARPU, CAC, Churn Rate)
+    SELECT 
+        *,
+        CASE WHEN cumulative_active > 0 THEN raw_revenue / cumulative_active ELSE 0 END as arpu,
+        CASE WHEN new_customers > 0 THEN raw_expenses / new_customers ELSE 0 END as cac,
+        CASE WHEN cumulative_active > 0 THEN (churned_this_month::numeric / cumulative_active) * 100 ELSE 0 END as churn_rate
+    FROM MonthlyRawData
+),
+MetricsWithTrends AS (
+    -- 4. Calculate Trends using Window Functions (LAG)
+    SELECT 
+        *,
+        LAG(raw_revenue) OVER (ORDER BY month) as prev_revenue,
+        LAG(arpu) OVER (ORDER BY month) as prev_arpu,
+        LAG(cac) OVER (ORDER BY month) as prev_cac,
+        LAG(churn_rate) OVER (ORDER BY month) as prev_churn_rate
+    FROM CalculatedKPIs
+)
+-- 5. Final Output: Formatted for Dashboard & Raw for Charts
+SELECT 
+    month as "Period",
+    
+    -- Formatted Big Numbers
+    'Rp ' || CASE 
+        WHEN raw_revenue >= 1000000 THEN ROUND(raw_revenue / 1000000.0, 2) || 'M'
+        ELSE ROUND(raw_revenue / 1000.0, 0) || 'k'
+    END as "Total Revenue",
+    
+    'Rp ' || ROUND(arpu / 1000.0, 1) || 'k' as "ARPU",
+    
+    'Rp ' || CASE 
+        WHEN cac >= 1000000 THEN ROUND(cac / 1000000.0, 2) || 'M'
+        ELSE ROUND(cac / 1000.0, 1) || 'k'
+    END as "CAC",
+    
+    ROUND(churn_rate, 1) || '%' as "Churn Rate",
+    
+    -- Trend Percentages (MoM)
+    CASE 
+        WHEN prev_revenue IS NULL OR prev_revenue = 0 THEN '0%'
+        ELSE ROUND(((raw_revenue::numeric / prev_revenue) - 1) * 100, 1) || '%'
+    END as "Rev Trend",
+    
+    CASE 
+        WHEN prev_arpu IS NULL OR prev_arpu = 0 THEN '0%'
+        ELSE ROUND(((arpu::numeric / prev_arpu) - 1) * 100, 1) || '%'
+    END as "ARPU Trend",
+    
+    CASE 
+        WHEN prev_cac IS NULL OR prev_cac = 0 THEN '0%'
+        ELSE ROUND(((cac::numeric / prev_cac) - 1) * 100, 1) || '%'
+    END as "CAC Trend",
+    
+    CASE 
+        WHEN prev_churn_rate IS NULL THEN '0%'
+        ELSE (ROUND(churn_rate - prev_churn_rate, 1)) || '%'
+    END as "Churn Trend",
+
+    -- Raw Data for Charts (Revenue Growth & Customer Growth)
+    raw_revenue as "Chart_Revenue",
+    raw_expenses as "Chart_Expenses",
+    cumulative_active as "Chart_Customer_Growth"
+FROM MetricsWithTrends
+ORDER BY month DESC;
+
+
+-- ============================================================================
+-- SECTION 2: PROFITABILITY ANALYSIS (12-Month Time Series - Hybrid YTD & MoM)
+-- ============================================================================
+WITH RECURSIVE MonthSeries AS (
+    -- 1. Generate 12 Bulan di tahun berjalan
+    SELECT '2026-01' as month
+    UNION ALL
+    SELECT TO_CHAR((month || '-01')::date + interval '1 month', 'YYYY-MM')
+    FROM MonthSeries WHERE month < '2026-12'
+),
+Bounds AS (
+    -- 2. Siapkan batas waktu Kumulatif (YTD) untuk setiap bulan
     SELECT
         month,
-        -- 1. Total Revenue
-        revenue,
-        -- Mengeluarkan expense & new_customers ke atas agar bisa dibaca oleh CASE di query utama
-        expense,
-        new_customers,
-        -- 2. ARPU Calculation (Revenue / Total Active Customers)
-        ROUND(revenue::numeric / NULLIF(total_active, 0), 0) as arpu,
-        -- 3. CAC Calculation (Total Expense / New Customers)
-        ROUND(expense::numeric / NULLIF(new_customers, 0), 0) as cac,
-        -- 4. Churn Rate Calculation (Inactive this month / Total Customers)
-        ROUND((inactive_this_month::numeric / NULLIF(total_customers, 0)) * 100, 1) as churn_rate
-    FROM (
-        SELECT
-            m.month,
-            -- Revenue Pemasukan
-            COALESCE((SELECT SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT))
-             FROM transactions WHERE status = 'Verified' AND keterangan = 'pemasukan' AND TO_CHAR(timestamp, 'YYYY-MM') = m.month), 0) as revenue,
-            -- Total Active Users (Kumulatif sampai bulan tsb)
-            (SELECT COUNT(*) FROM customers WHERE status = 'Active' AND TO_CHAR("createdAt"::date, 'YYYY-MM') <= m.month) as total_active,
-            -- Total Expense Pengeluaran
-            COALESCE((SELECT SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT))
-             FROM transactions WHERE status = 'Verified' AND keterangan = 'pengeluaran' AND TO_CHAR(timestamp, 'YYYY-MM') = m.month), 0) as expense,
-            -- New Customers (Bulan tsb)
-            (SELECT COUNT(*) FROM customers WHERE TO_CHAR("createdAt"::date, 'YYYY-MM') = m.month) as new_customers,
-            -- Inactive Customers (Bulan tsb)
-            (SELECT COUNT(*) FROM inactive_cust WHERE TO_CHAR(inactiveat::date, 'YYYY-MM') = m.month) as inactive_this_month,
-            -- Total Customers (Kumulatif)
-            (SELECT COUNT(*) FROM customers WHERE status = 'Active' and TO_CHAR("createdAt"::date, 'YYYY-MM') <= m.month) as total_customers
-        -- Tambahkan bulan-bulan riwayat yang kamu butuhkan di sini
-        FROM (VALUES ('2026-01'), ('2026-02'), ('2026-03'), ('2026-04'), ('2026-05')) as m(month)
-    ) base
+        (SUBSTRING(month, 1, 4) || '-01-01')::date as ytd_start,
+        ((month || '-01')::date + interval '1 month - 1 day')::date as ytd_end,
+
+        -- Flag untuk mengecek apakah bulan ini ada di masa depan (melebihi tanggal hari ini)
+        CASE WHEN ((month || '-01')::date) > CURRENT_DATE THEN true ELSE false END as is_future_month
+    FROM MonthSeries
 ),
-HistoricalAverages AS (
+RawData AS (
+    -- 3. Tarik data Dua Buku Kas sekaligus (YTD & Bulanan)
     SELECT
-        month as cur_month,
-        arpu as cur_arpu,
-        cac as cur_cac,
-        churn_rate as cur_churn_rate,
-        revenue as cur_revenue,
-        expense as cur_expense,
-        new_customers as cur_new_customers,
+        b.month,
+        b.is_future_month,
 
-        -- Menghitung Rata-rata dari bulan PERTAMA sampai H-1 bulan saat ini
-        AVG(arpu) OVER (ORDER BY month ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING) as prev_arpu,
-        AVG(cac) OVER (ORDER BY month ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING) as prev_cac,
-        AVG(churn_rate) OVER (ORDER BY month ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING) as prev_churn_rate,
-        AVG(revenue) OVER (ORDER BY month ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING) as prev_revenue,
+        -- A. BUKU KAS KUMULATIF (YTD)
+        -- Jika bulan depan, set NULL. Jika tidak, hitung SUM.
+        CASE WHEN b.is_future_month THEN NULL ELSE
+            COALESCE((SELECT SUM((regexp_replace(amount, '[^0-9]', '', 'g'))::numeric) FROM transactions WHERE status = 'Verified' AND keterangan = 'pemasukan' AND timestamp::date BETWEEN b.ytd_start AND b.ytd_end), 0)
+        END as ytd_mrr,
 
-        -- Bantuan untuk membuat label nama "Period"
-        MIN(month) OVER () as first_month,
-        LAG(month) OVER (ORDER BY month) as last_prev_month
-    FROM ExecutiveMetrics
+        CASE WHEN b.is_future_month THEN NULL ELSE
+            COALESCE((SELECT SUM((regexp_replace(amount, '[^0-9]', '', 'g'))::numeric) FROM transactions WHERE status = 'Verified' AND keterangan = 'pengeluaran' AND timestamp::date BETWEEN b.ytd_start AND b.ytd_end), 0)
+        END as ytd_expenses,
+
+        -- B. BUKU KAS BULANAN (MoM)
+        CASE WHEN b.is_future_month THEN NULL ELSE
+            COALESCE((SELECT SUM((regexp_replace(amount, '[^0-9]', '', 'g'))::numeric) FROM transactions WHERE status = 'Verified' AND keterangan = 'pemasukan' AND TO_CHAR(timestamp, 'YYYY-MM') = b.month), 0)
+        END as monthly_mrr,
+
+        CASE WHEN b.is_future_month THEN NULL ELSE
+            COALESCE((SELECT SUM((regexp_replace(amount, '[^0-9]', '', 'g'))::numeric) FROM transactions WHERE status = 'Verified' AND keterangan = 'pengeluaran' AND TO_CHAR(timestamp, 'YYYY-MM') = b.month), 0)
+        END as monthly_expenses,
+
+        -- C. Status User Kumulatif
+        CASE WHEN b.is_future_month THEN NULL ELSE
+            ((SELECT COUNT(*) FROM customers WHERE "createdAt"::date <= b.ytd_end) -
+             (SELECT COUNT(*) FROM inactive_cust WHERE inactiveat::date <= b.ytd_end))
+        END as active_users,
+
+        CASE WHEN b.is_future_month THEN NULL ELSE
+            (SELECT COUNT(*) FROM inactive_cust WHERE inactiveat::date <= b.ytd_end)
+        END as inactive_users,
+
+        -- D. JSON Waterfall
+        CASE WHEN b.is_future_month THEN '[]'::json ELSE
+            COALESCE((
+                SELECT json_agg(json_build_object('component', w.category, 'value', w.val))
+                FROM (
+                    SELECT 'Revenue' as category, COALESCE(SUM((regexp_replace(amount, '[^0-9]', '', 'g'))::numeric), 0) as val
+                    FROM transactions WHERE timestamp::date BETWEEN b.ytd_start AND b.ytd_end AND keterangan = 'pemasukan' AND status = 'Verified'
+                    HAVING COALESCE(SUM((regexp_replace(amount, '[^0-9]', '', 'g'))::numeric), 0) > 0
+                    UNION ALL
+                    SELECT category, -SUM(amount::numeric) as val
+                    FROM expenses WHERE date::date BETWEEN b.ytd_start AND b.ytd_end GROUP BY category
+                ) w
+            ), '[]'::json)
+        END as waterfall_json,
+
+        -- E. JSON Plan Mix
+        CASE WHEN b.is_future_month THEN '[]'::json ELSE
+            COALESCE((
+                SELECT json_agg(json_build_object('plan', p.plan, 'total', p.total, 'dist', p.dist))
+                FROM (
+                    SELECT service as plan, COUNT(*) as total, ROUND((COUNT(*)::numeric / NULLIF(SUM(COUNT(*)) OVER(), 0)) * 100, 1) as dist
+                    FROM customers
+                    WHERE status = 'Active' AND "createdAt"::date <= b.ytd_end
+                    GROUP BY service
+                ) p
+            ), '[]'::json)
+        END as planmix_json
+
+    FROM Bounds b
+),
+KPIs AS (
+    -- 4. Kalkulasi Profit & Margin (Biarkan NULL jika bahan bakunya NULL)
+    SELECT
+        month,
+        is_future_month,
+
+        ytd_mrr,
+        (ytd_mrr - ytd_expenses) as ytd_net_profit,
+        CASE WHEN ytd_mrr > 0 THEN ((ytd_mrr - ytd_expenses) / ytd_mrr) * 100 ELSE 0 END as ytd_margin,
+
+        monthly_mrr,
+        (monthly_mrr - monthly_expenses) as monthly_net_profit,
+        CASE WHEN monthly_mrr > 0 THEN ((monthly_mrr - monthly_expenses) / monthly_mrr) * 100 ELSE 0 END as monthly_margin,
+
+        coalesce(active_users, 0) as active_users, coalesce(inactive_users, 0) as inactive_users, waterfall_json, planmix_json
+    FROM RawData
+),
+WithTrends AS (
+    -- 5. Tarik nilai BULANAN dari baris sebelumnya
+    SELECT
+        *,
+        LAG(monthly_mrr) OVER (ORDER BY month) as prev_monthly_mrr,
+        LAG(monthly_margin) OVER (ORDER BY month) as prev_monthly_margin,
+        LAG(monthly_net_profit) OVER (ORDER BY month) as prev_monthly_net_profit
+    FROM KPIs
 )
+-- 6. Output Final
 SELECT
-    -- Output Label Contoh: "2026-05 vs Avg (2026-01 to 2026-04)"
-    cur_month || ' vs Avg (' || first_month || ' to ' || last_prev_month || ')' as "Period",
+    month as "Period",
 
-    -- ARPU & Trend
-    'Rp ' || ROUND((cur_arpu / 1000.0), 1) || 'k' as "ARPU",
-    ROUND(((cur_arpu::numeric / NULLIF(prev_arpu, 0)) - 1) * 100, 1) || '%' as "ARPU Trend",
+    -- Jika bulan depan, kosongkan (jangan tampilkan Rp 0M atau -)
+    CASE WHEN is_future_month THEN 0::text ELSE 'Rp ' || ROUND(ytd_mrr / 1000000.0, 2) || 'M' END as "MRR YTD",
+    CASE WHEN is_future_month THEN 0::text
+         WHEN prev_monthly_mrr IS NULL OR prev_monthly_mrr = 0 THEN '-'
+         ELSE ROUND(((monthly_mrr / prev_monthly_mrr) - 1) * 100, 1) || '%'
+    END as "MRR Trend",
 
-    -- CAC & Trend
-    CASE
-        WHEN cur_new_customers = 0 AND cur_expense > 0 THEN 'N/A'
-        WHEN cur_new_customers = 0 THEN 'Rp 0'
-        ELSE 'Rp ' || cur_cac
-    END as "CAC",
-    CASE
-        WHEN cur_cac IS NULL OR prev_cac IS NULL THEN '-'
-        WHEN prev_cac = 0 AND cur_cac = 0 THEN '0%'
-        WHEN prev_cac = 0 THEN '100%'
-        ELSE ROUND(((cur_cac::numeric / prev_cac) - 1) * 100, 1) || '%'
-    END as "CAC Trend",
+    CASE WHEN is_future_month THEN 0::text ELSE ROUND(ytd_margin, 1) || '%' END as "EBITDA Margin YTD",
+    CASE WHEN is_future_month THEN 0::text
+         WHEN prev_monthly_margin IS NULL THEN '-'
+         ELSE ROUND(monthly_margin - prev_monthly_margin, 1) || '%'
+    END as "EBITDA Trend",
 
-    -- Churn Rate & Trend
-    COALESCE(cur_churn_rate, 0) || '%' as "Churn Rate",
-    CASE
-        WHEN COALESCE(cur_churn_rate, 0) - COALESCE(prev_churn_rate, 0) > 0
-        THEN '+' || ROUND(COALESCE(cur_churn_rate, 0) - COALESCE(prev_churn_rate, 0), 1) || '%'
-        ELSE ROUND(COALESCE(cur_churn_rate, 0) - COALESCE(prev_churn_rate, 0), 1) || '%'
-    END as "Churn Rate Trend",
+    CASE WHEN is_future_month THEN 0::text ELSE 'Rp ' || ROUND(ytd_net_profit / 1000000.0, 2) || 'M' END as "Net Profit YTD",
+    CASE WHEN is_future_month THEN 0::text
+         WHEN prev_monthly_net_profit IS NULL OR prev_monthly_net_profit = 0 THEN '-'
+         ELSE ROUND(((monthly_net_profit - prev_monthly_net_profit) / NULLIF(ABS(prev_monthly_net_profit), 0)) * 100, 1) || '%'
+    END as "Net Profit Trend",
 
-    -- Total Revenue & Trend
-    'Rp ' || ROUND((cur_revenue / 1000000.0), 2) || 'M' as "Total Revenue",
-    ROUND(((cur_revenue::numeric / NULLIF(prev_revenue, 0)) - 1) * 100, 1) || '%' as "Revenue Trend"
-FROM HistoricalAverages
--- Filter untuk membuang bulan pertama (karena bulan 1 tidak memiliki data masa lalu untuk dibandingkan)
-WHERE last_prev_month IS NOT NULL
-ORDER BY cur_month DESC;
+    -- Untuk integer, kita biarkan NULL. Front-end biasanya me-render NULL sebagai kosong.
+    active_users,
+    inactive_users,
+
+    waterfall_json as "Waterfall_JSON",
+    planmix_json as "PlanMix_JSON"
+
+FROM WithTrends
+ORDER BY month DESC;

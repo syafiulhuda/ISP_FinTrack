@@ -167,416 +167,239 @@ export default function ProfitabilityPage() {
 
   const dynamicData = useMemo(() => {
     const isAllRegions = selectedProvince === "All Regions";
-    const allocationFactor = isAllRegions ? 1 : (customerList.length > 0 ? (customerList.filter((c: any) => c.province === selectedProvince).length / customerList.length) : 0);
     
-    // --- 1. Basic Stats Logic ---
-    // Mapping Kota ke Provinsi untuk transaksi yang tidak punya ID Pelanggan
+    // 1. Month Series & Time Bounds
+    const currentYear = endDate.substring(0, 4) || "2026";
+    const currentMonthStr = endDate.substring(0, 7); // e.g., "2026-05"
+    const allMonthsInYear = [
+      `${currentYear}-01`, `${currentYear}-02`, `${currentYear}-03`, `${currentYear}-04`, 
+      `${currentYear}-05`, `${currentYear}-06`, `${currentYear}-07`, `${currentYear}-08`, 
+      `${currentYear}-09`, `${currentYear}-10`, `${currentYear}-11`, `${currentYear}-12`
+    ];
+    
+    const ytdMonths = allMonthsInYear.filter(m => m <= currentMonthStr);
+    const prevMonthStr = ytdMonths.length > 1 ? ytdMonths[ytdMonths.length - 2] : null;
+
+    // Helper for local date comparison
+    const getLocalDate = (d: any) => {
+      if (!d) return "";
+      const date = new Date(d);
+      if (isNaN(date.getTime())) return String(d);
+      return date.toISOString().split('T')[0];
+    };
+
+    // Mapping Kota ke Provinsi (Fallback if needed)
     const getProvinceFromCity = (city: string) => {
       if (!city) return null;
       const c = city.toLowerCase();
       if (c.includes("bandung") || c.includes("bogor") || c.includes("depok") || c.includes("bekasi")) return "Jawa Barat";
       if (c.includes("jakarta")) return "DKI Jakarta";
-      if (c.includes("semarang") || c.includes("solo")) return "Jawa Tengah";
-      if (c.includes("surabaya") || c.includes("malang")) return "Jawa Timur";
-      if (c.includes("jogja") || c.includes("yogyakarta")) return "DI Yogyakarta";
-      if (c.includes("bali") || c.includes("denpasar")) return "Bali";
+      if (c.includes("surabaya") || c.includes("malang") || c.includes("sidoarjo") || c.includes("gresik")) return "Jawa Timur";
+      if (c.includes("yogyakarta") || c.includes("sleman") || c.includes("bantul")) return "DI Yogyakarta";
       return null;
     };
 
-    // Helper untuk memformat tanggal ke YYYY-MM-DD (Waktu Lokal)
-    const getLocalDate = (d: any) => {
-      if (!d) return "";
-      try {
-        const date = new Date(d);
-        if (isNaN(date.getTime())) return String(d);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      } catch (e) {
-        return String(d);
+    // 2. Core Aggregator Logic
+    const getStatsForMonths = (months: string[]) => {
+      let revenue = 0;
+      let expenses = 0;
+      
+      transactions.forEach((tx: any) => {
+        const txMonth = getLocalDate(tx.timestamp).substring(0, 7);
+        if (!months.includes(txMonth)) return;
+
+        // Region Filter Logic
+        if (!isAllRegions) {
+          // Priority 1: Check direct city/province in transaction
+          const cityProv = getProvinceFromCity(tx.city) || tx.city;
+          const matchesDirectly = cityProv && String(cityProv).toLowerCase().includes(selectedProvince.toLowerCase());
+          
+          if (!matchesDirectly) {
+            // Priority 2: Check linked customer if it's an income (pemasukan)
+            const idSuffix = tx.id?.split('-')[1];
+            if (tx.keterangan === "pemasukan") {
+              const customer = customerList.find((c: any) => String(c.id) === idSuffix);
+              if (customer?.province !== selectedProvince) return;
+            } else {
+              // Priority 3: For expenses (pengeluaran), if no direct city match, skip it
+              // Unless it's an unlinked expense that should be allocated (handled below)
+              return;
+            }
+          }
+        }
+
+        if (tx.status === "Verified") {
+          if (tx.keterangan === "pemasukan") revenue += (tx.numericAmount || 0);
+          if (tx.keterangan === "pengeluaran") expenses += (tx.numericAmount || 0);
+        }
+      });
+
+      // 3. Shared Expense Allocation (For expenses not explicitly linked to a region)
+      // This ensures global expenses are still accounted for proportionally
+      const allocationFactor = isAllRegions ? 1 : (customerList.length > 0 ? (customerList.filter((c: any) => c.province === selectedProvince).length / customerList.length) : 0);
+      
+      expenseList.forEach((exp: any) => {
+        const expMonth = getLocalDate(exp.date).substring(0, 7);
+        if (!months.includes(expMonth)) return;
+        
+        // If this expense has a specific city that ISN'T our selected region, skip it
+        if (!isAllRegions && exp.city && !String(exp.city).toLowerCase().includes(selectedProvince.toLowerCase())) return;
+
+        // If it has no city OR matches our region, apply allocation
+        const isTxLinked = transactions.some((tx: any) => tx.keterangan === "pengeluaran" && tx.id?.split('-')[1] === String(exp.id));
+        
+        // If not already counted in transaction loop (to avoid double counting)
+        if (!isTxLinked || isAllRegions) {
+           // We only allocate if it's not explicitly linked to ANOTHER region
+           expenses += (Math.abs(exp.amount || 0) * (isAllRegions ? 1 : allocationFactor));
+        }
+      });
+
+      const profit = revenue - expenses;
+      const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+      return { revenue, expenses, profit, margin };
+    };
+
+    // 3. Calculate Final KPIs
+    const ytdStats = getStatsForMonths(ytdMonths);
+    const currentMonthStats = getStatsForMonths([currentMonthStr]);
+    const prevMonthStats = prevMonthStr ? getStatsForMonths([prevMonthStr]) : null;
+
+    const calculateTrend = (current: number, previous: number | null, isMargin = false) => {
+      if (previous === null || previous === 0) return { text: "-", type: "neutral" };
+      
+      if (isMargin) {
+        const diff = current - previous;
+        return { 
+          text: `${diff > 0 ? "+" : ""}${diff.toFixed(1)}%`, 
+          type: diff >= 0 ? "up" : "danger" 
+        };
+      } else {
+        const diff = ((current / Math.abs(previous)) - 1) * 100;
+        return { 
+          text: `${diff > 0 ? "+" : ""}${diff.toFixed(1)}%`, 
+          type: diff >= 0 ? "up" : "danger" 
+        };
       }
     };
 
-    // Helper untuk cek range tanggal
-    const isInRange = (d: string) => {
-      const dateStr = getLocalDate(d);
-      return dateStr >= startDate && dateStr <= endDate;
-    };
-
-    // --- 1. Raw Stats (Untuk EBITDA & MRR) ---
-    const getRawMonthStats = (monthStr: string) => {
-      const txs = transactions.filter((tx: any) => {
-        const isVerified = tx.status === "Verified" && tx.keterangan === "pemasukan";
-        const matchesMonth = getLocalDate(tx.timestamp).startsWith(monthStr);
-        if (!isVerified || !matchesMonth || !isInRange(tx.timestamp)) return false;
-
-        if (isAllRegions) return true;
-        
-        const cityProvince = getProvinceFromCity(tx.city);
-        if (cityProvince === selectedProvince) return true;
-
-        const idSuffix = tx.id?.split('-')[1];
-        const customer = customerList.find((c: any) => String(c.id) === idSuffix);
-        return customer?.province === selectedProvince;
-      });
-
-      // Revenue (MRR) - 100% spesifik
-      const rev = txs.reduce((sum: number, tx: any) => sum + (tx.numericAmount || 0), 0);
-
-      // Kita fokus ke Transactions sebagai Source of Truth agar sinkron dengan Waterfall
-      const txExps = transactions.filter((tx: any) => {
-        const isExpense = tx.status === "Verified" && tx.keterangan === "pengeluaran";
-        const matchesMonth = getLocalDate(tx.timestamp).startsWith(monthStr);
-        if (!isExpense || !matchesMonth || !isInRange(tx.timestamp)) return false;
-        
-        if (isAllRegions) return true;
-
-        const cityProvince = getProvinceFromCity(tx.city);
-        if (cityProvince === selectedProvince) return true;
-
-        const idSuffix = tx.id?.split('-')[1];
-        const customer = customerList.find((c: any) => String(c.id) === idSuffix);
-        return customer?.province === selectedProvince;
-      });
-
-      // Biaya - Hanya dari Transactions agar sinkron dengan Waterfall & Audit SQL
-      const totalExp = txExps.reduce((sum: number, tx: any) => sum + (tx.numericAmount || 0), 0);
-
-      const profit = rev - totalExp;
-      const margin = rev > 0 ? (profit / rev) * 100 : 0;
-      return { rev, totalExp, profit, margin };
-    };
-
-    // --- 2. Filtered Stats (Khusus Untuk NET PROFIT) ---
-    const getFilteredMonthStats = (monthStr: string) => {
-      const txs = transactions.filter((tx: any) => {
-        const isVerified = tx.status === "Verified" && tx.keterangan === "pemasukan";
-        const matchesMonth = getLocalDate(tx.timestamp).startsWith(monthStr);
-        if (!isVerified || !matchesMonth || !isInRange(tx.timestamp)) return false;
-        
-        if (isAllRegions) return true;
-
-        const cityProvince = getProvinceFromCity(tx.city);
-        if (cityProvince === selectedProvince) return true;
-
-        const idSuffix = tx.id?.split('-')[1];
-        const customer = customerList.find((c: any) => String(c.id) === idSuffix);
-        
-        if (!customer) return false;
-        return customer.province === selectedProvince;
-      });
-      const rev = txs.reduce((sum: number, tx: any) => sum + (tx.numericAmount || 0), 0);
-
-      const txExps = transactions.filter((tx: any) => {
-        const isExpense = tx.status === "Verified" && tx.keterangan === "pengeluaran";
-        const matchesMonth = getLocalDate(tx.timestamp).startsWith(monthStr);
-        if (!isExpense || !matchesMonth || !isInRange(tx.timestamp)) return false;
-
-        if (isAllRegions) return true;
-
-        const cityProvince = getProvinceFromCity(tx.city);
-        if (cityProvince === selectedProvince) return true;
-
-        const idSuffix = tx.id?.split('-')[1];
-        const customer = customerList.find((c: any) => String(c.id) === idSuffix);
-
-        if (!customer) return false;
-        return customer.province === selectedProvince;
-      });
-
-      const exps = expenseList.filter((e: any) => getLocalDate(e.date).startsWith(monthStr) && isInRange(e.date));
-
-      // Biaya - Hanya dari Transactions
-      const totalExp = txExps.reduce((sum: number, tx: any) => sum + (tx.numericAmount || 0), 0);
-
-      const profit = rev - totalExp;
-      return { rev, totalExp, profit };
-    };
-
-    // --- 3. Analysis ---
-    const allMonths = Array.from(new Set([
-      ...transactions.filter(t => isInRange(t.timestamp as any)).map((t: any) => getLocalDate(typeof t.timestamp === 'object' && t.timestamp ? t.timestamp.toISOString() : (t.timestamp || "")).slice(0, 7)),
-      ...expenseList.filter(e => isInRange(e.date)).map((e: any) => getLocalDate(e.date).slice(0, 7))
-    ])).filter(m => m.match(/^\d{4}-\d{2}$/)).sort();
-
-    const latestMonth = allMonths[allMonths.length - 1] || "2026-10";
-    const prevMonths = allMonths.filter(m => m < latestMonth);
-
-    // Raw Latest/Benchmark (Untuk EBITDA & MRR Trends)
-    const rawLatest = getRawMonthStats(latestMonth);
-    const rawPrevTotal = prevMonths.reduce((acc, m) => {
-      const s = getRawMonthStats(m);
-      return { rev: acc.rev + s.rev, margin: acc.margin + s.margin, count: acc.count + 1 };
-    }, { rev: 0, margin: 0, count: 0 });
-    const rawBenchmark = {
-      rev: rawPrevTotal.count > 0 ? rawPrevTotal.rev / rawPrevTotal.count : 0,
-      margin: rawPrevTotal.count > 0 ? rawPrevTotal.margin / rawPrevTotal.count : 0
-    };
-
-    // Filtered Latest/Benchmark (Untuk NET PROFIT Trends)
-    const filtLatest = getFilteredMonthStats(latestMonth);
-    const filtPrevTotal = prevMonths.reduce((acc, m) => {
-      const s = getFilteredMonthStats(m);
-      return { profit: acc.profit + s.profit, count: acc.count + 1 };
-    }, { profit: 0, count: 0 });
-    const filtBenchmark = {
-      profit: filtPrevTotal.count > 0 ? filtPrevTotal.profit / filtPrevTotal.count : 0
-    };
-
-    // Annual Totals (Untuk Big Numbers)
-    const totalRawRevenue = allMonths.reduce((sum, m) => sum + getRawMonthStats(m).rev, 0);
-    const totalRawExp = allMonths.reduce((sum, m) => sum + getRawMonthStats(m).totalExp, 0);
-    const totalRawProfit = totalRawRevenue - totalRawExp;
-    const overallEbitdaMargin = totalRawRevenue > 0 ? (totalRawProfit / totalRawRevenue) * 100 : 0;
-
-    const totalFiltProfit = allMonths.reduce((sum, m) => sum + getFilteredMonthStats(m).profit, 0);
-
-    const calculateTrend = (current: number, benchmark: number) => {
-      if (benchmark === 0) {
-        if (current > 0) return { text: "+100%", type: "up" };
-        if (current < 0) return { text: "-100%", type: "danger" };
-        return { text: "0%", type: "neutral" };
-      }
-      const diff = ((current / benchmark) - 1) * 100;
-      if (diff > 0) return { text: `+${diff.toFixed(1)}%`, type: "up" };
-      if (diff < 0) return { text: `${diff.toFixed(1)}%`, type: "danger" };
-      return { text: "0%", type: "neutral" };
-    };
-
-
-    // --- Dynamic Active Users Logic ---
-    const activeCustomerIdsInRange = new Set(
-      transactions
-        .filter((tx: any) => tx.status === "Verified" && tx.keterangan === "pemasukan" && isInRange(tx.timestamp))
-        .map((tx: any) => {
-          // Ambil bagian setelah 'TRX-' atau 'TRX-CT'
-          const fullId = tx.id?.split('-')[1]; // CT001
-          return fullId;
-        })
-        .filter(Boolean)
-    );
-
-    const totalCount = customerList.filter((c: any) => {
-      const joinDate = getLocalDate(c.createdAt || c.registration_date);
-      if (joinDate > endDate) return false; 
-      if (isAllRegions) return true;
-      return c.province === selectedProvince;
-    }).length;
-
-    const activeCount = customerList.filter((c: any) => {
+    // 4. User Status (Cumulative)
+    const activeAtEnd = customerList.filter((c: any) => {
       const joinDate = getLocalDate(c.createdAt || c.registration_date);
       if (joinDate > endDate) return false;
-      
-      // Fix: Only count customers who are currently 'Active'
-      if (c.status !== "Active") return false;
-      
-      const hasTxInRange = activeCustomerIdsInRange.has(String(c.id));
-      if (!hasTxInRange) return false;
-      if (isAllRegions) return true;
-      return c.province === selectedProvince;
+      if (!isAllRegions && c.province !== selectedProvince) return false;
+      return c.status === "Active";
     }).length;
 
-    const inactiveCount = customerList.filter((c: any) => {
+    const inactiveAtEnd = customerList.filter((c: any) => {
       const joinDate = getLocalDate(c.createdAt || c.registration_date);
       if (joinDate > endDate) return false;
-      const isStatusInactive = c.status === "Inactive" || c.status === "Non-Active";
-      if (!isStatusInactive) return false;
-      if (isAllRegions) return true;
-      return c.province === selectedProvince;
+      if (!isAllRegions && c.province !== selectedProvince) return false;
+      return c.status === "Inactive" || c.status === "Non-Active";
     }).length;
 
-    const mrrTrend = calculateTrend(rawLatest.rev, rawBenchmark.rev);
-    const marginTrend = calculateTrend(rawLatest.margin, rawBenchmark.margin);
-    const profitTrend = calculateTrend(filtLatest.profit, filtBenchmark.profit);
-
-    const metrics = [
-      { 
-        name: "MRR (Verified)", 
-        value: formatCompactNumber(rawLatest.rev), 
-        trend: mrrTrend.text, 
-        trendType: mrrTrend.type, 
-        icon: "trending", 
-        detail: "Current Month Revenue" 
-      },
-      { 
-        name: "EBITDA MARGIN", 
-        value: `${rawLatest.margin.toFixed(1)}%`, 
-        trend: marginTrend.text, 
-        trendType: marginTrend.type, 
-        icon: "target", 
-        detail: "Current Month Margin" 
-      },
-      { 
-        name: "NET PROFIT", 
-        value: formatCompactNumber(filtLatest.profit), 
-        trend: profitTrend.text, 
-        trendType: profitTrend.type, 
-        icon: "pie", 
-        detail: "Current Month Result" 
-      },
-      { 
-        name: "ACTIVE USERS", 
-        value: String(activeCount), 
-        trend: activeCount > 0 ? "Synced" : "Stable", 
-        trendType: activeCount > 0 ? "up" : "neutral", 
-        icon: "user", 
-        detail: "Paying Subscribers" 
-      },
-      { 
-        name: "INACTIVE USERS", 
-        value: String(inactiveCount), 
-        trend: inactiveCount > 0 ? "Attention" : "Healthy", 
-        trendType: inactiveCount > 0 ? "danger" : "up", 
-        icon: "target", 
-        detail: "Non-Paying / Idle" 
-      },
-    ];
-
-    const filteredCustomers = isAllRegions 
-      ? customerList.filter((c: any) => c.status === "Active")
-      : customerList.filter((c: any) => c.status === "Active" && c.province === selectedProvince);
-
-    const residentialCount = filteredCustomers.filter((c: any) => c.type === "Residential").length;
-    const businessCount = filteredCustomers.filter((c: any) => c.type === "Business").length;
-    const totalFiltered = filteredCustomers.length;
-
-    // 4. Service Plan Mix (Sekarang mengikuti Filter Tanggal & Region)
-    const activeCustomers = customerList.filter((c: any) => {
-      // Fix: Only include customers who are currently 'Active'
-      if (c.status !== "Active") return false;
-      
-      const isActiveInRange = activeCustomerIdsInRange.has(String(c.id));
-      if (!isActiveInRange) return false;
-      if (isAllRegions) return true;
-      return c.province === selectedProvince;
-    });
-
-    const targetServices = serviceTiers.map((t: any) => t.name);
-    const serviceCounts: Record<string, number> = {};
-    targetServices.forEach((name: string) => {
-      serviceCounts[name] = 0;
-    });
-    
-    activeCustomers.forEach((c: any) => {
-      const name = c.service === 'Gamers Node' ? 'Gamers' : c.service;
-      if (serviceCounts.hasOwnProperty(name)) {
-        serviceCounts[name] += 1;
-      }
-    });
-
-    const totalActiveWithPlan = Object.values(serviceCounts).reduce((a, b) => a + b, 0);
-
-    const distribution = Object.entries(serviceCounts).map(([name, count]) => {
-      const colors: Record<string, string> = {
-        'Premium': '#004ac6',
-        'Standard': '#64748b',
-        'Basic': '#bc4800',
-        'Gamers': '#16a34a'
-      };
+    // 5. Chart Data (YTD Focus)
+    const growthTrend = ytdMonths.map(mStr => {
+      const stats = getStatsForMonths([mStr]);
+      const [year, month] = mStr.split("-");
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       return {
-        name,
-        count,
-        value: totalActiveWithPlan > 0 ? Math.round((count / totalActiveWithPlan) * 100) : 0,
+        month: `${monthNames[parseInt(month)-1]}`,
+        value: stats.profit
+      };
+    });
+
+    const incomeByType: Record<string, number> = {};
+    const expenseByType: Record<string, number> = {};
+    const allocationFactor = isAllRegions ? 1 : (customerList.length > 0 ? (customerList.filter((c: any) => c.province === selectedProvince).length / customerList.length) : 0);
+    
+    // 1. Process Transactions for Waterfall
+    transactions.forEach((tx: any) => {
+      const txMonth = getLocalDate(tx.timestamp).substring(0, 7);
+      if (!ytdMonths.includes(txMonth)) return;
+
+      if (!isAllRegions) {
+        const cityProv = getProvinceFromCity(tx.city) || tx.city;
+        const matchesDirectly = cityProv && String(cityProv).toLowerCase().includes(selectedProvince.toLowerCase());
+        
+        if (!matchesDirectly) {
+          const idSuffix = tx.id?.split('-')[1];
+          if (tx.keterangan === "pemasukan") {
+            const customer = customerList.find((c: any) => String(c.id) === idSuffix);
+            if (customer?.province !== selectedProvince) return;
+          } else {
+            return; // Skip explicit expenses that don't match this region
+          }
+        }
+      }
+
+      if (tx.status === "Verified") {
+        if (tx.keterangan === "pemasukan") {
+          const type = tx.type || "Revenue";
+          incomeByType[type] = (incomeByType[type] || 0) + (tx.numericAmount || 0);
+        } else if (tx.keterangan === "pengeluaran") {
+          const type = tx.type || "Expense";
+          expenseByType[type] = (expenseByType[type] || 0) + (tx.numericAmount || 0);
+        }
+      }
+    });
+
+    // 2. Add Allocated Expenses to Waterfall
+    expenseList.forEach((exp: any) => {
+      const expMonth = getLocalDate(exp.date).substring(0, 7);
+      if (!ytdMonths.includes(expMonth)) return;
+
+      // Skip if explicitly linked to another region
+      if (!isAllRegions && exp.city && !String(exp.city).toLowerCase().includes(selectedProvince.toLowerCase())) return;
+
+      const isTxLinked = transactions.some((tx: any) => tx.keterangan === "pengeluaran" && tx.id?.split('-')[1] === String(exp.id));
+      
+      // If not counted in the transaction loop, add as allocated expense
+      if (!isTxLinked || isAllRegions) {
+        const type = exp.category || "General Expense";
+        const allocatedAmount = Math.abs(exp.amount || 0) * (isAllRegions ? 1 : allocationFactor);
+        expenseByType[type] = (expenseByType[type] || 0) + allocatedAmount;
+      }
+    });
+
+    const waterfallData = [
+      ...Object.entries(incomeByType).map(([name, value]) => ({ name, value: Number(value), isExpense: false })),
+      ...Object.entries(expenseByType).map(([name, value]) => ({ name, value: -Number(value), isExpense: true }))
+    ].filter(d => d.value !== 0);
+
+    const activeCustomers = customerList.filter((c: any) => {
+      const joinDate = getLocalDate(c.createdAt || c.registration_date);
+      return joinDate <= endDate && c.status === "Active" && (isAllRegions || c.province === selectedProvince);
+    });
+
+    const distribution = ["Premium", "Standard", "Basic", "Gamers"].map(name => {
+      const count = activeCustomers.filter(c => (c.service === 'Gamers Node' ? 'Gamers' : c.service) === name).length;
+      const colors: Record<string, string> = { 'Premium': '#004ac6', 'Standard': '#64748b', 'Basic': '#bc4800', 'Gamers': '#16a34a' };
+      return { 
+        name, 
+        count, 
+        value: activeCustomers.length > 0 ? Math.round((count / activeCustomers.length) * 100) : 0,
         color: colors[name] || '#94a3b8'
       };
     });
 
-      const growthTrend = allMonths.map(mStr => {
-        const stats = getRawMonthStats(mStr);
-        const [year, month] = mStr.split("-");
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        return {
-          month: `${monthNames[parseInt(month)-1]} ${year.substring(2)}`,
-          value: stats.profit
-        };
-      });
-
-    const incomeByType: Record<string, number> = {};
-    const expenseByType: Record<string, number> = {};
-    transactions
-      .filter((tx: any) => {
-        const isVerified = tx.status === "Verified" && tx.keterangan === "pemasukan";
-        if (!isVerified || !isInRange(tx.timestamp)) return false;
-        
-        if (isAllRegions) return true;
-        const idSuffix = tx.id?.split('-')[1];
-        const customer = customerList.find((c: any) => String(c.id) === idSuffix);
-        return customer?.province === selectedProvince;
-      })
-      .forEach((tx: any) => {
-        const type = tx.type || "Other";
-        incomeByType[type] = (incomeByType[type] || 0) + (tx.numericAmount || 0);
-      });
-
-    // B & C. Gabungan Expenses & Transactions (Berdasarkan Query SQL Join)
-    // Dasar: expenses e LEFT JOIN transactions t ON e.id = TRX-ID
-    expenseList
-      .filter((exp: any) => isInRange(exp.date))
-      .forEach((exp: any) => {
-        // Cari transaksi yang match (split_part(t.id,'-',2) = e.id)
-        const matchingTx = transactions.find((tx: any) => 
-          tx.keterangan === "pengeluaran" && 
-          tx.id?.split('-')[1] === String(exp.id)
-        );
-
-        if (matchingTx) {
-          // 1. Jika ada match, filter berdasarkan Region Transaksi tersebut
-          let matchesRegion = isAllRegions;
-          if (!matchesRegion) {
-            const cityProvince = getProvinceFromCity((matchingTx as any).city);
-            const idSuffixForCust = matchingTx.id?.split('-')[1];
-            const customer = customerList.find((c: any) => String(c.id) === idSuffixForCust);
-            matchesRegion = cityProvince === selectedProvince || customer?.province === selectedProvince;
-          }
-
-          if (matchesRegion) {
-            // Gunakan t.type sesuai query
-            const type = matchingTx.type || exp.category || "Other Expense";
-            expenseByType[type] = (expenseByType[type] || 0) + Math.abs(exp.amount || 0);
-          }
-        } else {
-          // 2. Jika tidak ada match (Left Join), gunakan category & allocation factor (Default)
-          const type = exp.category || "Operational";
-          const amount = Math.abs(exp.amount || 0) * (isAllRegions ? 1 : allocationFactor);
-          expenseByType[type] = (expenseByType[type] || 0) + amount;
-        }
-      });
-
-    const waterfallData = [
-      ...Object.entries(incomeByType).map(([name, value]) => ({
-        name,
-        value: Number(value),
-        isExpense: false
-      })),
-      ...Object.entries(expenseByType).map(([name, value]) => ({
-        name,
-        value: -Number(value),
-        isExpense: true
-      }))
-    ].filter(d => d.value !== 0);
-
-
-
-
-
-
-
-
-
-
-
-
-
+    const mrrTrend = calculateTrend(currentMonthStats.revenue, prevMonthStats?.revenue || null);
+    const marginTrend = calculateTrend(currentMonthStats.margin, prevMonthStats?.margin || null, true);
+    const profitTrend = calculateTrend(currentMonthStats.profit, prevMonthStats?.profit || null);
 
     return {
-      metrics,
+      metrics: [
+        { name: "MRR (YTD)", value: formatCompactNumber(ytdStats.revenue), trend: mrrTrend.text, trendType: mrrTrend.type, icon: "trending", detail: "Year-To-Date Revenue" },
+        { name: "EBITDA MARGIN (YTD)", value: `${ytdStats.margin.toFixed(1)}%`, trend: marginTrend.text, trendType: marginTrend.type, icon: "target", detail: "Year-To-Date Margin" },
+        { name: "NET PROFIT (YTD)", value: formatCompactNumber(ytdStats.profit), trend: profitTrend.text, trendType: profitTrend.type, icon: "pie", detail: "Year-To-Date Result" },
+        { name: "ACTIVE USERS", value: String(activeAtEnd), trend: "Synced", trendType: "up", icon: "user", detail: "Total Paying Subscribers" },
+        { name: "INACTIVE USERS", value: String(inactiveAtEnd), trend: inactiveAtEnd > 0 ? "Attention" : "Healthy", trendType: inactiveAtEnd > 0 ? "danger" : "up", icon: "target", detail: "Total Non-Paying / Idle" },
+      ],
+      totalActiveUsers: activeCustomers.length,
       waterfallData,
       distribution,
       growthTrend,
-      latestRevenue: rawLatest.rev,
-      latestProfit: rawLatest.profit,
-      avgMonthlyRevenue: rawBenchmark.rev
+      latestProfit: ytdStats.profit
     };
   }, [selectedProvince, startDate, endDate, customerList, transactions, expenseList]);
 
@@ -715,7 +538,17 @@ export default function ProfitabilityPage() {
             <motion.section initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-200 dark:border-slate-800 shadow-sm">
               <h3 className="text-xl font-black mb-8">Service Plan Mix</h3>
               <div className="flex items-center gap-10">
-                <div className="h-[220px] w-1/2">
+                <div className="h-[220px] w-1/2 relative group">
+                  {/* Center Text Overlay */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+                    <span className="text-4xl font-black text-slate-900 dark:text-white leading-none">
+                      {dynamicData.totalActiveUsers}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                      Users
+                    </span>
+                  </div>
+                  
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie 

@@ -35,6 +35,7 @@ import {
   getMaintenanceHistory 
 } from "@/actions/map";
 import { cn } from "@/lib/utils";
+import { LoadingState } from "@/components/LoadingState";
 
 const IndonesiaMap = dynamic(() => import('@/components/map/IndonesiaMap'), { 
   ssr: false,
@@ -116,6 +117,10 @@ export default function DistributionMapPage() {
 
 
   if (!mounted) return null;
+
+  if (isLoading) {
+    return <LoadingState message="Memetakan jaringan ISP..." />;
+  }
 
   return (
     <div className="flex-1 flex flex-col min-h-screen relative overflow-hidden bg-slate-50 dark:bg-slate-950">

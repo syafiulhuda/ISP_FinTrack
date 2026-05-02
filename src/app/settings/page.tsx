@@ -27,6 +27,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAdminList, createAdmin } from "@/actions/db";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -482,10 +483,13 @@ export default function SettingsPage() {
                       <item.icon className="text-slate-400" size={18} />
                       <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.name}</span>
                     </div>
-                    <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest", item.color)}>
+                    <button
+                      onClick={() => toast.info("Fitur ini segera hadir 🚀")}
+                      className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest cursor-pointer hover:opacity-80 transition-opacity", item.color)}
+                    >
                       <span className={cn("w-1.5 h-1.5 rounded-full", item.dotColor, item.status === "CONNECTED" && "animate-pulse")}></span>
                       {item.status}
-                    </div>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -524,7 +528,10 @@ export default function SettingsPage() {
                         <p className="text-xs text-slate-500">{admin.role} • {admin.department}</p>
                       </div>
                     </div>
-                    <MoreVertical className="text-slate-400 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" size={18} />
+                    <MoreVertical 
+                      onClick={() => toast.info("Fitur ini segera hadir 🚀")}
+                      className="text-slate-400 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" size={18} 
+                    />
                   </div>
                 ))}
               </div>

@@ -4,7 +4,7 @@ import { query } from "@/lib/db";
 import crypto from "crypto";
 import { sendResetPasswordEmail } from "@/lib/mail";
 import bcrypt from "bcryptjs";
-import { createSession, destroySession } from "@/lib/auth";
+import { createSession, destroySession, getSession } from "@/lib/auth";
 
 export async function loginAction(email: string, password: string): Promise<{ success: boolean; error?: string }> {
   try {
@@ -114,5 +114,31 @@ export async function validateResetToken(token: string) {
   } catch (error) {
     console.error("Auth Action Error: validateResetToken", error);
     return { valid: false };
+  }
+}
+
+export async function changePasswordAction(passwordOld: string, passwordNew: string) {
+  try {
+    const adminId = await getSession();
+    if (!adminId) return { success: false, message: "Unauthorized." };
+
+    // 1. Get current password hash
+    const adminRes = await query("SELECT password, email FROM admin WHERE id = $1", [adminId]);
+    if (adminRes.rows.length === 0) return { success: false, message: "Admin not found." };
+
+    const { password: currentHash, email } = adminRes.rows[0];
+
+    // 2. Verify old password
+    const isMatch = await bcrypt.compare(passwordOld, currentHash);
+    if (!isMatch) return { success: false, message: "Password lama salah." };
+
+    // 3. Hash and Update new password
+    const newHash = await bcrypt.hash(passwordNew, 10);
+    await query("UPDATE admin SET password = $1 WHERE id = $2", [newHash, adminId]);
+
+    return { success: true, message: "Password berhasil diperbarui." };
+  } catch (error) {
+    console.error("Auth Action Error: changePasswordAction", error);
+    return { success: false, message: "Terjadi kesalahan server." };
   }
 }

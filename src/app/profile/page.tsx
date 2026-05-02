@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, Variants } from "framer-motion";
-import { Edit2, Laptop, Smartphone, Verified, ChevronRight, Info, Loader2, Camera } from "lucide-react";
+import { motion, Variants, AnimatePresence } from "framer-motion";
+import { Edit2, Laptop, Smartphone, Verified, ChevronRight, Info, Loader2, Camera, Lock, ArrowRight, X } from "lucide-react";
 import { getAdminProfile, updateAdminProfile } from "@/actions/db";
+import { changePasswordAction } from "@/actions/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { LoadingState } from "@/components/LoadingState";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -30,12 +33,17 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Password Change States
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [passData, setPassData] = useState({ old: '', new: '', confirm: '' });
+  const [isPassLoading, setIsPassLoading] = useState(false);
 
   useEffect(() => {
     if (profileData && !editData) {
       setEditData(profileData);
     }
-  }, [profileData]);
+  }, [profileData, editData]);
 
   const handleEdit = () => {
     setEditData(profileData);
@@ -53,10 +61,40 @@ export default function ProfilePage() {
       await updateAdminProfile(editData);
       queryClient.invalidateQueries({ queryKey: ['adminProfile'] });
       setIsEditing(false);
+      toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Failed to update profile:", error);
+      toast.error("Failed to update profile");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passData.new !== passData.confirm) {
+      toast.error("Konfirmasi password tidak cocok");
+      return;
+    }
+    if (passData.new.length < 6) {
+      toast.error("Password minimal 6 karakter");
+      return;
+    }
+
+    setIsPassLoading(true);
+    try {
+      const res = await changePasswordAction(passData.old, passData.new);
+      if (res.success) {
+        toast.success(res.message);
+        setIsPasswordModalOpen(false);
+        setPassData({ old: '', new: '', confirm: '' });
+      } else {
+        toast.error(res.message);
+      }
+    } catch (error) {
+      toast.error("Terjadi kesalahan sistem");
+    } finally {
+      setIsPassLoading(false);
     }
   };
 
@@ -69,11 +107,7 @@ export default function ProfilePage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="h-[70vh] flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary w-10 h-10" />
-      </div>
-    );
+    return <LoadingState message="Memuat profil admin..." />;
   }
 
   if (!profileData) {
@@ -292,13 +326,13 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
-                <button className="text-orange-600 dark:text-orange-500 text-xs font-bold hover:underline self-start sm:self-auto">
+                <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="text-orange-600 dark:text-orange-500 text-xs font-bold hover:underline self-start sm:self-auto">
                   Revoke
                 </button>
               </div>
             </div>
             <div className="mt-8 flex justify-end">
-              <button className="text-orange-600 dark:text-orange-500 text-sm font-bold px-4 py-2 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded-xl transition-all">
+              <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="text-orange-600 dark:text-orange-500 text-sm font-bold px-4 py-2 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded-xl transition-all">
                 Logout from all other devices
               </button>
             </div>
@@ -319,9 +353,12 @@ export default function ProfilePage() {
                     Last changed: 3mo ago
                   </span>
                 </div>
-                <button className="w-full py-3 px-5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-slate-100 text-sm font-bold rounded-2xl flex items-center justify-between">
+                <button 
+                  onClick={() => setIsPasswordModalOpen(true)}
+                  className="w-full py-3 px-5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-slate-100 text-sm font-bold rounded-2xl flex items-center justify-between group/btn"
+                >
                   Change Password
-                  <ChevronRight size={18} className="text-slate-400" />
+                  <ChevronRight size={18} className="text-slate-400 group-hover/btn:translate-x-1 transition-transform" />
                 </button>
               </div>
               <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
@@ -344,7 +381,7 @@ export default function ProfilePage() {
                     </p>
                     <p className="text-[10px] text-slate-500 truncate">Google Authenticator active</p>
                   </div>
-                  <button className="text-primary text-[10px] font-bold uppercase tracking-widest hover:underline shrink-0">
+                  <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="text-primary text-[10px] font-bold uppercase tracking-widest hover:underline shrink-0">
                     Manage
                   </button>
                 </div>
@@ -373,7 +410,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
-                <button className="mt-6 w-full text-center text-[11px] font-bold text-primary uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 py-3 rounded-xl transition-all">
+                <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="mt-6 w-full text-center text-[11px] font-bold text-primary uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 py-3 rounded-xl transition-all">
                   View Full History
                 </button>
               </div>
@@ -389,12 +426,109 @@ export default function ProfilePage() {
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
               Actions here are permanent. Please proceed with caution if you are attempting to deactivate this administrator account.
             </p>
-            <button className="w-full py-3 border-2 border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-500 text-sm font-bold rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95">
+            <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="w-full py-3 border-2 border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-500 text-sm font-bold rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95">
               Deactivate Account
             </button>
           </motion.div>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      <AnimatePresence>
+        {isPasswordModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-24 md:pl-64">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsPasswordModalOpen(false)}
+              className="absolute inset-0 bg-transparent"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[32px] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+            >
+              <div className="p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                    <Lock size={24} />
+                  </div>
+                  <button 
+                    onClick={() => setIsPasswordModalOpen(false)}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                  >
+                    <X size={20} className="text-slate-400" />
+                  </button>
+                </div>
+                
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Update Security</h3>
+                <p className="text-slate-500 dark:text-slate-400 font-medium mb-8">Ensure your account remains secure with a strong password.</p>
+
+                <form onSubmit={handleChangePassword} className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Current Password</label>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
+                      <input 
+                        type="password" required
+                        value={passData.old}
+                        onChange={e => setPassData({...passData, old: e.target.value})}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-primary/20 rounded-2xl py-3.5 pl-12 pr-4 outline-none transition-all font-medium text-slate-900 dark:text-white"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">New Password</label>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
+                      <input 
+                        type="password" required
+                        value={passData.new}
+                        onChange={e => setPassData({...passData, new: e.target.value})}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-primary/20 rounded-2xl py-3.5 pl-12 pr-4 outline-none transition-all font-medium text-slate-900 dark:text-white"
+                        placeholder="Min. 6 characters"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Confirm New Password</label>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
+                      <input 
+                        type="password" required
+                        value={passData.confirm}
+                        onChange={e => setPassData({...passData, confirm: e.target.value})}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-primary/20 rounded-2xl py-3.5 pl-12 pr-4 outline-none transition-all font-medium text-slate-900 dark:text-white"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    disabled={isPassLoading}
+                    className="w-full bg-primary text-white rounded-2xl py-4 font-black shadow-xl shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98] transition-all flex items-center justify-center gap-3 mt-4"
+                  >
+                    {isPassLoading ? (
+                      <Loader2 className="animate-spin" size={20} />
+                    ) : (
+                      <>
+                        <span>Update Password</span>
+                        <ArrowRight size={20} />
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
