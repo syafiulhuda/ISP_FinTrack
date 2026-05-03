@@ -5,7 +5,8 @@ import { m, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers } from "@/actions/db";
+import { getCustomers } from "@/actions/customers";
+import { Customer } from "@/types";
 
 interface ProvinceSelectionModalProps {
   isOpen: boolean;

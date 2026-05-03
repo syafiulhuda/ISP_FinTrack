@@ -4,7 +4,8 @@ import { Menu, Search, Bell, Settings, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { getAdminProfile, getNotifications } from "@/actions/db";
+import { getAdminProfile, getNotifications } from "@/actions/admin";
+import { Admin, Notification } from "@/types";
 
 export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { theme, toggleTheme } = useTheme();

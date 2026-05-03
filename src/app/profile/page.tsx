@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { m, Variants, AnimatePresence } from "framer-motion";
 import { Edit2, Laptop, Smartphone, Verified, ChevronRight, Info, Loader2, Camera, Lock, ArrowRight, X } from "lucide-react";
-import { getAdminProfile, updateAdminProfile } from "@/actions/db";
+import { getAdminProfile, updateAdminProfile } from "@/actions/admin";
+import { Admin } from "@/types";
 import { changePasswordAction } from "@/actions/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";

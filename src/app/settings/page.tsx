@@ -25,7 +25,8 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAdminList, createAdmin } from "@/actions/db";
+import { getAdminList, createAdmin } from "@/actions/admin";
+import { Admin } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 

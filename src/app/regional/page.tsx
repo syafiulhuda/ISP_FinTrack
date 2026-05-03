@@ -6,13 +6,21 @@ import {
   ChevronRight, 
   MessageSquare,
   ChevronDown, 
-  ChevronLeft 
+  ChevronLeft,
+  TrendingUp,
+  Banknote
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getServiceTiers, getAssetRoster, getInvoices, getAgingMVData } from "@/actions/db";
-import { cn } from "@/lib/utils";
+import { getCustomers, getAgingMVData } from "@/actions/customers";
+import { getServiceTiers } from "@/actions/tiers";
+import { getAssetRoster } from "@/actions/assets";
+import { getInvoices } from "@/actions/transactions";
+import { cn, formatCurrency, formatNumber } from "@/lib/utils";
 import { useState, useMemo, useEffect } from "react";
 import { LoadingState } from "@/components/LoadingState";
+import { Customer, ServiceTier, Asset, Invoice } from "@/types";
+import { StatCard } from "@/components/ui/StatCard";
+import DataTable from "../../components/ui/DataTable";
 
 export default function RegionalAnalysisPage() {
   const [selectedProvince, setSelectedProvince] = useState("All Provinces");
@@ -27,11 +35,11 @@ export default function RegionalAnalysisPage() {
     queryFn: () => getCustomers(1, 1000), 
     refetchInterval: 60000 
   });
-  const customerList = customerData?.customers || [];
-  const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers, refetchInterval: 60000 });
-  const { data: assetRoster = [], isLoading: loadingAssets } = useQuery({ queryKey: ['assetRoster'], queryFn: getAssetRoster, refetchInterval: 60000 });
-  const { data: invoicesList = [], isLoading: loadingInvoices } = useQuery({ queryKey: ['invoices'], queryFn: getInvoices, refetchInterval: 60000 });
-  const { data: agingMVData = [], isLoading: loadingMV } = useQuery({ queryKey: ['agingMV'], queryFn: getAgingMVData, refetchInterval: 60000 });
+  const customerList: Customer[] = customerData?.customers || [];
+  const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery<ServiceTier[]>({ queryKey: ['serviceTiers'], queryFn: getServiceTiers, refetchInterval: 60000 });
+  const { data: assetRoster = [], isLoading: loadingAssets } = useQuery<Asset[]>({ queryKey: ['assetRoster'], queryFn: getAssetRoster, refetchInterval: 60000 });
+  const { data: invoicesList = [], isLoading: loadingInvoices } = useQuery<Invoice[]>({ queryKey: ['invoices'], queryFn: getInvoices, refetchInterval: 60000 });
+  const { data: agingMVData = [], isLoading: loadingMV } = useQuery<any[]>({ queryKey: ['agingMV'], queryFn: getAgingMVData, refetchInterval: 60000 });
 
 
   const assetSummary = useMemo(() => {
@@ -293,25 +301,24 @@ export default function RegionalAnalysisPage() {
       </div>
 
       {/* Asset Ownership Summary */}
-      <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-slate-800">
-        <h3 className="text-lg font-black text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-          <MapPin size={18} className="text-primary" />
-          Ringkasan Aset Regional
-        </h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 text-center">
-            <p className="text-3xl font-black text-slate-900 dark:text-slate-100">{mounted ? assetSummary.total : '---'}</p>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Total Aset</p>
-          </div>
-          <div className="bg-emerald-50 dark:bg-emerald-900/10 p-5 rounded-2xl border border-emerald-200/50 dark:border-emerald-700/50 text-center">
-            <p className="text-3xl font-black text-emerald-600">{mounted ? assetSummary.online : '---'}</p>
-            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Online</p>
-          </div>
-          <div className="bg-rose-50 dark:bg-rose-900/10 p-5 rounded-2xl border border-rose-200/50 dark:border-rose-700/50 text-center">
-            <p className="text-3xl font-black text-rose-600">{mounted ? assetSummary.sold : '---'}</p>
-            <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mt-1">Sold</p>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard 
+          name="Total Aset" 
+          value={mounted ? formatNumber(assetSummary.total) : '---'} 
+          icon={MapPin} 
+        />
+        <StatCard 
+          name="Online" 
+          value={mounted ? formatNumber(assetSummary.online) : '---'} 
+          icon={TrendingUp}
+          iconClassName="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30"
+        />
+        <StatCard 
+          name="Sold" 
+          value={mounted ? formatNumber(assetSummary.sold) : '---'} 
+          icon={Banknote}
+          iconClassName="bg-rose-100 text-rose-600 dark:bg-rose-900/30"
+        />
       </div>
 
       {/* Profitability Table */}
@@ -327,47 +334,52 @@ export default function RegionalAnalysisPage() {
             Profitability by Kelurahan
           </h3>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/50 dark:bg-slate-800/50">
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Node Name</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer Count</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Monthly Revenue</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">ARPU</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Node Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              <AnimatePresence mode="wait">
-                {paginatedProfit.map((row) => (
-                  <m.tr 
-                    key={row.node}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group"
-                  >
-                    <td className="px-10 py-8">
-                      <div className="flex items-center gap-4">
-                        <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,74,198,0.5)]" />
-                        <span className="font-black text-slate-900 dark:text-slate-100 text-lg">{row.node}</span>
-                      </div>
-                    </td>
-                    <td className="px-10 py-8 text-sm font-bold text-slate-600 dark:text-slate-400">{row.customerCount} Active</td>
-                    <td className="px-10 py-8 text-sm font-black text-slate-900 dark:text-slate-100">Rp {row.revenue}</td>
-                    <td className="px-10 py-8 text-sm font-bold text-blue-600 dark:text-blue-400">Rp {row.arpu}</td>
-                    <td className="px-10 py-8">
-                      <span className={cn("text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-wider", row.color)}>
-                        {row.status}
-                      </span>
-                    </td>
-                  </m.tr>
-                ))}
-              </AnimatePresence>
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          data={paginatedProfit}
+          isLoading={loadingCustomers}
+          keyExtractor={(row: any) => row.node}
+          columns={[
+            { 
+              header: "Node Name", 
+              accessor: "node", 
+              className: "px-10 py-6",
+              render: (row: any) => (
+                <div className="flex items-center gap-4">
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,74,198,0.5)]" />
+                  <span className="font-black text-slate-900 dark:text-slate-100 text-lg">{row.node}</span>
+                </div>
+              )
+            },
+            { 
+              header: "Customer Count", 
+              accessor: "customerCount" as any, 
+              className: "px-10 py-6 font-bold",
+              render: (row: any) => `${row.customerCount} Active`
+            },
+            { 
+              header: "Monthly Revenue", 
+              accessor: "revenue", 
+              className: "px-10 py-6 font-black text-slate-900 dark:text-slate-100",
+              render: (row: any) => `Rp ${row.revenue}`
+            },
+            { 
+              header: "ARPU", 
+              accessor: "arpu", 
+              className: "px-10 py-6 font-bold text-blue-600 dark:text-blue-400",
+              render: (row: any) => `Rp ${row.arpu}`
+            },
+            { 
+              header: "Node Status", 
+              accessor: "status", 
+              className: "px-10 py-6",
+              render: (row: any) => (
+                <span className={cn("text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-wider", row.color)}>
+                  {row.status}
+                </span>
+              )
+            },
+          ]}
+        />
         
         {/* Pagination Profit */}
         <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
@@ -425,41 +437,39 @@ export default function RegionalAnalysisPage() {
             AR Aging Analysis
           </h3>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 dark:bg-slate-800/50">
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Node</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-green-600">0-30 Days</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-orange-500">31-60 Days</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-red-500">61-90 Days</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-red-700">90+ Days</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              <AnimatePresence mode="wait">
-                {paginatedAging.map((row) => (
-                  <m.tr 
-                    key={`aging-${row.node}`}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    className={cn(
-                      "hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors",
-                      row.aging.critical && "bg-red-50/30 dark:bg-red-900/5"
-                    )}
-                  >
-                    <td className="px-10 py-8 font-black text-slate-900 dark:text-slate-100 text-lg">{row.node}</td>
-                    <td className="px-10 py-8 text-sm font-bold text-slate-600 dark:text-slate-400">Rp {row.aging["0-30"]}</td>
-                    <td className="px-10 py-8 text-sm font-bold text-orange-600">Rp {row.aging["31-60"]}</td>
-                    <td className="px-10 py-8 text-sm font-bold text-red-600">Rp {row.aging["61-90"]}</td>
-                    <td className="px-10 py-8 text-sm font-black text-red-800">Rp {row.aging["90Plus"]}</td>
-                  </m.tr>
-                ))}
-              </AnimatePresence>
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          data={paginatedAging}
+          isLoading={loadingMV}
+          keyExtractor={(row: any) => `aging-${row.node}`}
+          rowClassName={(row: any) => row.aging.critical ? "bg-red-50/30 dark:bg-red-900/5" : ""}
+          columns={[
+            { header: "Node", accessor: "node", className: "px-10 py-6 text-lg font-black" },
+            { 
+              header: "0-30 Days", 
+              accessor: "aging", 
+              className: "px-10 py-6 font-bold text-slate-600 dark:text-slate-400",
+              render: (row: any) => `Rp ${row.aging["0-30"]}`
+            },
+            { 
+              header: "31-60 Days", 
+              accessor: "aging", 
+              className: "px-10 py-6 font-bold text-orange-600",
+              render: (row: any) => `Rp ${row.aging["31-60"]}`
+            },
+            { 
+              header: "61-90 Days", 
+              accessor: "aging", 
+              className: "px-10 py-6 font-bold text-red-600",
+              render: (row: any) => `Rp ${row.aging["61-90"]}`
+            },
+            { 
+              header: "90+ Days", 
+              accessor: "aging", 
+              className: "px-10 py-6 font-black text-red-800",
+              render: (row: any) => `Rp ${row.aging["90Plus"]}`
+            },
+          ]}
+        />
         
         {/* Pagination Aging */}
         <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">

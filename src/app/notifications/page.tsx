@@ -9,7 +9,8 @@ import {
   markAllNotificationsAsRead,
   deleteNotification,
   hideAllNotifications
-} from "@/actions/db";
+} from "@/actions/admin";
+import { Notification } from "@/types";
 
 import { useState } from "react";
 import { LoadingState } from "@/components/LoadingState";

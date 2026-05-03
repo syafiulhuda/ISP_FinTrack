@@ -33,13 +33,23 @@ import {
   Area
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getServiceTiers, getExpenses, getTransactions, createNotification, getRevenueGrowthTrend, getCustomerGrowthTrend, getInactiveCust } from "@/actions/db";
-import { cn } from "@/lib/utils";
+import { getCustomers, getInactiveCust, getCustomerGrowthTrend } from "@/actions/customers";
+import { getServiceTiers } from "@/actions/tiers";
+import { getExpenses, getTransactions, getRevenueGrowthTrend } from "@/actions/transactions";
+import { cn, formatCurrency, formatNumber } from "@/lib/utils";
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { StatCard } from "@/components/ui/StatCard";
+import { Transaction, ServiceTier, Customer } from "@/types";
 
-const CustomTooltip = ({ active, payload }: any) => {
+interface TooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
+
+const CustomTooltip = ({ active, payload }: TooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white dark:bg-slate-800 px-3 py-2 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700">
@@ -53,7 +63,7 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const RevenueTooltip = ({ active, payload, label }: any) => {
+const RevenueTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white dark:bg-slate-800 px-4 py-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700">
@@ -83,15 +93,15 @@ export default function Dashboard() {
   const router = useRouter();
   const dashboardRef = useRef<HTMLDivElement>(null);
   const { data: customerData, isLoading: loadingCustomers } = useQuery({ 
-    queryKey: ['customers', 1, 1000], // Fetch a large enough batch for dashboard stats
+    queryKey: ['customers', 1, 1000],
     queryFn: () => getCustomers(1, 1000) 
   });
-  const customerList = customerData?.customers || [];
-  const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
+  const customerList: Customer[] = customerData?.customers || [];
+  const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery<ServiceTier[]>({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
   const { data: expenseList = [], isLoading: loadingExpenses } = useQuery({ queryKey: ['expenses'], queryFn: getExpenses });
-  const { data: transactions = [], isLoading: loadingTx } = useQuery({ 
+  const { data: transactions = [], isLoading: loadingTx } = useQuery<(Transaction & { numericAmount: number })[]>({ 
     queryKey: ['transactions'], 
-    queryFn: getTransactions,
+    queryFn: getTransactions as any,
     refetchInterval: 60000 
   });
   const { data: trendData = [], isLoading: loadingTrend } = useQuery({
@@ -370,29 +380,29 @@ export default function Dashboard() {
       name: "ARPU", 
       value: dynamicData.arpu, 
       trend: dynamicData.trends.arpu, 
-      trendType: dynamicData.trends.arpu.includes('0.0%') || dynamicData.trends.arpu === "0%" ? "neutral" : (dynamicData.trends.arpu.startsWith('+') ? "up" : "down"), 
-      icon: "user" 
+      trendType: (dynamicData.trends.arpu === "0%" || dynamicData.trends.arpu.includes('0.0%')) ? "neutral" : (dynamicData.trends.arpu.startsWith('+') ? "up" : "down") as any, 
+      icon: User 
     },
     { 
       name: "CAC", 
       value: dynamicData.cac, 
       trend: dynamicData.trends.cac, 
-      trendType: (dynamicData.trends.cac === "-" || dynamicData.trends.cac === "0%" || dynamicData.trends.cac.includes('0.0%')) ? "neutral" : (dynamicData.trends.cac.startsWith('+') ? "up" : "down"), 
-      icon: "dollar" 
+      trendType: (dynamicData.trends.cac === "-" || dynamicData.trends.cac === "0%" || dynamicData.trends.cac.includes('0.0%')) ? "neutral" : (dynamicData.trends.cac.startsWith('+') ? "down" : "up") as any, // CAC up is bad
+      icon: DollarSign 
     },
     { 
       name: "Churn Rate", 
       value: dynamicData.churnRate, 
       trend: dynamicData.trends.churn, 
-      trendType: (dynamicData.trends.churn === "0%" || dynamicData.trends.churn.includes('0.0%') || dynamicData.trends.churn === "-") ? "neutral" : (dynamicData.trends.churn.startsWith('+') ? "up" : "down"), 
-      icon: "user-minus" 
+      trendType: (dynamicData.trends.churn === "0%" || dynamicData.trends.churn.includes('0.0%') || dynamicData.trends.churn === "-") ? "neutral" : (dynamicData.trends.churn.startsWith('+') ? "down" : "up") as any, // Churn up is bad
+      icon: UserMinus 
     },
     { 
       name: "Total Revenue", 
       value: dynamicData.totalRevenue, 
       trend: dynamicData.trends.revenue, 
-      trendType: (dynamicData.trends.revenue === "0%" || dynamicData.trends.revenue.includes('0.0%')) ? "neutral" : (dynamicData.trends.revenue.startsWith('+') ? "up" : "down"), 
-      icon: "wallet" 
+      trendType: (dynamicData.trends.revenue === "0%" || dynamicData.trends.revenue.includes('0.0%')) ? "neutral" : (dynamicData.trends.revenue.startsWith('+') ? "up" : "down") as any, 
+      icon: Wallet 
     },
   ];
 
@@ -514,43 +524,14 @@ export default function Dashboard() {
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {kpis.map((kpi, index) => (
-              <m.div
+              <StatCard
                 key={kpi.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 24, delay: index * 0.1 }}
-                className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-between h-40 group hover:border-primary/50 transition-all"
-              >
-                <div className="flex justify-between items-center">
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                    {kpi.icon === "user" && <User size={20} />}
-                    {kpi.icon === "dollar" && <DollarSign size={20} />}
-                    {kpi.icon === "user-minus" && <UserMinus size={20} />}
-                    {kpi.icon === "wallet" && <Wallet size={20} />}
-                  </div>
-                  <div className={cn(
-                    "flex items-center gap-1 text-[11px] font-black px-2 py-1 rounded-full",
-                    kpi.trendType === "neutral"
-                      ? "bg-slate-100 text-slate-500"
-                      : kpi.trendType === "up" 
-                        ? (kpi.name === "CAC" || kpi.name === "Churn Rate" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700")
-                        : (kpi.name === "CAC" || kpi.name === "Churn Rate" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")
-                  )}>
-                    {kpi.trendType === "neutral" ? (
-                      <span className="text-xs opacity-60">~</span>
-                    ) : kpi.trendType === "up" ? (
-                      <ArrowUp size={10} />
-                    ) : (
-                      <ArrowDown size={10} />
-                    )}
-                    {kpi.trendType === "neutral" && (kpi.trend === "0%" || kpi.trend === "0.0%") ? "0%" : kpi.trend}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{kpi.name}</p>
-                  <h3 className="text-3xl font-black text-slate-900 dark:text-slate-100 mt-1">{kpi.value}</h3>
-                </div>
-              </m.div>
+                name={kpi.name}
+                value={kpi.value}
+                icon={kpi.icon}
+                trend={kpi.trendType === 'neutral' ? undefined : kpi.trend}
+                trendType={kpi.trendType as any}
+              />
             ))}
           </div>
 
@@ -586,7 +567,10 @@ export default function Dashboard() {
               <div className="flex-1 w-full mt-4 min-h-[300px]">
                 {mounted && (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={dynamicData.trendData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                    <LineChart 
+                      data={dynamicData.trendData.filter((d: any) => d.growth !== null)} 
+                      margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
                       <XAxis 
                         dataKey="month" 
@@ -634,7 +618,10 @@ export default function Dashboard() {
             <div className="h-[220px] w-full">
               {mounted && (
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={dynamicData.growthTrend} margin={{ top: 10, right: 20, left: 20, bottom: 0 }}>
+                  <AreaChart 
+                    data={dynamicData.growthTrend.filter((d: any) => d.growth !== null)} 
+                    margin={{ top: 10, right: 20, left: 20, bottom: 0 }}
+                  >
                     <defs>
                       <linearGradient id="colorGrowth" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.1}/>
@@ -648,11 +635,6 @@ export default function Dashboard() {
                       tickLine={false} 
                       tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }} 
                       interval={0}
-                      tickFormatter={(value) => {
-                        const showMonths = ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov'];
-                        if (showMonths.includes(value)) return value;
-                        return '';
-                      }}
                     />
                     <YAxis hide domain={['auto', 'auto']} />
                     <Tooltip 

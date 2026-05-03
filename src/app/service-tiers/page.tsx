@@ -20,7 +20,9 @@ import {
   ZapOff
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getServiceTiers, createCustomer, auditCustomerGracePeriod, createServiceTier } from "@/actions/db";
+import { getCustomers, createCustomer, auditCustomerGracePeriod } from "@/actions/customers";
+import { getServiceTiers, createServiceTier } from "@/actions/tiers";
+import { Customer, ServiceTier } from "@/types";
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -164,7 +166,7 @@ export default function ServiceTiersPage() {
         (cust.status?.toLowerCase() === statusFilter.toLowerCase());
 
       return matchesSearch && matchesStatus;
-    });
+    }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   }, [allCustomers, searchQuery, statusFilter]);
 
   // 2. Memoize tier counts - MUST be before any conditional returns

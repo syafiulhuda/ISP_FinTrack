@@ -19,8 +19,9 @@ import {
   Download
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getTransactions, getOcrData, updateOcrData, postOcrEntry, checkTrxExists } from "@/actions/db";
-import { cn } from "@/lib/utils";
+import { getTransactions, getOcrData, updateOcrData, postOcrEntry, checkTrxExists } from "@/actions/transactions";
+import { cn, formatCurrency, formatNumber } from "@/lib/utils";
+import { Transaction } from "@/types";
 import { toast } from "sonner";
 import { exportToExcel } from "@/lib/exportUtils";
 import Tesseract from 'tesseract.js';
@@ -287,7 +288,7 @@ export default function FinancePage() {
   const filteredByKeterangan = transactions.filter(trx => {
     if (selectedKeterangan === "All") return true;
     return trx.keterangan?.toLowerCase() === selectedKeterangan.toLowerCase();
-  });
+  }).sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
 
   const totalPages = Math.ceil(filteredByKeterangan.length / itemsPerPage);
   const paginatedTransactions = filteredByKeterangan.slice(

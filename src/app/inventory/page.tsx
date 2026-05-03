@@ -23,7 +23,8 @@ import {
   Plus
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getAssetRoster, getStockAssets, getWarehouses, createAsset, deleteAsset, updateAssetCondition, deployAsset } from "@/actions/db";
+import { getAssetRoster, getStockAssets, getWarehouses, createAsset, deleteAsset, updateAssetCondition, deployAsset } from "@/actions/assets";
+import { Asset } from "@/types";
 import { 
   getMapAssets, 
   addMapNode, 
