@@ -10,6 +10,7 @@ const inter = Inter({
 });
 
 import QueryProvider from "@/components/providers/QueryProvider";
+import { FramerProvider } from "@/components/providers/FramerProvider";
 
 export const metadata: Metadata = {
   title: "ISP-FinTrack - Financial Management for ISPs",
@@ -25,10 +26,12 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} h-full antialiased`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className={`${inter.className} min-h-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
         <QueryProvider>
-          <ClientLayout>
-            {children}
-            <Toaster position="top-right" richColors />
-          </ClientLayout>
+          <FramerProvider>
+            <ClientLayout>
+              {children}
+              <Toaster position="top-right" richColors />
+            </ClientLayout>
+          </FramerProvider>
         </QueryProvider>
       </body>
     </html>

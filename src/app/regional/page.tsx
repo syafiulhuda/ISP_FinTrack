@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { 
   MapPin, 
   ChevronRight, 
@@ -22,7 +22,12 @@ export default function RegionalAnalysisPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
 
-  const { data: customerList = [], isLoading: loadingCustomers } = useQuery({ queryKey: ['customers'], queryFn: getCustomers, refetchInterval: 60000 });
+  const { data: customerData, isLoading: loadingCustomers } = useQuery({ 
+    queryKey: ['customers', 1, 1000], 
+    queryFn: () => getCustomers(1, 1000), 
+    refetchInterval: 60000 
+  });
+  const customerList = customerData?.customers || [];
   const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers, refetchInterval: 60000 });
   const { data: assetRoster = [], isLoading: loadingAssets } = useQuery({ queryKey: ['assetRoster'], queryFn: getAssetRoster, refetchInterval: 60000 });
   const { data: invoicesList = [], isLoading: loadingInvoices } = useQuery({ queryKey: ['invoices'], queryFn: getInvoices, refetchInterval: 60000 });
@@ -310,7 +315,7 @@ export default function RegionalAnalysisPage() {
       </div>
 
       {/* Profitability Table */}
-      <motion.section 
+      <m.section 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -336,7 +341,7 @@ export default function RegionalAnalysisPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               <AnimatePresence mode="wait">
                 {paginatedProfit.map((row) => (
-                  <motion.tr 
+                  <m.tr 
                     key={row.node}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -357,7 +362,7 @@ export default function RegionalAnalysisPage() {
                         {row.status}
                       </span>
                     </td>
-                  </motion.tr>
+                  </m.tr>
                 ))}
               </AnimatePresence>
             </tbody>
@@ -368,7 +373,7 @@ export default function RegionalAnalysisPage() {
         <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
           <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Showing {paginatedProfit.length} nodes</p>
           <div className="flex gap-3">
-            <motion.button 
+            <m.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setProfitPage(p => Math.max(1, p - 1))}
@@ -376,7 +381,7 @@ export default function RegionalAnalysisPage() {
               className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-400 disabled:opacity-30 shadow-sm"
             >
               <ChevronLeft size={20} />
-            </motion.button>
+            </m.button>
             <div className="flex items-center gap-1.5">
               <input 
                 type="text"
@@ -394,7 +399,7 @@ export default function RegionalAnalysisPage() {
               />
               <span className="text-xs font-black text-slate-400">/ {totalProfitPages || 1}</span>
             </div>
-            <motion.button 
+            <m.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setProfitPage(p => Math.min(totalProfitPages, p + 1))}
@@ -402,13 +407,13 @@ export default function RegionalAnalysisPage() {
               className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-400 disabled:opacity-30 shadow-sm"
             >
               <ChevronRight size={20} />
-            </motion.button>
+            </m.button>
           </div>
         </div>
-      </motion.section>
+      </m.section>
 
       {/* AR Aging Table */}
-      <motion.section 
+      <m.section 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -434,7 +439,7 @@ export default function RegionalAnalysisPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               <AnimatePresence mode="wait">
                 {paginatedAging.map((row) => (
-                  <motion.tr 
+                  <m.tr 
                     key={`aging-${row.node}`}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -449,7 +454,7 @@ export default function RegionalAnalysisPage() {
                     <td className="px-10 py-8 text-sm font-bold text-orange-600">Rp {row.aging["31-60"]}</td>
                     <td className="px-10 py-8 text-sm font-bold text-red-600">Rp {row.aging["61-90"]}</td>
                     <td className="px-10 py-8 text-sm font-black text-red-800">Rp {row.aging["90Plus"]}</td>
-                  </motion.tr>
+                  </m.tr>
                 ))}
               </AnimatePresence>
             </tbody>
@@ -460,7 +465,7 @@ export default function RegionalAnalysisPage() {
         <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
           <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Showing {paginatedAging.length} nodes</p>
           <div className="flex gap-3">
-            <motion.button 
+            <m.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setAgingPage(p => Math.max(1, p - 1))}
@@ -468,7 +473,7 @@ export default function RegionalAnalysisPage() {
               className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-400 disabled:opacity-30 shadow-sm"
             >
               <ChevronLeft size={20} />
-            </motion.button>
+            </m.button>
             <div className="flex items-center gap-1.5">
               <input 
                 type="text"
@@ -486,7 +491,7 @@ export default function RegionalAnalysisPage() {
               />
               <span className="text-xs font-black text-slate-400">/ {totalAgingPages || 1}</span>
             </div>
-            <motion.button 
+            <m.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setAgingPage(p => Math.min(totalAgingPages, p + 1))}
@@ -494,10 +499,10 @@ export default function RegionalAnalysisPage() {
               className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-400 disabled:opacity-30 shadow-sm"
             >
               <ChevronRight size={20} />
-            </motion.button>
+            </m.button>
           </div>
         </div>
-      </motion.section>
+      </m.section>
     </div>
   );
 }

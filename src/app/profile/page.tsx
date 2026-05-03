@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, Variants, AnimatePresence } from "framer-motion";
+import { m, Variants, AnimatePresence } from "framer-motion";
 import { Edit2, Laptop, Smartphone, Verified, ChevronRight, Info, Loader2, Camera, Lock, ArrowRight, X } from "lucide-react";
 import { getAdminProfile, updateAdminProfile } from "@/actions/db";
 import { changePasswordAction } from "@/actions/auth";
@@ -126,14 +126,14 @@ export default function ProfilePage() {
   }
 
   return (
-    <motion.div 
+    <m.div 
       variants={containerVariants}
       initial="hidden"
       animate="show"
       className="space-y-8 pb-10"
     >
       {/* Profile Header */}
-      <motion.section variants={itemVariants} className="mb-12">
+      <m.section variants={itemVariants} className="mb-12">
         <div className="flex flex-col md:flex-row items-end gap-6">
           <div className="relative group">
             <div className="w-32 h-32 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 border-4 border-white dark:border-slate-950 shadow-xl relative">
@@ -170,13 +170,13 @@ export default function ProfilePage() {
             </p>
           </div>
         </div>
-      </motion.section>
+      </m.section>
 
       {/* Bento Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Column 1 & 2: Personal Information */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800">
+          <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                 Personal Information
@@ -281,10 +281,10 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </m.div>
 
           {/* Session Management */}
-          <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800">
+          <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800">
             <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-2">
               Session Management
             </h3>
@@ -336,12 +336,12 @@ export default function ProfilePage() {
                 Logout from all other devices
               </button>
             </div>
-          </motion.div>
+          </m.div>
         </div>
 
         {/* Column 3: Account Security */}
         <div className="space-y-6">
-          <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800">
+          <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800">
             <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-8">
               Account Security
             </h3>
@@ -415,10 +415,10 @@ export default function ProfilePage() {
                 </button>
               </div>
             </div>
-          </motion.div>
+          </m.div>
 
           {/* Danger Zone */}
-          <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group">
+          <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group">
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-600" />
             <h3 className="text-xl font-bold tracking-tight text-red-600 dark:text-red-500 mb-4">
               Danger Zone
@@ -429,7 +429,7 @@ export default function ProfilePage() {
             <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="w-full py-3 border-2 border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-500 text-sm font-bold rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95">
               Deactivate Account
             </button>
-          </motion.div>
+          </m.div>
         </div>
       </div>
 
@@ -437,14 +437,14 @@ export default function ProfilePage() {
       <AnimatePresence>
         {isPasswordModalOpen && (
           <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-24 md:pl-64">
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsPasswordModalOpen(false)}
               className="absolute inset-0 bg-transparent"
             />
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -525,10 +525,10 @@ export default function ProfilePage() {
                   </button>
                 </form>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   );
 }

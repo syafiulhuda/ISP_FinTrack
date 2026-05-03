@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   Warehouse,
   Search,
@@ -334,14 +334,14 @@ export default function InventoryPage() {
           <p className="text-lg font-medium text-slate-500 mt-2">Real-time tracking and health audit of ISP infrastructure hardware.</p>
         </div>
         <div className="flex items-center gap-3">
-          <motion.button
+          <m.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setIsRegisterModalOpen(true)}
             className="bg-primary text-primary-foreground px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-primary/20 hover:opacity-95 transition-all"
           >
             Register New Asset
-          </motion.button>
+          </m.button>
         </div>
       </div>
 
@@ -350,7 +350,7 @@ export default function InventoryPage() {
         {dynamicStats.map((stat, index) => {
           const Icon = IconMap[stat.trendIcon as keyof typeof IconMap] || Cpu;
           return (
-            <motion.div
+            <m.div
               key={stat.label}
               whileHover={{ y: -5 }}
               className={cn(
@@ -361,7 +361,7 @@ export default function InventoryPage() {
               )}
             >
               {stat.isAlert && (
-                <motion.div
+                <m.div
                   animate={{ opacity: [0.3, 0.6, 0.3] }}
                   transition={{ repeat: Infinity, duration: 2 }}
                   className="absolute top-6 right-6 w-3 h-3 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]"
@@ -389,13 +389,13 @@ export default function InventoryPage() {
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
                 <h3 className="text-4xl font-black text-slate-900 dark:text-slate-100 mt-1">{stat.value}</h3>
               </div>
-            </motion.div>
+            </m.div>
           );
         })}
       </div>
 
       {/* Assets Roster */}
-      <motion.section
+      <m.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
@@ -408,7 +408,7 @@ export default function InventoryPage() {
           </div>
           
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full 2xl:w-auto">
-            <motion.button
+            <m.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleResetFilters}
@@ -417,7 +417,7 @@ export default function InventoryPage() {
             >
               <RotateCcw size={16} className="group-hover:text-primary transition-colors" />
               <span className="text-[9px] font-black uppercase tracking-widest">Reset</span>
-            </motion.button>
+            </m.button>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full 2xl:w-auto">
               <div className="relative group min-w-0">
@@ -510,7 +510,7 @@ export default function InventoryPage() {
                 {paginatedAssets.map((asset, index) => {
                   const CondIcon = ConditionIcon[asset.condition as keyof typeof ConditionIcon] || AlertCircle;
                   return (
-                    <motion.tr
+                    <m.tr
                       key={asset.sn}
                       layout
                       initial={{ opacity: 0 }}
@@ -606,21 +606,21 @@ export default function InventoryPage() {
                       <td className="px-6 py-6 text-right relative">
                         {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") ? (
                           <div ref={activeActionMenu === asset.sn ? actionMenuRef : null} className="inline-block">
-                            <motion.button
+                            <m.button
                               whileHover={{ scale: 1.15, rotate: 90 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={() => setActiveActionMenu(activeActionMenu === asset.sn ? null : asset.sn)}
                               className="p-2 text-slate-300 hover:text-primary transition-colors"
                             >
                               <MoreVertical size={20} />
-                            </motion.button>
+                            </m.button>
                           
                           <AnimatePresence>
                             {activeActionMenu === asset.sn && (
                               <div className="absolute right-0 z-50 flex items-start gap-2">
                                 {/* The Action Menu itself */}
                                 {!isResolving && (
-                                  <motion.div
+                                  <m.div
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.95 }}
@@ -740,12 +740,12 @@ export default function InventoryPage() {
                                         </div>
                                       </div>
                                     )}
-                                  </motion.div>
+                                  </m.div>
                                 )}
 
                                 {/* Contextual Audit Form (anchored side-by-side) */}
                                 {isResolving && resolvingAssetSn === asset.sn && (
-                                  <motion.div
+                                  <m.div
                                     initial={{ opacity: 0, x: 20, scale: 0.9 }}
                                     animate={{ opacity: 1, x: 0, scale: 1 }}
                                     exit={{ opacity: 0, x: 20, scale: 0.9 }}
@@ -788,7 +788,7 @@ export default function InventoryPage() {
                                         <CheckCircle2 size={14} /> Mark Healthy
                                       </button>
                                     </div>
-                                  </motion.div>
+                                  </m.div>
                                 )}
                               </div>
                             )}
@@ -798,7 +798,7 @@ export default function InventoryPage() {
                           <span className="text-[10px] font-bold text-slate-300 italic pr-2">No Action</span>
                         )}
                       </td>
-                    </motion.tr>
+                    </m.tr>
                   );
                 })}
               </AnimatePresence>
@@ -816,13 +816,13 @@ export default function InventoryPage() {
             <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-6 py-3 bg-primary text-white rounded-2xl text-xs font-black shadow-lg shadow-primary/20 disabled:opacity-30 transition-all">Next</button>
           </div>
         </div>
-      </motion.section>
+      </m.section>
 
       {/* Register Sidebar (Fixed Gap & Adaptive Height) */}
       <AnimatePresence>
         {isRegisterModalOpen && (
           <div className="fixed top-0 right-0 z-[100] p-0 pointer-events-none">
-            <motion.div
+            <m.div
               initial={{ x: "100%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}
@@ -834,14 +834,14 @@ export default function InventoryPage() {
                   <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Register Asset</h3>
                   <p className="text-xs font-medium text-slate-500 mt-1">Add hardware to infrastructure.</p>
                 </div>
-                <motion.button
+                <m.button
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsRegisterModalOpen(false)}
                   className="p-2 text-slate-400 hover:text-primary transition-colors"
                 >
                   <X size={24} />
-                </motion.button>
+                </m.button>
               </div>
               
               <form onSubmit={handleRegisterAsset} className="space-y-6 overflow-y-auto custom-scrollbar pr-2">
@@ -907,7 +907,7 @@ export default function InventoryPage() {
                   <button type="button" onClick={() => setIsRegisterModalOpen(false)} className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-sm transition-all hover:bg-slate-200">Cancel</button>
                 </div>
               </form>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>

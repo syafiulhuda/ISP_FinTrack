@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { 
   X, 
   ChevronRight, 
@@ -279,7 +279,7 @@ export function GenerateReportModal({ isOpen, onClose }: GenerateReportModalProp
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-start justify-center p-4 md:pl-64 pt-24 bg-transparent overflow-y-auto">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -303,7 +303,7 @@ export function GenerateReportModal({ isOpen, onClose }: GenerateReportModalProp
             <div className="px-8 py-6 bg-white dark:bg-slate-900">
               <div className="flex items-center justify-between max-w-2xl mx-auto relative">
                 <div className="absolute top-5 left-0 w-full h-0.5 bg-slate-100 dark:bg-slate-800 -translate-y-1/2 z-0" />
-                <motion.div 
+                <m.div 
                   className="absolute top-5 left-0 h-0.5 bg-blue-600 -translate-y-1/2 z-0" 
                   initial={{ width: "0%" }}
                   animate={{ width: step === 1 ? "0%" : step === 2 ? "50%" : "100%" }}
@@ -332,7 +332,7 @@ export function GenerateReportModal({ isOpen, onClose }: GenerateReportModalProp
             <div className="flex-1 overflow-y-auto p-8 min-h-[400px]">
               <AnimatePresence mode="wait">
                 {step === 1 && (
-                  <motion.div
+                  <m.div
                     key="step1"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -360,11 +360,11 @@ export function GenerateReportModal({ isOpen, onClose }: GenerateReportModalProp
                         <p className="text-xs text-slate-500 leading-relaxed">{cat.desc}</p>
                       </button>
                     ))}
-                  </motion.div>
+                  </m.div>
                 )}
 
                 {step === 2 && (
-                  <motion.div
+                  <m.div
                     key="step2"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -429,11 +429,11 @@ export function GenerateReportModal({ isOpen, onClose }: GenerateReportModalProp
                         ))}
                       </div>
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
 
                 {step === 3 && (
-                  <motion.div
+                  <m.div
                     key="step3"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -671,7 +671,7 @@ export function GenerateReportModal({ isOpen, onClose }: GenerateReportModalProp
                         </p>
                       </div>
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>
@@ -723,7 +723,7 @@ export function GenerateReportModal({ isOpen, onClose }: GenerateReportModalProp
                 </button>
               )}
             </div>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>,

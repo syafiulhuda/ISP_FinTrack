@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -174,7 +174,7 @@ export default function DistributionMapPage() {
               
               <AnimatePresence>
                 {isLayersOpen && (
-                  <motion.div 
+                  <m.div 
                     initial={{ opacity: 0, scale: 0.95, y: -10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -206,7 +206,7 @@ export default function DistributionMapPage() {
                         </label>
                       ))}
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>
@@ -214,7 +214,7 @@ export default function DistributionMapPage() {
 
         {/* Floating Legend */}
         <div className="absolute top-6 left-6 z-10 flex flex-col gap-4 pointer-events-none">
-          <motion.div 
+          <m.div 
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-5 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-800/50 w-64 pointer-events-auto"
@@ -280,7 +280,7 @@ export default function DistributionMapPage() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </div>
 
         {/* Selected Node Drawer & Location Card */}
@@ -288,7 +288,7 @@ export default function DistributionMapPage() {
           {selectedNode && (
             <div className="absolute top-6 bottom-6 right-6 flex items-start gap-4 z-50 pointer-events-none">
               {/* Location Detail Card (Left Side) */}
-              <motion.div 
+              <m.div 
                 initial={{ x: 100, opacity: 0, scale: 0.9 }}
                 animate={{ x: 0, opacity: 1, scale: 1 }}
                 exit={{ x: 100, opacity: 0, scale: 0.9 }}
@@ -350,10 +350,10 @@ export default function DistributionMapPage() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </m.div>
 
               {/* Main Asset Drawer */}
-              <motion.div 
+              <m.div 
                 initial={{ x: 400, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 400, opacity: 0 }}
@@ -536,14 +536,14 @@ export default function DistributionMapPage() {
                     View Maintenance History
                   </button>
                 </div>
-              </motion.div>
+              </m.div>
             </div>
           )}
         </AnimatePresence>
 
         {/* Bottom Floating Stats */}
         <div className="absolute bottom-6 left-6 z-10 flex gap-4">
-          <motion.div 
+          <m.div 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-6 py-4 rounded-[2rem] shadow-xl border border-slate-200/50 dark:border-slate-800/50 flex items-center gap-4 group hover:bg-white dark:hover:bg-slate-900 transition-all cursor-default"
@@ -557,8 +557,8 @@ export default function DistributionMapPage() {
               </p>
               <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Network Health</p>
             </div>
-          </motion.div>
-          <motion.div 
+          </m.div>
+          <m.div 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
@@ -573,7 +573,7 @@ export default function DistributionMapPage() {
               </p>
               <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Active Outages</p>
             </div>
-          </motion.div>
+          </m.div>
         </div>
 
         {/* Zoom Controls (Bottom Right) */}
@@ -611,14 +611,14 @@ export default function DistributionMapPage() {
       <AnimatePresence>
         {isHistoryModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
+            <m.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsHistoryModalOpen(false)}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
-            <motion.div 
+            <m.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -656,7 +656,7 @@ export default function DistributionMapPage() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>

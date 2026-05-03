@@ -15,7 +15,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useSettings } from "@/components/providers/SettingsProvider";
 import { useState } from "react";
 import { GenerateReportModal } from "@/components/modals/GenerateReportModal";
@@ -99,7 +99,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
 
       {/* Header */}
       <div className="mb-8 px-4 flex items-center space-x-3">
-        <motion.div 
+        <m.div 
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg overflow-hidden", !theme.isCustom && theme.bg, !theme.isCustom && theme.shadow)}
@@ -110,7 +110,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
           ) : (
             settings.appName.substring(0, 2).toUpperCase()
           )}
-        </motion.div>
+        </m.div>
         <div>
           <h1 className={cn("text-lg font-black tracking-tight", !theme.isCustom && theme.text, !theme.isCustom && theme.textDark)} style={theme.isCustom ? { color: theme.color } : {}}>{settings.appName}</h1>
           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{settings.appSubtitle}</p>
@@ -119,7 +119,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
 
       {/* CTA */}
       <div className="px-2 mb-6">
-        <motion.button 
+        <m.button 
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setIsReportModalOpen(true)}
@@ -128,7 +128,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
         >
           <Plus size={18} />
           <span>New Report</span>
-        </motion.button>
+        </m.button>
       </div>
 
       <GenerateReportModal 
@@ -155,7 +155,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
               )}
             >
               {isActive && (
-                <motion.div
+                <m.div
                   layoutId="active-pill"
                   className="absolute inset-0 bg-white dark:bg-slate-900 shadow-sm border border-slate-200/50 dark:border-slate-800 rounded-xl"
                   transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
@@ -185,7 +185,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
         {isLogoutConfirmOpen && (
           <div className="fixed inset-0 z-[100] flex items-start justify-center pt-40 px-4 md:pl-64">
             {/* Transparent clickable backdrop — no blur, no color */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -194,7 +194,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
             />
 
             {/* Modal Card */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
@@ -238,7 +238,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>

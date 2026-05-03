@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { 
   Wifi, 
   Zap, 
@@ -33,11 +33,28 @@ const IconMap = {
 };
 
 export default function ServiceTiersPage() {
-  const { data: customerList = [], isLoading: loadingCustomers, refetch: refetchCustomers, isRefetching } = useQuery({ 
-    queryKey: ['customers'], 
-    queryFn: getCustomers,
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
+
+  const { data: customerData, isLoading: loadingCustomers, refetch: refetchCustomers, isRefetching } = useQuery({ 
+    queryKey: ['customers', currentPage, itemsPerPage], 
+    queryFn: () => getCustomers(currentPage, itemsPerPage),
     staleTime: 0
   });
+
+  // We still need all customers for the tier counts at the top
+  const { data: allCustomerData } = useQuery({
+    queryKey: ['customers', 'all'],
+    queryFn: () => getCustomers(1, 1000),
+    staleTime: 60000
+  });
+
+  const customerList = customerData?.customers || [];
+  const allCustomers = allCustomerData?.customers || [];
+  const totalCount = customerData?.total || 0;
+
   const { data: serviceTiersRaw = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
 
   // Ensure Gamers package is always included in the UI if not present in DB
@@ -58,10 +75,6 @@ export default function ServiceTiersPage() {
     return tiers;
   }, [serviceTiersRaw]);
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 7;
   const isSearching = searchQuery.trim().length > 0;
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -138,7 +151,7 @@ export default function ServiceTiersPage() {
 
   // 1. Memoize filtered list - MUST be before any conditional returns
   const filteredCustomers = useMemo(() => {
-    return customerList.filter(cust => {
+    return allCustomers.filter(cust => {
       const matchesSearch = 
         (cust.name || cust.nama || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         cust.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -152,13 +165,13 @@ export default function ServiceTiersPage() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [customerList, searchQuery, statusFilter]);
+  }, [allCustomers, searchQuery, statusFilter]);
 
   // 2. Memoize tier counts - MUST be before any conditional returns
   const tierCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     serviceTiers.forEach(tier => {
-      counts[tier.name] = customerList.filter(c => {
+      counts[tier.name] = allCustomers.filter(c => {
         const service = c.service?.toLowerCase();
         const tierName = tier.name.toLowerCase();
         if (tierName === "gamers node") return service === "gamers";
@@ -166,17 +179,17 @@ export default function ServiceTiersPage() {
       }).length;
     });
     return counts;
-  }, [customerList, serviceTiers]);
+  }, [allCustomers, serviceTiers]);
 
   if (loadingCustomers || loadingTiers) {
     return <div className="h-full w-full flex items-center justify-center"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="text-slate-500 font-medium">Loading Service Tiers Data...</p></div></div>;
   }
 
-  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const totalPages = isSearching ? Math.ceil(filteredCustomers.length / itemsPerPage) : Math.ceil(totalCount / itemsPerPage);
   
   const displayCustomers = isSearching 
-    ? filteredCustomers 
-    : filteredCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    ? filteredCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+    : customerList; // Already limited by server if not searching
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -193,14 +206,14 @@ export default function ServiceTiersPage() {
           <p className="text-base md:text-lg font-medium text-slate-500 mt-2">Manage broadband tiers and subscriber distribution.</p>
         </div>
         <div className="flex items-center gap-4">
-          <motion.button
+          <m.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setIsAddModalOpen(true)}
             className="bg-primary text-white px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-primary/20 hover:opacity-95 transition-all flex items-center gap-2"
           >
             <Plus size={18} /> Add New Customer
-          </motion.button>
+          </m.button>
         </div>
       </div>
 
@@ -212,7 +225,7 @@ export default function ServiceTiersPage() {
           const isPriority = tier.type === "priority";
 
           return (
-            <motion.div
+            <m.div
               key={tier.name}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -265,12 +278,12 @@ export default function ServiceTiersPage() {
                   </span>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           );
         })}
 
         {/* Add New Tier Card */}
-        <motion.button
+        <m.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setIsAddTierModalOpen(true)}
@@ -283,7 +296,7 @@ export default function ServiceTiersPage() {
             <p className="font-bold text-slate-900 dark:text-slate-100">Add New Plan</p>
             <p className="text-xs text-slate-500">Expand your service offerings</p>
           </div>
-        </motion.button>
+        </m.button>
       </div>
 
       {/* Customer List Section */}
@@ -360,7 +373,7 @@ export default function ServiceTiersPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {displayCustomers.map((cust: any, idx: number) => (
-                  <motion.tr 
+                  <m.tr 
                     key={cust.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -410,7 +423,7 @@ export default function ServiceTiersPage() {
                         <span className="text-[10px] text-slate-400 font-bold uppercase">{cust.province}</span>
                       </div>
                     </td>
-                  </motion.tr>
+                  </m.tr>
                 ))}
                 {displayCustomers.length === 0 && (
                   <tr>
@@ -431,7 +444,7 @@ export default function ServiceTiersPage() {
               Showing <span className="text-slate-900 dark:text-slate-100">{displayCustomers.length}</span> of <span className="text-slate-900 dark:text-slate-100">{filteredCustomers.length}</span> subscribers
             </p>
             <div className="flex gap-2">
-              <motion.button 
+              <m.button 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -439,7 +452,7 @@ export default function ServiceTiersPage() {
                 className="px-4 py-2 bg-white dark:bg-slate-900 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 disabled:opacity-30 transition-all border border-slate-200 dark:border-slate-800 shadow-sm"
               >
                 Previous
-              </motion.button>
+              </m.button>
               <div className="flex items-center gap-1.5">
                 <input 
                   type="text"
@@ -457,7 +470,7 @@ export default function ServiceTiersPage() {
                 />
                 <span className="text-xs font-bold text-slate-400">/ {totalPages}</span>
               </div>
-              <motion.button 
+              <m.button 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handlePageChange(currentPage + 1)}
@@ -465,7 +478,7 @@ export default function ServiceTiersPage() {
                 className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 disabled:opacity-30 transition-all"
               >
                 Next
-              </motion.button>
+              </m.button>
             </div>
           </div>
         )}
@@ -482,7 +495,7 @@ export default function ServiceTiersPage() {
       <AnimatePresence>
         {isAddModalOpen && (
           <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
-            <motion.div 
+            <m.div 
               initial={{ x: "100%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}
@@ -494,14 +507,14 @@ export default function ServiceTiersPage() {
                   <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Register New Customer</h3>
                   <p className="text-xs font-medium text-slate-500 mt-1">Add a new subscriber to the network.</p>
                 </div>
-                <motion.button 
+                <m.button 
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsAddModalOpen(false)} 
                   className="p-2 text-slate-400 hover:text-primary transition-colors"
                 >
                   <X size={24} />
-                </motion.button>
+                </m.button>
               </div>
               
               <form onSubmit={handleAddCustomer} className="space-y-6 overflow-y-auto px-1 pr-3 custom-scrollbar">
@@ -623,7 +636,7 @@ export default function ServiceTiersPage() {
                   </button>
                 </div>
               </form>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>
@@ -632,7 +645,7 @@ export default function ServiceTiersPage() {
       <AnimatePresence>
         {isAddTierModalOpen && (
           <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
-            <motion.div 
+            <m.div 
               initial={{ x: "100%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}
@@ -644,14 +657,14 @@ export default function ServiceTiersPage() {
                   <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Add New Service</h3>
                   <p className="text-xs font-medium text-slate-500 mt-1">Configure a new internet plan for your customers.</p>
                 </div>
-                <motion.button 
+                <m.button 
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsAddTierModalOpen(false)} 
                   className="p-2 text-slate-400 hover:text-primary transition-colors"
                 >
                   <X size={24} />
-                </motion.button>
+                </m.button>
               </div>
 
               <form onSubmit={handleAddTier} className="space-y-6 overflow-y-auto px-1 pr-3 custom-scrollbar">
@@ -773,7 +786,7 @@ export default function ServiceTiersPage() {
                   </button>
                 </div>
               </form>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>
@@ -783,7 +796,7 @@ export default function ServiceTiersPage() {
         {showAuditConfirm && (
           <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
             {/* Transparent click-capture overlay (no dimming) */}
-            <motion.div 
+            <m.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -791,7 +804,7 @@ export default function ServiceTiersPage() {
               onClick={() => setShowAuditConfirm(false)}
             />
             
-            <motion.div
+            <m.div
               initial={{ scale: 0.8, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0, y: 20 }}
@@ -808,14 +821,14 @@ export default function ServiceTiersPage() {
                 </p>
                 
                 <div className="flex flex-col gap-4 w-full">
-                  <motion.button
+                  <m.button
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleRunAudit}
                     className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-orange-500/30 hover:bg-orange-500 transition-all flex items-center justify-center gap-2"
                   >
                     CONFIRM & DISCONNECT
-                  </motion.button>
+                  </m.button>
                   
                   <button
                     onClick={() => setShowAuditConfirm(false)}
@@ -829,7 +842,7 @@ export default function ServiceTiersPage() {
               {/* Decorative background element */}
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-orange-500/10 blur-3xl rounded-full -z-10" />
               <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full -z-10" />
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>

@@ -1,7 +1,7 @@
 "use client";
 
 import { X, Search, Check } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -20,7 +20,11 @@ export function ProvinceSelectionModal({
   selectedProvince, 
   onSelect 
 }: ProvinceSelectionModalProps) {
-  const { data: customerList = [] } = useQuery({ queryKey: ['customers'], queryFn: getCustomers });
+  const { data: customerData } = useQuery({ 
+    queryKey: ['customers', 1, 1000], 
+    queryFn: () => getCustomers(1, 1000) 
+  });
+  const customerList = customerData?.customers || [];
   const [searchQuery, setSearchQuery] = useState("");
 
   const provinces = useMemo(() => [
@@ -50,7 +54,7 @@ export function ProvinceSelectionModal({
       {isOpen && (
         <>
           {/* Backdrop - Lighter & Less intrusive for better UX */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -60,7 +64,7 @@ export function ProvinceSelectionModal({
 
           {/* Modal Container - Positioned higher for easier reach and less screen coverage */}
           <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-[12vh] pointer-events-none">
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.95, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -132,7 +136,7 @@ export function ProvinceSelectionModal({
 
               {/* Footer Indicator */}
               <div className="h-4 w-full bg-gradient-to-t from-slate-50/50 dark:from-slate-800/20 to-transparent shrink-0" />
-            </motion.div>
+            </m.div>
           </div>
         </>
       )}

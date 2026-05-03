@@ -37,8 +37,14 @@ export async function getStockAssets() {
   }
 }
 
-export async function getCustomers(): Promise<Customer[]> {
+export async function getCustomers(page: number = 1, limit: number = 10): Promise<{ customers: Customer[], total: number }> {
   try {
+    const offset = (page - 1) * limit;
+    
+    // Get total count for pagination
+    const countRes = await query('SELECT COUNT(*) as total FROM customers');
+    const total = parseInt(countRes.rows[0].total);
+
     const res = await query(`
       SELECT c.*,
         CASE 
@@ -69,11 +75,19 @@ export async function getCustomers(): Promise<Customer[]> {
         EXTRACT(DAY FROM (c."createdAt"::timestamptz AT TIME ZONE 'Asia/Jakarta')) as due_day
       FROM customers c
       ORDER BY c.id ASC
-    `);
-    return res.rows.length > 0 ? res.rows as Customer[] : Mock.MOCK_CUSTOMERS as Customer[];
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
+    
+    return {
+      customers: res.rows.length > 0 ? res.rows as Customer[] : (page === 1 ? Mock.MOCK_CUSTOMERS as Customer[] : []),
+      total: total || (page === 1 ? Mock.MOCK_CUSTOMERS.length : 0)
+    };
   } catch (e) {
     console.error("DB Error: getCustomers", e);
-    return Mock.MOCK_CUSTOMERS as Customer[];
+    return {
+      customers: page === 1 ? Mock.MOCK_CUSTOMERS as Customer[] : [],
+      total: page === 1 ? Mock.MOCK_CUSTOMERS.length : 0
+    };
   }
 }
 
@@ -683,10 +697,10 @@ export async function getCustomerGrowthTrend() {
       growth: parseInt(row.Growth || '0')
     }));
 
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonthIdx = now.getMonth();
     const filledData = [];
-    const currentYear = 2026; // Hardcoded to match seed data for now or use new Date().getFullYear()
-    const currentMonthIdx = 3; // April (matching system time in prompt)
-    
     let cumulative = 0;
     for (let i = 0; i < 12; i++) {
       const monthNum = i + 1;
@@ -700,11 +714,24 @@ export async function getCustomerGrowthTrend() {
       const d = new Date(currentYear, i, 1);
       filledData.push({
         month: d.toLocaleString('en-US', { month: 'short' }),
-        growth: i <= currentMonthIdx ? cumulative : null
+        growth: cumulative
       });
     }
 
-    return filledData;
+    // Determine the last month we should display (current month or last month with data)
+    const lastDataMonthIdx = rawData.reduce((max, item) => {
+      const m = parseInt(item.monthKey.split('-')[1]) - 1;
+      return m > max ? m : max;
+    }, -1);
+
+    const displayUntilIdx = Math.max(currentMonthIdx, lastDataMonthIdx);
+
+    const finalData = filledData.map((item, i) => ({
+      ...item,
+      growth: i <= displayUntilIdx ? item.growth : null
+    }));
+
+    return finalData;
   } catch (e) {
     console.error("DB Error: getCustomerGrowthTrend", e);
     return [];

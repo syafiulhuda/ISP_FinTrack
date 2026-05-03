@@ -5,7 +5,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { SettingsProvider } from "@/components/providers/SettingsProvider";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -39,7 +39,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
               <div className="max-w-7xl mx-auto w-full">
                 <ErrorBoundary>
                   <AnimatePresence mode="wait">
-                    <motion.div
+                    <m.div
                       key={pathname}
                       initial={{ opacity: 0, y: 8, scale: 0.99, filter: "blur(8px)" }}
                       animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
@@ -50,7 +50,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                       }}
                     >
                       {children}
-                    </motion.div>
+                    </m.div>
                   </AnimatePresence>
                 </ErrorBoundary>
               </div>

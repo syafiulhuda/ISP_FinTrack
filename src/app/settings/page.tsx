@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion, Variants, AnimatePresence } from "framer-motion";
+import { m, Variants, AnimatePresence } from "framer-motion";
 import { useSettings } from "@/components/providers/SettingsProvider";
 import { 
   Settings,
@@ -124,13 +124,13 @@ export default function SettingsPage() {
     <>
       <AnimatePresence>
         {(isSaving || isDiscarding || showSuccess) && (
-          <motion.div 
+          <m.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
           >
-            <motion.div 
+            <m.div 
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
@@ -138,14 +138,14 @@ export default function SettingsPage() {
             >
               {showSuccess ? (
                 <>
-                  <motion.div 
+                  <m.div 
                     initial={{ scale: 0 }} 
                     animate={{ scale: 1 }} 
                     transition={{ type: "spring", bounce: 0.5 }}
                     className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-500 rounded-full flex items-center justify-center mb-4"
                   >
                     <CheckCircle2 size={32} />
-                  </motion.div>
+                  </m.div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">Success!</h3>
                   <p className="text-sm text-slate-500 text-center font-medium">Your configurations have been successfully updated.</p>
                 </>
@@ -163,22 +163,22 @@ export default function SettingsPage() {
                   </p>
                 </>
               )}
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       <AnimatePresence>
         {isAddManagerOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
+            <m.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsAddManagerOpen(false)}
               className="absolute inset-0"
             />
-            <motion.div 
+            <m.div 
               initial={{ scale: 0.9, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, y: 20, opacity: 0 }}
@@ -265,29 +265,29 @@ export default function SettingsPage() {
                   {createAdminMutation.isPending ? <Loader2 className="animate-spin" size={18} /> : "Create Manager"}
                 </button>
               </form>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>
 
-    <motion.div 
+    <m.div 
       variants={containerVariants}
       initial="hidden"
       animate="show"
       className="space-y-8 pb-10"
     >
-      <motion.div variants={itemVariants} className="mb-10">
+      <m.div variants={itemVariants} className="mb-10">
         <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
           Settings
         </h2>
         <p className="text-slate-500 mt-1 font-medium">Configure your ISP management environment</p>
-      </motion.div>
+      </m.div>
 
       {/* Bento Grid Settings Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Left Nav: Category Selection */}
-        <motion.nav variants={itemVariants} className="lg:col-span-3 flex flex-col gap-2 p-1 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <m.nav variants={itemVariants} className="lg:col-span-3 flex flex-col gap-2 p-1 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-200 dark:border-slate-800">
           <button 
             onClick={() => setActiveTab('general')}
             className={cn(
@@ -336,14 +336,14 @@ export default function SettingsPage() {
             <Users size={18} />
             User Management
           </button>
-        </motion.nav>
+        </m.nav>
 
         {/* Right Content */}
         <div className="lg:col-span-9 space-y-6">
           
           {/* Section 1: General Info */}
           {activeTab === 'general' && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 relative overflow-hidden group shadow-sm">
+            <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 relative overflow-hidden group shadow-sm">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
                 <Info className="text-primary" size={20} />
                 Application Configuration
@@ -400,12 +400,12 @@ export default function SettingsPage() {
                   </select>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           )}
 
           {/* Section 2: Branding */}
           {activeTab === 'branding' && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
                 <Palette className="text-primary" size={20} />
                 Visual Identity
@@ -462,12 +462,12 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           )}
 
           {/* Section 3: Integrations */}
           {activeTab === 'integrations' && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 border-l-4 border-l-primary shadow-sm">
+            <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 border-l-4 border-l-primary shadow-sm">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
                 <Puzzle className="text-primary" size={20} />
                 Core Service Status
@@ -493,12 +493,12 @@ export default function SettingsPage() {
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </m.div>
           )}
 
           {/* Section 4: User Management */}
           {activeTab === 'users' && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between mb-8">
                 <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
                   <ShieldCheck className="text-primary" size={20} />
@@ -535,11 +535,11 @@ export default function SettingsPage() {
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </m.div>
           )}
 
           {/* Actions */}
-          <motion.div variants={itemVariants} className="flex items-center justify-end gap-4 py-8">
+          <m.div variants={itemVariants} className="flex items-center justify-end gap-4 py-8">
             <button 
               onClick={handleDiscard}
               disabled={isSaving || isDiscarding}
@@ -554,11 +554,11 @@ export default function SettingsPage() {
             >
               Save Configurations
             </button>
-          </motion.div>
+          </m.div>
 
         </div>
       </div>
-    </motion.div>
+    </m.div>
     </>
   );
 }

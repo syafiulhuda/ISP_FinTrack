@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { 
   TrendingUp, 
   ArrowUp, 
@@ -62,7 +62,11 @@ export default function ProfitabilityPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [datesInitialized, setDatesInitialized] = useState(false);
 
-  const { data: customerList = [], isLoading: loadingCustomers } = useQuery({ queryKey: ['customers'], queryFn: getCustomers });
+  const { data: customerData, isLoading: loadingCustomers } = useQuery({ 
+    queryKey: ['customers', 1, 1000], 
+    queryFn: () => getCustomers(1, 1000) 
+  });
+  const customerList = customerData?.customers || [];
   const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
   const { data: expenseList = [], isLoading: loadingExpenses } = useQuery({ queryKey: ['expenses'], queryFn: getExpenses });
   const { data: transactions = [], isLoading: loadingTx } = useQuery({ 
@@ -451,17 +455,17 @@ export default function ProfitabilityPage() {
             </div>
 
             <div className="relative" ref={dropdownRef}>
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-3 px-6 py-3.5 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 text-sm font-bold min-w-[200px]">
+              <m.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-3 px-6 py-3.5 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 text-sm font-bold min-w-[200px]">
                 <Filter size={18} className="text-primary" />
                 <span className="flex-1 text-left">{selectedProvince}</span>
                 <ChevronDown size={16} className={cn("transition-transform", isDropdownOpen && "rotate-180")} />
-              </motion.button>
+              </m.button>
               <AnimatePresence>
                 {isDropdownOpen && (
-                  <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -4 }} className="absolute right-0 top-full mt-2 w-[320px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                  <m.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -4 }} className="absolute right-0 top-full mt-2 w-[320px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
                     <div className="p-4 bg-slate-50/50 dark:bg-slate-900/50 border-b dark:border-slate-800"><div className="relative flex items-center"><Search className="absolute left-3 text-slate-400" size={16} /><input autoFocus className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20" placeholder="Search regions..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div></div>
                     <div className="max-h-[300px] overflow-y-auto p-2">{filteredProvinces.map((p) => (<button key={p} onClick={() => { setSelectedProvince(p); setIsDropdownOpen(false); }} className={cn("w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold mb-1", p === selectedProvince ? "bg-primary text-white shadow-md" : "hover:bg-slate-100 dark:hover:bg-slate-800")}>{p}{p === selectedProvince && <Check size={16} />}</button>))}</div>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>
@@ -470,7 +474,7 @@ export default function ProfitabilityPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {dynamicData.metrics.map((kpi, i) => (
-            <motion.div key={kpi.name} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-primary/5 transition-all group">
+            <m.div key={kpi.name} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-primary/5 transition-all group">
               <div className="flex items-center justify-between gap-2 mb-6">
                 <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0 flex items-center justify-center">
                   {kpi.icon === "trending" && <TrendingUp size={18} />}
@@ -492,12 +496,12 @@ export default function ProfitabilityPage() {
               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{kpi.name}</p>
               <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-2 whitespace-nowrap">{kpi.value}</h3>
               <p className="text-[9px] font-bold text-slate-400 mt-4 uppercase tracking-tighter">{kpi.detail}</p>
-            </motion.div>
+            </m.div>
           ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <motion.section initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 pb-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <m.section initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 pb-4 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex items-center justify-between mb-10"><div><h3 className="text-2xl font-black">Revenue Waterfall</h3><p className="text-sm text-slate-500 mt-1">Gross Margin vs Real Opex.</p></div><BarChart3 className="text-slate-300" size={32} /></div>
             <div className="h-[550px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -532,10 +536,10 @@ export default function ProfitabilityPage() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </motion.section>
+          </m.section>
 
           <div className="space-y-8">
-            <motion.section initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <m.section initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-200 dark:border-slate-800 shadow-sm">
               <h3 className="text-xl font-black mb-8">Service Plan Mix</h3>
               <div className="flex items-center gap-10">
                 <div className="h-[220px] w-1/2 relative group">
@@ -589,9 +593,9 @@ export default function ProfitabilityPage() {
                   })}
                 </div>
               </div>
-            </motion.section>
+            </m.section>
 
-            <motion.section initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-[2.5rem] p-10 border border-slate-700/30 shadow-xl relative overflow-hidden">
+            <m.section initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-[2.5rem] p-10 border border-slate-700/30 shadow-xl relative overflow-hidden">
               <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/10 rounded-full blur-3xl" />
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-6"><div><h3 className="text-xl font-black text-white mb-1">Profitability Trend</h3><p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Net Profit Month-over-Month</p></div><div className="px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full flex items-center gap-2"><div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" /><span className="text-[10px] font-black text-green-400 uppercase tracking-wider">Live</span></div></div>
@@ -628,7 +632,7 @@ export default function ProfitabilityPage() {
                   </ResponsiveContainer>
                 </div>
               </div>
-            </motion.section>
+            </m.section>
           </div>
         </div>
       </div>

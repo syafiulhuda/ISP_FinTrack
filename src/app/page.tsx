@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   ArrowUp,
   ArrowDown,
@@ -82,7 +82,11 @@ const RevenueTooltip = ({ active, payload, label }: any) => {
 export default function Dashboard() {
   const router = useRouter();
   const dashboardRef = useRef<HTMLDivElement>(null);
-  const { data: customerList = [], isLoading: loadingCustomers } = useQuery({ queryKey: ['customers'], queryFn: getCustomers });
+  const { data: customerData, isLoading: loadingCustomers } = useQuery({ 
+    queryKey: ['customers', 1, 1000], // Fetch a large enough batch for dashboard stats
+    queryFn: () => getCustomers(1, 1000) 
+  });
+  const customerList = customerData?.customers || [];
   const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
   const { data: expenseList = [], isLoading: loadingExpenses } = useQuery({ queryKey: ['expenses'], queryFn: getExpenses });
   const { data: transactions = [], isLoading: loadingTx } = useQuery({ 
@@ -409,14 +413,14 @@ export default function Dashboard() {
       <AnimatePresence>
         {isRoadmapOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsRoadmapOpen(false)}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -464,19 +468,19 @@ export default function Dashboard() {
                   Acknowledge
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>
 
       <div ref={dashboardRef} className="space-y-8 pb-10">
-        <motion.div 
+        <m.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="space-y-8"
         >
           {/* Header */}
-          <motion.div 
+          <m.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 24 }}
@@ -505,12 +509,12 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
-          </motion.div>
+          </m.div>
 
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {kpis.map((kpi, index) => (
-              <motion.div
+              <m.div
                 key={kpi.name}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -546,12 +550,12 @@ export default function Dashboard() {
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{kpi.name}</p>
                   <h3 className="text-3xl font-black text-slate-900 dark:text-slate-100 mt-1">{kpi.value}</h3>
                 </div>
-              </motion.div>
+              </m.div>
             ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <motion.section
+            <m.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.4 }}
@@ -613,11 +617,11 @@ export default function Dashboard() {
                   </ResponsiveContainer>
                 )}
               </div>
-            </motion.section>
+            </m.section>
 
             <div className="space-y-8">
               {/* Right Column: Customer Mix */}
-              <motion.section 
+              <m.section 
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.5 }}
@@ -645,13 +649,9 @@ export default function Dashboard() {
                       tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }} 
                       interval={0}
                       tickFormatter={(value) => {
-                        const mapping: Record<string, string> = {
-                          'Jan': 'Jan',
-                          'Apr': 'Apr',
-                          'Aug': 'Aug',
-                          'Dec': 'Dec'
-                        };
-                        return mapping[value] || '';
+                        const showMonths = ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov'];
+                        if (showMonths.includes(value)) return value;
+                        return '';
                       }}
                     />
                     <YAxis hide domain={['auto', 'auto']} />
@@ -681,9 +681,9 @@ export default function Dashboard() {
               )}
             </div>
 
-          </motion.section>
+          </m.section>
 
-              <motion.section
+              <m.section
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.6 }}
@@ -692,18 +692,18 @@ export default function Dashboard() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/20 transition-colors" />
                 <h4 className="text-white font-black text-lg mb-2 relative z-10">Upgrade Infrastructure</h4>
                 <p className="text-slate-400 text-sm mb-6 font-medium leading-relaxed relative z-10">Expand nodes in the Bandung area to capture growing demand.</p>
-                <motion.button
+                <m.button
                   onClick={() => setIsRoadmapOpen(true)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="w-full py-4 bg-white text-slate-900 rounded-2xl font-black text-sm hover:bg-slate-100 transition-all flex items-center justify-center gap-2 relative z-10 shadow-xl shadow-white/5"
                 >
                   Review Roadmap <ArrowUpRight size={18} />
-                </motion.button>
-              </motion.section>
+                </m.button>
+              </m.section>
             </div>
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </div>
   );

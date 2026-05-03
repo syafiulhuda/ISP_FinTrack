@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { 
   CloudUpload, 
   ZoomIn, 
@@ -388,7 +388,7 @@ export default function FinancePage() {
 
               {/* Income / Expense Tabs */}
               <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl mb-10 relative">
-                <motion.div 
+                <m.div 
                   className={cn(
                     "absolute h-[calc(100%-12px)] top-1.5 rounded-xl shadow-sm z-0",
                     activeTab === 'pemasukan' ? "bg-primary" : "bg-orange-500"
@@ -550,14 +550,14 @@ export default function FinancePage() {
 
       <AnimatePresence>
         {isZoomed && (
-          <motion.div 
+          <m.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-auto"
             onClick={() => setIsZoomed(false)}
           >
-            <motion.div
+            <m.div
               initial={{ scale: 0.8, opacity: 0, y: 40 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0, y: 40 }}
@@ -577,8 +577,8 @@ export default function FinancePage() {
                 className="w-auto max-h-[75vh] object-contain rounded-3xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] border-4 border-white/20"
                 alt="Receipt Zoom"
               />
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
 
@@ -637,7 +637,7 @@ export default function FinancePage() {
 
           {/* Transaction Rows */}
           {paginatedTransactions.map((trx, index) => (
-            <motion.div 
+            <m.div 
               key={`${trx.id}-${index}`}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -680,7 +680,7 @@ export default function FinancePage() {
               <div className="col-span-3 text-right text-[11px] font-medium text-slate-500 font-mono">
                 {typeof trx.timestamp === 'object' ? trx.timestamp.toLocaleString('id-ID') : trx.timestamp}
               </div>
-            </motion.div>
+            </m.div>
           ))}
         </div>
 
@@ -743,7 +743,7 @@ export default function FinancePage() {
           {isModalOpen && (
             <div className="absolute inset-0 z-50 flex justify-end">
               {/* Backdrop - Contained */}
-              <motion.div 
+              <m.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -752,7 +752,7 @@ export default function FinancePage() {
               />
               
               {/* Drawer Panel - Contained */}
-              <motion.div
+              <m.div
                 initial={{ x: "100%" }}
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
@@ -821,7 +821,7 @@ export default function FinancePage() {
                     Back to Summary
                   </button>
                 </div>
-              </motion.div>
+              </m.div>
             </div>
           )}
         </AnimatePresence>
@@ -829,13 +829,13 @@ export default function FinancePage() {
 
       <AnimatePresence>
         {showDuplicateWarning && (
-          <motion.div 
+          <m.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[200] flex items-center justify-center p-4 pointer-events-none"
           >
-            <motion.div
+            <m.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -863,8 +863,8 @@ export default function FinancePage() {
                   Edit Reference
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

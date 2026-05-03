@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Lock, ArrowRight, ShieldCheck, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -78,7 +78,7 @@ function ResetPasswordForm() {
   if (isValidating) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4">
-        <motion.div 
+        <m.div 
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full"
@@ -141,14 +141,14 @@ function ResetPasswordForm() {
       </div>
 
       {error && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-6 flex items-center gap-3 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
         >
           <AlertCircle size={20} className="text-red-600 dark:text-red-400 shrink-0" />
           <p className="text-sm font-bold text-red-700 dark:text-red-300">{error}</p>
-        </motion.div>
+        </m.div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -186,7 +186,7 @@ function ResetPasswordForm() {
           )}
         >
           {isLoading ? (
-            <motion.div 
+            <m.div 
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full"

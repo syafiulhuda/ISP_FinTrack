@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, Variants } from "framer-motion";
+import { m, Variants } from "framer-motion";
 import { Banknote, FileScan, AlertTriangle, Clock, ShieldCheck, Loader2, Trash2, Server, CheckCircle } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -156,13 +156,13 @@ export default function NotificationsPage() {
   const categories = ['Finance', 'Inventory', 'System'];
 
   return (
-    <motion.div 
+    <m.div 
       variants={containerVariants}
       initial="hidden"
       animate="show"
       className="space-y-8 pb-10"
     >
-      <motion.div variants={itemVariants} className="flex items-center justify-between mb-8">
+      <m.div variants={itemVariants} className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Notifications
@@ -190,10 +190,10 @@ export default function NotificationsPage() {
             Clear All
           </button>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Overview Header */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <m.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 border-l-4 border-l-primary shadow-sm">
           <p className="text-[0.6875rem] font-bold text-slate-500 uppercase tracking-widest">
             Unread Alerts
@@ -212,7 +212,7 @@ export default function NotificationsPage() {
           </p>
           <h3 className="text-4xl font-bold mt-2 text-slate-900 dark:text-slate-100">{financialPending}</h3>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Notifications Content */}
       <div className="flex flex-col gap-8">
@@ -225,7 +225,7 @@ export default function NotificationsPage() {
           const paginatedNotifications = catNotifications.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
           return (
-            <motion.section key={cat} variants={itemVariants} className="space-y-4">
+            <m.section key={cat} variants={itemVariants} className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${cat === 'Finance' ? 'bg-primary' : cat === 'Inventory' ? 'bg-orange-500' : 'bg-slate-400'}`}></span>
@@ -348,10 +348,10 @@ export default function NotificationsPage() {
                   </div>
                 </div>
               )}
-            </motion.section>
+            </m.section>
           );
         })}
       </div>
-    </motion.div>
+    </m.div>
   );
 }
