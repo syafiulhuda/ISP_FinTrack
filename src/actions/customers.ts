@@ -4,6 +4,7 @@ import { query } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import * as Mock from '@/lib/mockData';
 import { Customer } from '@/types';
+import { getAdminProfile } from './admin';
 
 export async function getCustomers(page: number = 1, limit: number = 10): Promise<{ customers: Customer[], total: number }> {
   try {
@@ -15,13 +16,13 @@ export async function getCustomers(page: number = 1, limit: number = 10): Promis
       SELECT c.*,
         CASE 
           WHEN c.status = 'Active' AND (
-            EXTRACT(DAY FROM (c."createdAt"::timestamptz AT TIME ZONE 'Asia/Jakarta')) =
+            EXTRACT(DAY FROM (c."createdAt" AT TIME ZONE 'Asia/Jakarta')) =
             EXTRACT(DAY FROM (NOW() AT TIME ZONE 'Asia/Jakarta' + INTERVAL '1 day'))
             OR
-            EXTRACT(DAY FROM (c."createdAt"::timestamptz AT TIME ZONE 'Asia/Jakarta')) <=
+            EXTRACT(DAY FROM (c."createdAt" AT TIME ZONE 'Asia/Jakarta')) <=
             EXTRACT(DAY FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
             OR
-            date_trunc('month', c."createdAt"::timestamptz) < date_trunc('month', NOW())
+            date_trunc('month', c."createdAt") < date_trunc('month', NOW())
           )
           AND NOT EXISTS (
             SELECT 1 FROM transactions t
@@ -34,7 +35,7 @@ export async function getCustomers(page: number = 1, limit: number = 10): Promis
           THEN true 
           ELSE false 
         END as is_grace_period,
-        EXTRACT(DAY FROM (c."createdAt"::timestamptz AT TIME ZONE 'Asia/Jakarta')) as due_day
+        EXTRACT(DAY FROM (c."createdAt" AT TIME ZONE 'Asia/Jakarta')) as due_day
       FROM customers c
       ORDER BY c."createdAt" DESC, c.id DESC
       LIMIT $1 OFFSET $2
@@ -55,8 +56,22 @@ export async function getCustomers(page: number = 1, limit: number = 10): Promis
 
 export async function getInactiveCust() {
   try {
-    const res = await query('SELECT * FROM inactive_cust ORDER BY inactiveat DESC');
-    return res.rows;
+    const res = await query(`
+      SELECT 
+        id, name, no_telp, service, address, village, district, city, province, status,
+        TO_CHAR(createdat AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as createdat_str,
+        TO_CHAR(inactiveat AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as inactiveat_str,
+        TO_CHAR(inactiveat::date, 'YYYY-MM') as inactive_month 
+      FROM inactive_cust 
+      ORDER BY inactiveat DESC
+    `);
+    
+    // Strictly format response to ensure safe React Flight serialization to Client Components
+    return res.rows.map(r => ({
+      ...r,
+      createdAt: r.createdat_str,
+      inactiveat: r.inactiveat_str
+    }));
   } catch (e) {
     console.error("DB Error: getInactiveCust", e);
     return [];
@@ -69,7 +84,7 @@ export async function auditCustomerGracePeriod() {
       UPDATE customers
       SET status = 'Inactive'
       WHERE status = 'Active'
-        AND EXTRACT(DAY FROM "createdAt"::timestamp) = EXTRACT(DAY FROM NOW())
+        AND EXTRACT(DAY FROM "createdAt" AT TIME ZONE 'Asia/Jakarta') = EXTRACT(DAY FROM NOW() AT TIME ZONE 'Asia/Jakarta')
         AND NOT EXISTS (
           SELECT 1 FROM transactions t
           WHERE t.status = 'Verified'
@@ -99,27 +114,11 @@ export async function auditCustomerGracePeriod() {
 export async function getCustomerGrowthTrend() {
   try {
     const res = await query(`
-      with activeCustomer as (
-          select
-              TO_CHAR("createdAt"::timestamp, 'YYYY-MM') as month,
-              count(*) as tot_cust
-          from customers c
-          where status = 'Active'
-          group by 1
-      )
-      , inactiveCustomer as (
-          select
-              TO_CHAR("createdAt"::timestamp, 'YYYY-MM') as month,
-              count(*) as inactive_cust
-          from customers c
-          where status = 'Inactive'
-          group by 1
-      )
       select
-          COALESCE(a.month, i.month) as "Month",
-          sum(coalesce(a.tot_cust,0)) - sum(coalesce(i.inactive_cust,0)) as "Growth"
-      from activeCustomer a
-      full outer join inactiveCustomer i on a.month = i.month
+          TO_CHAR("createdAt"::date, 'YYYY-MM') as "Month",
+          count(*) as "Growth"
+      from customers c
+      where status = 'Active'
       group by 1
       order by 1 ASC
     `);
@@ -230,10 +229,13 @@ export async function createCustomer(data: {
     }
     const nextId = `CT${String(nextNum).padStart(3, '0')}`;
 
+    const profile = await getAdminProfile();
+    const inputter = profile.fullName || 'Unknown Admin';
+    
     await query(`
-      INSERT INTO customers (id, name, no_telp, service, province, city, district, village, address, status, "createdAt")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Active', NOW())
-    `, [nextId, data.name, data.no_telp, data.service, data.province, data.city, data.district, data.village, data.address]);
+      INSERT INTO customers (id, name, no_telp, service, province, city, district, village, address, status, "createdAt", inputter, inputter_tms)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Active', NOW(), $10, NOW())
+    `, [nextId, data.name, data.no_telp, data.service, data.province, data.city, data.district, data.village, data.address, inputter]);
 
     revalidatePath('/service-tiers');
     revalidatePath('/regional');

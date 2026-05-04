@@ -4,6 +4,7 @@ import { query } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import * as Mock from '@/lib/mockData';
 import { Asset } from '@/types';
+import { getAdminProfile } from './admin';
 
 export async function getAssetRoster(): Promise<Asset[]> {
   try {
@@ -27,25 +28,13 @@ export async function getStockAssets() {
 
 export async function getWarehouses() {
   try {
-    const res = await query(`
-      select distinct
-          split_part(location,',',1) as warehouse_name,
-          split_part(location,',',2) as city_name,
-          split_part(location,',',3) as province_name,
-          latitude,
-          longitude
-      from asset_roster
-      where split_part(location,',',2) in (' Yogyakarta',' DKI Jakarta',' Bali',' Surabaya')
-      order by split_part(location,',',1) asc
-    `);
+    const res = await query('SELECT id, location, latitude, longitude, city FROM warehouse_location ORDER BY location ASC');
     return res.rows;
   } catch (e) {
     console.error("DB Error: getWarehouses", e);
     return [
-      { warehouse_name: 'Warehouse Main', city_name: ' DKI Jakarta', province_name: '', latitude: -6.2088, longitude: 106.8456 },
-      { warehouse_name: 'Warehouse East', city_name: ' Yogyakarta', province_name: ' DI Yogyakarta', latitude: -7.7956, longitude: 110.3695 },
-      { warehouse_name: 'Warehouse South', city_name: ' Bali', province_name: '', latitude: -8.4095, longitude: 115.1889 },
-      { warehouse_name: 'Warehouse West', city_name: ' Surabaya', province_name: ' Jawa Timur', latitude: -7.2575, longitude: 112.7521 }
+      { id: 1, location: 'Warehouse Main', city: 'Jakarta', latitude: -6.2088, longitude: 106.8456 },
+      { id: 2, location: 'Warehouse East', city: 'Yogyakarta', latitude: -7.7956, longitude: 110.3695 }
     ];
   }
 }
@@ -61,9 +50,16 @@ export async function createAsset(data: {
   longitude?: number
 }) {
   try {
+    const profile = await getAdminProfile();
+    const inputterName = profile.fullName || 'Unknown Admin';
+
     const res = await query(`
-      INSERT INTO stock_asset_roster (sn, mac, type, location, condition, color, latitude, longitude, status, kepemilikan, tanggal_perubahan, is_used)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), $11)
+      INSERT INTO stock_asset_roster (
+        sn, mac, type, location, condition, color, 
+        latitude, longitude, status, kepemilikan, 
+        tanggal_perubahan, is_used, inputter, inputter_tms
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), $11, $12, NOW())
       RETURNING *
     `, [
       data.sn, 
@@ -76,7 +72,8 @@ export async function createAsset(data: {
       data.longitude ?? 106.8456,
       'Offline',
       data.kepemilikan || 'Dimiliki',
-      false
+      false,
+      inputterName
     ]);
     revalidatePath('/inventory');
     return { success: true, asset: res.rows[0] };
@@ -88,7 +85,10 @@ export async function createAsset(data: {
 
 export async function updateAssetCondition(sn: string, condition: string) {
   try {
-    await query(`UPDATE asset_roster SET condition = $1, tanggal_perubahan = NOW() WHERE sn = $2`, [condition, sn]);
+    const profile = await getAdminProfile();
+    const inputterName = profile.fullName || 'Unknown Admin';
+
+    await query(`UPDATE asset_roster SET condition = $1, tanggal_perubahan = NOW(), inputter = $3, inputter_tms = NOW() WHERE sn = $2`, [condition, sn, inputterName]);
     revalidatePath('/inventory');
     return { success: true };
   } catch (e) {
@@ -110,14 +110,17 @@ export async function deleteAsset(sn: string) {
 
 export async function deployAsset(sn: string, data: { location: string, latitude: number, longitude: number }) {
   try {
+    const profile = await getAdminProfile();
+    const inputterName = profile.fullName || 'Unknown Admin';
+
     await query(`
       WITH deleted AS (
         DELETE FROM stock_asset_roster WHERE sn = $1 RETURNING *
       )
-      INSERT INTO asset_roster (sn, mac, type, location, condition, color, latitude, longitude, status, kepemilikan, tanggal_perubahan)
-      SELECT sn, mac, type, $2, condition, color, $3, $4, 'Online', kepemilikan, NOW()
+      INSERT INTO asset_roster (sn, mac, type, location, condition, color, latitude, longitude, status, kepemilikan, tanggal_perubahan, inputter, inputter_tms)
+      SELECT sn, mac, type, $2, condition, color, $3, $4, 'Online', kepemilikan, NOW(), $5, NOW()
       FROM deleted
-    `, [sn, data.location, data.latitude, data.longitude]);
+    `, [sn, data.location, data.latitude, data.longitude, inputterName]);
     
     revalidatePath('/inventory');
     return { success: true };

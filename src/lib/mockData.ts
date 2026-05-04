@@ -617,7 +617,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT103",
     "method": "QRIS Dynamic",
-    "amount": "Rp 400.000",
+    "amount": 400000,
     "status": "Verified",
     "timestamp": "2026-10-21T22:10:23.254Z",
     "type": "e-wallet",
@@ -627,7 +627,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT105",
     "method": "E-Wallet Payment",
-    "amount": "Rp 150.000",
+    "amount": 150000,
     "status": "Verified",
     "timestamp": "2026-10-21T19:47:39.947Z",
     "type": "qris",
@@ -637,7 +637,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT106",
     "method": "E-Wallet Payment",
-    "amount": "Rp 750.000",
+    "amount": 750000,
     "status": "Verified",
     "timestamp": "2026-10-21T18:41:00.202Z",
     "type": "bank",
@@ -647,7 +647,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT113",
     "method": "E-Wallet Payment",
-    "amount": "Rp 750.000",
+    "amount": 750000,
     "status": "Verified",
     "timestamp": "2026-10-21T05:10:47.270Z",
     "type": "bank",
@@ -657,7 +657,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT108",
     "method": "Bank Transfer",
-    "amount": "Rp 250.000",
+    "amount": 250000,
     "status": "Verified",
     "timestamp": "2026-10-21T04:46:37.094Z",
     "type": "qris",
@@ -667,7 +667,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT102",
     "method": "Bank Transfer",
-    "amount": "Rp 250.000",
+    "amount": 250000,
     "status": "Verified",
     "timestamp": "2026-10-21T02:53:47.992Z",
     "type": "bank",
@@ -677,7 +677,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT107",
     "method": "QRIS Dynamic",
-    "amount": "Rp 400.000",
+    "amount": 400000,
     "status": "Verified",
     "timestamp": "2026-10-21T01:42:48.814Z",
     "type": "bank",
@@ -687,7 +687,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT104",
     "method": "Bank Transfer",
-    "amount": "Rp 250.000",
+    "amount": 250000,
     "status": "Verified",
     "timestamp": "2026-10-21T01:21:53.527Z",
     "type": "qris",
@@ -697,7 +697,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT109",
     "method": "E-Wallet Payment",
-    "amount": "Rp 150.000",
+    "amount": 150000,
     "status": "Verified",
     "timestamp": "2026-10-21T00:11:33.906Z",
     "type": "bank",
@@ -707,7 +707,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT100",
     "method": "Bank Transfer",
-    "amount": "Rp 750.000",
+    "amount": 750000,
     "status": "Verified",
     "timestamp": "2026-10-20T18:14:57.380Z",
     "type": "e-wallet",
@@ -717,7 +717,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT099",
     "method": "QRIS Dynamic",
-    "amount": "Rp 150.000",
+    "amount": 150000,
     "status": "Verified",
     "timestamp": "2026-10-19T22:13:10.015Z",
     "type": "bank",
@@ -727,7 +727,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT098",
     "method": "QRIS Dynamic",
-    "amount": "Rp 250.000",
+    "amount": 250000,
     "status": "Verified",
     "timestamp": "2026-10-18T19:17:25.306Z",
     "type": "qris",
@@ -737,7 +737,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT097",
     "method": "QRIS Dynamic",
-    "amount": "Rp 400.000",
+    "amount": 400000,
     "status": "Verified",
     "timestamp": "2026-10-17T17:17:08.168Z",
     "type": "bank",
@@ -747,7 +747,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT028",
     "method": "Bank Transfer",
-    "amount": "Rp 750.000",
+    "amount": 750000,
     "status": "Verified",
     "timestamp": "2026-10-16T02:37:35.485Z",
     "type": "e-wallet",
@@ -757,7 +757,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT027",
     "method": "QRIS Dynamic",
-    "amount": "Rp 150.000",
+    "amount": 150000,
     "status": "Verified",
     "timestamp": "2026-10-15T21:40:53.145Z",
     "type": "qris",
@@ -767,7 +767,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT026",
     "method": "Bank Transfer",
-    "amount": "Rp 250.000",
+    "amount": 250000,
     "status": "Verified",
     "timestamp": "2026-10-14T19:41:32.771Z",
     "type": "e-wallet",
@@ -777,7 +777,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT025",
     "method": "E-Wallet Payment",
-    "amount": "Rp 400.000",
+    "amount": 400000,
     "status": "Verified",
     "timestamp": "2026-10-13T00:30:23.121Z",
     "type": "bank",
@@ -787,7 +787,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT024",
     "method": "E-Wallet Payment",
-    "amount": "Rp 750.000",
+    "amount": 750000,
     "status": "Verified",
     "timestamp": "2026-10-12T02:54:51.909Z",
     "type": "e-wallet",
@@ -797,7 +797,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT023",
     "method": "QRIS Dynamic",
-    "amount": "Rp 250.000",
+    "amount": 250000,
     "status": "Verified",
     "timestamp": "2026-10-11T08:53:39.293Z",
     "type": "bank",
@@ -807,7 +807,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT022",
     "method": "QRIS Dynamic",
-    "amount": "Rp 150.000",
+    "amount": 150000,
     "status": "Verified",
     "timestamp": "2026-10-10T19:27:06.300Z",
     "type": "qris",
@@ -817,7 +817,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT021",
     "method": "E-Wallet Payment",
-    "amount": "Rp 400.000",
+    "amount": 400000,
     "status": "Verified",
     "timestamp": "2026-10-09T03:28:08.926Z",
     "type": "qris",
@@ -827,7 +827,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT020",
     "method": "QRIS Dynamic",
-    "amount": "Rp 750.000",
+    "amount": 750000,
     "status": "Verified",
     "timestamp": "2026-10-08T09:01:58.234Z",
     "type": "qris",
@@ -837,7 +837,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT019",
     "method": "QRIS Dynamic",
-    "amount": "Rp 150.000",
+    "amount": 150000,
     "status": "Verified",
     "timestamp": "2026-10-07T02:42:22.774Z",
     "type": "qris",
@@ -847,7 +847,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT018",
     "method": "Bank Transfer",
-    "amount": "Rp 250.000",
+    "amount": 250000,
     "status": "Verified",
     "timestamp": "2026-10-06T16:19:04.644Z",
     "type": "bank",
@@ -857,7 +857,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT017",
     "method": "E-Wallet Payment",
-    "amount": "Rp 400.000",
+    "amount": 400000,
     "status": "Verified",
     "timestamp": "2026-10-05T23:33:07.902Z",
     "type": "bank",
@@ -867,7 +867,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT016",
     "method": "Bank Transfer",
-    "amount": "Rp 750.000",
+    "amount": 750000,
     "status": "Verified",
     "timestamp": "2026-10-04T22:43:56.273Z",
     "type": "qris",
@@ -877,7 +877,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT015",
     "method": "E-Wallet Payment",
-    "amount": "Rp 250.000",
+    "amount": 250000,
     "status": "Verified",
     "timestamp": "2026-10-03T00:27:03.267Z",
     "type": "bank",
@@ -887,7 +887,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT014",
     "method": "QRIS Dynamic",
-    "amount": "Rp 150.000",
+    "amount": 150000,
     "status": "Verified",
     "timestamp": "2026-10-02T15:56:26.424Z",
     "type": "qris",
@@ -897,7 +897,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT013",
     "method": "QRIS Dynamic",
-    "amount": "Rp 400.000",
+    "amount": 400000,
     "status": "Verified",
     "timestamp": "2026-10-01T14:14:35.396Z",
     "type": "e-wallet",
@@ -907,7 +907,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT012",
     "method": "Bank Transfer",
-    "amount": "Rp 750.000",
+    "amount": 750000,
     "status": "Verified",
     "timestamp": "2026-09-20T12:34:58.224Z",
     "type": "bank",
@@ -917,7 +917,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT011",
     "method": "Bank Transfer",
-    "amount": "Rp 250.000",
+    "amount": 250000,
     "status": "Verified",
     "timestamp": "2026-09-15T08:43:55.850Z",
     "type": "e-wallet",
@@ -927,7 +927,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT010",
     "method": "QRIS Dynamic",
-    "amount": "Rp 150.000",
+    "amount": 150000,
     "status": "Verified",
     "timestamp": "2026-09-10T17:42:58.511Z",
     "type": "qris",
@@ -937,7 +937,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT009",
     "method": "Bank Transfer",
-    "amount": "Rp 400.000",
+    "amount": 400000,
     "status": "Verified",
     "timestamp": "2026-09-05T10:37:48.856Z",
     "type": "e-wallet",
@@ -947,7 +947,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT008",
     "method": "QRIS Dynamic",
-    "amount": "Rp 750.000",
+    "amount": 750000,
     "status": "Verified",
     "timestamp": "2026-08-30T14:08:02.675Z",
     "type": "qris",
@@ -957,7 +957,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT007",
     "method": "E-Wallet Payment",
-    "amount": "Rp 150.000",
+    "amount": 150000,
     "status": "Verified",
     "timestamp": "2026-07-22T08:29:07.002Z",
     "type": "bank",
@@ -967,7 +967,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT006",
     "method": "E-Wallet Payment",
-    "amount": "Rp 250.000",
+    "amount": 250000,
     "status": "Verified",
     "timestamp": "2026-06-18T00:52:39.210Z",
     "type": "qris",
@@ -977,7 +977,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT005",
     "method": "QRIS Dynamic",
-    "amount": "Rp 400.000",
+    "amount": 400000,
     "status": "Verified",
     "timestamp": "2026-05-12T14:04:12.406Z",
     "type": "bank",
@@ -1017,7 +1017,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT004",
     "method": "Bank Transfer",
-    "amount": "Rp 750.000",
+    "amount": 750000,
     "status": "Verified",
     "timestamp": "2026-04-05T18:03:11.599Z",
     "type": "qris",
@@ -1057,7 +1057,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT002",
     "method": "Bank Transfer",
-    "amount": "Rp 250.000",
+    "amount": 250000,
     "status": "Verified",
     "timestamp": "2026-02-20T10:09:09.007Z",
     "type": "e-wallet",
@@ -1067,7 +1067,7 @@ export const MOCK_TRANSACTIONS = [
   {
     "id": "TRX-CT001",
     "method": "QRIS Dynamic",
-    "amount": "Rp 400.000",
+    "amount": 400000,
     "status": "Verified",
     "timestamp": "2026-01-15T15:27:42.335Z",
     "type": "bank",

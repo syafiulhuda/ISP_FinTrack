@@ -42,11 +42,11 @@ import { getServiceTiers } from "@/actions/tiers";
 import { getExpenses, getTransactions } from "@/actions/transactions";
 import { createNotification } from "@/actions/admin";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
-import { Customer, ServiceTier, Transaction } from "@/types";
+import { Customer, ServiceTier, Transaction, Expense } from "@/types";
 import { StatCard } from "@/components/ui/StatCard";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { name: string; value: number; color?: string; dataKey?: string; payload: any }[] }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white dark:bg-slate-800 px-3 py-2 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700">
@@ -87,7 +87,7 @@ export default function ProfitabilityPage() {
     let minDateStr = "9999-12-31";
     let maxDateStr = "0000-01-01";
     
-    const updateMinMax = (val: any) => {
+    const updateMinMax = (val: string | Date | null | undefined) => {
       if (!val) return;
       let d = "";
       if (typeof val === "string") {
@@ -103,9 +103,9 @@ export default function ProfitabilityPage() {
       if (d > maxDateStr) maxDateStr = d;
     };
     
-    transactions.forEach((t: any) => updateMinMax(t.timestamp));
-    expenseList.forEach((e: any) => updateMinMax(e.date));
-    customerList.forEach((c: any) => updateMinMax(c.createdAt || c.registration_date));
+    transactions.forEach((t: Transaction) => updateMinMax(t.timestamp));
+    expenseList.forEach((e: Expense) => updateMinMax(e.date));
+    customerList.forEach((c: Customer) => updateMinMax(c.createdAt));
     
     if (minDateStr === "9999-12-31") {
       minDateStr = "2026-01-01";
@@ -136,7 +136,7 @@ export default function ProfitabilityPage() {
 
   const provinces = useMemo(() => [
     "All Regions",
-    ...Array.from(new Set(customerList.map((c: any) => c.province))).sort()
+    ...Array.from(new Set(customerList.map((c: Customer) => c.province).filter(Boolean) as string[])).sort()
   ], [customerList]);
 
   const [mounted, setMounted] = useState(false);
@@ -175,30 +175,57 @@ export default function ProfitabilityPage() {
   };
 
   const dynamicData = useMemo(() => {
+    if (!startDate || !endDate) {
+      return {
+        metrics: [],
+        totalActiveUsers: 0,
+        waterfallData: [],
+        distribution: [],
+        growthTrend: [],
+        latestProfit: 0
+      };
+    }
     const isAllRegions = selectedProvince === "All Regions";
     
-    // 1. Month Series & Time Bounds
-    const currentYear = endDate.substring(0, 4) || "2026";
-    const currentMonthStr = endDate.substring(0, 7); // e.g., "2026-05"
-    const allMonthsInYear = [
-      `${currentYear}-01`, `${currentYear}-02`, `${currentYear}-03`, `${currentYear}-04`, 
-      `${currentYear}-05`, `${currentYear}-06`, `${currentYear}-07`, `${currentYear}-08`, 
-      `${currentYear}-09`, `${currentYear}-10`, `${currentYear}-11`, `${currentYear}-12`
-    ];
+    // 1. Calculate Selected Range & Months
+    const startMonthStr = startDate.substring(0, 7);
+    const endMonthStr = endDate.substring(0, 7);
     
-    const ytdMonths = allMonthsInYear.filter(m => m <= currentMonthStr);
-    const prevMonthStr = ytdMonths.length > 1 ? ytdMonths[ytdMonths.length - 2] : null;
+    const selectedMonths: string[] = [];
+    if (startDate && endDate) {
+      let current = new Date(startDate.substring(0, 7) + "-01");
+      const end = new Date(endDate.substring(0, 7) + "-01");
+      let safety = 0;
+      while (current <= end && safety < 48) { // max 4 years
+        selectedMonths.push(current.toISOString().substring(0, 7));
+        current.setMonth(current.getMonth() + 1);
+        safety++;
+      }
+    }
+
+    const currentMonthStr = endMonthStr;
+    const prevMonthDate = new Date(endDate);
+    prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+    const prevMonthStr = prevMonthDate.toISOString().substring(0, 7);
 
     // Helper for local date comparison
-    const getLocalDate = (d: any) => {
+    const getLocalDate = (d?: string | Date | null) => {
       if (!d) return "";
       const date = new Date(d);
-      if (isNaN(date.getTime())) return String(d);
-      return date.toISOString().split('T')[0];
+      if (isNaN(date.getTime())) return String(d).split('T')[0];
+      
+      // Force UTC+7 evaluation using pure math (Identical to AT TIME ZONE 'Asia/Jakarta')
+      const localTime = date.getTime() + (7 * 60 * 60 * 1000);
+      const localDate = new Date(localTime);
+      const year = localDate.getUTCFullYear();
+      const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(localDate.getUTCDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
     };
 
     // Mapping Kota ke Provinsi (Fallback if needed)
-    const getProvinceFromCity = (city: string) => {
+    const getProvinceFromCity = (city?: string | null) => {
       if (!city) return null;
       const c = city.toLowerCase();
       if (c.includes("bandung") || c.includes("bogor") || c.includes("depok") || c.includes("bekasi") || c.includes("cimahi") || c.includes("tasikmalaya")) return "Jawa Barat";
@@ -210,29 +237,25 @@ export default function ProfitabilityPage() {
     };
 
     // 2. Core Aggregator Logic
-    const getStatsForMonths = (months: string[]) => {
+    const getStatsForRange = (start: string, end: string) => {
       let revenue = 0;
       let expenses = 0;
       
-      transactions.forEach((tx: any) => {
-        const txMonth = getLocalDate(tx.timestamp).substring(0, 7);
-        if (!months.includes(txMonth)) return;
+      transactions.forEach((tx: Transaction) => {
+        const txDate = getLocalDate(tx.timestamp);
+        if (txDate < start || txDate > end) return;
 
         // Region Filter Logic
         if (!isAllRegions) {
-          // Priority 1: Check direct city/province in transaction
           const cityProv = getProvinceFromCity(tx.city) || tx.city;
           const matchesDirectly = cityProv && String(cityProv).toLowerCase().includes(selectedProvince.toLowerCase());
           
           if (!matchesDirectly) {
-            // Priority 2: Check linked customer if it's an income (pemasukan)
             const idSuffix = tx.id?.split('-')[1];
             if (tx.keterangan === "pemasukan") {
-              const customer = customerList.find((c: any) => String(c.id) === idSuffix);
+              const customer = customerList.find((c: Customer) => String(c.id) === idSuffix);
               if (customer?.province !== selectedProvince) return;
             } else {
-              // Priority 3: For expenses (pengeluaran), if no direct city match, skip it
-              // Unless it's an unlinked expense that should be allocated (handled below)
               return;
             }
           }
@@ -244,56 +267,58 @@ export default function ProfitabilityPage() {
         }
       });
 
-      // 3. Shared Expense Allocation (For expenses not explicitly linked to a region)
-      // This ensures global expenses are still accounted for proportionally
-      const allocationFactor = isAllRegions ? 1 : (customerList.length > 0 ? (customerList.filter((c: any) => c.province === selectedProvince).length / customerList.length) : 0);
-      
-      expenseList.forEach((exp: any) => {
-        const expMonth = getLocalDate(exp.date).substring(0, 7);
-        if (!months.includes(expMonth)) return;
-        
-        // If this expense has a specific city that ISN'T our selected region, skip it
-        if (!isAllRegions && exp.city && !String(exp.city).toLowerCase().includes(selectedProvince.toLowerCase())) return;
-
-        // If it has no city OR matches our region, apply allocation
-        const isTxLinked = transactions.some((tx: any) => tx.keterangan === "pengeluaran" && tx.id?.split('-')[1] === String(exp.id));
-        
-        // If not already counted in transaction loop (to avoid double counting)
-        if (!isTxLinked || isAllRegions) {
-           // We only allocate if it's not explicitly linked to ANOTHER region
-           expenses += (Math.abs(exp.amount || 0) * (isAllRegions ? 1 : allocationFactor));
-        }
-      });
-
       const profit = revenue - expenses;
       const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
       return { revenue, expenses, profit, margin };
     };
 
-    // 3. Calculate Final KPIs
-    const ytdStats = getStatsForMonths(ytdMonths);
-    const currentMonthStats = getStatsForMonths([currentMonthStr]);
-    const prevMonthStats = prevMonthStr ? getStatsForMonths([prevMonthStr]) : null;
-
-    const calculateTrend = (current: number, previous: number | null, isMargin = false) => {
-      if (previous === null || previous === 0) return { text: "-", type: "neutral" };
-      
-      if (isMargin) {
-        const diff = current - previous;
-        return { 
-          text: `${diff > 0 ? "+" : ""}${diff.toFixed(1)}%`, 
-          type: diff >= 0 ? "up" : "danger" 
-        };
-      } else {
-        const diff = ((current / Math.abs(previous)) - 1) * 100;
-        return { 
-          text: `${diff > 0 ? "+" : ""}${diff.toFixed(1)}%`, 
-          type: diff >= 0 ? "up" : "danger" 
-        };
-      }
+    // Helper for specific month stats (used in trends/charts)
+    const getStatsForMonth = (mStr: string) => {
+      const year = parseInt(mStr.split('-')[0]);
+      const month = parseInt(mStr.split('-')[1]);
+      const lastDay = new Date(year, month, 0).getDate();
+      const monthStart = `${mStr}-01`;
+      const monthEnd = `${mStr}-${String(lastDay).padStart(2, '0')}`;
+      return getStatsForRange(monthStart, monthEnd);
     };
 
-    // 4. User Status (Cumulative)
+    // 3. Calculate Final KPIs
+    const rangeStats = getStatsForRange(startDate, endDate);
+    
+    // Calculate MoM (Month-over-Month) trend based on the end date's month
+    let endMStr = endDate.substring(0, 7);
+    let endYear = parseInt(endMStr.split('-')[0]);
+    let endMonth = parseInt(endMStr.split('-')[1]);
+    let prevMonthD = new Date(endYear, endMonth - 2, 1);
+    let prevMStr = prevMonthD.getFullYear() + "-" + String(prevMonthD.getMonth() + 1).padStart(2, '0');
+
+    const currentMonthStats = getStatsForMonth(endMStr);
+    const prevMonthStats = getStatsForMonth(prevMStr);
+
+    const calculateTrend = (current: number, previous: number | null, isMargin = false) => {
+      if (previous === null || previous === 0) {
+         if (isMargin && current !== 0) {
+             return { text: `+${current.toFixed(1)}%`, type: current > 0 ? "up" : "danger" };
+         }
+         return { text: "0%", type: "neutral" };
+      }
+      
+      // Match SQL Exact Formulas:
+      // Margin: curr_margin - prev_margin
+      // Profit: ((curr_profit - prev_profit) / ABS(prev_profit)) * 100
+      const diff = isMargin 
+        ? (current - previous) 
+        : (((current - previous) / Math.abs(previous)) * 100);
+      
+      if (Math.abs(diff) < 0.01) return { text: "0.0%", type: "neutral" };
+      
+      return { 
+        text: `${diff > 0 ? "+" : ""}${diff.toFixed(1)}%`, 
+        type: diff > 0 ? "up" : "danger" 
+      };
+    };
+
+    // 4. User Status (Cumulative at end of range)
     const activeAtEnd = customerList.filter((c: any) => {
       const joinDate = getLocalDate(c.createdAt || c.registration_date);
       if (joinDate > endDate) return false;
@@ -308,9 +333,9 @@ export default function ProfitabilityPage() {
       return c.status === "Inactive" || c.status === "Non-Active";
     }).length;
 
-    // 5. Chart Data (YTD Focus)
-    const growthTrend = ytdMonths.map(mStr => {
-      const stats = getStatsForMonths([mStr]);
+    // 5. Chart Data (Range Focused)
+    const growthTrend = selectedMonths.map(mStr => {
+      const stats = getStatsForMonth(mStr);
       const [year, month] = mStr.split("-");
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       return {
@@ -323,54 +348,41 @@ export default function ProfitabilityPage() {
     const expenseByType: Record<string, number> = {};
     const allocationFactor = isAllRegions ? 1 : (customerList.length > 0 ? (customerList.filter((c: any) => c.province === selectedProvince).length / customerList.length) : 0);
     
-    // 1. Process Transactions for Waterfall
+    // For Income (Revenue Component) - purely from transactions
     transactions.forEach((tx: any) => {
-      const txMonth = getLocalDate(tx.timestamp).substring(0, 7);
-      if (!ytdMonths.includes(txMonth)) return;
+      const txDate = getLocalDate(tx.timestamp);
+      if (txDate < startDate || txDate > endDate) return;
 
       if (!isAllRegions) {
         const cityProv = getProvinceFromCity(tx.city) || tx.city;
         const matchesDirectly = cityProv && String(cityProv).toLowerCase().includes(selectedProvince.toLowerCase());
-        
         if (!matchesDirectly) {
           const idSuffix = tx.id?.split('-')[1];
           if (tx.keterangan === "pemasukan") {
             const customer = customerList.find((c: any) => String(c.id) === idSuffix);
             if (customer?.province !== selectedProvince) return;
-          } else {
-            return; // Skip explicit expenses that don't match this region
-          }
+          } else return;
         }
       }
 
-      if (tx.status === "Verified") {
-        if (tx.keterangan === "pemasukan") {
-          const type = tx.type || "Revenue";
-          incomeByType[type] = (incomeByType[type] || 0) + (tx.numericAmount || 0);
-        } else if (tx.keterangan === "pengeluaran") {
-          const type = tx.type || "Expense";
-          expenseByType[type] = (expenseByType[type] || 0) + (tx.numericAmount || 0);
-        }
+      if (tx.status === "Verified" && tx.keterangan === "pemasukan") {
+        // SQL Waterfall strictly uses 'Revenue' as the category for all income
+        const type = "Revenue";
+        incomeByType[type] = (incomeByType[type] || 0) + (tx.numericAmount || 0);
       }
     });
 
-    // 2. Add Allocated Expenses to Waterfall
+    // For Expenses (Waterfall Components) - purely from expenseList (like SQL)
     expenseList.forEach((exp: any) => {
-      const expMonth = getLocalDate(exp.date).substring(0, 7);
-      if (!ytdMonths.includes(expMonth)) return;
+      const expDate = getLocalDate(exp.date);
+      if (expDate < startDate || expDate > endDate) return;
 
-      // Map city to province for robust filtering
       const expProv = getProvinceFromCity(exp.city) || exp.city;
       if (!isAllRegions && expProv && !String(expProv).toLowerCase().includes(selectedProvince.toLowerCase())) return;
 
-      const isTxLinked = transactions.some((tx: any) => tx.keterangan === "pengeluaran" && tx.id?.split('-')[1] === String(exp.id));
-      
-      // If not counted in the transaction loop, add as allocated expense
-      if (!isTxLinked || isAllRegions) {
-        const type = exp.category || "General Expense";
-        const allocatedAmount = Math.abs(exp.amount || 0) * (isAllRegions ? 1 : allocationFactor);
-        expenseByType[type] = (expenseByType[type] || 0) + allocatedAmount;
-      }
+      const type = exp.category || "General Expense";
+      const allocatedAmount = Math.abs(exp.amount || 0) * (isAllRegions ? 1 : allocationFactor);
+      expenseByType[type] = (expenseByType[type] || 0) + allocatedAmount;
     });
 
     const waterfallData = [
@@ -394,15 +406,15 @@ export default function ProfitabilityPage() {
       };
     });
 
-    const mrrTrend = calculateTrend(currentMonthStats.revenue, prevMonthStats?.revenue || null);
-    const marginTrend = calculateTrend(currentMonthStats.margin, prevMonthStats?.margin || null, true);
-    const profitTrend = calculateTrend(currentMonthStats.profit, prevMonthStats?.profit || null);
+    const mrrTrend = calculateTrend(currentMonthStats.revenue, prevMonthStats.revenue);
+    const marginTrend = calculateTrend(currentMonthStats.margin, prevMonthStats.margin, true);
+    const profitTrend = calculateTrend(currentMonthStats.profit, prevMonthStats.profit);
 
     return {
       metrics: [
-        { name: "MRR (YTD)", value: formatCompactNumber(ytdStats.revenue), trend: mrrTrend.text, trendType: mrrTrend.type, icon: TrendingUp, detail: "Year-To-Date Revenue" },
-        { name: "EBITDA MARGIN (YTD)", value: `${ytdStats.margin.toFixed(1)}%`, trend: marginTrend.text, trendType: marginTrend.type, icon: Target, detail: "Year-To-Date Margin" },
-        { name: "NET PROFIT (YTD)", value: formatCompactNumber(ytdStats.profit), trend: profitTrend.text, trendType: profitTrend.type, icon: PieChartIcon, detail: "Year-To-Date Result" },
+        { name: "REVENUE (RANGE)", value: formatCompactNumber(rangeStats.revenue), trend: mrrTrend.text, trendType: mrrTrend.type, icon: TrendingUp, detail: "Total revenue in selected range" },
+        { name: "EBITDA MARGIN", value: `${rangeStats.margin.toFixed(1)}%`, trend: marginTrend.text, trendType: marginTrend.type, icon: Target, detail: "Average margin in range" },
+        { name: "NET PROFIT", value: formatCompactNumber(rangeStats.profit), trend: profitTrend.text, trendType: profitTrend.type, icon: PieChartIcon, detail: "Net profit in range" },
         { name: "ACTIVE USERS", value: String(activeAtEnd), trend: "Synced", trendType: "up" as any, icon: UserCheck, detail: "Total Paying Subscribers" },
         { name: "INACTIVE USERS", value: String(inactiveAtEnd), trend: inactiveAtEnd > 0 ? "Attention" : "Healthy", trendType: (inactiveAtEnd > 0 ? "danger" : "up") as any, icon: Target, detail: "Total Non-Paying / Idle" },
       ],
@@ -410,7 +422,7 @@ export default function ProfitabilityPage() {
       waterfallData,
       distribution,
       growthTrend,
-      latestProfit: ytdStats.profit
+      latestProfit: rangeStats.profit
     };
   }, [selectedProvince, startDate, endDate, customerList, transactions, expenseList]);
 

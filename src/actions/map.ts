@@ -3,6 +3,7 @@
 import { query } from '@/lib/db';
 import { MOCK_ASSETS } from '@/lib/mockData';
 import { revalidatePath } from 'next/cache';
+import { getAdminProfile } from './admin';
 
 export async function getMapAssets() {
   try {
@@ -42,11 +43,22 @@ export async function addMapNode(data: {
   kepemilikan: string;
 }) {
   try {
+    const profile = await getAdminProfile();
+    const inputterName = profile.fullName || 'Unknown Admin';
+
     const res = await query(`
-      INSERT INTO asset_roster (sn, mac, type, location, latitude, longitude, status, kepemilikan, condition, tanggal_perubahan)
-      VALUES ($1, $2, $3, $4, $5, $6, 'Online', $7, 'Good', NOW())
+      INSERT INTO asset_roster (
+        sn, mac, type, location, latitude, longitude, 
+        status, kepemilikan, condition, tanggal_perubahan, 
+        inputter, inputter_tms
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, 'Online', $7, 'Good', NOW(), $8, NOW())
       RETURNING *
-    `, [data.sn, data.mac, data.type, data.location, data.latitude, data.longitude, data.kepemilikan]);
+    `, [
+      data.sn, data.mac, data.type, data.location, 
+      data.latitude, data.longitude, data.kepemilikan, 
+      inputterName
+    ]);
     revalidatePath('/distribution');
     return { success: true, asset: res.rows[0] };
   } catch (error) {
@@ -57,17 +69,30 @@ export async function addMapNode(data: {
 
 export async function dispatchTechnician(assetId: number, sn: string) {
   try {
+    const profile = await getAdminProfile();
+    const inputterName = profile.fullName || 'Unknown Admin';
+
     // 1. Insert into notifications
     await query(`
-      INSERT INTO notifications (category, title, message, type, is_unread, created_at)
-      VALUES ('System', 'Technician Dispatched', 'Field engineer dispatched for asset ' || $1 || ' (ID: ' || $2 || ')', 'system', true, NOW())
-    `, [sn, assetId]);
+      INSERT INTO notifications (
+        category, title, message, type, is_unread, 
+        created_at, inputter, inputter_tms
+      )
+      VALUES (
+        'System', 'Technician Dispatched', 
+        'Field engineer dispatched for asset ' || $1 || ' (ID: ' || $2 || ')', 
+        'system', true, NOW(), $3, NOW()
+      )
+    `, [sn, assetId, inputterName]);
 
     // 2. Add a maintenance history entry
     await query(`
-      INSERT INTO maintenance_history (asset_id, description, technician_name, date)
-      VALUES ($1, 'Technician dispatched for troubleshooting', 'Budi Santoso', NOW())
-    `, [assetId]);
+      INSERT INTO maintenance_history (
+        asset_id, description, technician_name, date, 
+        inputter, inputter_tms
+      )
+      VALUES ($1, 'Technician dispatched for troubleshooting', 'Budi Santoso', NOW(), $2, NOW())
+    `, [assetId, inputterName]);
 
     revalidatePath('/distribution');
     revalidatePath('/notifications');
@@ -94,6 +119,9 @@ export async function getMaintenanceHistory(assetId: number) {
 
 export async function resolveMaintenance(sn: string, technician: string, description: string) {
   try {
+    const profile = await getAdminProfile();
+    const inputterName = profile.fullName || 'Unknown Admin';
+
     // 1. Get asset id from SN
     const assetRes = await query('SELECT id FROM asset_roster WHERE sn = $1', [sn]);
     if (assetRes.rows.length === 0) return { success: false, error: 'Asset not found' };
@@ -102,21 +130,32 @@ export async function resolveMaintenance(sn: string, technician: string, descrip
     // 2. Update asset status and condition
     await query(`
       UPDATE asset_roster 
-      SET status = 'Online', condition = 'Good', tanggal_perubahan = NOW() 
+      SET status = 'Online', condition = 'Good', tanggal_perubahan = NOW(),
+          inputter = $2, inputter_tms = NOW()
       WHERE id = $1
-    `, [assetId]);
+    `, [assetId, inputterName]);
 
     // 3. Add to maintenance history
     await query(`
-      INSERT INTO maintenance_history (asset_id, description, technician_name, date)
-      VALUES ($1, $2, $3, NOW())
-    `, [assetId, description, technician]);
+      INSERT INTO maintenance_history (
+        asset_id, description, technician_name, date, 
+        inputter, inputter_tms
+      )
+      VALUES ($1, $2, $3, NOW(), $4, NOW())
+    `, [assetId, description, technician, inputterName]);
 
     // 4. Notification
     await query(`
-      INSERT INTO notifications (category, title, message, type, is_unread, created_at)
-      VALUES ('System', 'Maintenance Resolved', 'Maintenance completed for asset ' || $1 || ' (SN: ' || $2 || ')', 'success', true, NOW())
-    `, [assetId, sn]);
+      INSERT INTO notifications (
+        category, title, message, type, is_unread, 
+        created_at, inputter, inputter_tms
+      )
+      VALUES (
+        'System', 'Maintenance Resolved', 
+        'Maintenance completed for asset ' || $1 || ' (SN: ' || $2 || ')', 
+        'success', true, NOW(), $3, NOW()
+      )
+    `, [assetId, sn, inputterName]);
 
     revalidatePath('/distribution');
     revalidatePath('/inventory');

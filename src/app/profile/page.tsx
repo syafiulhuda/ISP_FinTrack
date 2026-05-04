@@ -342,6 +342,90 @@ export default function ProfilePage() {
 
         {/* Column 3: Account Security */}
         <div className="space-y-6">
+          <AnimatePresence>
+            {isPasswordModalOpen && (
+              <m.div
+                initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                animate={{ opacity: 1, height: "auto", marginBottom: 24 }}
+                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-xl border-2 border-primary/20 overflow-hidden"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                    <Lock size={20} />
+                  </div>
+                  <button 
+                    onClick={() => setIsPasswordModalOpen(false)}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                  >
+                    <X size={18} className="text-slate-400" />
+                  </button>
+                </div>
+                
+                <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mb-1">Update Security</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-6">Ensure your account remains secure.</p>
+
+                <form onSubmit={handleChangePassword} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Current Password</label>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+                      <input 
+                        type="password" required
+                        value={passData.old}
+                        onChange={e => setPassData({...passData, old: e.target.value})}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-transparent focus:border-primary/20 rounded-xl py-2.5 pl-11 pr-4 outline-none transition-all font-medium text-sm text-slate-900 dark:text-white"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">New Password</label>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+                      <input 
+                        type="password" required
+                        value={passData.new}
+                        onChange={e => setPassData({...passData, new: e.target.value})}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-transparent focus:border-primary/20 rounded-xl py-2.5 pl-11 pr-4 outline-none transition-all font-medium text-sm text-slate-900 dark:text-white"
+                        placeholder="Min. 6 characters"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Confirm Password</label>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+                      <input 
+                        type="password" required
+                        value={passData.confirm}
+                        onChange={e => setPassData({...passData, confirm: e.target.value})}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-transparent focus:border-primary/20 rounded-xl py-2.5 pl-11 pr-4 outline-none transition-all font-medium text-sm text-slate-900 dark:text-white"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    disabled={isPassLoading}
+                    className="w-full bg-primary text-white rounded-xl py-3 font-bold shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 text-sm"
+                  >
+                    {isPassLoading ? (
+                      <Loader2 className="animate-spin" size={18} />
+                    ) : (
+                      <>
+                        <span>Update Password</span>
+                        <ArrowRight size={18} />
+                      </>
+                    )}
+                  </button>
+                </form>
+              </m.div>
+            )}
+          </AnimatePresence>
           <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800">
             <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-8">
               Account Security
@@ -434,102 +518,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Change Password Modal */}
-      <AnimatePresence>
-        {isPasswordModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-24 md:pl-64">
-            <m.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsPasswordModalOpen(false)}
-              className="absolute inset-0 bg-transparent"
-            />
-            <m.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[32px] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
-            >
-              <div className="p-8">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                    <Lock size={24} />
-                  </div>
-                  <button 
-                    onClick={() => setIsPasswordModalOpen(false)}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                  >
-                    <X size={20} className="text-slate-400" />
-                  </button>
-                </div>
-                
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Update Security</h3>
-                <p className="text-slate-500 dark:text-slate-400 font-medium mb-8">Ensure your account remains secure with a strong password.</p>
 
-                <form onSubmit={handleChangePassword} className="space-y-5">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Current Password</label>
-                    <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
-                      <input 
-                        type="password" required
-                        value={passData.old}
-                        onChange={e => setPassData({...passData, old: e.target.value})}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-primary/20 rounded-2xl py-3.5 pl-12 pr-4 outline-none transition-all font-medium text-slate-900 dark:text-white"
-                        placeholder="••••••••"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">New Password</label>
-                    <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
-                      <input 
-                        type="password" required
-                        value={passData.new}
-                        onChange={e => setPassData({...passData, new: e.target.value})}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-primary/20 rounded-2xl py-3.5 pl-12 pr-4 outline-none transition-all font-medium text-slate-900 dark:text-white"
-                        placeholder="Min. 6 characters"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Confirm New Password</label>
-                    <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
-                      <input 
-                        type="password" required
-                        value={passData.confirm}
-                        onChange={e => setPassData({...passData, confirm: e.target.value})}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-primary/20 rounded-2xl py-3.5 pl-12 pr-4 outline-none transition-all font-medium text-slate-900 dark:text-white"
-                        placeholder="••••••••"
-                      />
-                    </div>
-                  </div>
-
-                  <button 
-                    type="submit"
-                    disabled={isPassLoading}
-                    className="w-full bg-primary text-white rounded-2xl py-4 font-black shadow-xl shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98] transition-all flex items-center justify-center gap-3 mt-4"
-                  >
-                    {isPassLoading ? (
-                      <Loader2 className="animate-spin" size={20} />
-                    ) : (
-                      <>
-                        <span>Update Password</span>
-                        <ArrowRight size={20} />
-                      </>
-                    )}
-                  </button>
-                </form>
-              </div>
-            </m.div>
-          </div>
-        )}
-      </AnimatePresence>
     </m.div>
   );
 }

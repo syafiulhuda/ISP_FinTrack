@@ -29,6 +29,7 @@ import { getAdminList, createAdmin } from "@/actions/admin";
 import { Admin } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import Link from "next/link";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -58,6 +59,7 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'general' | 'branding' | 'integrations' | 'users'>('general');
+  const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDiscarding, setIsDiscarding] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -95,6 +97,7 @@ export default function SettingsPage() {
       updateSettings(formData);
       setIsSaving(false);
       setShowSuccess(true);
+      setIsEditing(false);
       setTimeout(() => setShowSuccess(false), 2000);
     }, 1200);
   };
@@ -111,6 +114,7 @@ export default function SettingsPage() {
         language: settings.language || 'English (Universal)',
       });
       setIsDiscarding(false);
+      setIsEditing(false);
     }, 800);
   };
 
@@ -337,6 +341,14 @@ export default function SettingsPage() {
             <Users size={18} />
             User Management
           </button>
+          
+          <Link 
+            href="/settings/audit"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+          >
+            <ShieldCheck size={18} />
+            Security & Audit
+          </Link>
         </m.nav>
 
         {/* Right Content */}
@@ -355,7 +367,8 @@ export default function SettingsPage() {
                     App Name
                   </label>
                   <input 
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-slate-900 dark:text-slate-100 font-medium transition-all" 
+                    disabled={!isEditing}
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-slate-900 dark:text-slate-100 font-medium transition-all disabled:opacity-70 disabled:cursor-not-allowed" 
                     type="text" 
                     value={formData.appName}
                     onChange={(e) => setFormData({ ...formData, appName: e.target.value })}
@@ -366,7 +379,8 @@ export default function SettingsPage() {
                     App Subtitle
                   </label>
                   <input 
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-slate-900 dark:text-slate-100 font-medium transition-all" 
+                    disabled={!isEditing}
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-slate-900 dark:text-slate-100 font-medium transition-all disabled:opacity-70 disabled:cursor-not-allowed" 
                     type="text" 
                     value={formData.appSubtitle}
                     onChange={(e) => setFormData({ ...formData, appSubtitle: e.target.value })}
@@ -377,9 +391,10 @@ export default function SettingsPage() {
                     Default Timezone
                   </label>
                   <select 
+                    disabled={!isEditing}
                     value={formData.timezone}
                     onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     <option>UTC -05:00 Eastern Time</option>
                     <option>UTC +00:00 Greenwich Mean Time</option>
@@ -391,9 +406,10 @@ export default function SettingsPage() {
                     System Language
                   </label>
                   <select 
+                    disabled={!isEditing}
                     value={formData.language}
                     onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     <option>English (Universal)</option>
                     <option>Spanish (ES)</option>
@@ -414,15 +430,20 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div className="flex items-center gap-6">
                   <div 
-                    onClick={handleUpdateLogo}
-                    className="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center relative group overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-primary transition-colors cursor-pointer"
+                    onClick={() => isEditing && handleUpdateLogo()}
+                    className={cn(
+                      "w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center relative group overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-700 transition-colors",
+                      isEditing ? "hover:border-primary cursor-pointer" : "cursor-not-allowed opacity-70"
+                    )}
                   >
                     {formData.appLogo ? (
                       <img src={formData.appLogo} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
                       <ImagePlus className="text-slate-400 group-hover:hidden" size={24} />
                     )}
-                    <span className="text-[10px] absolute bottom-2 hidden group-hover:block font-bold text-primary bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded-full shadow-sm">CHANGE</span>
+                    {isEditing && (
+                      <span className="text-[10px] absolute bottom-2 hidden group-hover:block font-bold text-primary bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded-full shadow-sm">CHANGE</span>
+                    )}
                   </div>
                   <div>
                     <p className="font-bold text-sm text-slate-900 dark:text-slate-100">Corporate Logo</p>
@@ -435,6 +456,7 @@ export default function SettingsPage() {
                     {['blue', 'indigo', 'emerald', 'amber'].map((color) => (
                       <button 
                         key={color}
+                        disabled={!isEditing}
                         onClick={() => setFormData({ ...formData, accentColor: color })}
                         className={cn(
                           "w-8 h-8 rounded-full transition-all",
@@ -442,20 +464,26 @@ export default function SettingsPage() {
                           color === 'indigo' && "bg-indigo-600",
                           color === 'emerald' && "bg-emerald-600",
                           color === 'amber' && "bg-amber-600",
-                          formData.accentColor === color ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 opacity-100' : 'opacity-60 hover:opacity-100'
+                          formData.accentColor === color ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 opacity-100' : 'opacity-60 hover:opacity-100',
+                          !isEditing && "cursor-not-allowed opacity-40"
                         )}
                       />
                     ))}
                     <div 
-                      onClick={() => colorPickerRef.current?.click()}
-                      className={`w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-slate-500 relative ${formData.accentColor.startsWith('#') ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 opacity-100' : 'opacity-60'}`}
+                      onClick={() => isEditing && colorPickerRef.current?.click()}
+                      className={cn(
+                        "w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center transition-colors text-slate-500 relative",
+                        formData.accentColor.startsWith('#') ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 opacity-100' : 'opacity-60',
+                        isEditing ? "cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800" : "cursor-not-allowed opacity-40"
+                      )}
                       style={formData.accentColor.startsWith('#') ? { backgroundColor: formData.accentColor, color: 'white', borderColor: 'transparent' } : {}}
                     >
                       <Pipette size={14} className="relative z-10" />
                       <input 
                         ref={colorPickerRef}
                         type="color" 
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        disabled={!isEditing}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full disabled:cursor-not-allowed"
                         value={formData.accentColor.startsWith('#') ? formData.accentColor : '#004ac6'}
                         onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
                       />
@@ -541,20 +569,31 @@ export default function SettingsPage() {
 
           {/* Actions */}
           <m.div variants={itemVariants} className="flex items-center justify-end gap-4 py-8">
-            <button 
-              onClick={handleDiscard}
-              disabled={isSaving || isDiscarding}
-              className="px-6 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all disabled:opacity-50"
-            >
-              Discard Changes
-            </button>
-            <button 
-              onClick={handleSave} 
-              disabled={isSaving || isDiscarding}
-              className="px-8 py-3 rounded-xl bg-gradient-to-br from-primary to-blue-600 text-white font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
-            >
-              Save Configurations
-            </button>
+            {!isEditing ? (
+              <button 
+                onClick={() => setIsEditing(true)}
+                className="px-8 py-3 rounded-xl bg-primary text-white font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"
+              >
+                Edit Configurations
+              </button>
+            ) : (
+              <>
+                <button 
+                  onClick={handleDiscard}
+                  disabled={isSaving || isDiscarding}
+                  className="px-6 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all disabled:opacity-50"
+                >
+                  Discard Changes
+                </button>
+                <button 
+                  onClick={handleSave} 
+                  disabled={isSaving || isDiscarding}
+                  className="px-8 py-3 rounded-xl bg-gradient-to-br from-primary to-blue-600 text-white font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  Save Configurations
+                </button>
+              </>
+            )}
           </m.div>
 
         </div>

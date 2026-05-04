@@ -64,6 +64,43 @@ export default function FinancePage() {
   const [isScanning, setIsScanning] = useState(false);
   const [activeTab, setActiveTab] = useState<'pemasukan' | 'pengeluaran'>('pemasukan');
 
+  // Auto-update reference when date or transaction type changes
+  useEffect(() => {
+    if (!date) return;
+
+    // Parse DD/MM/YYYY or any recognizable date format
+    const parsedDate = (() => {
+      const dmy = date.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+      if (dmy) {
+        const [, d, m, y] = dmy;
+        const fullYear = y.length === 2 ? `20${y}` : y;
+        return new Date(`${fullYear}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
+      }
+      const attempt = new Date(date);
+      return isNaN(attempt.getTime()) ? null : attempt;
+    })();
+
+    if (!parsedDate || isNaN(parsedDate.getTime())) return;
+
+    const yyyymmdd = parsedDate.getFullYear().toString() +
+      String(parsedDate.getMonth() + 1).padStart(2, '0') +
+      String(parsedDate.getDate()).padStart(2, '0');
+
+    if (activeTab === 'pengeluaran') {
+      setReference(`OUT-AUTO-${yyyymmdd}`);
+    } else {
+      setReference(prev => {
+        if (!prev) return prev;
+        const parts = prev.split('-');
+        if (parts.length >= 3) {
+          parts[parts.length - 1] = yyyymmdd;
+          return parts.join('-');
+        }
+        return prev;
+      });
+    }
+  }, [date, activeTab]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
@@ -233,11 +270,25 @@ export default function FinancePage() {
     if (!ocrData?.id) return;
     const res = await updateOcrData(ocrData.id, { vendor, date, amount, reference });
     if (res) {
-      toast.success("OCR data updated successfully");
       setIsEditing(false);
     } else {
       toast.error("Failed to update OCR data");
     }
+  };
+
+  // Saves OCR data AND posts the transaction in one go
+  const handleSaveAndPost = async (force: boolean = false) => {
+    if (!amount || Number(amount.replace(/[^0-9.-]+/g, '')) === 0) {
+      toast.error("Please enter a valid amount before posting.");
+      return;
+    }
+    // Save OCR data first (silently)
+    if (ocrData?.id) {
+      await updateOcrData(ocrData.id, { vendor, date, amount, reference });
+    }
+    setIsEditing(false);
+    // Then post the transaction
+    await handlePost(force);
   };
 
   const handlePost = async (force: boolean = false) => {
@@ -532,7 +583,7 @@ export default function FinancePage() {
                 {isEditing ? "Cancel" : "Edit Details"}
               </button>
               <button 
-                onClick={() => isEditing ? handleSave() : handlePost()}
+                onClick={() => isEditing ? handleSaveAndPost() : handlePost()}
                 disabled={isPosting}
                 className={cn(
                   "flex-[2] text-white rounded-xl py-4 text-sm font-bold transition-all shadow-lg",
@@ -542,7 +593,7 @@ export default function FinancePage() {
                   isPosting && "opacity-50 cursor-not-allowed"
                 )}
               >
-                {isPosting ? "Processing..." : (isEditing ? "Finish & Save Changes" : "Confirm & Post Entry")}
+                {isPosting ? "Processing..." : (isEditing ? "Save & Post Entry ✓" : "Confirm & Post Entry")}
               </button>
             </div>
           </div>

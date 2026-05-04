@@ -33,9 +33,7 @@ import {
   Area
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getInactiveCust, getCustomerGrowthTrend } from "@/actions/customers";
-import { getServiceTiers } from "@/actions/tiers";
-import { getExpenses, getTransactions, getRevenueGrowthTrend } from "@/actions/transactions";
+import { getDashboardData } from '@/actions/dashboard';
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
@@ -92,30 +90,20 @@ const RevenueTooltip = ({ active, payload, label }: TooltipProps) => {
 export default function Dashboard() {
   const router = useRouter();
   const dashboardRef = useRef<HTMLDivElement>(null);
-  const { data: customerData, isLoading: loadingCustomers } = useQuery({ 
-    queryKey: ['customers', 1, 1000],
-    queryFn: () => getCustomers(1, 1000) 
+  
+  const { data: dashboardData, isLoading } = useQuery({
+    queryKey: ['dashboardData'],
+    queryFn: getDashboardData
   });
-  const customerList: Customer[] = customerData?.customers || [];
-  const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery<ServiceTier[]>({ queryKey: ['serviceTiers'], queryFn: getServiceTiers });
-  const { data: expenseList = [], isLoading: loadingExpenses } = useQuery({ queryKey: ['expenses'], queryFn: getExpenses });
-  const { data: transactions = [], isLoading: loadingTx } = useQuery<(Transaction & { numericAmount: number })[]>({ 
-    queryKey: ['transactions'], 
-    queryFn: getTransactions as any,
-    refetchInterval: 60000 
-  });
-  const { data: trendData = [], isLoading: loadingTrend } = useQuery({
-    queryKey: ['revenueGrowthTrend'],
-    queryFn: getRevenueGrowthTrend
-  });
-  const { data: customerGrowthTrend = [], isLoading: loadingGrowth } = useQuery({
-    queryKey: ['customerGrowthTrend'],
-    queryFn: getCustomerGrowthTrend
-  });
-  const { data: inactiveCust = [], isLoading: loadingInactive } = useQuery({
-    queryKey: ['inactiveCust'],
-    queryFn: getInactiveCust
-  });
+
+  const customerList = dashboardData?.customers || [];
+  const serviceTiers = dashboardData?.tiers || [];
+  const transactions = dashboardData?.transactions || [];
+  const inactiveCust = dashboardData?.inactiveCust || [];
+  const customerGrowthTrend = dashboardData?.customerGrowthTrend || [];
+  const expenseList = dashboardData?.expenses || [];
+  const trendData = dashboardData?.trendData || [];
+
 
   const [mounted, setMounted] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -128,10 +116,10 @@ export default function Dashboard() {
 
   // Data Validation: Sync Check between Customers and Transactions
   useEffect(() => {
-    if (loadingCustomers || loadingTx || loadingTiers || !customerList.length || !transactions.length) return;
+    if (isLoading || !customerList.length || !transactions.length) return;
 
     const active = customerList.filter((c: any) => c.status === "Active");
-    const estimatedRevenue = active.reduce((sum, customer) => {
+    const estimatedRevenue = active.reduce((sum: number, customer: any) => {
       const tier = serviceTiers.find((t: any) => {
         const sName = customer.service?.toLowerCase();
         const tName = t.name?.toLowerCase();
@@ -144,7 +132,7 @@ export default function Dashboard() {
 
     const verifiedTxTotal = transactions
       .filter((t: any) => t.status === "Verified")
-      .reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
+      .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
 
     // Disable the automated flood of notifications
     /*
@@ -159,7 +147,7 @@ export default function Dashboard() {
       );
     }
     */
-  }, [customerList, transactions, serviceTiers, loadingCustomers, loadingTx, loadingTiers]);
+  }, [customerList, transactions, serviceTiers, isLoading]);
 
   useEffect(() => {
     setLastUpdated(new Date());
@@ -175,16 +163,22 @@ export default function Dashboard() {
   }, [lastUpdated]);
 
   const dynamicData = useMemo(() => {
-    const activeCustomers = customerList.filter(c => c.status === "Active");
+    const activeCustomers = customerList.filter((c: any) => c.status === "Active");
     
     const extractMonth = (dateVal: any) => {
       if (!dateVal) return "";
       try {
         const d = new Date(dateVal);
         if (isNaN(d.getTime())) return String(dateVal).slice(0, 7);
-        return d.toISOString().slice(0, 7);
+        
+        // Force evaluation in Asia/Jakarta timezone (UTC+7) using pure math
+        const localTime = d.getTime() + (7 * 60 * 60 * 1000);
+        const localDate = new Date(localTime);
+        const year = localDate.getUTCFullYear();
+        const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+        return `${year}-${month}`;
       } catch (e) {
-        return "";
+        return String(dateVal).slice(0, 7);
       }
     };
 
@@ -195,7 +189,7 @@ export default function Dashboard() {
         t.keterangan === "pemasukan" && 
         extractMonth(t.timestamp) === monthStr
       );
-      const rev = txs.reduce((sum, t) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
+      const rev = txs.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
       
       // 2. Active Count (for ARPU denominator): status='Active' AND createdAt <= month
       const activeCount = customerList.filter((c: any) => 
@@ -211,7 +205,7 @@ export default function Dashboard() {
         t.keterangan === "pengeluaran" && 
         extractMonth(t.timestamp) === monthStr
       );
-      const totalExp = txExps.reduce((sum, t) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
+      const totalExp = txExps.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
       
       // 4. New Customers: createdAt in month
       const newCustsInMonth = customerList.filter((c: any) => 
@@ -221,8 +215,8 @@ export default function Dashboard() {
       const cac = newCustsInMonth > 0 ? totalExp / newCustsInMonth : 0;
       
       // 5. Inactive this month: From inactive_cust table
-      const inactiveInMonth = inactiveCust.filter((ic: any) => 
-        extractMonth(ic.inactiveat) === monthStr
+      const inactiveInMonth = (inactiveCust as any[]).filter((ic: any) => 
+        (ic.inactive_month && ic.inactive_month === monthStr) || extractMonth(ic.inactiveat) === monthStr
       ).length;
       
       // 6. Total Customers (Churn denominator): status='Active' AND createdAt <= month
@@ -234,28 +228,9 @@ export default function Dashboard() {
       return { rev, arpu, cac, churn, totalExp, newCusts: newCustsInMonth };
     };
 
-    const calculateRevenue = () => {
-      const activeCustomers = customerList.filter(c => c.status === "Active");
-      const estimatedRevenue = activeCustomers.reduce((sum, customer) => {
-        const tier = serviceTiers.find(t => {
-          const sName = customer.service?.toLowerCase();
-          const tName = t.name?.toLowerCase();
-          if (tName === "gamers node") return sName === "gamers";
-          return sName === tName;
-        });
-        const price = tier ? parseInt(tier.price.replace(/[^0-9]/g, '')) : 0;
-        return sum + price;
-      }, 0);
 
-      const totalVerifiedRevenue = transactions
-        .filter(t => t.status === "Verified" && t.keterangan === 'pemasukan')
-        .reduce((sum, t) => sum + (parseInt(t.amount.replace(/[^0-9]/g, '')) || 0), 0);
-
-      return estimatedRevenue > 0 ? estimatedRevenue : totalVerifiedRevenue;
-    };
-
-    const distribution = serviceTiers.map(tier => {
-      const count = activeCustomers.filter(c => {
+    const distribution = serviceTiers.map((tier: any) => {
+      const count = activeCustomers.filter((c: any) => {
         const service = c.service?.toLowerCase();
         const tierName = tier.name.toLowerCase();
         if (tierName === "gamers node") return service === "gamers";
@@ -285,9 +260,9 @@ export default function Dashboard() {
 
     // --- CALCULATE TRENDS ---
     const monthsWithData = transactions
-      .filter(t => t.status === "Verified" && t.keterangan === "pemasukan")
-      .map(t => extractMonth(t.timestamp))
-      .filter(m => m.match(/^\d{4}-\d{2}$/))
+      .filter((t: any) => t.status === "Verified" && t.keterangan === "pemasukan")
+      .map((t: any) => extractMonth(t.timestamp))
+      .filter((m: string) => m.match(/^\d{4}-\d{2}$/))
       .sort();
     
     // Default to 2026-05 and 2026-04 for consistency with user SQL
@@ -363,9 +338,9 @@ export default function Dashboard() {
       },
       currentPeriod: (() => {
         const trxDates = transactions
-          .map(t => new Date(t.timestamp || ""))
-          .filter(d => !isNaN(d.getTime()))
-          .sort((a, b) => b.getTime() - a.getTime());
+          .map((t: any) => new Date(t.timestamp || ""))
+          .filter((d: any) => !isNaN(d.getTime()))
+          .sort((a: any, b: any) => b.getTime() - a.getTime());
         
         const latestDate = trxDates.length > 0 ? trxDates[0] : new Date();
         const monthName = latestDate.toLocaleString("en-US", { month: "short" });
@@ -407,7 +382,7 @@ export default function Dashboard() {
   ];
 
 
-  if (loadingCustomers || loadingTiers || loadingExpenses || loadingTx || loadingTrend || loadingInactive) {
+  if (isLoading) {
     return (
       <div className="min-h-[70vh] w-full flex flex-col items-center justify-center">
         <div className="animate-pulse flex flex-col items-center gap-4">
@@ -619,7 +594,7 @@ export default function Dashboard() {
               {mounted && (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart 
-                    data={dynamicData.growthTrend.filter((d: any) => d.growth !== null)} 
+                    data={(dynamicData.growthTrend as any[]).filter((d: any) => d.growth !== null)} 
                     margin={{ top: 10, right: 20, left: 20, bottom: 0 }}
                   >
                     <defs>

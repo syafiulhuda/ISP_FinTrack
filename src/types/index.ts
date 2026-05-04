@@ -41,6 +41,7 @@ export interface Transaction {
   isWarning?: boolean;
   linked_id?: string;
   city?: string;
+  numericAmount?: number;
 }
 
 export interface ServiceTier {
@@ -97,4 +98,13 @@ export interface Invoice {
   amount: number;
   due_date: string;
   status: 'Unpaid' | 'Paid' | 'Overdue';
+}
+
+export interface Expense {
+  id: string | number;
+  amount: number | string;
+  date: string | Date;
+  category?: string;
+  city?: string;
+  description?: string;
 }

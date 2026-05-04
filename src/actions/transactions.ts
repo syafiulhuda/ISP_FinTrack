@@ -4,6 +4,7 @@ import { query } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import * as Mock from '@/lib/mockData';
 import { Transaction, OcrData, Invoice } from '@/types';
+import { getAdminProfile } from './admin';
 
 export async function getTransactions(): Promise<(Transaction & { numericAmount?: number })[]> {
   try {
@@ -20,15 +21,15 @@ export async function getTransactions(): Promise<(Transaction & { numericAmount?
     const data = res.rows.length > 0 ? res.rows : [...Mock.MOCK_TRANSACTIONS].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     return data.map(r => ({
       ...r,
-      amount: r.amount || 'Rp 0',
-      numericAmount: parseInt((r.amount || '').replace(/[^0-9]/g, '') || '0'),
+      amount: r.amount !== null ? Number(r.amount) : 0,
+      numericAmount: r.amount !== null ? Number(r.amount) : 0,
       timestamp: r.timestamp ? new Date(r.timestamp).toISOString() : new Date().toISOString()
     })) as (Transaction & { numericAmount?: number })[];
   } catch (e) {
     console.error("DB Error: getTransactions", e);
     return Mock.MOCK_TRANSACTIONS.map(r => ({
       ...r,
-      numericAmount: parseInt(r.amount.replace(/[^0-9]/g, '')),
+      numericAmount: Number(String(r.amount).replace(/[^0-9.-]+/g,"")),
     })) as (Transaction & { numericAmount?: number })[];
   }
 }
@@ -114,8 +115,12 @@ export async function postOcrEntry(ocrId: string | number, data: {
       console.warn("Sequence sync skipped or failed (might be non-serial):", seqError);
     }
 
-    const cleanNumeric = data.amount.replace(/[^0-9]/g, '');
-    const formattedAmount = `Rp ${Number(cleanNumeric).toLocaleString('id-ID').replace(/,/g, '.')}`;
+    const cleanNumeric = data.amount.replace(/[^0-9.-]+/g, '');
+    const finalAmount = Number(cleanNumeric);
+
+    // Get the current admin for audit trail
+    const profile = await getAdminProfile();
+    const inputterName = profile.fullName || 'Unknown Admin';
 
     let trxCity = '';
     const cleanLoc = (data.location || '').replace(/©/g, '').trim();
@@ -135,37 +140,36 @@ export async function postOcrEntry(ocrId: string | number, data: {
     if (data.keterangan === 'pengeluaran') {
       const transactionType = data.purchaseType || 'Lainnya';
       const expenseRes = await query(`
-        INSERT INTO expenses (category, amount, date, description, city)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO expenses (category, amount, date, description, city, inputter, inputter_tms)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW())
         RETURNING id
-      `, [transactionType, Number(cleanNumeric), timestamp, '', trxCity || null]);
+      `, [transactionType, Number(cleanNumeric), timestamp, '', trxCity || null, inputterName]);
 
       const expenseId = expenseRes.rows[0].id;
-      const datePart = (data.reference || '').replace(/^OUT-AUTO-/, '');
+
+      // Derive date suffix from ACTUAL transaction date, not from reference
+      const tsDate = isNaN(Date.parse(timestamp)) ? new Date() : new Date(timestamp);
+      const datePart = tsDate.getFullYear().toString() +
+        String(tsDate.getMonth() + 1).padStart(2, '0') +
+        String(tsDate.getDate()).padStart(2, '0');
       trxId = `OUT-${expenseId}-${datePart}`;
 
       await query('UPDATE expenses SET description = $1 WHERE id = $2', [trxId, expenseId]);
 
       await query(`
-        INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, city)
-        VALUES ($1, $2, $3, 'Verified', $4, $5, $6, $7)
-      `, [trxId, data.method, formattedAmount, timestamp, transactionType, 'pengeluaran', trxCity || null]);
+        INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, city, inputter, inputter_tms)
+        VALUES ($1, $2, $3, 'Verified', $4, $5, $6, $7, $8, NOW())
+      `, [trxId, data.method, finalAmount, timestamp, transactionType, 'pengeluaran', trxCity || null, inputterName]);
 
     } else {
       trxId = data.reference || `TRX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
       await query(`
-        INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, city)
-        VALUES ($1, $2, $3, 'Verified', $4, $5, $6, $7)
-      `, [trxId, data.method, formattedAmount, timestamp, 'Tagihan', 'pemasukan', null]);
+        INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, city, inputter, inputter_tms)
+        VALUES ($1, $2, $3, 'Verified', $4, $5, $6, $7, $8, NOW())
+      `, [trxId, data.method, finalAmount, timestamp, 'Tagihan', 'pemasukan', null, inputterName]);
 
-      const customerId = trxId.includes('-') ? trxId.split('-')[1] : null;
-      if (customerId) {
-        await query(`
-          INSERT INTO invoices (customer_id, amount, due_date, status)
-          VALUES ($1, $2, $3, 'Paid')
-        `, [customerId, Number(cleanNumeric), timestamp]);
-      }
+      // NOTE: Invoice is auto-created by DB trigger insert_invoice_from_transaction
     }
 
     const equipmentTypes = ['ONT', 'SERVER', 'ODP', 'OLT'];
@@ -198,9 +202,9 @@ export async function postOcrEntry(ocrId: string | number, data: {
 
       await query(`
         INSERT INTO stock_asset_roster (
-          id, sn, mac, type, location, condition, status, kepemilikan, is_used, latitude, longitude, tanggal_perubahan
+          id, sn, mac, type, location, condition, status, kepemilikan, is_used, latitude, longitude, tanggal_perubahan, inputter, inputter_tms
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
       `, [
         nextStockId, 
         cleanSn,
@@ -213,7 +217,8 @@ export async function postOcrEntry(ocrId: string | number, data: {
         false, 
         coords.lat, 
         coords.long, 
-        pgTimestamp
+        pgTimestamp,
+        inputterName
       ]);
     }
 
@@ -233,7 +238,7 @@ export async function getRevenueGrowthTrend() {
       WITH MonthlyRevenue AS (
           SELECT 
               TO_CHAR(timestamp, 'YYYY-MM') as month,
-              SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) as revenue
+              SUM(amount) as revenue
           FROM transactions
           WHERE status = 'Verified' AND keterangan = 'pemasukan'
           GROUP BY 1
@@ -241,7 +246,7 @@ export async function getRevenueGrowthTrend() {
       MonthlyExpenses AS (
           SELECT 
               TO_CHAR(timestamp, 'YYYY-MM') as month,
-              SUM(CAST(REPLACE(REPLACE(REPLACE(amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT)) as expense
+              SUM(amount) as expense
           FROM transactions
           WHERE status = 'Verified' AND keterangan = 'pengeluaran'
           GROUP BY 1

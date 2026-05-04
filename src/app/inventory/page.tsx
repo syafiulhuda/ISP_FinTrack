@@ -876,13 +876,13 @@ export default function InventoryPage() {
                       <select 
                         required
                         className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none" 
-                        value={newAsset.location.split(',')[0]} 
+                        value={newAsset.location} 
                         onChange={e => {
-                          const wh = warehouses.find((w: any) => w.warehouse_name === e.target.value);
+                          const wh = warehouses.find((w: any) => w.location === e.target.value);
                           if (wh) {
                             setNewAsset({
                               ...newAsset, 
-                              location: wh.warehouse_name,
+                              location: wh.location,
                               latitude: Number(wh.latitude),
                               longitude: Number(wh.longitude)
                             });
@@ -891,8 +891,8 @@ export default function InventoryPage() {
                       >
                         <option value="" disabled>Select Warehouse</option>
                         {warehouses.map((wh: any) => (
-                          <option key={wh.warehouse_name} value={wh.warehouse_name}>
-                            {wh.warehouse_name} ({wh.city_name.trim()})
+                          <option key={wh.id} value={wh.location}>
+                            {wh.location} ({wh.city})
                           </option>
                         ))}
                       </select>
