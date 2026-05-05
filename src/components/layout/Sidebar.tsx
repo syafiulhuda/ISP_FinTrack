@@ -12,16 +12,14 @@ import {
   Plus,
   X,
   LogOut,
-  AlertTriangle
+  AlertTriangle,
+  TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { m, AnimatePresence } from "framer-motion";
 import { useSettings } from "@/components/providers/SettingsProvider";
 import { useState } from "react";
-import { GenerateReportModal } from "@/components/modals/GenerateReportModal";
-
 const navigation = [
-  { name: "Executive Summary", href: "/executive", icon: LayoutDashboard },
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Service Tiers", href: "/service-tiers", icon: Layers },
   { name: "Finance", href: "/finance", icon: CreditCard },
@@ -35,7 +33,6 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
   const router = useRouter();
   const { settings } = useSettings();
 
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -99,46 +96,59 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
         )}
 
       {/* Header */}
-      <div className="mb-8 px-4 flex items-center space-x-3">
-        <m.div 
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg overflow-hidden", !theme.isCustom && theme.bg, !theme.isCustom && theme.shadow)}
-          style={theme.isCustom ? { backgroundColor: theme.color, boxShadow: `0 10px 15px -3px ${theme.color}44` } : {}}
-        >
-          {settings.appLogo ? (
-            <img src={settings.appLogo} alt="App Logo" className="w-full h-full object-cover" />
-          ) : (
-            settings.appName.substring(0, 2).toUpperCase()
-          )}
-        </m.div>
-        <div>
-          <h1 className={cn("text-lg font-black tracking-tight", !theme.isCustom && theme.text, !theme.isCustom && theme.textDark)} style={theme.isCustom ? { color: theme.color } : {}}>{settings.appName}</h1>
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{settings.appSubtitle}</p>
+      <div className="mb-6 px-2">
+        <div className="flex items-center space-x-3 mb-4 px-2">
+          <m.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg overflow-hidden shrink-0", !theme.isCustom && theme.bg, !theme.isCustom && theme.shadow)}
+            style={theme.isCustom ? { backgroundColor: theme.color, boxShadow: `0 10px 15px -3px ${theme.color}44` } : {}}
+          >
+            {settings.appLogo ? (
+              <img src={settings.appLogo} alt="App Logo" className="w-full h-full object-cover" />
+            ) : (
+              settings.appName.substring(0, 2).toUpperCase()
+            )}
+          </m.div>
+          <div className="flex flex-col">
+            <h1 className="font-black text-lg tracking-tight text-slate-900 dark:text-white leading-none">{settings.appName}</h1>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Enterprise Finance</p>
+          </div>
         </div>
-      </div>
 
-      {/* CTA */}
-      <div className="px-2 mb-6">
-        <m.button 
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setIsReportModalOpen(true)}
-          className={cn("w-full py-3 px-4 bg-gradient-to-br text-white rounded-xl font-bold text-sm flex items-center justify-center space-x-2 shadow-lg transition-all", !theme.isCustom && theme.btn, !theme.isCustom && theme.shadow)}
-          style={theme.isCustom ? { background: `linear-gradient(to bottom right, ${theme.color}, ${theme.color}dd)`, boxShadow: `0 10px 15px -3px ${theme.color}44` } : {}}
+        {/* Executive Summary Button (Premium Sleek Design) */}
+        <Link 
+          href="/executive"
+          className={cn(
+            "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300",
+            pathname === '/executive' 
+              ? "bg-slate-900 dark:bg-white/10 shadow-xl shadow-indigo-500/10 border border-indigo-500/50" 
+              : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/30"
+          )}
         >
-          <Plus size={18} />
-          <span>New Report</span>
-        </m.button>
+          {pathname === '/executive' && (
+            <m.div 
+              layoutId="header-active-bar" 
+              className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-500 rounded-r-full"
+            />
+          )}
+          <div className={cn(
+            "p-1.5 rounded-lg transition-colors shrink-0",
+            pathname === '/executive' ? "bg-indigo-500 text-white" : "bg-indigo-500/10 text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white"
+          )}>
+            <TrendingUp size={16} />
+          </div>
+          <span className={cn(
+            "text-[11px] font-black uppercase tracking-tight whitespace-nowrap transition-colors", 
+            pathname === '/executive' ? "text-white" : "text-slate-700 dark:text-slate-200"
+          )}>
+            Executive Summary
+          </span>
+        </Link>
       </div>
 
-      <GenerateReportModal 
-        isOpen={isReportModalOpen} 
-        onClose={() => setIsReportModalOpen(false)} 
-      />
-
-      {/* Navigation Links */}
-      <nav className="flex-1 space-y-1">
+      {/* Navigation */}
+      <nav className="flex-1 space-y-1 mt-6">
         {navigation.map((item) => {
           const isActive = item.href === "/" 
             ? pathname === "/" || pathname === "/profitability"

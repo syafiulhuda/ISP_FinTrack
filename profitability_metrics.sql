@@ -232,3 +232,15 @@ FROM RangeMetrics rm
 CROSS JOIN CalculatedTrends ct
 CROSS JOIN CustomerStats cs
 CROSS JOIN WaterfallData w;
+
+
+-- 
+-- Executive Summary
+-- 
+-- Financial & Profitability
+
+
+-- Inventory & Assets
+
+
+-- Regional Analysis
