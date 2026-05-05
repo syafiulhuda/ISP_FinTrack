@@ -21,6 +21,7 @@ import { useState } from "react";
 import { GenerateReportModal } from "@/components/modals/GenerateReportModal";
 
 const navigation = [
+  { name: "Executive Summary", href: "/executive", icon: LayoutDashboard },
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Service Tiers", href: "/service-tiers", icon: Layers },
   { name: "Finance", href: "/finance", icon: CreditCard },
