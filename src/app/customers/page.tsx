@@ -4,23 +4,21 @@ import { useState, useEffect, useMemo } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { 
   Search, 
-  Filter, 
-  User, 
-  DollarSign, 
   Clock, 
   ShieldAlert, 
   ChevronRight,
   TrendingUp,
   CreditCard,
-  Calendar,
-  MoreVertical
+  Calendar
 } from "lucide-react";
 import { getCustomerAnalysis } from "@/actions/customers";
 import { formatCurrency } from "@/lib/utils";
+import { CustomerDetailDrawer } from "@/components/customers/CustomerDetailDrawer";
 
 export default function CustomerAnalysisPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -203,7 +201,7 @@ export default function CustomerAnalysisPage() {
       <m.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden"
+        className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative"
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -283,8 +281,11 @@ export default function CustomerAnalysisPage() {
                   </td>
 
                   <td className="p-6">
-                    <button className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                      <ChevronRight size={20} />
+                    <button
+                      onClick={() => setSelectedCustomer(customer)}
+                      className="p-2 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-xl transition-all text-slate-400 hover:text-indigo-500 group-hover:text-indigo-400"
+                    >
+                      <ChevronRight size={20} className="transition-transform group-hover:translate-x-0.5" />
                     </button>
                   </td>
                 </m.tr>
@@ -347,6 +348,11 @@ export default function CustomerAnalysisPage() {
             <p className="text-slate-500 font-medium mt-1">Try adjusting your search or filters.</p>
           </div>
         )}
+
+        <CustomerDetailDrawer
+          customer={selectedCustomer}
+          onClose={() => setSelectedCustomer(null)}
+        />
       </m.div>
         </>
       )}
