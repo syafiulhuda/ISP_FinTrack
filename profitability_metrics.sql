@@ -233,6 +233,159 @@ CROSS JOIN CalculatedTrends ct
 CROSS JOIN CustomerStats cs
 CROSS JOIN WaterfallData w;
 
+WITH Parameters AS (
+    SELECT
+        '2026-01-01'::date as start_date,
+        '2026-04-30'::date as end_date,
+        '2026-04' as target_month -- Parameter bulan untuk menghitung MoM Trend
+),
+BaseCustomers AS (
+    -- Mapping city ke province untuk data pelanggan
+    SELECT
+        id::text as cust_id,
+        CASE
+            WHEN city IN ('Jakarta Pusat', 'Jakarta Utara', 'Jakarta Selatan', 'Jakarta Timur', 'Jakarta Barat') THEN 'DKI Jakarta'
+            WHEN city = 'Bandung' THEN 'Jawa Barat'
+            WHEN city = 'Surabaya' THEN 'Jawa Timur'
+            WHEN city = 'Makassar' THEN 'Sulawesi Selatan'
+            ELSE COALESCE(province, 'Unknown')
+        END as province_mapped,
+        status,
+        ("createdAt" AT TIME ZONE 'Asia/Jakarta')::date AS join_date
+    FROM customers
+),
+BaseTransactions AS (
+    -- Sentralisasi mapping city transaksi agar tidak ditulis berulang-ulang
+    SELECT
+        CASE
+            WHEN COALESCE(city, 'Unknown') IN ('Jakarta Pusat', 'Jakarta Utara', 'Jakarta Selatan', 'Jakarta Timur', 'Jakarta Barat') THEN 'DKI Jakarta'
+            WHEN COALESCE(city, 'Unknown') = 'Bandung' THEN 'Jawa Barat'
+            WHEN COALESCE(city, 'Unknown') = 'Surabaya' THEN 'Jawa Timur'
+            WHEN COALESCE(city, 'Unknown') = 'Makassar' THEN 'Sulawesi Selatan'
+            ELSE 'Unknown'
+        END as province_mapped,
+        keterangan,
+        amount::numeric as amount_num,
+        (timestamp AT TIME ZONE 'Asia/Jakarta')::date as tx_date,
+        TO_CHAR((timestamp AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM') as tx_month
+    FROM transactions
+    WHERE status = 'Verified'
+),
+CustomerMetrics AS (
+    SELECT
+        c.province_mapped,
+        COUNT(*) FILTER (WHERE c.status = 'Active' AND c.join_date <= p.end_date) as active_users,
+        COUNT(*) FILTER (WHERE c.status IN ('Inactive', 'Non-Active') AND c.join_date <= p.end_date) as inactive_users
+    FROM BaseCustomers c
+    CROSS JOIN Parameters p
+    GROUP BY c.province_mapped
+),
+TransactionMetrics AS (
+    -- Hitung Range Metrics (sesuai start_date & end_date)
+    SELECT
+        t.province_mapped,
+        COALESCE(SUM(t.amount_num) FILTER (WHERE t.keterangan = 'pemasukan'), 0) as range_rev,
+        COALESCE(SUM(t.amount_num) FILTER (WHERE t.keterangan = 'pengeluaran'), 0) as range_exp
+    FROM BaseTransactions t
+    CROSS JOIN Parameters p
+    WHERE t.tx_date >= p.start_date AND t.tx_date <= p.end_date
+    GROUP BY t.province_mapped
+),
+MonthlyStats AS (
+    -- Agregasi per bulan untuk perhitungan Trend
+    SELECT
+        province_mapped,
+        tx_month as month,
+        COALESCE(SUM(amount_num) FILTER (WHERE keterangan = 'pemasukan'), 0) as rev,
+        COALESCE(SUM(amount_num) FILTER (WHERE keterangan = 'pengeluaran'), 0) as exp
+    FROM BaseTransactions
+    GROUP BY 1, 2
+),
+TrendComparison AS (
+    -- Tarik data Current vs Previous Month menggunakan LAG()
+    SELECT
+        province_mapped,
+        month,
+        rev as curr_rev,
+        exp as curr_exp,
+        LAG(rev) OVER (PARTITION BY province_mapped ORDER BY month) as prev_rev,
+        LAG(exp) OVER (PARTITION BY province_mapped ORDER BY month) as prev_exp
+    FROM MonthlyStats
+),
+RawCombined AS (
+    -- Gabungkan semua metrik mentah (Customer + Range + Trend)
+    SELECT
+        COALESCE(cm.province_mapped, tm.province_mapped, tc.province_mapped) as province_mapped,
+        COALESCE(tm.range_rev, 0) as range_rev,
+        COALESCE(tm.range_exp, 0) as range_exp,
+        COALESCE(cm.active_users, 0) as active_users,
+        COALESCE(cm.inactive_users, 0) as inactive_users,
+        COALESCE(tc.curr_rev, 0) as curr_rev,
+        COALESCE(tc.curr_exp, 0) as curr_exp,
+        COALESCE(tc.prev_rev, 0) as prev_rev,
+        COALESCE(tc.prev_exp, 0) as prev_exp
+    FROM CustomerMetrics cm
+    FULL OUTER JOIN TransactionMetrics tm ON cm.province_mapped = tm.province_mapped
+    FULL OUTER JOIN (
+        SELECT * FROM TrendComparison CROSS JOIN Parameters p WHERE month = p.target_month
+    ) tc ON COALESCE(cm.province_mapped, tm.province_mapped) = tc.province_mapped
+),
+AggregatedData AS (
+    -- Menjumlahkan semua data mentah. Fungsi ROLLUP akan otomatis membuat baris 'All Regions'
+    SELECT
+        COALESCE(province_mapped, 'All Regions') as province,
+        SUM(range_rev) as range_rev,
+        SUM(range_exp) as range_exp,
+        SUM(active_users) as active_users,
+        SUM(inactive_users) as inactive_users,
+        SUM(curr_rev) as curr_rev,
+        SUM(curr_exp) as curr_exp,
+        SUM(prev_rev) as prev_rev,
+        SUM(prev_exp) as prev_exp
+    FROM RawCombined
+    GROUP BY ROLLUP(province_mapped)
+)
+-- ==============================================================================
+-- FINAL SELECT: Terapkan format dan rumus margin/trend secara seragam
+-- ==============================================================================
+SELECT
+    province as "PROVINCE",
+
+    -- 1. Range Metrics
+    range_rev as "REVENUE",
+    (range_rev - range_exp) as "NET PROFIT",
+    ROUND(
+        CASE WHEN range_rev > 0 THEN ((range_rev - range_exp) / range_rev) * 100 ELSE 0 END,
+    1) || '%' as "EBITDA MARGIN",
+
+    -- 2. Customer Metrics
+    active_users as "ACTIVE USERS",
+    inactive_users as "INACTIVE USERS",
+
+    -- 3. Trend Metrics
+    CASE
+        WHEN prev_rev = 0 AND curr_rev > 0 THEN '+100.0%'
+        WHEN prev_rev = 0 THEN '0.0%'
+        ELSE ROUND(((curr_rev - prev_rev) / NULLIF(prev_rev, 0)) * 100, 1) || '%'
+    END as "REV TREND",
+
+    CASE
+        WHEN (prev_rev - prev_exp) = 0 AND (curr_rev - curr_exp) > 0 THEN '+100.0%'
+        WHEN (prev_rev - prev_exp) = 0 THEN '0.0%'
+        ELSE ROUND((((curr_rev - curr_exp) - (prev_rev - prev_exp)) / NULLIF(ABS(prev_rev - prev_exp), 0)) * 100, 1) || '%'
+    END as "PROFIT TREND",
+
+    ROUND(
+        (CASE WHEN curr_rev > 0 THEN ((curr_rev - curr_exp) / curr_rev) * 100 ELSE 0 END) -
+        (CASE WHEN prev_rev > 0 THEN ((prev_rev - prev_exp) / prev_rev) * 100 ELSE 0 END),
+    1) || ' pp' as "MARGIN TREND"
+
+FROM AggregatedData
+-- Sort: All Regions taruh di paling bawah, sisanya urut berdasarkan Revenue
+ORDER BY
+    CASE WHEN province = 'All Regions' THEN 1 ELSE 0 END,
+    range_rev DESC;
+
 
 -- 
 -- Executive Summary

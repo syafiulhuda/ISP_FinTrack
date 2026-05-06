@@ -193,41 +193,34 @@ export default function ExecutiveDashboard() {
         }
         if (tx.keterangan === "pengeluaran") {
           totalExpenses += amt;
-          directCosts += amt; // Assuming transaction-level expenses are direct
+          
+          // Categorize Direct Costs from transactions
+          const cat = String(tx.type || '').toLowerCase();
+          if (cat.includes('server') || cat.includes('maintenance') || cat.includes('listrik') || cat.includes('hardware')) {
+            directCosts += amt;
+          }
+
           monthlyExpenses[monthStr] = (monthlyExpenses[monthStr] || 0) + amt;
           profitByProvince[txProvince] = (profitByProvince[txProvince] || 0) - amt;
         }
       }
     });
 
-    expenses.forEach((exp: any) => {
-      const expDate = getLocalDate(exp.date);
-      if (expDate < startDate || expDate > endDate) return;
-      
-      const txProvince = getProvinceFromCity(exp.city) || exp.city || "Other";
-      if (!isAllRegions && !String(txProvince).toLowerCase().includes(selectedProvince.toLowerCase())) return;
-
-      const amt = Number(exp.amount || 0);
-      const monthStr = expDate.substring(0, 7);
-      totalExpenses += amt;
-      
-      // Categorize Direct Costs
-      const cat = String(exp.category || '').toLowerCase();
-      if (cat.includes('server') || cat.includes('maintenance') || cat.includes('listrik')) {
-        directCosts += amt;
-      }
-
-      monthlyExpenses[monthStr] = (monthlyExpenses[monthStr] || 0) + amt;
-      profitByProvince[txProvince] = (profitByProvince[txProvince] || 0) - amt;
-    });
+    // Note: We skip the separate "expenses" table loop because all expense records 
+    // are already included in the "transactions" table with keterangan='pengeluaran'.
 
     const grossProfit = totalRevenue - directCosts;
     const netProfit = totalRevenue - totalExpenses;
-    const trendData = Array.from(new Set([...Object.keys(monthlyRevenue), ...Object.keys(monthlyExpenses)])).sort().map(month => ({
-      month,
-      revenue: monthlyRevenue[month] || 0,
-      expenses: monthlyExpenses[month] || 0,
-      profit: (monthlyRevenue[month] || 0) - (monthlyExpenses[month] || 0)
+    // Calculate monthly stats from transactions only
+    const allMonths = Array.from(new Set([...Object.keys(monthlyRevenue), ...Object.keys(monthlyExpenses)]))
+      .filter(m => (monthlyRevenue[m] || 0) > 0 || (monthlyExpenses[m] || 0) > 0) // Strictly only months with data
+      .sort();
+
+    const trendData = allMonths.map(month => ({
+        month,
+        revenue: monthlyRevenue[month] || 0,
+        expenses: monthlyExpenses[month] || 0,
+        profit: (monthlyRevenue[month] || 0) - (monthlyExpenses[month] || 0)
     }));
 
     // --- INVENTORY GROUPINGS ---
@@ -239,19 +232,26 @@ export default function ExecutiveDashboard() {
 
     filteredAssetRoster.forEach((a: any) => {
       assetByType[a.type || 'Other'] = (assetByType[a.type || 'Other'] || 0) + 1;
-      const loc = a.location || 'Unknown';
+      const loc = a.province || getProvinceFromCity(a.location) || 'Unknown';
       assetByLocation[loc] = (assetByLocation[loc] || 0) + 1;
       ownershipDist[a.kepemilikan || 'Company'] = (ownershipDist[a.kepemilikan || 'Company'] || 0) + 1;
     });
 
     filteredStockAssets.forEach((a: any) => {
       stockByType[a.type || 'Other'] = (stockByType[a.type || 'Other'] || 0) + 1;
-      const loc = a.location || 'Unknown';
+      const loc = a.province || getProvinceFromCity(a.location) || 'Unknown';
       stockByLocation[loc] = (stockByLocation[loc] || 0) + 1;
+      ownershipDist[a.kepemilikan || 'Company'] = (ownershipDist[a.kepemilikan || 'Company'] || 0) + 1;
     });
 
     const assetValuation = [...filteredAssetRoster, ...filteredStockAssets].reduce((sum: number, item: any) => {
-      const val = Number(String(item.harga_beli || '0').replace(/[^0-9]/g, ''));
+      // Handle formatting like "Rp 1.000.000,00" or raw numbers
+      const raw = String(item.harga_beli || '0')
+        .replace(/[^0-9,.]/g, '') // Remove everything except digits, comma, dot
+        .replace(/(\d+)\.(\d+)\.(\d+)/g, '$1$2$3') // Remove thousand separators (dots between digits)
+        .replace(',', '.'); // Convert comma to dot for parseFloat
+      
+      const val = parseFloat(raw);
       return sum + (isNaN(val) ? 0 : val);
     }, 0);
 
@@ -265,10 +265,14 @@ export default function ExecutiveDashboard() {
     const formatCurrency = (val: number) => {
       const sign = val < 0 ? "-" : "";
       const absVal = Math.abs(val);
+      
+      // Support Trillions (T), Billions (B), Millions (M)
+      if (absVal >= 1000000000000) return `${sign}Rp ${(absVal / 1000000000000).toFixed(2)}T`;
       if (absVal >= 1000000000) return `${sign}Rp ${(absVal / 1000000000).toFixed(2)}B`;
-      if (absVal >= 1000000) return `${sign}Rp ${(absVal / 1000000).toFixed(2)}M`;
-      if (absVal >= 1000) return `${sign}Rp ${(absVal / 1000).toFixed(1)}k`;
-      return `${sign}Rp ${absVal.toFixed(0)}`;
+      if (absVal >= 1000000) return `${sign}Rp ${(absVal / 1000000).toFixed(1)}M`;
+      if (absVal >= 1000) return `${sign}Rp ${(absVal / 1000).toFixed(0)}k`;
+      
+      return `${sign}Rp ${absVal.toLocaleString('id-ID')}`;
     };
 
     return {
@@ -461,6 +465,7 @@ export default function ExecutiveDashboard() {
                         <RechartsTooltip formatter={(value: any) => new Intl.NumberFormat('id-ID', {style: 'currency', currency: 'IDR'}).format(Number(value) || 0)} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
                         <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} formatter={(value) => <span className="text-slate-400 font-medium mr-6">{value}</span>} />
                         <Area type="monotone" dataKey="revenue" name="Gross Revenue" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                        <Line type="monotone" dataKey="expenses" name="Expenses" stroke="#f43f5e" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                         <Line type="monotone" dataKey="profit" name="Net Profit" stroke="#10b981" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
                       </ComposedChart>
                     </ResponsiveContainer>
@@ -496,10 +501,17 @@ export default function ExecutiveDashboard() {
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={processedData.inventory.assetByType}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 'bold'}} />
                           <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
-                          <RechartsTooltip contentStyle={{borderRadius: '12px'}} />
-                          <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                          <RechartsTooltip 
+                            cursor={{ fill: 'transparent' }} 
+                            content={({ active, payload }) => active && payload && payload.length && (
+                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
+                                {Number(payload[0].value).toLocaleString()}
+                              </div>
+                            )} 
+                          />
+                          <Bar dataKey="value" fill="#6366f1" radius={[10, 10, 0, 0]} barSize={40} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -512,10 +524,17 @@ export default function ExecutiveDashboard() {
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={processedData.inventory.stockByType}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 'bold'}} />
                           <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
-                          <RechartsTooltip contentStyle={{borderRadius: '12px'}} />
-                          <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                          <RechartsTooltip 
+                            cursor={{ fill: 'transparent' }} 
+                            content={({ active, payload }) => active && payload && payload.length && (
+                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
+                                {Number(payload[0].value).toLocaleString()}
+                              </div>
+                            )} 
+                          />
+                          <Bar dataKey="value" fill="#8b5cf6" radius={[10, 10, 0, 0]} barSize={40} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -529,9 +548,16 @@ export default function ExecutiveDashboard() {
                         <BarChart data={processedData.inventory.assetByLocation} layout="vertical">
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
                           <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
-                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} width={100} />
-                          <RechartsTooltip />
-                          <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} />
+                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 'bold'}} width={100} />
+                          <RechartsTooltip 
+                            cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
+                            content={({ active, payload }) => active && payload && payload.length && (
+                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
+                                {Number(payload[0].value).toLocaleString()}
+                              </div>
+                            )} 
+                          />
+                          <Bar dataKey="value" fill="#10b981" radius={[0, 10, 10, 0]} barSize={20} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -545,9 +571,16 @@ export default function ExecutiveDashboard() {
                         <BarChart data={processedData.inventory.stockByLocation} layout="vertical">
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
                           <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
-                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} width={100} />
-                          <RechartsTooltip />
-                          <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 'bold'}} width={100} />
+                          <RechartsTooltip 
+                            cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
+                            content={({ active, payload }) => active && payload && payload.length && (
+                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
+                                {Number(payload[0].value).toLocaleString()}
+                              </div>
+                            )} 
+                          />
+                          <Bar dataKey="value" fill="#3b82f6" radius={[0, 10, 10, 0]} barSize={20} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -568,8 +601,14 @@ export default function ExecutiveDashboard() {
                           >
                             {processedData.inventory.ownershipDist.map((_: any, i: number) => <Cell key={i} fill={["#4f46e5", "#06b6d4", "#f43f5e"][i % 3]} />)}
                           </Pie>
-                          <RechartsTooltip />
-                          <Legend verticalAlign="middle" align="right" layout="vertical" />
+                          <RechartsTooltip 
+                            content={({ active, payload }) => active && payload && payload.length && (
+                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
+                                {Number(payload[0].value).toLocaleString()}
+                              </div>
+                            )} 
+                          />
+                          <Legend verticalAlign="middle" align="right" layout="vertical" formatter={(value) => <span className="text-slate-400 font-bold text-xs">{value}</span>} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -592,9 +631,16 @@ export default function ExecutiveDashboard() {
                         <BarChart data={processedData.regional.provinceSubscribers} layout="vertical">
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
                           <XAxis type="number" hide />
-                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 600}} width={120} />
-                          <RechartsTooltip />
-                          <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} label={{ position: 'right', fill: '#64748b', fontSize: 10 }} />
+                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 700}} width={120} />
+                          <RechartsTooltip 
+                            cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
+                            content={({ active, payload }) => active && payload && payload.length && (
+                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
+                                {Number(payload[0].value).toLocaleString()}
+                              </div>
+                            )} 
+                          />
+                          <Bar dataKey="value" fill="#6366f1" radius={[0, 10, 10, 0]} barSize={24} label={{ position: 'right', fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -610,9 +656,16 @@ export default function ExecutiveDashboard() {
                         <BarChart data={processedData.regional.cityDist} layout="vertical">
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
                           <XAxis type="number" hide />
-                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 600}} width={100} />
-                          <RechartsTooltip />
-                          <Bar dataKey="value" fill="#06b6d4" radius={[0, 4, 4, 0]} label={{ position: 'right', fill: '#64748b', fontSize: 10 }} />
+                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 700}} width={100} />
+                          <RechartsTooltip 
+                            cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
+                            content={({ active, payload }) => active && payload && payload.length && (
+                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
+                                {Number(payload[0].value).toLocaleString()}
+                              </div>
+                            )} 
+                          />
+                          <Bar dataKey="value" fill="#06b6d4" radius={[0, 10, 10, 0]} barSize={18} label={{ position: 'right', fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>

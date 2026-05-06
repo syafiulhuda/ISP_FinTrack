@@ -301,24 +301,62 @@ export default function Dashboard() {
     const churnDiff = latestStats.churn - prevStats.churn;
     const churnTrendLabel = `${churnDiff >= 0 ? '+' : ''}${churnDiff.toFixed(1)}%`;
 
-    const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-    const currentYear = new Date().getFullYear();
-    const currentMonthIdx = new Date().getMonth();
+    // --- DAILY TREND FOR LATEST ACTIVE MONTH ---
+    const sortedTxs = [...transactions]
+      .filter((t: any) => t.status === "Verified")
+      .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     
-    const calculatedTrendData = [];
-    for (let i = 5; i >= 0; i--) {
-      let mIdx = currentMonthIdx - i;
-      let year = currentYear;
-      if (mIdx < 0) {
-        mIdx += 12;
-        year -= 1;
-      }
-      const monthStr = `${year}-${months[mIdx]}`;
-      const stats = getMonthStats(monthStr);
-      calculatedTrendData.push({
-        month: new Date(year, mIdx).toLocaleString('default', { month: 'short' }),
-        revenue: stats.rev,
-        expenses: stats.totalExp
+    const latestTx = sortedTxs[0];
+    const latestTxDate = (latestTx && latestTx.timestamp) ? new Date(latestTx.timestamp) : new Date();
+    const targetYear = latestTxDate.getFullYear();
+    const targetMonth = latestTxDate.getMonth(); // 0-indexed
+    const latestDay = latestTxDate.getDate();
+
+    const dailyTrendData = [];
+    for (let day = 1; day <= latestDay; day++) {
+      const dayStr = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      
+      const dayTxs = transactions.filter((t: any) => {
+        if (!t.timestamp) return false;
+        const d = new Date(t.timestamp);
+        return d.getFullYear() === targetYear && 
+               d.getMonth() === targetMonth && 
+               d.getDate() === day &&
+               t.status === "Verified";
+      });
+
+      const rev = dayTxs
+        .filter((t: any) => t.keterangan === 'pemasukan')
+        .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
+      
+      const exp = dayTxs
+        .filter((t: any) => t.keterangan === 'pengeluaran')
+        .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
+
+      dailyTrendData.push({
+        month: `${day} ${latestTxDate.toLocaleString('default', { month: 'short' })}`,
+        revenue: rev,
+        expenses: exp
+      });
+    }
+
+    // --- DAILY CUSTOMER GROWTH FOR LATEST ACTIVE MONTH ---
+    const dailyGrowthData = [];
+    let cumulativeBeforeMonth = customerList.filter((c: any) => {
+      const d = new Date(c.createdAt || c.registration_date);
+      return d.getFullYear() < targetYear || (d.getFullYear() === targetYear && d.getMonth() < targetMonth);
+    }).length;
+
+    for (let day = 1; day <= latestDay; day++) {
+      const newThisDay = customerList.filter((c: any) => {
+        const d = new Date(c.createdAt || c.registration_date);
+        return d.getFullYear() === targetYear && d.getMonth() === targetMonth && d.getDate() === day;
+      }).length;
+      
+      cumulativeBeforeMonth += newThisDay;
+      dailyGrowthData.push({
+        month: `${day} ${latestTxDate.toLocaleString('default', { month: 'short' })}`,
+        growth: cumulativeBeforeMonth
       });
     }
 
@@ -328,14 +366,15 @@ export default function Dashboard() {
       churnRate: `${latestStats.churn.toFixed(1)}%`,
       cac: cacDisplay,
       distribution: distribution,
-      trendData: calculatedTrendData,
-      growthTrend: customerGrowthTrend,
+      trendData: dailyTrendData,
+      growthTrend: dailyGrowthData,
       trends: {
         arpu: calculateTrend(latestStats.arpu, prevStats.arpu),
         cac: cacTrend,
         churn: churnTrendLabel,
         revenue: calculateTrend(latestStats.rev, prevStats.rev)
       },
+      dateRangeLabel: latestTxDate ? `Showing data from 1 ${latestTxDate.toLocaleString('default', { month: 'short' })} to ${latestTxDate.getDate()} ${latestTxDate.toLocaleString('default', { month: 'short' })} ${latestTxDate.getFullYear()}` : "",
       currentPeriod: (() => {
         const trxDates = transactions
           .map((t: any) => new Date(t.timestamp || ""))
@@ -520,7 +559,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Revenue Growth</h3>
-                  <p className="text-sm font-medium text-slate-500 mt-1">Gross revenue vs projected expenses.</p>
+                  <p className="text-sm font-medium text-slate-500 mt-1">{dynamicData.dateRangeLabel}</p>
                 </div>
                 <Link
                   href="/profitability"
@@ -551,8 +590,9 @@ export default function Dashboard() {
                         dataKey="month" 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{ fontSize: 11, fontWeight: 'bold', fill: '#64748b' }} 
+                        tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }} 
                         dy={10} 
+                        interval={4}
                       />
                       <YAxis hide domain={['auto', 'auto']} />
                       <Tooltip content={<RevenueTooltip />} />
@@ -561,8 +601,8 @@ export default function Dashboard() {
                         dataKey="revenue" 
                         stroke="#004ac6" 
                         strokeWidth={4} 
-                        dot={{ r: 4, fill: '#004ac6', strokeWidth: 2, stroke: '#fff' }} 
-                        activeDot={{ r: 6, strokeWidth: 0 }}
+                        dot={{ r: 2, fill: '#004ac6', strokeWidth: 1, stroke: '#fff' }} 
+                        activeDot={{ r: 4, strokeWidth: 0 }}
                       />
                       <Line 
                         type="monotone" 
@@ -588,7 +628,7 @@ export default function Dashboard() {
               >
             <div className="mb-8">
               <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Customer Growth</h3>
-              <p className="text-sm font-medium text-slate-500 mt-1">Segmentation</p>
+              <p className="text-xs font-medium text-slate-500 mt-1">{dynamicData.dateRangeLabel}</p>
             </div>
             <div className="h-[220px] w-full">
               {mounted && (
@@ -609,7 +649,7 @@ export default function Dashboard() {
                       axisLine={false} 
                       tickLine={false} 
                       tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }} 
-                      interval={0}
+                      interval={4}
                     />
                     <YAxis hide domain={['auto', 'auto']} />
                     <Tooltip 
@@ -632,6 +672,8 @@ export default function Dashboard() {
                       strokeWidth={3} 
                       fillOpacity={1} 
                       fill="url(#colorGrowth)" 
+                      dot={{ r: 2, fill: '#0ea5e9', strokeWidth: 1, stroke: '#fff' }} 
+                      activeDot={{ r: 4, strokeWidth: 0 }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>

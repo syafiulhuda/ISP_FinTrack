@@ -258,7 +258,7 @@ async function seed() {
     }
 
     // Bulk Insert ONTs
-    console.log('Inserting Asset Roster (ONTs)...');
+    console.log('Inserting Deployed Asset Roster (ONTs)...');
     let ontBatch = [];
     for (let i = 0; i < onts.length; i++) {
       const ont = onts[i];
@@ -270,6 +270,34 @@ async function seed() {
       if (ontBatch.length >= 100 || i === onts.length - 1) {
         await Promise.all(ontBatch);
         ontBatch = [];
+      }
+    }
+
+    // 4. SEED STOCK ASSETS (Warehouse)
+    console.log('📦 Seeding Stock Assets (Warehouse)...');
+    const stockItems = [
+      { type: 'ONT', count: 25, model: 'HG6243C' },
+      { type: 'OLT', count: 5, model: 'C320' },
+      { type: 'Router', count: 12, model: 'CCR1036' },
+      { type: 'Server', count: 3, model: 'R740' }
+    ];
+
+    const warehouses = [
+      { loc: 'Warehouse Main (Jakarta)', lat: -6.2088, lon: 106.8456, prov: 'DKI Jakarta' },
+      { loc: 'Warehouse East (Ambon)', lat: -3.6547, lon: 128.1906, prov: 'Maluku' },
+      { loc: 'Warehouse South (Bali)', lat: -8.6500, lon: 115.2167, prov: 'Bali' }
+    ];
+
+    for (const item of stockItems) {
+      for (let j = 0; j < item.count; j++) {
+        const wh = getRandomItem(warehouses);
+        const sn = `STK-${item.type}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        const mac = `AC:BD:${Math.random().toString(16).substring(2, 4)}:${Math.random().toString(16).substring(2, 4)}:00:01`;
+        
+        await client.query(`
+          INSERT INTO stock_asset_roster (sn, mac, type, location, condition, latitude, longitude, status, kepemilikan, province, is_used)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        `, [sn, mac, item.type, wh.loc, 'Good', wh.lat, wh.lon, 'Offline', 'Dimiliki', wh.prov, false]);
       }
     }
 
