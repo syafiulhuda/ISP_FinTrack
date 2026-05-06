@@ -13,7 +13,8 @@ import {
   X,
   LogOut,
   AlertTriangle,
-  TrendingUp
+  TrendingUp,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { m, AnimatePresence } from "framer-motion";
@@ -25,6 +26,7 @@ const navigation = [
   { name: "Finance", href: "/finance", icon: CreditCard },
   { name: "Inventory", href: "/inventory", icon: Package },
   { name: "Distribution Map", href: "/distribution", icon: Map },
+  { name: "Customer Analysis", href: "/customers", icon: Users },
   { name: "Regional Analysis", href: "/regional", icon: Map },
 ];
 

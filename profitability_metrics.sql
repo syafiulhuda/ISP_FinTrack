@@ -1,3 +1,97 @@
+/* 
+  ==========================================================================
+  CRM ANALYTICS: CUSTOMER HEALTH SCORE & LTV VALIDATION
+  ==========================================================================
+  Logic Reference:
+  - Baseline: 70
+  - Active: +20 | Inactive: -40
+  - Late Payment: -10 per instance (Tx Date > Due Day + 3 days grace)
+  - Value Bonus: +10 if LTV > 1,000,000
+*/
+
+WITH CustomerMetrics AS (
+    SELECT 
+        c.id,
+        c.name,
+        c.status,
+        c.service,
+        c."createdAt" AT TIME ZONE 'Asia/Jakarta' as reg_date,
+        EXTRACT(DAY FROM c."createdAt" AT TIME ZONE 'Asia/Jakarta') as due_day,
+        COUNT(t.id) as total_payments,
+        COALESCE(SUM(t.numericAmount), 0) as ltv,
+        MAX(t.timestamp AT TIME ZONE 'Asia/Jakarta') as last_payment_date,
+        -- Menghitung jumlah keterlambatan (Grace period 3 hari)
+        COUNT(CASE 
+            WHEN EXTRACT(DAY FROM t.timestamp AT TIME ZONE 'Asia/Jakarta') > (EXTRACT(DAY FROM c."createdAt" AT TIME ZONE 'Asia/Jakarta') + 3)
+            THEN 1 
+        END) as late_payments_count
+    FROM customers c
+    LEFT JOIN transactions t ON split_part(t.id, '-', 2) = c.id 
+        AND t.status = 'Verified' 
+        AND t.keterangan = 'pemasukan'
+    GROUP BY c.id, c.name, c.status, c.service, c."createdAt"
+),
+HealthCalculation AS (
+    SELECT 
+        *,
+        GREATEST(0, LEAST(100, 
+            70 -- Baseline
+            + (CASE WHEN status = 'Active' THEN 20 WHEN status = 'Inactive' THEN -40 ELSE 0 END) -- Status Impact
+            - (late_payments_count * 10) -- Penalty Keterlambatan
+            + (CASE WHEN ltv > 1000000 THEN 10 ELSE 0 END) -- Value Bonus
+        )) as calculated_health_score
+    FROM CustomerMetrics
+)
+SELECT 
+    id, 
+    name, 
+    status, 
+    service,
+    ltv,
+    total_payments,
+    late_payments_count,
+    calculated_health_score,
+    CASE 
+        WHEN calculated_health_score >= 80 THEN 'Excellent'
+        WHEN calculated_health_score >= 50 THEN 'Stable'
+        ELSE 'At Risk'
+    END as health_category
+FROM HealthCalculation
+ORDER BY calculated_health_score DESC;
+
+-- VALIDASI KPI: CHURN RISK HIGH (Score < 50)
+WITH CustomerMetrics AS (
+    SELECT 
+        c.id,
+        c.status,
+        COUNT(CASE 
+            WHEN EXTRACT(DAY FROM t.timestamp AT TIME ZONE 'Asia/Jakarta') > (EXTRACT(DAY FROM c."createdAt" AT TIME ZONE 'Asia/Jakarta') + 3)
+            THEN 1 
+        END) as late_payments_count,
+        COALESCE(SUM(t.numericAmount), 0) as ltv
+    FROM customers c
+    LEFT JOIN transactions t ON split_part(t.id, '-', 2) = c.id 
+        AND t.status = 'Verified' 
+        AND t.keterangan = 'pemasukan'
+    GROUP BY c.id, c.status, c."createdAt"
+),
+HealthCalculation AS (
+    SELECT 
+        id,
+        GREATEST(0, LEAST(100, 
+            70 
+            + (CASE WHEN status = 'Active' THEN 20 WHEN status = 'Inactive' THEN -40 ELSE 0 END)
+            - (late_payments_count * 10)
+            + (CASE WHEN ltv > 1000000 THEN 10 ELSE 0 END)
+        )) as calculated_health_score
+    FROM CustomerMetrics
+)
+SELECT 
+    COUNT(*) as total_churn_risk_high,
+    STRING_AGG(id, ', ') as at_risk_customer_ids
+FROM HealthCalculation
+WHERE calculated_health_score < 50;
+
 -- Daftar pelanggan yang akan jatuh tempo
 SELECT
     c.id,

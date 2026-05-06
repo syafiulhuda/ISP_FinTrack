@@ -15,16 +15,7 @@ export async function getCustomers(page: number = 1, limit: number = 10): Promis
     const res = await query(`
       SELECT c.*,
         CASE 
-          WHEN c.status = 'Active' AND (
-            EXTRACT(DAY FROM (c."createdAt" AT TIME ZONE 'Asia/Jakarta')) =
-            EXTRACT(DAY FROM (NOW() AT TIME ZONE 'Asia/Jakarta' + INTERVAL '1 day'))
-            OR
-            EXTRACT(DAY FROM (c."createdAt" AT TIME ZONE 'Asia/Jakarta')) <=
-            EXTRACT(DAY FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
-            OR
-            date_trunc('month', c."createdAt") < date_trunc('month', NOW())
-          )
-          AND NOT EXISTS (
+          WHEN c.status = 'Active' AND NOT EXISTS (
             SELECT 1 FROM transactions t
             WHERE split_part(t.id, '-', 2) = c.id
               AND t.keterangan = 'pemasukan'
@@ -32,9 +23,9 @@ export async function getCustomers(page: number = 1, limit: number = 10): Promis
               AND EXTRACT(MONTH FROM (t.timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(MONTH FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
               AND EXTRACT(YEAR FROM (t.timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(YEAR FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
           )
-          THEN true 
-          ELSE false 
-        END as is_grace_period,
+          THEN (EXTRACT(DAY FROM (c."createdAt" AT TIME ZONE 'Asia/Jakarta'))::int - EXTRACT(DAY FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))::int)
+          ELSE null
+        END as grace_days,
         EXTRACT(DAY FROM (c."createdAt" AT TIME ZONE 'Asia/Jakarta')) as due_day
       FROM customers c
       ORDER BY c."createdAt" DESC, c.id DESC
@@ -262,6 +253,65 @@ export async function getAgingMVData() {
     return res.rows;
   } catch (e) {
     console.error("DB Error: getAgingMVData", e);
+    return [];
+  }
+}
+export async function getCustomerAnalysis() {
+  try {
+    const customersRes = await query('SELECT id, name, service, status, "createdAt" AT TIME ZONE \'Asia/Jakarta\' as created_at FROM customers');
+    const transactionsRes = await query(`
+      SELECT split_part(id, '-', 2) as customer_id, amount, timestamp AT TIME ZONE 'Asia/Jakarta' as tx_date, status, keterangan
+      FROM transactions
+      WHERE status = 'Verified' AND keterangan = 'pemasukan'
+    `);
+
+    const customers = customersRes.rows;
+    const transactions = transactionsRes.rows;
+
+    const analysis = customers.map((c: any) => {
+      const customerTxs = transactions.filter((t: any) => t.customer_id === c.id);
+      
+      // Calculate LTV
+      const ltv = customerTxs.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount).replace(/[^0-9]/g, '')) || 0), 0);
+      
+      // Calculate Late Payment Ratio
+      // Due day is the day of registration
+      const regDate = new Date(c.created_at);
+      const dueDay = regDate.getDate();
+      
+      let lateCount = 0;
+      customerTxs.forEach((t: any) => {
+        const txDate = new Date(t.tx_date);
+        if (txDate.getDate() > dueDay + 3) { // 3 days grace period
+          lateCount++;
+        }
+      });
+      
+      const paymentRatio = customerTxs.length > 0 ? (lateCount / customerTxs.length) * 100 : 0;
+      
+      // Calculate Health Score (0-100)
+      let score = 70; // Baseline
+      if (c.status === 'Active') score += 20;
+      if (c.status === 'Inactive') score -= 40;
+      
+      score -= (lateCount * 10); // Deduct for each late payment
+      if (ltv > 1000000) score += 10; // Bonus for high value
+      
+      const healthScore = Math.max(0, Math.min(100, score));
+
+      return {
+        ...c,
+        ltv,
+        paymentRatio,
+        healthScore,
+        txCount: customerTxs.length,
+        lastPayment: customerTxs.length > 0 ? customerTxs.sort((a: any, b: any) => new Date(b.tx_date).getTime() - new Date(a.tx_date).getTime())[0].tx_date : null
+      };
+    });
+
+    return analysis;
+  } catch (e) {
+    console.error("DB Error: getCustomerAnalysis", e);
     return [];
   }
 }

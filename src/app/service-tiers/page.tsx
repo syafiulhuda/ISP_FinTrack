@@ -37,6 +37,7 @@ const IconMap = {
 export default function ServiceTiersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
@@ -77,7 +78,7 @@ export default function ServiceTiersPage() {
     return tiers;
   }, [serviceTiersRaw]);
 
-  const isSearching = searchQuery.trim().length > 0;
+  const isSearching = searchQuery.trim().length > 0 || statusFilter !== "All";
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newCustomer, setNewCustomer] = useState({
@@ -162,7 +163,7 @@ export default function ServiceTiersPage() {
       
       const matchesStatus = 
         statusFilter === "All" || 
-        (statusFilter === "grace" && (cust as any).is_grace_period) ||
+        (statusFilter === "grace" && (cust as any).grace_days !== null && (cust as any).grace_days <= 1) ||
         (cust.status?.toLowerCase() === statusFilter.toLowerCase());
 
       return matchesSearch && matchesStatus;
@@ -326,22 +327,52 @@ export default function ServiceTiersPage() {
               <ZapOff size={18} className={cn(isAuditing && "animate-pulse")} />
             </button>
             <div className="relative w-full sm:w-auto">
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full sm:w-[160px] pl-4 pr-10 py-2.5 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none cursor-pointer shadow-sm"
+              <button
+                onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                className="w-full sm:w-[200px] flex items-center justify-between pl-4 pr-3 py-2.5 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all shadow-sm"
               >
-                <option value="All">All Subscribers</option>
-                <option value="active">Active Only</option>
-                <option value="inactive">Inactive Only</option>
-                <option value="grace">Grace Period (Due Tomorrow)</option>
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-              </div>
+                <span className="capitalize">{statusFilter === "grace" ? "Grace Period" : statusFilter === "All" ? "All Subscribers" : `${statusFilter} Only`}</span>
+                <ChevronDown size={14} className={cn("transition-transform duration-300", isStatusDropdownOpen && "rotate-180")} />
+              </button>
+
+              <AnimatePresence>
+                {isStatusDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setIsStatusDropdownOpen(false)} />
+                    <m.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute left-0 right-0 mt-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-40 overflow-hidden py-1"
+                    >
+                      {[
+                        { label: "All Subscribers", value: "All" },
+                        { label: "Active Only", value: "active" },
+                        { label: "Inactive Only", value: "inactive" },
+                        { label: "Grace Period", value: "grace" }
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => {
+                            setStatusFilter(opt.value);
+                            setCurrentPage(1);
+                            setIsStatusDropdownOpen(false);
+                          }}
+                          className={cn(
+                            "w-full text-left px-4 py-3 text-xs font-bold transition-all flex items-center justify-between",
+                            statusFilter === opt.value 
+                              ? "bg-primary text-white" 
+                              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+                          )}
+                        >
+                          {opt.label}
+                          {statusFilter === opt.value && <CheckCircle2 size={14} />}
+                        </button>
+                      ))}
+                    </m.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
             
             <div className="relative w-full md:w-[320px] group">
@@ -395,11 +426,21 @@ export default function ServiceTiersPage() {
                         )}></div>
                         {cust.status || 'Active'}
                       </div>
-                      {cust.is_grace_period && (
-                        <div className="mt-1 flex items-center gap-1 text-[8px] font-black text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded-md uppercase tracking-tighter w-fit">
-                          <AlertTriangle size={8} /> Due Tomorrow
-                        </div>
-                      )}
+                        {cust.grace_days !== null && cust.grace_days <= 3 && (
+                          <div className={cn(
+                            "mt-1 flex items-center gap-1 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter w-fit",
+                            cust.grace_days === 1 ? "text-orange-600 bg-orange-100" :
+                            cust.grace_days === 0 ? "text-amber-600 bg-amber-100 ring-1 ring-amber-500/20" :
+                            cust.grace_days < 0 ? "text-rose-600 bg-rose-100 ring-1 ring-rose-500/20" :
+                            "text-slate-500 bg-slate-100"
+                          )}>
+                            <AlertTriangle size={8} /> 
+                            {cust.grace_days === 1 ? "Due Tomorrow" : 
+                             cust.grace_days === 0 ? "Due Today" : 
+                             cust.grace_days < 0 ? `Overdue ${Math.abs(cust.grace_days)} Days` : 
+                             `Due in ${cust.grace_days} Days`}
+                          </div>
+                        )}
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex flex-col gap-0.5">
@@ -439,8 +480,8 @@ export default function ServiceTiersPage() {
           </div>
         </div>
 
-        {/* Pagination UI - Only visible when not searching or if search results should be paginated (but user asked for show-all when searching) */}
-        {!isSearching && totalPages > 1 && (
+        {/* Pagination UI */}
+        {totalPages > 1 && (
           <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
               Showing <span className="text-slate-900 dark:text-slate-100">{displayCustomers.length}</span> of <span className="text-slate-900 dark:text-slate-100">{filteredCustomers.length}</span> subscribers
@@ -486,9 +527,9 @@ export default function ServiceTiersPage() {
         )}
 
         {isSearching && (
-          <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center">
-              Search results showing <span className="text-slate-900 dark:text-slate-100 font-black">{displayCustomers.length}</span> matches
+          <div className="p-4 bg-primary/5 border-t border-slate-100 dark:border-slate-800">
+            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] text-center">
+              Filtered Result: <span className="text-slate-900 dark:text-white">{filteredCustomers.length}</span> matches found
             </p>
           </div>
         )}
