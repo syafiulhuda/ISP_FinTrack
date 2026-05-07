@@ -28,6 +28,7 @@ const navigation = [
   { name: "Distribution Map", href: "/distribution", icon: Map },
   { name: "Customer Analysis", href: "/customers", icon: Users },
   { name: "Regional Analysis", href: "/regional", icon: Map },
+  { name: "Predictive Analysis", href: "/predictions", icon: TrendingUp },
 ];
 
 export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
