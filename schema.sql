@@ -20,12 +20,13 @@ SET row_security = off;
 -- Name: notify_asset_condition(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.notify_asset_condition() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.notify_asset_condition() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
       BEGIN
-        -- Hanya buat notifikasi jika kondisi bukan 'Good' DAN Kepemilikan adalah 'Dimiliki'
-        IF (NEW.condition != 'Good' AND (NEW.kepemilikan = 'Dimiliki' OR NEW.kepemilikan IS NULL)) THEN
+        -- Case-insensitive check for condition and ownership
+        -- Buat notifikasi jika kondisi bukan 'Good' DAN Kepemilikan adalah 'Dimiliki' atau 'Sewa'
+        IF (LOWER(NEW.condition) != 'good' AND (LOWER(NEW.kepemilikan) IN ('dimiliki', 'sewa') OR NEW.kepemilikan IS NULL)) THEN
           INSERT INTO notifications (category, title, message, type, is_unread, action_label)
           VALUES (
             'Inventory',
@@ -34,8 +35,8 @@ CREATE FUNCTION public.notify_asset_condition() RETURNS trigger
             'hardware',
             true,
             CASE 
-              WHEN NEW.condition = 'Broken' THEN 'Schedule Dispatch' 
-              WHEN NEW.condition = 'Warning' THEN 'Schedule Dispatch'
+              WHEN LOWER(NEW.condition) = 'broken' THEN 'Schedule Dispatch' 
+              WHEN LOWER(NEW.condition) = 'warning' THEN 'Schedule Dispatch'
               ELSE 'Log Maintenance' 
             END
           );
@@ -51,7 +52,7 @@ ALTER FUNCTION public.notify_asset_condition() OWNER TO postgres;
 -- Name: notify_new_transaction(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.notify_new_transaction() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.notify_new_transaction() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
       BEGIN
@@ -79,6 +80,7 @@ CREATE FUNCTION public.notify_new_transaction() RETURNS trigger
         RETURN NEW;
       END;
       $$;
+
 
 
 ALTER FUNCTION public.notify_new_transaction() OWNER TO postgres;
