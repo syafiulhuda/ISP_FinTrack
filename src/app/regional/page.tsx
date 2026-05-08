@@ -132,7 +132,7 @@ export default function RegionalAnalysisPage() {
         if (tn === "gamers node") return s === "gamers";
         return s === tn;
       });
-      const price = tier ? parseInt(tier.price.replace(/[^0-9]/g, '')) : 0;
+      const price = tier ? Number(tier.price) : 0;
       grouped[village].revenue += price;
     });
 

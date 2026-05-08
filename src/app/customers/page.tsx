@@ -11,14 +11,14 @@ import {
   CreditCard,
   Calendar
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { getCustomerAnalysis } from "@/actions/customers";
 import { formatCurrency } from "@/lib/utils";
-import { CustomerDetailDrawer } from "@/components/customers/CustomerDetailDrawer";
 
 export default function CustomerAnalysisPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -280,12 +280,12 @@ export default function CustomerAnalysisPage() {
                     </div>
                   </td>
 
-                  <td className="p-6">
+                  <td className="p-6 text-right">
                     <button
-                      onClick={() => setSelectedCustomer(customer)}
-                      className="p-2 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-xl transition-all text-slate-400 hover:text-indigo-500 group-hover:text-indigo-400"
+                      onClick={() => router.push(`/customers/${customer.id}`)}
+                      className="p-3 bg-slate-50 dark:bg-slate-800/50 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-600 rounded-2xl transition-all text-slate-400 group-hover:scale-110 shadow-sm"
                     >
-                      <ChevronRight size={20} className="transition-transform group-hover:translate-x-0.5" />
+                      <ChevronRight size={18} className="transition-transform group-hover:translate-x-0.5" />
                     </button>
                   </td>
                 </m.tr>
@@ -349,10 +349,7 @@ export default function CustomerAnalysisPage() {
           </div>
         )}
 
-        <CustomerDetailDrawer
-          customer={selectedCustomer}
-          onClose={() => setSelectedCustomer(null)}
-        />
+
       </m.div>
         </>
       )}

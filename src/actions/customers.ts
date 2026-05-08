@@ -106,7 +106,7 @@ export async function getCustomerGrowthTrend() {
   try {
     const res = await query(`
       SELECT
-          TO_CHAR("createdAt"::timestamptz AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM') as "Month",
+          TO_CHAR("createdAt" AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM') as "Month",
           count(*) as "Growth"
       FROM customers c
       WHERE status = 'Active'
@@ -321,3 +321,86 @@ export async function getCustomerAnalysis() {
     return [];
   }
 }
+
+export async function getCustomer360(customerId: string) {
+  try {
+    const customerRes = await query('SELECT id, name, service, status, "createdAt" AT TIME ZONE \'Asia/Jakarta\' as created_at FROM customers WHERE id = $1', [customerId]);
+    if (customerRes.rows.length === 0) return null;
+    const c = customerRes.rows[0];
+
+    const txRes = await query(`
+      SELECT amount, timestamp AT TIME ZONE 'Asia/Jakarta' as tx_date, status, keterangan
+      FROM transactions
+      WHERE split_part(id, '-', 2) = $1 AND status = 'Verified' AND keterangan = 'pemasukan'
+      ORDER BY tx_date ASC
+    `, [customerId]);
+
+    const txs = txRes.rows;
+    
+    const regDate = new Date(c.created_at);
+    const dueDay = regDate.getDate();
+
+    let ltv = 0;
+    let lateCount = 0;
+    const payment_history: any[] = [];
+    const late_payments: any[] = [];
+
+    // Group by month for timeline chart
+    const monthGroups: Record<string, { ontime: number, late: number, total: number }> = {};
+
+    txs.forEach((t: any) => {
+      const amt = Number(t.amount) || 0;
+      ltv += amt;
+      const txDate = new Date(t.tx_date);
+      const isLate = txDate.getDate() > dueDay + 3;
+      
+      const monthKey = txDate.toLocaleString('default', { month: 'short', year: 'numeric' });
+      if (!monthGroups[monthKey]) {
+        monthGroups[monthKey] = { ontime: 0, late: 0, total: 0 };
+      }
+      monthGroups[monthKey].total += amt;
+
+      if (isLate) {
+        lateCount++;
+        monthGroups[monthKey].late += amt;
+        const daysLate = txDate.getDate() - dueDay;
+        late_payments.push({
+          month: monthKey,
+          date: txDate.toISOString(),
+          daysLate,
+          amount: amt
+        });
+      } else {
+        monthGroups[monthKey].ontime += amt;
+      }
+    });
+
+    Object.keys(monthGroups).forEach(key => {
+      payment_history.push({
+        month: key,
+        ...monthGroups[key]
+      });
+    });
+
+    let score = 70;
+    if (c.status === 'Active') score += 20;
+    if (c.status === 'Inactive') score -= 40;
+    score -= (lateCount * 10);
+    if (ltv > 1000000) score += 10;
+    const healthScore = Math.max(0, Math.min(100, score));
+
+    return {
+      ...c,
+      ltv,
+      healthScore,
+      txCount: txs.length,
+      paymentRatio: txs.length > 0 ? (lateCount / txs.length) * 100 : 0,
+      payment_history,
+      late_payments
+    };
+  } catch (e) {
+    console.error("DB Error: getCustomer360", e);
+    return null;
+  }
+}
+

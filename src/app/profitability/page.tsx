@@ -39,7 +39,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { getCustomers, getServiceMix } from "@/actions/customers";
 import { getServiceTiers } from "@/actions/tiers";
-import { getExpenses, getTransactions } from "@/actions/transactions";
+import { getExpenses, getTransactions, getTransactionDateRange } from "@/actions/transactions";
 import { createNotification } from "@/actions/admin";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
 import { Customer, ServiceTier, Transaction, Expense } from "@/types";
@@ -79,11 +79,21 @@ export default function ProfitabilityPage() {
     queryFn: getTransactions,
     refetchInterval: 60000 
   });
+  const { data: dateRange } = useQuery({ 
+    queryKey: ['transactionDateRange'], 
+    queryFn: getTransactionDateRange 
+  });
 
   const handleResetDates = useCallback(() => {
+    if (dateRange) {
+      setStartDate(dateRange.startDate);
+      setEndDate(dateRange.endDate);
+      return;
+    }
+
     if (!transactions.length && !expenseList.length && !customerList.length) return;
     
-    // Find min and max dates from all data
+    // Find min and max dates from all data (Fallback)
     let minDateStr = "9999-12-31";
     let maxDateStr = "0000-01-01";
     
@@ -108,31 +118,24 @@ export default function ProfitabilityPage() {
     customerList.forEach((c: Customer) => updateMinMax(c.createdAt));
     
     if (minDateStr === "9999-12-31") {
-      minDateStr = "2026-01-01";
-      maxDateStr = "2026-12-31";
+      const year = new Date().getFullYear();
+      minDateStr = `${year}-01-01`;
+      maxDateStr = `${year}-12-31`;
     }
     
-    const minYear = parseInt(minDateStr.substring(0, 4));
-    const maxYear = parseInt(maxDateStr.substring(0, 4));
-    
-    // If data spans decades/multiple years (difference > 1), default to maxYear's start and end
-    if (maxYear - minYear >= 1) {
-      setStartDate(`${maxYear}-01-01`);
-      // Use the maxDateStr or the end of the maxYear
-      setEndDate(maxDateStr);
-    } else {
-      setStartDate(minDateStr);
-      setEndDate(maxDateStr);
-    }
-  }, [transactions, expenseList, customerList]);
+    setStartDate(minDateStr);
+    setEndDate(maxDateStr);
+  }, [transactions, expenseList, customerList, dateRange]);
 
   // Initialize dates once data is loaded
   useEffect(() => {
-    if (!datesInitialized && (transactions.length > 0 || expenseList.length > 0 || customerList.length > 0)) {
+    if (!datesInitialized && (dateRange || transactions.length > 0 || expenseList.length > 0 || customerList.length > 0)) {
       handleResetDates();
-      setDatesInitialized(true);
+      if (dateRange || (transactions.length > 0 && expenseList.length > 0 && customerList.length > 0)) {
+        setDatesInitialized(true);
+      }
     }
-  }, [transactions, expenseList, customerList, datesInitialized, handleResetDates]);
+  }, [transactions, expenseList, customerList, dateRange, datesInitialized, handleResetDates]);
 
   const provinces = useMemo(() => [
     "All Regions",

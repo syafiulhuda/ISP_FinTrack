@@ -126,7 +126,7 @@ export default function Dashboard() {
         if (tName === "gamers node") return sName === "gamers";
         return sName === tName;
       });
-      const price = tier ? parseInt(tier.price.replace(/[^0-9]/g, '')) : 0;
+      const price = tier ? Number(tier.price) : 0;
       return sum + price;
     }, 0);
 
@@ -343,12 +343,14 @@ export default function Dashboard() {
     // --- DAILY CUSTOMER GROWTH FOR LATEST ACTIVE MONTH ---
     const dailyGrowthData = [];
     let cumulativeBeforeMonth = customerList.filter((c: any) => {
+      if (c.status !== "Active") return false;
       const d = new Date(c.createdAt || c.registration_date);
       return d.getFullYear() < targetYear || (d.getFullYear() === targetYear && d.getMonth() < targetMonth);
     }).length;
 
     for (let day = 1; day <= latestDay; day++) {
       const newThisDay = customerList.filter((c: any) => {
+        if (c.status !== "Active") return false;
         const d = new Date(c.createdAt || c.registration_date);
         return d.getFullYear() === targetYear && d.getMonth() === targetMonth && d.getDate() === day;
       }).length;

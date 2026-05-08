@@ -23,7 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCustomers, createCustomer, auditCustomerGracePeriod } from "@/actions/customers";
 import { getServiceTiers, createServiceTier } from "@/actions/tiers";
 import { Customer, ServiceTier } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 
@@ -44,14 +44,16 @@ export default function ServiceTiersPage() {
   const { data: customerData, isLoading: loadingCustomers, refetch: refetchCustomers, isRefetching } = useQuery({ 
     queryKey: ['customers', currentPage, itemsPerPage], 
     queryFn: () => getCustomers(currentPage, itemsPerPage),
-    staleTime: 0
+    staleTime: 0,
+    placeholderData: (previousData) => previousData,
   });
 
   // We still need all customers for the tier counts at the top
   const { data: allCustomerData } = useQuery({
     queryKey: ['customers', 'all'],
     queryFn: () => getCustomers(1, 1000),
-    staleTime: 60000
+    staleTime: 60000,
+    placeholderData: (previousData) => previousData,
   });
 
   const customerList = customerData?.customers || [];
@@ -69,7 +71,7 @@ export default function ServiceTiersPage() {
         name: "Gamers",
         speed: "200",
         unit: "Mbps",
-        price: "Rp 750.000",
+        price: 750000,
         fup: "Unlimited",
         type: "priority",
         icon: "gamepad"
@@ -163,7 +165,12 @@ export default function ServiceTiersPage() {
       
       const matchesStatus = 
         statusFilter === "All" || 
-        (statusFilter === "grace" && (cust as any).grace_days !== null && (cust as any).grace_days <= 1) ||
+        (statusFilter === "grace" && (cust as any).grace_days !== null && (
+          // Kondisi 1: Jatuh tempo BESOK (grace_days === 1)
+          (cust as any).grace_days === 1 ||
+          // Kondisi 2: Sudah berlangganan > 1 bulan (30 hari)
+          (new Date().getTime() - new Date(cust.createdAt || 0).getTime() > 30 * 24 * 60 * 60 * 1000)
+        )) ||
         (cust.status?.toLowerCase() === statusFilter.toLowerCase());
 
       return matchesSearch && matchesStatus;
@@ -184,8 +191,11 @@ export default function ServiceTiersPage() {
     return counts;
   }, [allCustomers, serviceTiers]);
 
-  if (loadingCustomers || loadingTiers) {
-    return <div className="h-full w-full flex items-center justify-center"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="text-slate-500 font-medium">Loading Service Tiers Data...</p></div></div>;
+  // We handle loading states inline to prevent layout shifts and scroll jumps
+  const isLoading = (loadingCustomers || loadingTiers) && allCustomers.length === 0;
+
+  if (isLoading) {
+    return <div className="h-full w-full flex items-center justify-center"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="text-slate-500 font-medium">Initializing Service Tiers...</p></div></div>;
   }
 
   const totalPages = isSearching ? Math.ceil(filteredCustomers.length / itemsPerPage) : Math.ceil(totalCount / itemsPerPage);
@@ -262,7 +272,7 @@ export default function ServiceTiersPage() {
                   <span className="text-3xl font-bold">{tier.speed}</span>
                   <span className={cn("text-sm font-semibold", isFeatured ? "text-white/80" : "text-slate-400")}>{tier.unit}</span>
                 </div>
-                <p className={cn("text-sm mt-1", isFeatured ? "text-white/80" : "text-slate-500")}>{tier.price} / mo</p>
+                <p className={cn("text-sm mt-1", isFeatured ? "text-white/80" : "text-slate-500")}>{formatCurrency(tier.price)} / mo</p>
               </div>
 
               <div className="space-y-4 pt-4 relative">
@@ -391,8 +401,11 @@ export default function ServiceTiersPage() {
           </div>
         </div>
 
-        <div className="w-full overflow-x-auto relative z-0">
-          <div>
+        <div className={cn(
+          "w-full overflow-x-auto relative z-0 transition-opacity duration-200",
+          (isRefetching) ? "opacity-50 pointer-events-none" : "opacity-100"
+        )}>
+          <div className="min-h-[580px]">
             <table className="w-full text-left border-collapse table-fixed min-w-[1000px]">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50">
@@ -754,11 +767,11 @@ export default function ServiceTiersPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Price (string)</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Price</label>
                       <input 
                         required
-                        type="text" 
-                        placeholder="e.g. Rp 900.000"
+                        type="number" 
+                        placeholder="e.g. 900000"
                         className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
                         value={newTier.price}
                         onChange={(e) => setNewTier({...newTier, price: e.target.value})}

@@ -47,7 +47,7 @@ export interface Transaction {
 export interface ServiceTier {
   id: number;
   name: string;
-  price: string;
+  price: string | number;
   fup: string;
   speed: string;
   features?: string[];

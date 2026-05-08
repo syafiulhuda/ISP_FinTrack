@@ -480,7 +480,25 @@ export default function ExecutiveDashboard() {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
                         <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
                         <YAxis tickFormatter={(val) => `Rp${val/1000000}M`} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                        <RechartsTooltip formatter={(value: any) => new Intl.NumberFormat('id-ID', {style: 'currency', currency: 'IDR'}).format(Number(value) || 0)} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
+                        <RechartsTooltip 
+                          cursor={{ stroke: '#6366f1', strokeWidth: 2, strokeDasharray: '5 5' }} 
+                          content={({ active, payload }) => active && payload && payload.length && (
+                            <div className="bg-slate-900/90 backdrop-blur-md text-white px-4 py-3 rounded-2xl text-xs font-black shadow-2xl border border-white/10">
+                              <p className="opacity-60 mb-2 uppercase tracking-tighter text-[9px]">{payload[0].payload.month}</p>
+                              <div className="flex flex-col gap-2">
+                                {payload.map((entry: any, i: number) => (
+                                  <div key={i} className="flex items-center justify-between gap-6">
+                                    <span className="flex items-center gap-2">
+                                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                      {entry.name}
+                                    </span>
+                                    <span className="font-mono">{new Intl.NumberFormat('id-ID', {style: 'currency', currency: 'IDR', maximumFractionDigits: 0}).format(entry.value)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )} 
+                        />
                         <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} formatter={(value) => <span className="text-slate-400 font-medium mr-6">{value}</span>} />
                         <Area type="monotone" dataKey="revenue" name="Gross Revenue" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
                         <Line type="monotone" dataKey="expenses" name="Expenses" stroke="#f43f5e" strokeWidth={2} strokeDasharray="5 5" dot={false} />
@@ -529,7 +547,13 @@ export default function ExecutiveDashboard() {
                               </div>
                             )} 
                           />
-                          <Bar dataKey="value" fill="#6366f1" radius={[10, 10, 0, 0]} barSize={40} />
+                          <defs>
+                            <linearGradient id="barGradient1" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
+                              <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.8} />
+                            </linearGradient>
+                          </defs>
+                          <Bar dataKey="value" fill="url(#barGradient1)" radius={[10, 10, 0, 0]} barSize={40} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -552,7 +576,13 @@ export default function ExecutiveDashboard() {
                               </div>
                             )} 
                           />
-                          <Bar dataKey="value" fill="#8b5cf6" radius={[10, 10, 0, 0]} barSize={40} />
+                          <defs>
+                            <linearGradient id="barGradient2" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1} />
+                              <stop offset="100%" stopColor="#7c3aed" stopOpacity={0.8} />
+                            </linearGradient>
+                          </defs>
+                          <Bar dataKey="value" fill="url(#barGradient2)" radius={[10, 10, 0, 0]} barSize={40} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -568,14 +598,20 @@ export default function ExecutiveDashboard() {
                           <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
                           <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 'bold'}} width={100} />
                           <RechartsTooltip 
-                            cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
+                            cursor={{ fill: 'transparent' }} 
                             content={({ active, payload }) => active && payload && payload.length && (
                               <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
                                 {Number(payload[0].value).toLocaleString()}
                               </div>
                             )} 
                           />
-                          <Bar dataKey="value" fill="#10b981" radius={[0, 10, 10, 0]} barSize={20} />
+                          <defs>
+                            <linearGradient id="barGradient3" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#10b981" stopOpacity={1} />
+                              <stop offset="100%" stopColor="#059669" stopOpacity={0.8} />
+                            </linearGradient>
+                          </defs>
+                          <Bar dataKey="value" fill="url(#barGradient3)" radius={[0, 10, 10, 0]} barSize={20} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -591,14 +627,20 @@ export default function ExecutiveDashboard() {
                           <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
                           <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 'bold'}} width={100} />
                           <RechartsTooltip 
-                            cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
+                            cursor={{ fill: 'transparent' }} 
                             content={({ active, payload }) => active && payload && payload.length && (
                               <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
                                 {Number(payload[0].value).toLocaleString()}
                               </div>
                             )} 
                           />
-                          <Bar dataKey="value" fill="#3b82f6" radius={[0, 10, 10, 0]} barSize={20} />
+                          <defs>
+                            <linearGradient id="barGradient4" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#3b82f6" stopOpacity={1} />
+                              <stop offset="100%" stopColor="#2563eb" stopOpacity={0.8} />
+                            </linearGradient>
+                          </defs>
+                          <Bar dataKey="value" fill="url(#barGradient4)" radius={[0, 10, 10, 0]} barSize={20} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -651,14 +693,21 @@ export default function ExecutiveDashboard() {
                           <XAxis type="number" hide />
                           <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 700}} width={120} />
                           <RechartsTooltip 
-                            cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
+                            cursor={{ fill: 'transparent' }} 
                             content={({ active, payload }) => active && payload && payload.length && (
-                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
-                                {Number(payload[0].value).toLocaleString()}
+                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-xs font-black shadow-2xl border border-white/10">
+                                <p className="opacity-60 mb-1 uppercase tracking-tighter text-[9px]">{payload[0].payload.name}</p>
+                                <p className="text-sm font-black">{Number(payload[0].value).toLocaleString()}</p>
                               </div>
                             )} 
                           />
-                          <Bar dataKey="value" fill="#6366f1" radius={[0, 10, 10, 0]} barSize={24} label={{ position: 'right', fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
+                          <defs>
+                            <linearGradient id="regGradient1" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
+                              <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.8} />
+                            </linearGradient>
+                          </defs>
+                          <Bar dataKey="value" fill="url(#regGradient1)" radius={[0, 10, 10, 0]} barSize={24} label={{ position: 'right', fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -676,14 +725,21 @@ export default function ExecutiveDashboard() {
                           <XAxis type="number" hide />
                           <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 700}} width={100} />
                           <RechartsTooltip 
-                            cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
+                            cursor={{ fill: 'transparent' }} 
                             content={({ active, payload }) => active && payload && payload.length && (
-                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
-                                {Number(payload[0].value).toLocaleString()}
+                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-xs font-black shadow-2xl border border-white/10">
+                                <p className="opacity-60 mb-1 uppercase tracking-tighter text-[9px]">{payload[0].payload.name}</p>
+                                <p className="text-sm font-black">{Number(payload[0].value).toLocaleString()}</p>
                               </div>
                             )} 
                           />
-                          <Bar dataKey="value" fill="#06b6d4" radius={[0, 10, 10, 0]} barSize={18} label={{ position: 'right', fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
+                          <defs>
+                            <linearGradient id="regGradient2" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#06b6d4" stopOpacity={1} />
+                              <stop offset="100%" stopColor="#0891b2" stopOpacity={0.8} />
+                            </linearGradient>
+                          </defs>
+                          <Bar dataKey="value" fill="url(#regGradient2)" radius={[0, 10, 10, 0]} barSize={18} label={{ position: 'right', fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>

@@ -26,7 +26,7 @@ CREATE OR REPLACE FUNCTION public.notify_asset_condition() RETURNS trigger
       BEGIN
         -- Case-insensitive check for condition and ownership
         -- Buat notifikasi jika kondisi bukan 'Good' DAN Kepemilikan adalah 'Dimiliki' atau 'Sewa'
-        IF (LOWER(NEW.condition) != 'good' AND (LOWER(NEW.kepemilikan) IN ('dimiliki', 'sewa') OR NEW.kepemilikan IS NULL)) THEN
+        IF (LOWER(NEW.condition) != 'good' AND (TG_OP = 'INSERT' OR OLD.condition != NEW.condition) AND (LOWER(NEW.kepemilikan) IN ('dimiliki', 'sewa') OR NEW.kepemilikan IS NULL)) THEN
           INSERT INTO notifications (category, title, message, type, is_unread, action_label)
           VALUES (
             'Inventory',
@@ -187,7 +187,7 @@ CREATE TABLE public.customers (
     city text,
     province text,
     status text,
-    "createdAt" text,
+    "createdAt" timestamp with time zone,
     no_telp text
 );
 
@@ -357,7 +357,7 @@ CREATE TABLE public.service_tiers (
     name text,
     speed text,
     unit text,
-    price text,
+    price numeric,
     fup text,
     type text,
     icon text
