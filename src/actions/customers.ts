@@ -105,13 +105,13 @@ export async function auditCustomerGracePeriod() {
 export async function getCustomerGrowthTrend() {
   try {
     const res = await query(`
-      select
-          TO_CHAR("createdAt"::date, 'YYYY-MM') as "Month",
+      SELECT
+          TO_CHAR("createdAt"::timestamptz AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM') as "Month",
           count(*) as "Growth"
-      from customers c
-      where status = 'Active'
-      group by 1
-      order by 1 ASC
+      FROM customers c
+      WHERE status = 'Active'
+      GROUP BY 1
+      ORDER BY 1 ASC
     `);
     
     const rawData = (res.rows || []).map(row => ({
@@ -119,9 +119,13 @@ export async function getCustomerGrowthTrend() {
       growth: parseInt(row.Growth || '0')
     }));
 
+    // Use UTC+7 math to determine current WIB year & month
     const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonthIdx = now.getMonth();
+    const wibMs = now.getTime() + 7 * 60 * 60 * 1000;
+    const wibNow = new Date(wibMs);
+    const currentYear = wibNow.getUTCFullYear();
+    const currentMonthIdx = wibNow.getUTCMonth(); // 0-based
+
     const filledData = [];
     let cumulative = 0;
     for (let i = 0; i < 12; i++) {
@@ -133,9 +137,10 @@ export async function getCustomerGrowthTrend() {
         cumulative += existing.growth;
       }
 
-      const d = new Date(currentYear, i, 1);
+      // Build month label using UTC to avoid timezone shift
+      const d = new Date(Date.UTC(currentYear, i, 1));
       filledData.push({
-        month: d.toLocaleString('en-US', { month: 'short' }),
+        month: d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' }),
         growth: cumulative
       });
     }
@@ -158,6 +163,7 @@ export async function getCustomerGrowthTrend() {
     return [];
   }
 }
+
 
 export async function getServiceMix(province?: string) {
   try {

@@ -491,3 +491,43 @@ ORDER BY
 
 
 -- Regional Analysis
+
+
+-- 
+-- Forecasting
+-- 
+-- Linear Regression
+WITH LinearStats AS (
+    SELECT
+        regr_slope(revenue, month_index) as m,
+        regr_intercept(revenue, month_index) as b,
+        regr_slope(churn_rate, month_index) as m_churn,
+        regr_intercept(churn_rate, month_index) as b_churn,
+        regr_slope(expenses, month_index) as m_opex,
+        regr_intercept(expenses, month_index) as b_opex,
+        MAX(month_index) as last_idx
+    FROM predictive_metrics_mv
+    WHERE revenue > 0 -- Mengabaikan bulan yang belum ada datanya (seperti Mei 2026 di data Anda)
+)
+SELECT
+    TO_CHAR((m * (last_idx + 1) + b), 'RP 999,999,999,999') as validated_revenue,
+    ROUND((m_churn * (last_idx + 1) + b_churn)::numeric, 2) || '%' as validated_churn,
+    TO_CHAR((m_opex * (last_idx + 1) + b_opex), 'RP 999,999,999,999') as validated_opex
+FROM LinearStats;
+
+-- Neural Network
+WITH WeightedData AS (
+    SELECT
+        revenue,
+        churn_rate,
+        expenses,
+        -- Membuat bobot linear (1, 2, 3... N)
+        ROW_NUMBER() OVER (ORDER BY month ASC) as weight
+    FROM predictive_metrics_mv
+    WHERE revenue > 0 -- Hanya mengambil data histori yang valid (11 bulan)
+)
+SELECT
+    TO_CHAR(SUM(revenue * weight) / SUM(weight), 'RP 999,999,999,999') as validated_nn_revenue,
+    ROUND((SUM(churn_rate * weight) / SUM(weight))::numeric, 2) || '%' as validated_nn_churn,
+    TO_CHAR(SUM(expenses * weight) / SUM(weight), 'RP 999,999,999,999') as validated_nn_opex
+FROM WeightedData;

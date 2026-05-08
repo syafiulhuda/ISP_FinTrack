@@ -237,7 +237,7 @@ export async function getRevenueGrowthTrend() {
     const res = await query(`
       WITH MonthlyRevenue AS (
           SELECT 
-              TO_CHAR(timestamp, 'YYYY-MM') as month,
+              TO_CHAR(timestamp AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM') as month,
               SUM(amount) as revenue
           FROM transactions
           WHERE status = 'Verified' AND keterangan = 'pemasukan'
@@ -245,7 +245,7 @@ export async function getRevenueGrowthTrend() {
       ),
       MonthlyExpenses AS (
           SELECT 
-              TO_CHAR(timestamp, 'YYYY-MM') as month,
+              TO_CHAR(timestamp AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM') as month,
               SUM(amount) as expense
           FROM transactions
           WHERE status = 'Verified' AND keterangan = 'pengeluaran'
@@ -281,16 +281,21 @@ export async function getRevenueGrowthTrend() {
       
       let current = new Date(firstMonth);
       while (current <= lastMonth) {
-        const monthStr = current.toISOString().slice(0, 7);
+        // UTC+7 math — do NOT use toISOString() which gives UTC month
+        const wibMs = current.getTime() + 7 * 60 * 60 * 1000;
+        const wibDate = new Date(wibMs);
+        const year = wibDate.getUTCFullYear();
+        const month = String(wibDate.getUTCMonth() + 1).padStart(2, '0');
+        const monthStr = `${year}-${month}`;
         const existing = rawData.find(d => d.monthKey === monthStr);
         
         filledData.push({
-          month: current.toLocaleString('default', { month: 'short' }),
+          month: new Date(year, wibDate.getUTCMonth()).toLocaleString('default', { month: 'short' }),
           revenue: existing ? existing.revenue : 0,
           expenses: existing ? existing.expenses : 0
         });
         
-        current.setMonth(current.getMonth() + 1);
+        current.setUTCMonth(current.getUTCMonth() + 1);
       }
     }
 
@@ -305,6 +310,35 @@ export async function getRevenueGrowthTrend() {
       { month: 'Feb', revenue: 4100000, expenses: 2000000 },
       { month: 'Mar', revenue: 0, expenses: 0 }
     ];
+  }
+}
+
+/**
+ * Ambil tanggal pertama & terakhir dari tabel transactions (WIB).
+ * Digunakan sebagai default filter date range di semua halaman.
+ */
+export async function getTransactionDateRange(): Promise<{ startDate: string; endDate: string }> {
+  try {
+    const res = await query(`
+      SELECT 
+        TO_CHAR(MIN(timestamp AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM-DD') as start_date,
+        TO_CHAR(MAX(timestamp AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM-DD') as end_date
+      FROM transactions
+      WHERE status = 'Verified'
+    `);
+    const row = res.rows[0];
+    if (row?.start_date && row?.end_date) {
+      return { startDate: row.start_date, endDate: row.end_date };
+    }
+    // Fallback: current year
+    const now = new Date();
+    const wibYear = new Date(now.getTime() + 7 * 60 * 60 * 1000).getUTCFullYear();
+    return { startDate: `${wibYear}-01-01`, endDate: `${wibYear}-12-31` };
+  } catch (e) {
+    console.error("DB Error: getTransactionDateRange", e);
+    const now = new Date();
+    const wibYear = new Date(now.getTime() + 7 * 60 * 60 * 1000).getUTCFullYear();
+    return { startDate: `${wibYear}-01-01`, endDate: `${wibYear}-12-31` };
   }
 }
 

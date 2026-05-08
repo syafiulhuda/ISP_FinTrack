@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getExecutiveReport } from "@/actions/executive";
+import { getTransactionDateRange } from "@/actions/transactions";
+
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
   LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, ComposedChart
@@ -33,11 +35,27 @@ export default function ExecutiveDashboard() {
   });
 
   const [activeTab, setActiveTab] = useState("financial");
-  const [startDate, setStartDate] = useState("2026-01-01");
-  const [endDate, setEndDate] = useState("2026-12-31");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [selectedProvince, setSelectedProvince] = useState("All Regions");
   const [isRegionOpen, setIsRegionOpen] = useState(false);
+  const [datesInitialized, setDatesInitialized] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const { data: dateRange } = useQuery({
+    queryKey: ['transactionDateRange'],
+    queryFn: getTransactionDateRange,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (!datesInitialized && dateRange?.startDate && dateRange?.endDate) {
+      setStartDate(dateRange.startDate);
+      setEndDate(dateRange.endDate);
+      setDatesInitialized(true);
+    }
+  }, [dateRange, datesInitialized]);
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

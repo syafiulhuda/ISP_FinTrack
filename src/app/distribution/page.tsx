@@ -55,8 +55,10 @@ export default function DistributionMapPage() {
     ONT: true,
     Server: true,
     Good: true,
-    Maintenance: true
+    Maintenance: true,
+    Broken: false,
   });
+
   const [maintenanceHistory, setMaintenanceHistory] = useState<any[]>([]);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
@@ -82,7 +84,7 @@ export default function DistributionMapPage() {
 
   const filteredAssets = useMemo(() => {
     const typeFilters = ['OLT', 'ODP', 'ONT', 'Server'];
-    const statusFilters = ['Good', 'Maintenance'];
+    const statusFilters = ['Good', 'Maintenance', 'Broken'] as const;
 
     const activeTypeFilters = typeFilters.filter(t => activeLayers[t as keyof typeof activeLayers]);
     const activeStatusFilters = statusFilters.filter(s => activeLayers[s as keyof typeof activeLayers]);
@@ -90,19 +92,25 @@ export default function DistributionMapPage() {
     return assets.filter(a => {
       const matchesSearch = a.sn.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             a.location.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesType = activeTypeFilters.length === 0 || activeTypeFilters.includes(a.type);
-      
-      // Map DB condition to UI filter labels (case-insensitive)
+
+      // Properly classify asset status — Broken is NOT a fallback for Good
       const rawCondition = (a.condition || a.status || '').toLowerCase();
-      const assetStatus = rawCondition === 'good' || rawCondition === 'online' ? 'Good' 
-                        : rawCondition === 'maintenance' || rawCondition === 'maint.' ? 'Maintenance'
-                        : 'Good'; // Fallback
-      // If no status filters are checked, hide everything
+      let assetStatus: 'Good' | 'Maintenance' | 'Broken';
+      if (rawCondition === 'good' || rawCondition === 'online') {
+        assetStatus = 'Good';
+      } else if (rawCondition === 'maintenance' || rawCondition === 'maint.') {
+        assetStatus = 'Maintenance';
+      } else {
+        assetStatus = 'Broken'; // offline, broken, warning, unknown → Broken
+      }
+
       const matchesStatus = activeStatusFilters.length > 0 && activeStatusFilters.includes(assetStatus);
-      
+
       return matchesSearch && matchesType && matchesStatus;
     });
+
   }, [assets, searchQuery, activeLayers]);
 
   const nodeStats = useMemo(() => {
@@ -182,7 +190,7 @@ export default function DistributionMapPage() {
                   >
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Filter Viewport</p>
                     <div className="space-y-3">
-                      {['OLT', 'ODP', 'ONT', 'Server', 'Good', 'Maintenance'].map((layer) => (
+                      {['OLT', 'ODP', 'ONT', 'Server', 'Good', 'Maintenance', 'Broken'].map((layer) => (
                         <label key={layer} className="flex items-center gap-3 cursor-pointer group">
                           <div className="relative flex items-center">
                             <input
@@ -198,13 +206,14 @@ export default function DistributionMapPage() {
                           <span className={cn(
                             "text-[13px] font-bold tracking-tight transition-colors",
                             activeLayers[layer as keyof typeof activeLayers] 
-                              ? (layer === 'Maintenance' ? "text-amber-500" : layer === 'Warning' ? "text-red-500" : layer === 'Good' ? "text-emerald-500" : "text-slate-900 dark:text-white")
+                              ? (layer === 'Maintenance' ? "text-amber-500" : layer === 'Broken' ? "text-red-500" : layer === 'Good' ? "text-emerald-500" : "text-slate-900 dark:text-white")
                               : "text-slate-400 dark:text-slate-600 group-hover:text-slate-500"
                           )}>
                             {layer}
                           </span>
                         </label>
                       ))}
+
                     </div>
                   </m.div>
                 )}
