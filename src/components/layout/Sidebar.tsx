@@ -125,9 +125,10 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
           className={cn(
             "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300",
             pathname === '/executive' 
-              ? "bg-slate-900 dark:bg-white/10 shadow-xl shadow-indigo-500/10 border border-indigo-500/50" 
+              ? cn(theme.bg, "shadow-xl dark:bg-white/10 border border-white/10 dark:border-indigo-500/50", !theme.isCustom && theme.shadow) 
               : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/30"
           )}
+          style={pathname === '/executive' && theme.isCustom ? { backgroundColor: theme.color, boxShadow: `0 10px 15px -3px ${theme.color}44` } : {}}
         >
           {pathname === '/executive' && (
             <m.div 
@@ -137,7 +138,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
           )}
           <div className={cn(
             "p-1.5 rounded-lg transition-colors shrink-0",
-            pathname === '/executive' ? "bg-indigo-500 text-white" : "bg-indigo-500/10 text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white"
+            pathname === '/executive' ? "bg-white/20 text-white" : "bg-indigo-500/10 text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white"
           )}>
             <TrendingUp size={16} />
           </div>

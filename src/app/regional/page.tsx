@@ -382,46 +382,48 @@ export default function RegionalAnalysisPage() {
         />
         
         {/* Pagination Profit */}
-        <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
-          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Showing {paginatedProfit.length} nodes</p>
-          <div className="flex gap-3">
-            <m.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setProfitPage(p => Math.max(1, p - 1))}
-              disabled={profitPage === 1}
-              className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-400 disabled:opacity-30 shadow-sm"
-            >
-              <ChevronLeft size={20} />
-            </m.button>
-            <div className="flex items-center gap-1.5">
-              <input 
-                type="text"
-                key={`profit-page-${profitPage}`}
-                defaultValue={profitPage}
-                onBlur={(e) => {
-                  const val = parseInt(e.target.value);
-                  if (!isNaN(val) && val >= 1 && val <= (totalProfitPages || 1)) setProfitPage(val);
-                  else e.target.value = String(profitPage);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                }}
-                className="w-10 h-10 text-center rounded-xl text-xs font-black bg-primary text-white shadow-lg shadow-primary/20 border-none outline-none"
-              />
-              <span className="text-xs font-black text-slate-400">/ {totalProfitPages || 1}</span>
+        {dynamicData.length > 0 && (
+          <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-white/5">
+            <p className="text-xs font-bold text-slate-400">
+              Showing <span className="text-slate-900 dark:text-white">{(profitPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(profitPage*itemsPerPage, dynamicData.length)}</span> of <span className="text-slate-900 dark:text-white">{dynamicData.length}</span> nodes
+            </p>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setProfitPage(prev => Math.max(1, prev - 1))}
+                disabled={profitPage === 1}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+              >
+                Previous
+              </button>
+              <div className="flex items-center gap-1">
+                {[...Array(Math.min(5, totalProfitPages))].map((_, i) => {
+                  let pageNum = profitPage <= 3 ? i + 1 : (profitPage >= totalProfitPages - 2 ? totalProfitPages - 4 + i : profitPage - 2 + i);
+                  if (pageNum <= 0 || pageNum > totalProfitPages) return null;
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setProfitPage(pageNum)}
+                      className={cn(
+                        "w-8 h-8 rounded-lg text-xs font-bold transition-all",
+                        profitPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      )}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              <button 
+                onClick={() => setProfitPage(prev => Math.min(totalProfitPages, prev + 1))}
+                disabled={profitPage === totalProfitPages}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+              >
+                Next
+              </button>
             </div>
-            <m.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setProfitPage(p => Math.min(totalProfitPages, p + 1))}
-              disabled={profitPage >= totalProfitPages}
-              className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-400 disabled:opacity-30 shadow-sm"
-            >
-              <ChevronRight size={20} />
-            </m.button>
           </div>
-        </div>
+        )}
       </m.section>
 
       {/* AR Aging Table */}
@@ -472,46 +474,48 @@ export default function RegionalAnalysisPage() {
         />
         
         {/* Pagination Aging */}
-        <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
-          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Showing {paginatedAging.length} nodes</p>
-          <div className="flex gap-3">
-            <m.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setAgingPage(p => Math.max(1, p - 1))}
-              disabled={agingPage === 1}
-              className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-400 disabled:opacity-30 shadow-sm"
-            >
-              <ChevronLeft size={20} />
-            </m.button>
-            <div className="flex items-center gap-1.5">
-              <input 
-                type="text"
-                key={`aging-page-${agingPage}`}
-                defaultValue={agingPage}
-                onBlur={(e) => {
-                  const val = parseInt(e.target.value);
-                  if (!isNaN(val) && val >= 1 && val <= (totalAgingPages || 1)) setAgingPage(val);
-                  else e.target.value = String(agingPage);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                }}
-                className="w-10 h-10 text-center rounded-xl text-xs font-black bg-primary text-white shadow-lg shadow-primary/20 border-none outline-none"
-              />
-              <span className="text-xs font-black text-slate-400">/ {totalAgingPages || 1}</span>
+        {dynamicData.length > 0 && (
+          <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-white/5">
+            <p className="text-xs font-bold text-slate-400">
+              Showing <span className="text-slate-900 dark:text-white">{(agingPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(agingPage*itemsPerPage, dynamicData.length)}</span> of <span className="text-slate-900 dark:text-white">{dynamicData.length}</span> nodes
+            </p>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setAgingPage(prev => Math.max(1, prev - 1))}
+                disabled={agingPage === 1}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+              >
+                Previous
+              </button>
+              <div className="flex items-center gap-1">
+                {[...Array(Math.min(5, totalAgingPages))].map((_, i) => {
+                  let pageNum = agingPage <= 3 ? i + 1 : (agingPage >= totalAgingPages - 2 ? totalAgingPages - 4 + i : agingPage - 2 + i);
+                  if (pageNum <= 0 || pageNum > totalAgingPages) return null;
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setAgingPage(pageNum)}
+                      className={cn(
+                        "w-8 h-8 rounded-lg text-xs font-bold transition-all",
+                        agingPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      )}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              <button 
+                onClick={() => setAgingPage(prev => Math.min(totalAgingPages, prev + 1))}
+                disabled={agingPage === totalAgingPages}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+              >
+                Next
+              </button>
             </div>
-            <m.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setAgingPage(p => Math.min(totalAgingPages, p + 1))}
-              disabled={agingPage >= totalAgingPages}
-              className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-400 disabled:opacity-30 shadow-sm"
-            >
-              <ChevronRight size={20} />
-            </m.button>
           </div>
-        </div>
+        )}
       </m.section>
     </div>
   );

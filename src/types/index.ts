@@ -12,6 +12,11 @@ export interface Customer {
   city?: string;
   district?: string;
   village?: string;
+  address?: string;
+  is_vip?: boolean;
+  no_telp?: string;
+  grace_days?: number;
+  due_day?: number;
 }
 
 export interface Asset {

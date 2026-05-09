@@ -204,11 +204,6 @@ export default function ServiceTiersPage() {
     ? filteredCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
     : customerList; // Already limited by server if not searching
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-    }
-  };
 
   return (
     <div className="space-y-10">
@@ -405,7 +400,7 @@ export default function ServiceTiersPage() {
           "w-full overflow-x-auto relative z-0 transition-opacity duration-200",
           (isRefetching) ? "opacity-50 pointer-events-none" : "opacity-100"
         )}>
-          <div className="min-h-[580px]">
+          <div className="min-h-[650px]" style={{ overflowAnchor: 'none' }}>
             <table className="w-full text-left border-collapse table-fixed min-w-[1000px]">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50">
@@ -424,36 +419,40 @@ export default function ServiceTiersPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: isSearching ? 0 : idx * 0.05 }}
-                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-all group"
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-all group h-[92px]"
                   >
                     <td className="px-6 py-5">
-                      <div className={cn(
-                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all",
-                        cust.status?.toLowerCase() === 'active' 
-                          ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 ring-1 ring-emerald-500/20" 
-                          : "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 ring-1 ring-rose-500/20"
-                      )}>
+                      <div className="h-12 flex flex-col justify-center">
                         <div className={cn(
-                          "w-1.5 h-1.5 rounded-full animate-pulse",
-                          cust.status?.toLowerCase() === 'active' ? "bg-emerald-500" : "bg-rose-500"
-                        )}></div>
-                        {cust.status || 'Active'}
-                      </div>
-                        {cust.grace_days !== null && cust.grace_days <= 3 && (
+                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all w-fit",
+                          cust.status?.toLowerCase() === 'active' 
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 ring-1 ring-emerald-500/20" 
+                            : "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 ring-1 ring-rose-500/20"
+                        )}>
                           <div className={cn(
-                            "mt-1 flex items-center gap-1 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter w-fit",
-                            cust.grace_days === 1 ? "text-orange-600 bg-orange-100" :
-                            cust.grace_days === 0 ? "text-amber-600 bg-amber-100 ring-1 ring-amber-500/20" :
-                            cust.grace_days < 0 ? "text-rose-600 bg-rose-100 ring-1 ring-rose-500/20" :
-                            "text-slate-500 bg-slate-100"
-                          )}>
-                            <AlertTriangle size={8} /> 
-                            {cust.grace_days === 1 ? "Due Tomorrow" : 
-                             cust.grace_days === 0 ? "Due Today" : 
-                             cust.grace_days < 0 ? `Overdue ${Math.abs(cust.grace_days)} Days` : 
-                             `Due in ${cust.grace_days} Days`}
-                          </div>
-                        )}
+                            "w-1.5 h-1.5 rounded-full animate-pulse",
+                            cust.status?.toLowerCase() === 'active' ? "bg-emerald-500" : "bg-rose-500"
+                          )}></div>
+                          {cust.status || 'Active'}
+                        </div>
+                          {cust.grace_days !== null && cust.grace_days <= 3 && (
+                            <div className={cn(
+                              "mt-1 flex items-center gap-1 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter w-fit leading-tight",
+                              cust.grace_days === 1 ? "text-orange-600 bg-orange-100" :
+                              cust.grace_days === 0 ? "text-amber-600 bg-amber-100 ring-1 ring-amber-500/20" :
+                              cust.grace_days < 0 ? "text-rose-600 bg-rose-100 ring-1 ring-rose-500/20" :
+                              "text-slate-500 bg-slate-100"
+                            )}>
+                              <AlertTriangle size={8} className="shrink-0" /> 
+                              <span className="max-w-[80px] break-words">
+                                {cust.grace_days === 1 ? "Due Tomorrow" : 
+                                 cust.grace_days === 0 ? "Due Today" : 
+                                 cust.grace_days < 0 ? `Overdue ${Math.abs(cust.grace_days)} Days` : 
+                                 `Due in ${cust.grace_days} Days`}
+                              </span>
+                            </div>
+                          )}
+                      </div>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex flex-col gap-0.5">
@@ -493,48 +492,46 @@ export default function ServiceTiersPage() {
           </div>
         </div>
 
-        {/* Pagination UI */}
-        {totalPages > 1 && (
-          <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-              Showing <span className="text-slate-900 dark:text-slate-100">{displayCustomers.length}</span> of <span className="text-slate-900 dark:text-slate-100">{filteredCustomers.length}</span> subscribers
+        {/* Pagination Controls */}
+        {totalPages > 0 && (
+          <div className="p-10 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-white/5">
+            <p className="text-xs font-bold text-slate-400">
+              Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, isSearching ? filteredCustomers.length : totalCount)}</span> of <span className="text-slate-900 dark:text-white">{isSearching ? filteredCustomers.length : totalCount}</span> subscribers
             </p>
-            <div className="flex gap-2">
-              <m.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handlePageChange(currentPage - 1)}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 bg-white dark:bg-slate-900 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 disabled:opacity-30 transition-all border border-slate-200 dark:border-slate-800 shadow-sm"
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
                 Previous
-              </m.button>
-              <div className="flex items-center gap-1.5">
-                <input 
-                  type="text"
-                  key={`st-page-${currentPage}`}
-                  defaultValue={currentPage}
-                  onBlur={(e) => {
-                    const val = parseInt(e.target.value);
-                    if (!isNaN(val) && val >= 1 && val <= totalPages) handlePageChange(val);
-                    else e.target.value = String(currentPage);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                  }}
-                  className="w-10 h-10 text-center rounded-xl text-xs font-bold bg-primary text-white shadow-lg shadow-primary/20 border-none outline-none"
-                />
-                <span className="text-xs font-bold text-slate-400">/ {totalPages}</span>
+              </button>
+              <div className="flex items-center gap-1">
+                {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                  let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
+                  if (pageNum <= 0 || pageNum > totalPages) return null;
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={cn(
+                        "w-8 h-8 rounded-lg text-xs font-bold transition-all",
+                        currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      )}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
               </div>
-              <m.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handlePageChange(currentPage + 1)}
+              <button 
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 disabled:opacity-30 transition-all"
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
                 Next
-              </m.button>
+              </button>
             </div>
           </div>
         )}

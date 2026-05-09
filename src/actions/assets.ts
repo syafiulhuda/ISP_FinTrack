@@ -97,6 +97,42 @@ export async function updateAssetCondition(sn: string, condition: string) {
   }
 }
 
+export async function startMaintenance(sn: string, technician: string, reason: string) {
+  try {
+    const profile = await getAdminProfile();
+    const inputterName = profile.fullName || 'Unknown Admin';
+
+    // 1. Get asset id from SN
+    const assetRes = await query('SELECT id FROM asset_roster WHERE sn = $1', [sn]);
+    if (assetRes.rows.length === 0) return { success: false, error: 'Asset not found' };
+    const assetId = assetRes.rows[0].id;
+
+    // 2. Update asset condition to 'Maintenance'
+    await query(`
+      UPDATE asset_roster 
+      SET condition = 'Maintenance', tanggal_perubahan = NOW(),
+          inputter = $2, inputter_tms = NOW()
+      WHERE id = $1
+    `, [assetId, inputterName]);
+
+    // 3. Add to maintenance history
+    await query(`
+      INSERT INTO maintenance_history (
+        asset_id, description, technician_name, date, 
+        inputter, inputter_tms
+      )
+      VALUES ($1, 'START MAINTENANCE: ' || $2, $3, NOW(), $4, NOW())
+    `, [assetId, reason, technician, inputterName]);
+
+    revalidatePath('/inventory');
+    revalidatePath('/distribution');
+    return { success: true };
+  } catch (error) {
+    console.error('DB Error: startMaintenance:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
 export async function deleteAsset(sn: string) {
   try {
     await query(`DELETE FROM asset_roster WHERE sn = $1`, [sn]);

@@ -452,7 +452,11 @@ export default function DistributionMapPage() {
                       {selectedNode.tanggal_perubahan && (
                         <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
                           <span className="text-xs font-bold text-slate-500">Tgl. Perubahan</span>
-                          <span className="text-xs font-black">{selectedNode.tanggal_perubahan}</span>
+                          <span className="text-xs font-black">
+                            {selectedNode.tanggal_perubahan instanceof Date 
+                              ? selectedNode.tanggal_perubahan.toLocaleString() 
+                              : String(selectedNode.tanggal_perubahan)}
+                          </span>
                         </div>
                       )}
                     </div>

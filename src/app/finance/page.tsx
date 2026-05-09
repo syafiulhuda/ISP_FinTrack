@@ -737,54 +737,44 @@ export default function FinancePage() {
         </div>
 
         {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-2 pt-4">
-            <p className="text-sm font-medium text-slate-500">
-              Showing <span className="text-slate-900 dark:text-slate-100 font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-slate-100 font-bold">{Math.min(currentPage * itemsPerPage, filteredByKeterangan.length)}</span> of <span className="text-slate-900 dark:text-slate-100 font-bold">{filteredByKeterangan.length}</span> results
+        {filteredByKeterangan.length > 0 && (
+          <div className="p-10 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-white/5">
+            <p className="text-xs font-bold text-slate-400">
+              Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, filteredByKeterangan.length)}</span> of <span className="text-slate-900 dark:text-white">{filteredByKeterangan.length}</span> results
             </p>
             <div className="flex items-center gap-2">
               <button 
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className={cn(
-                  "p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 transition-all",
-                  currentPage === 1 
-                    ? "opacity-50 cursor-not-allowed text-slate-400" 
-                    : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                )}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
-                <ChevronLeft size={18} />
+                Previous
               </button>
-              
-              <div className="flex items-center gap-1.5">
-                <input 
-                  type="text"
-                  key={`finance-page-${currentPage}`}
-                  defaultValue={currentPage}
-                  onBlur={(e) => {
-                    const val = parseInt(e.target.value);
-                    if (!isNaN(val) && val >= 1 && val <= totalPages) setCurrentPage(val);
-                    else e.target.value = String(currentPage);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                  }}
-                  className="w-10 h-10 text-center rounded-xl text-sm font-bold bg-primary text-white shadow-lg shadow-primary/20 border-none outline-none"
-                />
-                <span className="text-xs font-bold text-slate-400">/ {totalPages}</span>
+              <div className="flex items-center gap-1">
+                {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                  let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
+                  if (pageNum <= 0 || pageNum > totalPages) return null;
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={cn(
+                        "w-8 h-8 rounded-lg text-xs font-bold transition-all",
+                        currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      )}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
               </div>
-
               <button 
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className={cn(
-                  "p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 transition-all",
-                  currentPage === totalPages 
-                    ? "opacity-50 cursor-not-allowed text-slate-400" 
-                    : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                )}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
-                <ChevronRight size={18} />
+                Next
               </button>
             </div>
           </div>

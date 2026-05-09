@@ -247,12 +247,16 @@ export default function ExecutiveDashboard() {
     const stockByType: Record<string, number> = {};
     const stockByLocation: Record<string, number> = {};
     const ownershipDist: Record<string, number> = {};
+    const inventoryByCondition: Record<string, number> = {};
 
     filteredAssetRoster.forEach((a: any) => {
       assetByType[a.type || 'Other'] = (assetByType[a.type || 'Other'] || 0) + 1;
       const loc = a.province || getProvinceFromCity(a.location) || 'Unknown';
       assetByLocation[loc] = (assetByLocation[loc] || 0) + 1;
       ownershipDist[a.kepemilikan || 'Company'] = (ownershipDist[a.kepemilikan || 'Company'] || 0) + 1;
+      
+      const cond = a.condition || 'Unknown';
+      inventoryByCondition[cond] = (inventoryByCondition[cond] || 0) + 1;
     });
 
     filteredStockAssets.forEach((a: any) => {
@@ -260,6 +264,9 @@ export default function ExecutiveDashboard() {
       const loc = a.province || getProvinceFromCity(a.location) || 'Unknown';
       stockByLocation[loc] = (stockByLocation[loc] || 0) + 1;
       ownershipDist[a.kepemilikan || 'Company'] = (ownershipDist[a.kepemilikan || 'Company'] || 0) + 1;
+      
+      const cond = a.condition || 'Unknown';
+      inventoryByCondition[cond] = (inventoryByCondition[cond] || 0) + 1;
     });
 
     const assetValuation = [...filteredAssetRoster, ...filteredStockAssets].reduce((sum: number, item: any) => {
@@ -310,6 +317,7 @@ export default function ExecutiveDashboard() {
         stockByType: Object.entries(stockByType).map(([name, value]) => ({ name: name as string, value: value as number })),
         stockByLocation: Object.entries(stockByLocation).map(([name, value]) => ({ name: name as string, value: value as number })),
         ownershipDist: Object.entries(ownershipDist).map(([name, value]) => ({ name: name as string, value: value as number })),
+        byCondition: inventoryByCondition,
         broken: filteredAssetRoster.filter((a: any) => a.condition === "Broken").length + filteredStockAssets.filter((a: any) => a.condition === "Broken").length
       },
       regional: {
@@ -519,9 +527,32 @@ export default function ExecutiveDashboard() {
                     <h3 className="text-4xl font-black text-emerald-500">{processedData.inventory.valuation}</h3>
                     <p className="text-xs text-slate-400 mt-1">Combined value of {processedData.inventory.total} devices</p>
                   </div>
-                  <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-center">
-                    <p className="text-xs font-bold text-slate-500 mb-1 uppercase">Total Assets</p>
-                    <h4 className="text-3xl font-black">{processedData.inventory.total}</h4>
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between shadow-sm">
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Total Assets</p>
+                      <h4 className="text-3xl font-black text-slate-900 dark:text-white">{processedData.inventory.total}</h4>
+                    </div>
+                    
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase">
+                          {processedData.inventory.byCondition['Good'] || 0} Good
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase">
+                          {processedData.inventory.byCondition['Maintenance'] || 0} Maint.
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                        <span className="text-[9px] font-black text-rose-600 dark:text-rose-400 uppercase">
+                          {processedData.inventory.byCondition['Broken'] || 0} Broken
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   <div className="bg-red-500/10 p-5 rounded-2xl border border-red-500/20 flex flex-col justify-center">
                     <p className="text-xs font-bold text-red-500 mb-1 uppercase">Broken Devices</p>

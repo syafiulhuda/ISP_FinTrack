@@ -23,7 +23,7 @@ import {
   Plus
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getAssetRoster, getStockAssets, getWarehouses, createAsset, deleteAsset, updateAssetCondition, deployAsset } from "@/actions/assets";
+import { getAssetRoster, getStockAssets, getWarehouses, createAsset, deleteAsset, updateAssetCondition, deployAsset, startMaintenance } from "@/actions/assets";
 import { Asset } from "@/types";
 import { 
   getMapAssets, 
@@ -99,6 +99,12 @@ export default function InventoryPage() {
   const [techName, setTechName] = useState("");
   const [techDesc, setTechDesc] = useState("");
   const [isResolving, setIsResolving] = useState(false);
+  
+  const [isStartingMaintenance, setIsStartingMaintenance] = useState(false);
+  const [startingAssetSn, setStartingAssetSn] = useState<string | null>(null);
+  const [maintenanceReason, setMaintenanceReason] = useState("");
+  const [techNameStart, setTechNameStart] = useState("");
+  
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletingAssetSn, setDeletingAssetSn] = useState<string | null>(null);
 
@@ -108,8 +114,9 @@ export default function InventoryPage() {
     function handleClickOutside(event: MouseEvent) {
       if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
         setActiveActionMenu(null);
-        setIsResolving(false); // Reset resolving when clicking outside
-        setIsDeleting(false); // Reset deleting when clicking outside
+        setIsResolving(false);
+        setIsStartingMaintenance(false);
+        setIsDeleting(false);
       }
     }
     
@@ -220,11 +227,6 @@ export default function InventoryPage() {
   const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
   const paginatedAssets = filteredAssets.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-    }
-  };
 
   const handleResetFilters = () => {
     setSelectedType("All");
@@ -291,6 +293,11 @@ export default function InventoryPage() {
     if (condition === 'Good') {
       setResolvingAssetSn(sn);
       setIsResolving(true);
+      setIsStartingMaintenance(false);
+    } else if (condition === 'Maintenance') {
+      setStartingAssetSn(sn);
+      setIsStartingMaintenance(true);
+      setIsResolving(false);
     } else {
       const res = await updateAssetCondition(sn, condition);
       if (res.success) {
@@ -302,11 +309,43 @@ export default function InventoryPage() {
     }
   };
 
+  const handleStartMaintenance = async () => {
+    if (!startingAssetSn || !techNameStart || !maintenanceReason) {
+      toast.error("Please fill in maintenance details.");
+      return;
+    }
+
+    // User requested a pop-up confirmation
+    if (!window.confirm(`Are you sure you want to move asset ${startingAssetSn} to Maintenance mode?`)) {
+      return;
+    }
+
+    const res = await startMaintenance(startingAssetSn, techNameStart, maintenanceReason);
+    if (res.success) {
+      toast.success("Asset moved to Maintenance!");
+      setIsStartingMaintenance(false);
+      setActiveActionMenu(null);
+      setStartingAssetSn(null);
+      setTechNameStart("");
+      setMaintenanceReason("");
+      refetchAssets();
+      refetchStock();
+    } else {
+      toast.error("Failed to start maintenance.");
+    }
+  };
+
   const handleResolveMaintenance = async () => {
     if (!resolvingAssetSn || !techName || !techDesc) {
       toast.error("Please fill in technician details.");
       return;
     }
+
+    // User requested a pop-up confirmation
+    if (!window.confirm(`Are you sure you want to mark asset ${resolvingAssetSn} as Healthy? This will set status to Online.`)) {
+      return;
+    }
+
     const res = await resolveMaintenance(resolvingAssetSn, techName, techDesc);
     if (res.success) {
       toast.success("Maintenance resolved!");
@@ -607,20 +646,21 @@ export default function InventoryPage() {
                       <td className="px-6 py-6 text-right relative">
                         {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") ? (
                           <div ref={activeActionMenu === asset.sn ? actionMenuRef : null} className="inline-block">
-                            <m.button
-                              whileHover={{ scale: 1.15, rotate: 90 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => setActiveActionMenu(activeActionMenu === asset.sn ? null : asset.sn)}
-                              className="p-2 text-slate-300 hover:text-primary transition-colors"
-                            >
-                              <MoreVertical size={20} />
-                            </m.button>
+                            {asset.condition !== 'Broken' && (
+                              <m.button
+                                whileHover={{ scale: 1.15, rotate: 90 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => setActiveActionMenu(activeActionMenu === asset.sn ? null : asset.sn)}
+                                className="p-2 text-slate-300 hover:text-primary transition-colors"
+                              >
+                                <MoreVertical size={20} />
+                              </m.button>
+                            )}
                           
                           <AnimatePresence>
                             {activeActionMenu === asset.sn && (
                               <div className="absolute right-0 z-50 flex items-start gap-2">
                                 {/* The Action Menu itself */}
-                                {!isResolving && (
                                   <m.div
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
@@ -695,7 +735,7 @@ export default function InventoryPage() {
                                           </div>
                                         ) : (
                                           <>
-                                            {(asset.kepemilikan === 'Dimiliki' || !asset.kepemilikan) && (
+                                            {(asset.kepemilikan === 'Dimiliki' || asset.kepemilikan === 'Sewa' || !asset.kepemilikan) && (
                                               <>
                                                 {asset.condition === 'Maintenance' && (
                                                   <button onClick={() => handleUpdateCondition(asset.sn, 'Good')} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all flex items-center gap-3">
@@ -707,12 +747,8 @@ export default function InventoryPage() {
                                                     <Wrench size={14} className="text-blue-500" /> Maintenance
                                                   </button>
                                                 )}
-                                                <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
                                               </>
                                             )}
-                                            <button onClick={() => handleDeleteAsset(asset.sn)} className="w-full text-left px-4 py-3 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all flex items-center gap-3">
-                                              <AlertCircle size={14} /> Delete Asset
-                                            </button>
                                           </>
                                         )}
                                       </>
@@ -742,7 +778,6 @@ export default function InventoryPage() {
                                       </div>
                                     )}
                                   </m.div>
-                                )}
 
                                 {/* Contextual Audit Form (anchored side-by-side) */}
                                 {isResolving && resolvingAssetSn === asset.sn && (
@@ -751,12 +786,12 @@ export default function InventoryPage() {
                                     animate={{ opacity: 1, x: 0, scale: 1 }}
                                     exit={{ opacity: 0, x: 20, scale: 0.9 }}
                                     className={cn(
-                                      "w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-6 text-left origin-right",
+                                      "absolute right-full mr-4 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-6 text-left origin-right z-[110]",
                                       (index >= Math.floor(paginatedAssets.length / 2) && paginatedAssets.length > 1) ? "bottom-0" : "top-0"
                                     )}
                                   >
                                     <div className="flex justify-between items-center mb-4">
-                                      <h4 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter">Audit Resolution</h4>
+                                      <h4 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter text-emerald-500">Audit Resolution</h4>
                                       <button onClick={() => setIsResolving(false)} className="text-slate-400 hover:text-red-500 transition-colors">
                                         <X size={16}/>
                                       </button>
@@ -773,7 +808,7 @@ export default function InventoryPage() {
                                         />
                                       </div>
                                       <div className="space-y-1">
-                                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Details</label>
+                                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Resolution Details</label>
                                         <textarea 
                                           placeholder="Resolution details..."
                                           rows={2}
@@ -787,6 +822,53 @@ export default function InventoryPage() {
                                         className="w-full py-3 bg-emerald-600 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-500/20 hover:opacity-90 transition-all flex items-center justify-center gap-2"
                                       >
                                         <CheckCircle2 size={14} /> Mark Healthy
+                                      </button>
+                                    </div>
+                                  </m.div>
+                                )}
+
+                                {isStartingMaintenance && startingAssetSn === asset.sn && (
+                                  <m.div
+                                    initial={{ opacity: 0, x: 20, scale: 0.9 }}
+                                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                                    exit={{ opacity: 0, x: 20, scale: 0.9 }}
+                                    className={cn(
+                                      "absolute right-full mr-4 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-6 text-left origin-right z-[110]",
+                                      (index >= Math.floor(paginatedAssets.length / 2) && paginatedAssets.length > 1) ? "bottom-0" : "top-0"
+                                    )}
+                                  >
+                                    <div className="flex justify-between items-center mb-4">
+                                      <h4 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter text-blue-500">Initiate Maintenance</h4>
+                                      <button onClick={() => setIsStartingMaintenance(false)} className="text-slate-400 hover:text-red-500 transition-colors">
+                                        <X size={16}/>
+                                      </button>
+                                    </div>
+                                    <div className="space-y-4">
+                                      <div className="space-y-1">
+                                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Assigned Tech</label>
+                                        <input 
+                                          type="text" 
+                                          placeholder="Technician Name"
+                                          value={techNameStart}
+                                          onChange={(e) => setTechNameStart(e.target.value)}
+                                          className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Problem Description</label>
+                                        <textarea 
+                                          placeholder="Describe the issue..."
+                                          rows={2}
+                                          value={maintenanceReason}
+                                          onChange={(e) => setMaintenanceReason(e.target.value)}
+                                          className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
+                                        />
+                                      </div>
+                                      <button 
+                                        onClick={handleStartMaintenance}
+                                        className="w-full py-3 bg-blue-600 text-white rounded-xl text-xs font-black shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                                      >
+                                        <Wrench size={14} /> Start Maintenance
                                       </button>
                                     </div>
                                   </m.div>
@@ -807,16 +889,49 @@ export default function InventoryPage() {
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="p-10 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
-          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
-            Showing <span className="text-slate-900 dark:text-slate-100">{paginatedAssets.length}</span> of <span className="text-slate-900 dark:text-slate-100">{filteredAssets.length}</span> assets
-          </p>
-          <div className="flex gap-3">
-            <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-6 py-3 bg-white dark:bg-slate-900 rounded-2xl text-xs font-black text-slate-600 dark:text-slate-300 disabled:opacity-30 border border-slate-200 dark:border-slate-800 shadow-sm transition-all">Previous</button>
-            <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-6 py-3 bg-primary text-white rounded-2xl text-xs font-black shadow-lg shadow-primary/20 disabled:opacity-30 transition-all">Next</button>
+        {/* Pagination Controls */}
+        {filteredAssets.length > 0 && (
+          <div className="p-10 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-white/5">
+            <p className="text-xs font-bold text-slate-400">
+              Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, filteredAssets.length)}</span> of <span className="text-slate-900 dark:text-white">{filteredAssets.length}</span> assets
+            </p>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+              >
+                Previous
+              </button>
+              <div className="flex items-center gap-1">
+                {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                  let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
+                  if (pageNum <= 0 || pageNum > totalPages) return null;
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={cn(
+                        "w-8 h-8 rounded-lg text-xs font-bold transition-all",
+                        currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      )}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              <button 
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+              >
+                Next
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </m.section>
 
       {/* Register Sidebar (Fixed Gap & Adaptive Height) */}

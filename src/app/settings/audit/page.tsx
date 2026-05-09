@@ -27,7 +27,12 @@ export default function AuditTrailPage() {
     const filtered = logs.filter((log: any) => {
       // Filter by date
       if (dateFilter) {
-        const logDate = new Date(log.timestamp).toISOString().split("T")[0];
+        const date = new Date(log.timestamp);
+        const wibDate = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+        const logDate = wibDate.getUTCFullYear() + "-" + 
+                        String(wibDate.getUTCMonth() + 1).padStart(2, '0') + "-" + 
+                        String(wibDate.getUTCDate()).padStart(2, '0');
+        
         if (logDate !== dateFilter) return false;
       }
       
@@ -136,7 +141,7 @@ export default function AuditTrailPage() {
         <DataTable 
           data={displayLogs} 
           columns={columns} 
-          keyExtractor={(row) => `${row.action}-${row.timestamp}-${row.user}`}
+          keyExtractor={(row) => row.id}
           isLoading={isLoading}
           emptyMessage="Tidak ada aktivitas yang sesuai."
         />

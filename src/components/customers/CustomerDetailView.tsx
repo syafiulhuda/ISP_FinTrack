@@ -2,14 +2,17 @@
 
 import { m } from "framer-motion";
 import {
-  TrendingUp, CreditCard, Calendar, Activity,
-  AlertTriangle, CheckCircle2, Star, Bell, ArrowUpRight,
-  Zap, Clock, Package, BarChart2, Tag, Users, Milestone,
-  ChevronLeft, MapPin, Phone, Mail, ShieldCheck
+  TrendingUp, CreditCard, Activity,
+  Star, Bell, ArrowUpRight,
+  Zap, Clock, Package, Users, Milestone,
+  ChevronLeft, MapPin, Phone, ShieldCheck, Crown
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, Cell } from "recharts";
+import { formatCurrency, cn } from "@/lib/utils";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import Link from "next/link";
+import { toggleVipStatus, sendPaymentReminder } from "@/actions/customers";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const formatCompactNumber = (number: number) => {
   if (number >= 1000000000) return `Rp ${(number / 1000000000).toFixed(2)} B`;
@@ -18,9 +21,6 @@ const formatCompactNumber = (number: number) => {
   return `Rp ${number.toFixed(0)}`;
 };
 
-function cn(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
 
 function HealthScoreGauge({ score }: { score: number }) {
   const color = score >= 80 ? "#10b981" : score >= 50 ? "#f59e0b" : "#f43f5e";
@@ -68,11 +68,44 @@ function ScoreItem({ label, value, positive }: { label: string; value: number; p
 }
 
 export default function CustomerDetailView({ data }: { data: any }) {
+  const [isVip, setIsVip] = useState(data.is_vip || false);
+  const [isSending, setIsSending] = useState(false);
+  const [isTogglingVip, setIsTogglingVip] = useState(false);
+
+  const handleToggleVip = async () => {
+    setIsTogglingVip(true);
+    const newStatus = !isVip;
+    const res = await toggleVipStatus(data.id, newStatus);
+    if (res.success) {
+      setIsVip(newStatus);
+      toast.success(newStatus ? 'Customer marked as VIP' : 'VIP status removed', {
+        description: `Status updated for ${data.name} globally.`,
+        icon: newStatus ? <Crown size={16} className="text-amber-500" /> : <Star size={16} />
+      });
+    } else {
+      toast.error('Failed to update VIP status');
+    }
+    setIsTogglingVip(false);
+  };
+
+  const handleSendReminder = async () => {
+    setIsSending(true);
+    const res = await sendPaymentReminder(data.id);
+    if (res.success) {
+      toast.success('Reminder Sent!', {
+        description: `Notification sent to ${data.name} via WhatsApp.`,
+        icon: <Bell size={16} className="text-indigo-500" />
+      });
+    } else {
+      toast.error('Failed to send reminder');
+    }
+    setIsSending(false);
+  };
+
   const isActive = data.status === "Active";
   const isAtRisk = data.healthScore < 50;
   const isExcellent = data.healthScore >= 80;
   const lateCount = data.txCount > 0 ? Math.round((data.paymentRatio / 100) * data.txCount) : 0;
-  const onTimeCount = data.txCount - lateCount;
   const avgPayment = data.txCount > 0 ? data.ltv / data.txCount : 0;
 
   const segment = data.ltv >= 5000000 ? "Premium Subscriber"
@@ -100,7 +133,18 @@ export default function CustomerDetailView({ data }: { data: any }) {
           </Link>
           <div>
             <div className="flex items-center gap-3">
-               <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{data.name}</h1>
+               <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                 {data.name}
+                 {isVip && (
+                   <m.div
+                     initial={{ scale: 0 }}
+                     animate={{ scale: 1 }}
+                     className="bg-gradient-to-tr from-amber-400 to-yellow-600 p-1 rounded-full shadow-lg shadow-amber-500/20"
+                   >
+                     <Crown size={16} className="text-white" />
+                   </m.div>
+                 )}
+               </h1>
                <span className={cn("text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider",
                   isActive ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
                )}>{data.status}</span>
@@ -113,13 +157,26 @@ export default function CustomerDetailView({ data }: { data: any }) {
         </div>
 
         <div className="flex gap-3 w-full md:w-auto">
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20">
-            <Bell size={18} />
-            Send Reminder
+          <button 
+            onClick={handleSendReminder}
+            disabled={isSending}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+          >
+            <Bell size={18} className={cn(isSending && "animate-bounce")} />
+            {isSending ? "Sending..." : "Send Reminder"}
           </button>
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl font-bold transition-all hover:bg-slate-50 dark:hover:bg-slate-800">
-            <Star size={18} />
-            Mark VIP
+          <button 
+            onClick={handleToggleVip}
+            disabled={isTogglingVip}
+            className={cn(
+              "flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 border rounded-2xl font-bold transition-all disabled:opacity-50",
+              isVip 
+                ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400"
+                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+            )}
+          >
+            <Star size={18} className={cn(isVip && "fill-current")} />
+            {isTogglingVip ? "Updating..." : isVip ? "VIP Member" : "Mark VIP"}
           </button>
         </div>
       </div>
@@ -168,19 +225,19 @@ export default function CustomerDetailView({ data }: { data: any }) {
              <h3 className="text-lg font-black mb-6 flex items-center gap-2"><Users size={20} className="text-indigo-500" /> CRM Intelligence</h3>
              <div className="space-y-6">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Customer Segment</p>
-                  <p className={cn("text-lg font-black", segmentColor.split(' ')[0])}>{segment}</p>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Customer Segment</p>
+                   <p className={cn("text-lg font-black", segmentColor.split(' ')[0])}>{segment}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Churn Risk Level</p>
-                  <p className={cn("text-lg font-black", churnColor)}>{churnPct}</p>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Churn Risk Level</p>
+                   <p className={cn("text-lg font-black", churnColor)}>{churnPct}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Service</p>
-                  <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold">
-                    <Package size={16} className="text-indigo-500" />
-                    {data.service}
-                  </div>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Service</p>
+                   <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold">
+                     <Package size={16} className="text-indigo-500" />
+                     {data.service}
+                   </div>
                 </div>
                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-4">
                     <div>

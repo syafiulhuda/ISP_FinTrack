@@ -39,6 +39,7 @@ const typeConfig: Record<string, { icon: any, color: string, bg: string }> = {
   audit: { icon: ShieldCheck, color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-200 dark:bg-slate-800' },
   system: { icon: Server, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
   success: { icon: CheckCircle, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' },
+  info: { icon: Clock, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
 };
 
 const containerVariants: Variants = {
@@ -152,9 +153,9 @@ export default function NotificationsPage() {
 
   const unreadAlerts = notifications.filter((n: any) => n.is_unread).length;
   const inventoryFlagged = notifications.filter((n: any) => n.category === 'Inventory' && n.is_unread).length;
-  const financialPending = notifications.filter((n: any) => n.category === 'Finance' && n.is_unread).length;
+  const financialPending = notifications.filter((n: any) => (n.category === 'Finance' || n.category === 'Billing') && n.is_unread).length;
 
-  const categories = ['Finance', 'Inventory', 'System'];
+  const categories = ['Finance', 'Billing', 'Inventory', 'System'];
 
   return (
     <m.div 

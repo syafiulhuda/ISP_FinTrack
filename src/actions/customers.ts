@@ -89,7 +89,7 @@ export async function auditCustomerGracePeriod() {
       for (const row of res.rows) {
         await query(`
           INSERT INTO notifications (type, category, title, message, created_at, is_unread)
-          VALUES ('warning', 'billing', 'Customer Suspended', 'Customer ' || $1 || ' has been set to Inactive due to unpaid bill.', NOW(), true)
+          VALUES ('warning', 'Billing', 'Customer Suspended', 'Customer ' || $1 || ' has been set to Inactive due to unpaid bill.', NOW(), true)
         `, [row.id]);
       }
     }
@@ -264,7 +264,7 @@ export async function getAgingMVData() {
 }
 export async function getCustomerAnalysis() {
   try {
-    const customersRes = await query('SELECT id, name, service, status, "createdAt" AT TIME ZONE \'Asia/Jakarta\' as created_at FROM customers');
+    const customersRes = await query('SELECT id, name, service, status, is_vip, "createdAt" AT TIME ZONE \'Asia/Jakarta\' as created_at FROM customers');
     const transactionsRes = await query(`
       SELECT split_part(id, '-', 2) as customer_id, amount, timestamp AT TIME ZONE 'Asia/Jakarta' as tx_date, status, keterangan
       FROM transactions
@@ -324,7 +324,7 @@ export async function getCustomerAnalysis() {
 
 export async function getCustomer360(customerId: string) {
   try {
-    const customerRes = await query('SELECT id, name, service, status, "createdAt" AT TIME ZONE \'Asia/Jakarta\' as created_at FROM customers WHERE id = $1', [customerId]);
+    const customerRes = await query('SELECT id, name, service, status, is_vip, "createdAt" AT TIME ZONE \'Asia/Jakarta\' as created_at FROM customers WHERE id = $1', [customerId]);
     if (customerRes.rows.length === 0) return null;
     const c = customerRes.rows[0];
 
@@ -401,6 +401,43 @@ export async function getCustomer360(customerId: string) {
   } catch (e) {
     console.error("DB Error: getCustomer360", e);
     return null;
+  }
+}
+
+export async function toggleVipStatus(customerId: string, status: boolean) {
+  try {
+    await query('UPDATE customers SET is_vip = $1 WHERE id = $2', [status, customerId]);
+
+    revalidatePath('/customers');
+    revalidatePath(`/customers/${customerId}`);
+    revalidatePath('/service-tiers');
+    return { success: true };
+  } catch (e) {
+    console.error("DB Error: toggleVipStatus", e);
+    return { success: false, error: String(e) };
+  }
+}
+
+export async function sendPaymentReminder(customerId: string) {
+  try {
+    const res = await query('SELECT name, no_telp FROM customers WHERE id = $1', [customerId]);
+    if (res.rows.length === 0) throw new Error('Customer not found');
+    const customer = res.rows[0];
+
+    // Mock WhatsApp/Fonnte integration logic
+    console.log(`[WA REMINDER] Sending to ${customer.name} (${customer.no_telp})...`);
+    
+    // Record in notifications
+    await query(`
+      INSERT INTO notifications (type, category, title, message, created_at, is_unread)
+      VALUES ('info', 'Billing', 'Reminder Sent', 'Payment reminder sent to ' || $1 || ' (' || $2 || ')', NOW(), true)
+    `, [customer.name, customerId]);
+
+    revalidatePath(`/customers/${customerId}`);
+    return { success: true };
+  } catch (e) {
+    console.error("DB Error: sendPaymentReminder", e);
+    return { success: false, error: String(e) };
   }
 }
 
