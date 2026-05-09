@@ -66,15 +66,22 @@ export default function FinancePage() {
 
   // Auto-update reference when date or transaction type changes
   useEffect(() => {
-    if (!date) return;
+    if (!date || typeof date !== 'string') return;
 
     // Parse DD/MM/YYYY or any recognizable date format
     const parsedDate = (() => {
+      // Handle DD/MM/YYYY or DD-MM-YYYY
       const dmy = date.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
       if (dmy) {
         const [, d, m, y] = dmy;
         const fullYear = y.length === 2 ? `20${y}` : y;
         return new Date(`${fullYear}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
+      }
+      // Handle DDMMYYYY
+      const dmyPlain = date.match(/^(\d{2})(\d{2})(\d{4})$/);
+      if (dmyPlain) {
+        const [, d, m, y] = dmyPlain;
+        return new Date(`${y}-${m}-${d}`);
       }
       const attempt = new Date(date);
       return isNaN(attempt.getTime()) ? null : attempt;
@@ -86,17 +93,36 @@ export default function FinancePage() {
       String(parsedDate.getMonth() + 1).padStart(2, '0') +
       String(parsedDate.getDate()).padStart(2, '0');
 
+    // Only sync if the date is reasonably complete (to avoid partial sync mess)
+    if (date.length < 8) return;
+
     if (activeTab === 'pengeluaran') {
       setReference(`OUT-AUTO-${yyyymmdd}`);
     } else {
       setReference(prev => {
-        if (!prev) return prev;
+        // If the user hasn't typed anything meaningful yet or it's the default
+        if (!prev || prev === 'TRX-XXXXX') return `TRX-MANUAL-${yyyymmdd}`;
+        
+        // Split the current reference to isolate the base from any date suffix
         const parts = prev.split('-');
-        if (parts.length >= 3) {
-          parts[parts.length - 1] = yyyymmdd;
-          return parts.join('-');
+        
+        // If it looks like a standard format (Prefix-ID-Date or Prefix-Date)
+        // We want to keep the "Base" and replace/append the date
+        let base = "";
+        if (parts.length >= 2) {
+          // If the last part is a date (8 digits), remove it to get the base
+          if (parts[parts.length-1].length === 8 && /^\d+$/.test(parts[parts.length-1])) {
+            base = parts.slice(0, parts.length - 1).join('-');
+          } else {
+            // Otherwise, the whole thing is the base
+            base = prev;
+          }
+        } else {
+          base = prev;
         }
-        return prev;
+
+        const newRef = `${base}-${yyyymmdd}`;
+        return newRef;
       });
     }
   }, [date, activeTab]);
@@ -194,17 +220,10 @@ export default function FinancePage() {
         let finalDate = "";
         if (tanggalMatch) {
           finalDate = tanggalMatch[1];
-          setDate(finalDate);
         } else if (dateFallback) {
           finalDate = dateFallback[0];
-          setDate(finalDate);
         }
 
-        if (nominalMatch) setAmount(nominalMatch[1].replace(/[^0-9]/g, ''));
-        else if (amountFallback) setAmount(amountFallback[1].replace(/[^0-9]/g, ''));
-
-        if (detectedVendor) setVendor(detectedVendor);
-        
         // Format Date Suffix (YYYYMMDD)
         let dateSuffix = "";
         let rawDateSuffix = "";
@@ -220,43 +239,56 @@ export default function FinancePage() {
           }
         }
 
-        if (isExpense) {
-          setReference(`OUT-AUTO-${rawDateSuffix}`);
-        } else {
-          if (idMatch) {
-            setReference(`TRX-${idMatch[1].trim().toUpperCase()}${dateSuffix}`);
-          } else if (custIdPattern) {
-            setReference(`TRX-${custIdPattern[1].toUpperCase()}${dateSuffix}`);
-          } else if (refFallback) {
-            const ref = refFallback[1].toUpperCase();
-            const baseRef = ref.startsWith('TRX-') ? ref : `TRX-${ref}`;
-            setReference(`${baseRef}${dateSuffix}`);
-          }
-        }
-
-        if (metodePembayaranMatch) {
-          const metode = metodePembayaranMatch[1].trim().toLowerCase();
-          if (metode.includes('bank') || metode.includes('tf') || metode.includes('transf')) setMethod('Bank Transfer');
-          else if (metode.includes('tunai') || metode.includes('cash') || metode.includes('tunal')) setMethod('Cash');
-          else if (metode.includes('qris')) setMethod('QRIS Dynamic');
-          else if (metode.includes('credit') || metode.includes('card') || metode.includes('kartu')) setMethod('Credit Card');
-          else setMethod('Bank Transfer');
-        }
-
         // 6. Expense Specific Fields (Jenis Pembelian & SN)
         const jenisMatch = text.match(/Jenis\s*Pembelian\s*[:\-\;\|\!\.\s]*\s*([^\n\r]+)/i);
         const snMatch = text.match(/Serial\s*Number\s*[:\-\;\|\!\.\s]*\s*([^\n\r]+)/i);
         const macMatch = text.match(/MAC\s*Number\s*[:\-\;\|\!\.\s]*\s*([^\n\r]+)/i);
         const locMatch = text.match(/Location\s*[:\-\;\|\!\.\s]*\s*([^\n\r]+)/i);
+
+        const extractedConfidence = ret.data.confidence.toFixed(0) + "%";
+
+        // Capture values into variables for immediate DB save (since state updates are async)
+        const finalVendor = detectedVendor || "";
+        const finalAmountVal = (nominalMatch ? nominalMatch[1].replace(/[^0-9]/g, '') : (amountFallback ? amountFallback[1].replace(/[^0-9]/g, '') : "0"));
         
+        let finalReference = "";
+        if (isExpense) {
+          finalReference = `OUT-AUTO-${rawDateSuffix}`;
+        } else {
+          if (idMatch) finalReference = `TRX-${idMatch[1].trim().toUpperCase()}${dateSuffix}`;
+          else if (custIdPattern) finalReference = `TRX-${custIdPattern[1].toUpperCase()}${dateSuffix}`;
+          else if (refFallback) {
+            const ref = refFallback[1].toUpperCase();
+            const baseRef = ref.startsWith('TRX-') ? ref : `TRX-${ref}`;
+            finalReference = `${baseRef}${dateSuffix}`;
+          }
+        }
+
+        // Apply to state for UI
+        setVendor(finalVendor);
+        setAmount(finalAmountVal);
+        setReference(finalReference);
+        if (finalDate) setDate(finalDate);
+
         if (jenisMatch) setPurchaseType(jenisMatch[1].trim());
         if (snMatch) setSerialNumber(snMatch[1].trim());
         if (macMatch) setMacNumber(macMatch[1].trim());
         if (locMatch) setLocation(locMatch[1].trim());
 
-
         await worker.terminate();
-        toast.success("OCR complete. Data extracted from invoice — please verify!");
+
+        // PERSIST TO DB IMMEDIATELY WITH INPUTTER
+        if (ocrData?.id) {
+          await updateOcrData(ocrData.id, {
+            vendor: finalVendor,
+            amount: finalAmountVal,
+            date: finalDate || date,
+            reference: finalReference,
+            confidence: extractedConfidence
+          });
+        }
+
+        toast.success("OCR complete. Data saved and verified!");
       } catch (err) {
         console.error(err);
         toast.error("OCR failed. Please enter data manually.");
@@ -366,24 +398,40 @@ export default function FinancePage() {
           <h1 className="text-6xl font-bold leading-tight tracking-tight text-slate-900 dark:text-slate-100 mb-2">Receipt OCR</h1>
           <p className="text-xl font-medium text-slate-500 max-w-2xl">Upload and verify financial documents for automated ledger entry.</p>
         </div>
-        <div 
-          onClick={() => fileInputRef.current?.click()}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleFileUpload}
-          className="w-full lg:w-1/3 bg-slate-100 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors group"
-        >
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-            className="hidden" 
-            accept="image/*"
-          />
-          <div className="w-14 h-14 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors shadow-sm">
-            <CloudUpload size={24} className="text-primary group-hover:text-white" />
+        <div className="flex-1 flex flex-col lg:flex-row gap-4">
+          <div 
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleFileUpload}
+            className="flex-1 bg-slate-100 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors group"
+          >
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileUpload} 
+              className="hidden" 
+              accept="image/*"
+            />
+            <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center mb-3 group-hover:bg-primary group-hover:text-white transition-colors shadow-sm">
+              <CloudUpload size={20} className="text-primary group-hover:text-white" />
+            </div>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">Drag & drop slip here</span>
           </div>
-          <span className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">Drag & drop slip here</span>
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">or click to browse</span>
+          
+          <button 
+            onClick={() => {
+              setVendor("");
+              setDate("");
+              setAmount("");
+              setReference("TRX-XXXXX");
+              setUploadedImageUrl(null);
+              setIsEditing(true);
+            }}
+            className="px-8 py-6 bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all group"
+          >
+            <Sparkles size={24} className="text-blue-500 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-black uppercase tracking-widest text-slate-500">Input Manual</span>
+          </button>
         </div>
       </div>
 
@@ -410,7 +458,7 @@ export default function FinancePage() {
               <img 
                 alt="Receipt Source" 
                 className="w-full h-full object-contain opacity-90 transition-transform duration-500 group-hover:scale-105" 
-                src={uploadedImageUrl || ocrData.image}
+                src={uploadedImageUrl || 'https://plus.unsplash.com/premium_photo-1679923814036-8febf10a04c0?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'}
               />
               {/* Scanning overlay */}
               {isScanning && (
@@ -477,10 +525,10 @@ export default function FinancePage() {
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Vendor / Payee</label>
                   <div className="relative">
                     <input 
-                      disabled={!isEditing}
+                      disabled={!isEditing && uploadedImageUrl !== null}
                       className={cn(
                         "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all",
-                        isEditing && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                        (isEditing || uploadedImageUrl === null) && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
                       )}
                       placeholder="e.g. PT Mega Indah"
                       type="text" 
@@ -496,10 +544,10 @@ export default function FinancePage() {
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Transaction Date</label>
                   <div className="relative">
                     <input 
-                      disabled={!isEditing}
+                      disabled={!isEditing && uploadedImageUrl !== null}
                       className={cn(
                         "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all",
-                        isEditing && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                        (isEditing || uploadedImageUrl === null) && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
                       )}
                       placeholder="DD/MM/YYYY"
                       type="text" 
@@ -516,11 +564,11 @@ export default function FinancePage() {
                   <div className="relative">
                     <span className="absolute left-5 top-4 text-slate-400 font-bold">Rp</span>
                     <input 
-                      disabled={!isEditing}
+                      disabled={!isEditing && uploadedImageUrl !== null}
                       placeholder="0"
                       className={cn(
                         "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-xl rounded-xl pl-14 pr-12 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-black transition-all",
-                        isEditing && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                        (isEditing || uploadedImageUrl === null) && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
                       )}
                       type="text" 
                       value={amount}
@@ -534,10 +582,10 @@ export default function FinancePage() {
                 <div className="space-y-2">
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Payment Method</label>
                   <select 
-                    disabled={!isEditing}
+                    disabled={!isEditing && uploadedImageUrl !== null}
                     className={cn(
                       "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all appearance-none cursor-pointer",
-                      isEditing && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                      (isEditing || uploadedImageUrl === null) && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
                     )}
                     value={method}
                     onChange={(e) => setMethod(e.target.value)}
@@ -556,10 +604,12 @@ export default function FinancePage() {
                 <div className="space-y-2">
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Reference No</label>
                   <input 
-                    disabled={true}
+                    disabled={!isEditing && uploadedImageUrl !== null}
                     placeholder="TRX-XXXXX"
                     className={cn(
-                      "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 text-sm rounded-xl px-5 py-4 border-none outline-none font-mono font-bold transition-all cursor-not-allowed",
+                      "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none outline-none font-mono font-bold transition-all",
+                      (!isEditing && uploadedImageUrl !== null) && "text-slate-400 dark:text-slate-500 cursor-not-allowed",
+                      (isEditing || uploadedImageUrl === null) && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
                     )}
                     type="text" 
                     value={reference}
@@ -625,7 +675,7 @@ export default function FinancePage() {
               </button>
 
               <img 
-                src={ocrData.image} 
+                src={uploadedImageUrl || 'https://plus.unsplash.com/premium_photo-1679923814036-8febf10a04c0?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'} 
                 className="w-auto max-h-[75vh] object-contain rounded-3xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] border-4 border-white/20"
                 alt="Receipt Zoom"
               />

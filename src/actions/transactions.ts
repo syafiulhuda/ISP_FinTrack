@@ -59,22 +59,58 @@ export async function getExpenses() {
 
 export async function getOcrData(): Promise<OcrData> {
   try {
-    const res = await query('SELECT * FROM ocr_data LIMIT 1');
-    return res.rows[0] as OcrData || Mock.MOCK_OCR as OcrData;
+    // Get the LATEST ocr entry to maintain session state across refreshes
+    let res = await query('SELECT * FROM ocr_data ORDER BY id DESC LIMIT 1');
+    
+    // If table is empty, return a default object (don't force insert ID 1)
+    if (res.rows.length === 0) {
+      return {
+        id: 0,
+        vendor: 'System Start',
+        date: new Date().toISOString(),
+        amount: '0',
+        reference: 'TRX-INIT',
+        image: 'https://plus.unsplash.com/premium_photo-1679923814036-8febf10a04c0?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        confidence: '0%',
+        inputter: 'System',
+        inputter_tms: new Date().toISOString()
+      } as unknown as OcrData;
+    }
+    
+    return res.rows[0] as OcrData;
   } catch (e) {
     console.error("DB Error: getOcrData", e);
-    return Mock.MOCK_OCR as OcrData;
+    return { ...Mock.MOCK_OCR, id: 999 } as unknown as OcrData;
   }
 }
 
-export async function updateOcrData(id: string | number, data: { vendor: string, date: string, amount: string, reference: string }) {
+export async function updateOcrData(id: string | number, data: { 
+  vendor: string, 
+  date: string, 
+  amount: string, 
+  reference: string,
+  image?: string,
+  confidence?: string
+}) {
   try {
+    const profile = await getAdminProfile();
+    const inputterName = (profile as any).nickname || profile.fullName || 'Unknown Admin';
+    
+    // Create a NEW row for every update/save to maintain history
     const res = await query(`
-      UPDATE ocr_data 
-      SET vendor = $1, date = $2, amount = $3, reference = $4
-      WHERE id = $5
+      INSERT INTO ocr_data (vendor, date, amount, reference, image, confidence, inputter, inputter_tms)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
       RETURNING *
-    `, [data.vendor, data.date, data.amount, data.reference, id]);
+    `, [
+      data.vendor, 
+      isNaN(Date.parse(data.date)) ? null : data.date, 
+      Number(String(data.amount).replace(/[^0-9.-]+/g, '')) || 0, 
+      data.reference, 
+      data.image || null, 
+      data.confidence || null, 
+      inputterName
+    ]);
+    
     revalidatePath('/finance');
     return res.rows[0];
   } catch (e) {
@@ -164,10 +200,24 @@ export async function postOcrEntry(ocrId: string | number, data: {
     } else {
       trxId = data.reference || `TRX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
+      // Logic to fetch city from customer if it's a standard TRX-CT... format
+      let customerCity = null;
+      if (trxId.startsWith('TRX-CT')) {
+        try {
+          const custId = trxId.split('-')[1]; // Extract CTxxx
+          const custRes = await query('SELECT city FROM customers WHERE id = $1 LIMIT 1', [custId]);
+          if (custRes.rows.length > 0) {
+            customerCity = custRes.rows[0].city;
+          }
+        } catch (cityErr) {
+          console.warn("Failed to fetch customer city for transaction:", cityErr);
+        }
+      }
+
       await query(`
         INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, city, inputter, inputter_tms)
         VALUES ($1, $2, $3, 'Verified', $4, $5, $6, $7, $8, NOW())
-      `, [trxId, data.method, finalAmount, timestamp, 'Tagihan', 'pemasukan', null, inputterName]);
+      `, [trxId, data.method, finalAmount, timestamp, 'Tagihan', 'pemasukan', customerCity, inputterName]);
 
       // NOTE: Invoice is auto-created by DB trigger insert_invoice_from_transaction
     }

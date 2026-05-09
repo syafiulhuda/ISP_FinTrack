@@ -38,17 +38,19 @@ CREATE FUNCTION public.fn_set_inputter_tms() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
       BEGIN
-        -- Always set inputter_tms to current WIB time if not provided
+        -- Set inputter_tms ke WIB jika kosong
         IF NEW.inputter_tms IS NULL THEN
           NEW.inputter_tms := (NOW() AT TIME ZONE 'Asia/Jakarta');
         END IF;
-        -- If inputter is NULL on INSERT, set a default fallback
+        
+        -- Jika inputter NULL pada INSERT, ambil nickname dari admin (fallback ke System jika admin kosong)
         IF TG_OP = 'INSERT' AND NEW.inputter IS NULL THEN
-          NEW.inputter := 'System';
+          NEW.inputter := COALESCE((SELECT nickname FROM admin ORDER BY id ASC LIMIT 1), 'System');
         END IF;
+        
         RETURN NEW;
       END;
-      $$;
+    $$;
 
 
 ALTER FUNCTION public.fn_set_inputter_tms() OWNER TO postgres;

@@ -5,7 +5,8 @@ import { query } from '@/lib/db';
 export async function getAuditLogs() {
   try {
     // Run all queries in parallel for performance
-    const [loginRes, stockRes, assetRes, expRes, invRes, mainRes, custRes, trxRes] = await Promise.all([
+    // Run all queries in parallel for performance
+    const [loginRes, stockRes, assetRes, expRes, mainRes, custRes, trxRes] = await Promise.all([
       // 1. Login Logs (no inputter field - use nickname)
       query(`
         SELECT id::text, nickname as user, login_timestamp AT TIME ZONE 'Asia/Jakarta' as timestamp, 
@@ -49,18 +50,7 @@ export async function getAuditLogs() {
         LIMIT 50
       `),
 
-      // 5. Invoices (OCR pemasukan)
-      query(`
-        SELECT 'INV-' || id::text as id, inputter as user, inputter_tms AT TIME ZONE 'Asia/Jakarta' as timestamp, 
-               'Invoice Generated' as action, 
-               'Invoice #' || id::text || ' — Customer: ' || COALESCE(customer_id, 'N/A') || ' (Rp ' || amount::text || ')' as details
-        FROM invoices
-        WHERE inputter IS NOT NULL AND inputter_tms IS NOT NULL
-        ORDER BY inputter_tms DESC
-        LIMIT 50
-      `),
-
-      // 6. Maintenance History
+      // 5. Maintenance History
       query(`
         SELECT 'MAIN-' || id::text as id, inputter as user, inputter_tms AT TIME ZONE 'Asia/Jakarta' as timestamp, 
                'Maintenance Record' as action, 
@@ -71,7 +61,7 @@ export async function getAuditLogs() {
         LIMIT 50
       `),
 
-      // 7. Customers (New customer registration)
+      // 6. Customers (New customer registration)
       query(`
         SELECT 'CUST-' || id as id, inputter as user, inputter_tms AT TIME ZONE 'Asia/Jakarta' as timestamp, 
                'Customer Added' as action, 
@@ -82,7 +72,7 @@ export async function getAuditLogs() {
         LIMIT 50
       `),
 
-      // 8. Transactions (Pemasukan & Pengeluaran posted)
+      // 7. Transactions (Pemasukan & Pengeluaran posted)
       query(`
         SELECT id, inputter as user, inputter_tms AT TIME ZONE 'Asia/Jakarta' as timestamp, 
                CASE WHEN keterangan = 'pemasukan' THEN 'Income Posted' ELSE 'Expense Posted' END as action,
@@ -100,7 +90,6 @@ export async function getAuditLogs() {
       ...stockRes.rows, 
       ...assetRes.rows, 
       ...expRes.rows, 
-      ...invRes.rows, 
       ...mainRes.rows,
       ...custRes.rows,
       ...trxRes.rows,

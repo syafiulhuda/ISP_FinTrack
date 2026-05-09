@@ -1,3 +1,51 @@
+-- 
+-- Struktur dan Hierarki dB
+-- 
+SELECT
+    schema_name,
+    object_type,
+    object_name
+FROM (
+    -- 1. Get Tables, Views, Materialized Views, and Sequences
+    SELECT
+        n.nspname AS schema_name,
+        CASE c.relkind
+            WHEN 'r' THEN 'table'
+            WHEN 'v' THEN 'view'
+            WHEN 'm' THEN 'materialized_view'
+            WHEN 'S' THEN 'sequence'
+        END AS object_type,
+        c.relname AS object_name
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relkind IN ('r', 'v', 'm', 'S')
+      AND n.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+    UNION ALL
+    -- 2. Get Functions / Procedures
+    SELECT
+        n.nspname AS schema_name,
+        'function' AS object_type,
+        p.proname AS object_name
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+    UNION ALL
+    -- 3. Get Triggers (Excluding internal/system triggers)
+    SELECT
+        n.nspname AS schema_name,
+        'trigger' AS object_type,
+        t.tgname AS object_name
+    FROM pg_trigger t
+    JOIN pg_class c ON t.tgrelid = c.oid
+    JOIN pg_namespace n ON c.relnamespace = n.oid
+    WHERE NOT t.tgisinternal -- Hanya trigger buatan user
+      AND n.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+) AS database_objects
+ORDER BY
+    object_type ASC,
+    object_name ASC;
+
+
 --
 -- Page Dashboard
 --

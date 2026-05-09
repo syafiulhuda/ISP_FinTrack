@@ -23,7 +23,7 @@ ALTER SEQUENCE maintenance_history_id_seq RESTART WITH 1;
 
 -- Admin
 INSERT INTO admin (nama, email, password, role, department, image, nickname) VALUES 
-('Super Admin', 'admin@ispfintrack.local', 'hashed_pass', 'System Administrator', 'IT & Operations', '/avatars/admin.png', 'Admin');
+('Super Admin', 'admin@ispfintrack.local', '$2b$10$ImRPefTHZc5nQIYCxyrO/.yOm19H2hDQJT.admXbLDs8D9I48xXdq', 'System Administrator', 'IT & Operations', '/avatars/admin.png', 'Admin');
 
 -- Service Tiers
 INSERT INTO service_tiers (name, speed, unit, price, fup, type, icon) VALUES 
