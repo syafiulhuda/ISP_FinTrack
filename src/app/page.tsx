@@ -510,30 +510,28 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 24 }}
-            className="flex flex-col md:flex-row md:items-center justify-between gap-4"
+            className="flex flex-row items-start md:items-center justify-between gap-2 md:gap-4"
           >
-            <div>
-              <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Executive Overview</h2>
-              <p className="text-sm font-medium text-slate-500 mt-1 flex items-center gap-2">
-                <Clock size={14} />
-                {minutesAgo === 0 ? "Data updated just now" : `Data updated ${minutesAgo} minute${minutesAgo > 1 ? 's' : ''} ago`}
+            <div className="flex-1">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">Executive Overview</h2>
+              <p className="text-[10px] md:text-sm font-medium text-slate-500 mt-1 flex items-center gap-1.5 md:gap-2">
+                <Clock size={12} className="md:w-[14px] md:h-[14px]" />
+                {minutesAgo === 0 ? "Data updated just now" : `Data updated ${minutesAgo} min ago`}
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Period</p>
-                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+            <div className="flex items-center gap-2 md:gap-4 shrink-0">
+              <div className="text-right">
+                <p className="text-[8px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Current Period</p>
+                <p className="text-[10px] sm:text-xs md:text-sm font-bold text-slate-900 dark:text-slate-100">
                   {dynamicData.currentPeriod}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => router.push('/profitability')}
-                  className="bg-primary text-white p-3 rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all"
-                >
-                  <TrendingUp size={20} />
-                </button>
-              </div>
+              <button 
+                onClick={() => router.push('/profitability')}
+                className="bg-primary text-white p-2 md:p-3 rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all shrink-0"
+              >
+                <TrendingUp size={16} className="md:w-[20px] md:h-[20px]" />
+              </button>
             </div>
           </m.div>
 

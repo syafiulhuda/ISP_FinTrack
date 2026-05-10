@@ -61,19 +61,22 @@ export default function AuditTrailPage() {
     { 
       header: "Date & Time", 
       accessor: "timestamp", 
+      className: "whitespace-nowrap",
       render: (row: any) => {
         const d = new Date(row.timestamp);
-        return <span className="font-mono text-sm text-slate-600 dark:text-slate-300">{d.toLocaleString('id-ID')}</span>;
+        return <span className="font-mono text-sm text-slate-600 dark:text-slate-300 tabular-nums">{d.toLocaleString('id-ID')}</span>;
       }
     },
     { 
       header: "User / Admin", 
       accessor: "user", 
+      className: "whitespace-nowrap",
       render: (row: any) => <span className="font-medium text-slate-800 dark:text-slate-200">{row.user}</span>
     },
     { 
       header: "Action Type", 
       accessor: "action", 
+      className: "whitespace-nowrap",
       render: (row: any) => {
         let color = "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
         if (row.action === 'System Login') color = "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
@@ -81,7 +84,7 @@ export default function AuditTrailPage() {
         if (row.action === 'Hardware Deployed') color = "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
         
         return (
-          <span className={cn("px-2.5 py-1 rounded-full text-xs font-bold", color)}>
+          <span className={cn("px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap", color)}>
             {row.action}
           </span>
         );
@@ -90,6 +93,7 @@ export default function AuditTrailPage() {
     { 
       header: "Details / Record ID", 
       accessor: "details",
+      className: "whitespace-nowrap min-w-[200px]",
       render: (row: any) => <span className="text-sm text-slate-500 dark:text-slate-400">{row.details}</span>
     }
   ];
@@ -104,34 +108,34 @@ export default function AuditTrailPage() {
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
         
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
-          <div className="relative w-full sm:w-auto flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+        <div className="flex flex-row items-center gap-3 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800 overflow-x-auto no-scrollbar">
+          <div className="relative flex-1 min-w-[160px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input 
               type="text" 
               placeholder="Cari nama admin..." 
               value={adminSearch}
               onChange={(e) => setAdminSearch(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+              className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
             />
           </div>
           
-          <div className="relative w-full sm:w-auto">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <div className="relative shrink-0">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input 
               type="date" 
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full sm:w-auto bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-900 dark:text-slate-100"
+              className="w-auto bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-900 dark:text-slate-100"
             />
           </div>
 
           {(adminSearch || dateFilter) && (
             <button 
               onClick={() => { setAdminSearch(""); setDateFilter(""); }}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-colors"
+              className="flex items-center gap-2 px-3 py-2.5 text-[13px] font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-colors shrink-0"
             >
-              <FilterX size={18} />
+              <FilterX size={16} />
               Reset
             </button>
           )}
@@ -144,32 +148,33 @@ export default function AuditTrailPage() {
           keyExtractor={(row) => row.id}
           isLoading={isLoading}
           emptyMessage="Tidak ada aktivitas yang sesuai."
+          className="no-scrollbar"
         />
 
         {/* Pagination */}
         {!isLoading && sortedAndFilteredLogs.length > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+          <div className="flex flex-row items-center justify-between gap-3 mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+            <p className="text-[8px] sm:text-xs font-black text-slate-400 uppercase tracking-widest leading-tight max-w-[80px] sm:max-w-none text-left">
               Showing <span className="text-slate-900 dark:text-slate-100">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-slate-100">{Math.min(currentPage * itemsPerPage, sortedAndFilteredLogs.length)}</span> of <span className="text-slate-900 dark:text-slate-100">{sortedAndFilteredLogs.length}</span> entries
             </p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 bg-slate-50 dark:bg-slate-800/40 p-1 rounded-lg sm:p-1.5 sm:rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shrink-0">
               <button
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-slate-600 dark:text-slate-400"
+                className="p-1.5 sm:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-slate-600 dark:text-slate-400"
               >
-                <ChevronsLeft size={18} />
+                <ChevronsLeft size={16} />
               </button>
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-slate-600 dark:text-slate-400"
+                className="p-1.5 sm:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-slate-600 dark:text-slate-400"
               >
-                <ChevronLeft size={18} />
+                <ChevronLeft size={16} />
               </button>
               
-              <div className="flex items-center gap-1 px-2">
+              <div className="flex items-center gap-1 px-1">
                 {[...Array(Math.min(5, totalPages))].map((_, i) => {
                   let pageNum: number;
                   if (totalPages <= 5) {
@@ -187,10 +192,10 @@ export default function AuditTrailPage() {
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
                       className={cn(
-                        "w-8 h-8 rounded-lg text-xs font-black transition-all",
+                        "w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-[10px] sm:text-xs font-black transition-all",
                         currentPage === pageNum 
-                          ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                          : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          ? "bg-primary text-white shadow-md shadow-primary/20" 
+                          : "text-slate-400 hover:bg-white dark:hover:bg-slate-700"
                       )}
                     >
                       {pageNum}
@@ -202,16 +207,16 @@ export default function AuditTrailPage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-slate-600 dark:text-slate-400"
+                className="p-1.5 sm:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-slate-600 dark:text-slate-400"
               >
-                <ChevronRight size={18} />
+                <ChevronRight size={16} />
               </button>
               <button
                 onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-slate-600 dark:text-slate-400"
+                className="p-1.5 sm:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-slate-600 dark:text-slate-400"
               >
-                <ChevronsRight size={18} />
+                <ChevronsRight size={16} />
               </button>
             </div>
           </div>

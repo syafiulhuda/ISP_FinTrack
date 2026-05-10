@@ -22,3 +22,12 @@ export function formatNumber(num: number | string): string {
   const numericNum = typeof num === 'string' ? parseInt(num) || 0 : num;
   return new Intl.NumberFormat('id-ID').format(numericNum);
 }
+
+export function formatCompactNumber(num: number | string): string {
+  const numericNum = typeof num === 'string' ? parseFloat(num.replace(/[^0-9.-]/g, '')) || 0 : num;
+  return new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    compactDisplay: 'short',
+    maximumFractionDigits: 1
+  }).format(numericNum);
+}

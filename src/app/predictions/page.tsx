@@ -28,7 +28,7 @@ import {
   Legend 
 } from "recharts";
 import { getPredictions, refreshPredictions, PredictionResult } from "@/actions/predictions";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatCompactNumber, cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function PredictionsPage() {
@@ -105,19 +105,19 @@ export default function PredictionsPage() {
   return (
     <div className="space-y-8 p-2">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Predictive Analysis</h1>
+          <h1 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">Predictive Analysis</h1>
           <p className="text-slate-500 font-medium mt-1">Next-Month Financial & Churn Projections</p>
         </div>
 
-        <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-1.5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-inner w-fit">
           <button 
             onClick={() => setModelType('lr')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-[1.5rem] text-sm font-black transition-all ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-[1.5rem] text-sm font-black transition-all duration-300 whitespace-nowrap ${
               modelType === 'lr' 
-              ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
-              : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-indigo-500/50" 
+              : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
             <TrendingUp size={16} />
@@ -125,23 +125,23 @@ export default function PredictionsPage() {
           </button>
           <button 
             onClick={() => setModelType('nn')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-[1.5rem] text-sm font-black transition-all ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-[1.5rem] text-sm font-black transition-all duration-300 whitespace-nowrap ${
               modelType === 'nn' 
-              ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
-              : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-indigo-500/50" 
+              : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
             <Brain size={16} />
             Neural Network
           </button>
-          <div className="w-px h-8 bg-slate-200 dark:bg-slate-800 mx-1" />
+          <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-2" />
           <button 
             onClick={handleRefresh}
             disabled={isFetching}
-            className="p-3 text-slate-400 hover:text-indigo-500 transition-colors disabled:opacity-50"
+            className="p-2.5 text-slate-400 hover:text-indigo-500 transition-colors disabled:opacity-50"
             title="Refresh Data"
           >
-            <RefreshCw size={20} className={isFetching ? "animate-spin" : ""} />
+            <RefreshCw size={18} className={isFetching ? "animate-spin" : ""} />
           </button>
         </div>
       </div>
@@ -165,7 +165,7 @@ export default function PredictionsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <PredictionCard 
                 title="Predicted Revenue" 
-                value={formatCurrency(predictions.predicted.revenue)}
+                value={`Rp ${formatCompactNumber(predictions.predicted.revenue)}`}
                 change={calculateChange(predictions.predicted.revenue, predictions.actual[predictions.actual.length-1].revenue)}
                 icon={<DollarSign />}
                 color="indigo"
@@ -180,7 +180,7 @@ export default function PredictionsPage() {
               />
               <PredictionCard 
                 title="Projected OPEX" 
-                value={formatCurrency(predictions.predicted.expenses)}
+                value={`Rp ${formatCompactNumber(predictions.predicted.expenses)}`}
                 change={calculateChange(predictions.predicted.expenses, predictions.actual[predictions.actual.length-1].expenses)}
                 icon={<Activity />}
                 color="amber"
@@ -189,42 +189,50 @@ export default function PredictionsPage() {
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 gap-8">
               {/* Revenue Projection Chart */}
-              <m.div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
-                <div className="flex items-center justify-between mb-8">
+              <m.div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+                <div className="flex items-center justify-between mb-10">
                   <div>
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white">Revenue Projection</h3>
-                    <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Actual vs Forecasted</p>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Revenue Projection</h3>
+                    <p className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">Actual vs Forecasted Analysis</p>
                   </div>
-                  <div className="px-3 py-1 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg">
-                    <span className="text-[10px] font-black text-indigo-500 uppercase">1-Month Outlook</span>
+                  <div className="px-3 py-1.5 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
+                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-wider">1-Month Outlook</span>
                   </div>
                 </div>
-                <div className="h-[300px] w-full">
+                <div className="h-[320px] w-full mt-auto">
                   <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartData}>
+                    <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
                           <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
                       <XAxis 
                         dataKey="month" 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}}
+                        tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}}
+                        dy={10}
                       />
                       <YAxis 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}}
-                        tickFormatter={(val) => `Rp ${val/1000000}M`}
+                        tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}}
+                        tickFormatter={(val) => `Rp${val/1000000}M`}
+                        width={60}
                       />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend iconType="circle" />
+                      <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                      <Legend 
+                        verticalAlign="top" 
+                        align="right" 
+                        height={36} 
+                        iconType="circle"
+                        formatter={(value) => <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{value}</span>}
+                      />
                       <Area 
                         type="monotone" 
                         dataKey="revenue_actual" 
@@ -232,16 +240,19 @@ export default function PredictionsPage() {
                         strokeWidth={4} 
                         fillOpacity={1} 
                         fill="url(#colorRev)" 
-                        name="Actual Revenue"
+                        name="Actual"
+                        animationDuration={1500}
                       />
                       <Line 
                         type="monotone" 
                         dataKey="revenue_forecast" 
-                        stroke="#6366f1" 
+                        stroke="#818cf8" 
                         strokeWidth={4} 
-                        strokeDasharray="8 8" 
-                        name="Forecasted"
-                        dot={{ r: 6, fill: '#fff', stroke: '#6366f1', strokeWidth: 3 }}
+                        strokeDasharray="6 6" 
+                        name="Forecast"
+                        dot={{ r: 5, fill: '#fff', stroke: '#818cf8', strokeWidth: 3 }}
+                        activeDot={{ r: 8, fill: '#818cf8', stroke: '#fff', strokeWidth: 3 }}
+                        animationDuration={2000}
                       />
                     </ComposedChart>
                   </ResponsiveContainer>
@@ -249,37 +260,47 @@ export default function PredictionsPage() {
               </m.div>
 
               {/* Churn Rate Trend Chart */}
-              <m.div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
-                <div className="flex items-center justify-between mb-8">
+              <m.div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+                <div className="flex items-center justify-between mb-10">
                   <div>
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white">Churn Rate Forecast</h3>
-                    <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Subscriber Retention Trend</p>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Churn Rate Forecast</h3>
+                    <p className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">Subscriber Retention Projections</p>
                   </div>
                 </div>
-                <div className="h-[300px] w-full">
+                <div className="h-[320px] w-full mt-auto">
                   <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                      <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} unit="%" />
-                      <Tooltip content={<CustomTooltip unit="%" />} />
+                    <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
+                      <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} unit="%" width={40} />
+                      <Tooltip content={<CustomTooltip unit="%" />} cursor={{ stroke: '#f43f5e', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                      <Legend 
+                        verticalAlign="top" 
+                        align="right" 
+                        height={36} 
+                        iconType="circle"
+                        formatter={(value) => <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{value}</span>}
+                      />
                       <Area 
-                        type="stepAfter" 
+                        type="monotone" 
                         dataKey="churn_actual" 
                         stroke="#f43f5e" 
                         strokeWidth={4} 
                         fill="#f43f5e" 
                         fillOpacity={0.05} 
-                        name="Historical Churn"
+                        name="Historical"
+                        animationDuration={1500}
                       />
                       <Line 
-                        type="stepAfter" 
+                        type="monotone" 
                         dataKey="churn_forecast" 
-                        stroke="#f43f5e" 
+                        stroke="#fb7185" 
                         strokeWidth={4} 
-                        strokeDasharray="8 8" 
-                        name="Predicted Churn"
-                        dot={{ r: 6, fill: '#fff', stroke: '#f43f5e', strokeWidth: 3 }}
+                        strokeDasharray="6 6" 
+                        name="Predicted"
+                        dot={{ r: 5, fill: '#fff', stroke: '#fb7185', strokeWidth: 3 }}
+                        activeDot={{ r: 8, fill: '#fb7185', stroke: '#fff', strokeWidth: 3 }}
+                        animationDuration={2000}
                       />
                     </ComposedChart>
                   </ResponsiveContainer>
@@ -297,22 +318,39 @@ function PredictionCard({ title, value, change, icon, color, reverseColor = fals
   const isPositive = parseFloat(change) > 0;
   const isGood = reverseColor ? !isPositive : isPositive;
 
+  const colorMap: any = {
+    indigo: "text-indigo-500 bg-indigo-500/10 border-indigo-500/20",
+    rose: "text-rose-500 bg-rose-500/10 border-rose-500/20",
+    amber: "text-amber-500 bg-amber-500/10 border-amber-500/20"
+  };
+
+  const glowMap: any = {
+    indigo: "bg-indigo-500/10",
+    rose: "bg-rose-500/10",
+    amber: "bg-amber-500/10"
+  };
+
   return (
-    <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-      <div className={`absolute top-0 right-0 w-32 h-32 bg-${color}-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:scale-110 transition-transform`} />
-      <div className="flex items-center gap-4 mb-4">
-        <div className={`p-3 bg-${color}-500/10 text-${color}-500 rounded-2xl`}>
+    <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+      <div className={`absolute top-0 right-0 w-32 h-32 ${glowMap[color]} rounded-full -mr-16 -mt-16 blur-3xl group-hover:scale-150 transition-transform duration-700`} />
+      
+      <div className="flex items-center gap-4 mb-5">
+        <div className={`p-3 rounded-2xl ${colorMap[color].split(' ').slice(0, 2).join(' ')}`}>
           {icon}
         </div>
-        <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">{title}</span>
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{title}</span>
       </div>
-      <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{value}</h3>
-      <div className="flex items-center gap-2 mt-3">
-        <div className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black ${
-          isGood ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
+      
+      <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tighter tabular-nums whitespace-nowrap leading-none">
+        {value}
+      </h3>
+      
+      <div className="flex items-center gap-2 mt-4">
+        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black shadow-sm ${
+          isGood ? "bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/20" : "bg-rose-500/10 text-rose-500 ring-1 ring-rose-500/20"
         }`}>
           {isPositive ? "+" : ""}{change}%
-          <ArrowRight size={10} className={isPositive ? "-rotate-45" : "rotate-45"} />
+          <ArrowRight size={10} className={cn("transition-transform", isPositive ? "-rotate-45" : "rotate-45")} />
         </div>
         <span className="text-[10px] font-bold text-slate-400">vs Last Month</span>
       </div>

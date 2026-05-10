@@ -35,8 +35,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           <div className="flex-1 flex flex-col min-w-0 relative md:pl-64 transition-all duration-300">
             <Topbar onMenuClick={() => setIsMobileMenuOpen(true)} />
 
-            <main className="flex-1 overflow-y-auto pt-24 pb-12 px-6 lg:px-8">
-              <div className="max-w-7xl mx-auto w-full">
+            <main className="flex-1 overflow-y-auto pt-24 pb-12 px-4 sm:px-6 lg:px-8 2xl:px-12">
+              <div className="w-full max-w-[2000px] mx-auto">
                 <ErrorBoundary>
                   <AnimatePresence mode="wait">
                     <m.div

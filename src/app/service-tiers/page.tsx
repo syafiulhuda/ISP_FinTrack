@@ -314,70 +314,72 @@ export default function ServiceTiersPage() {
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Customer Directory</h3>
             <p className="text-sm font-medium text-slate-500 mt-1">Search and manage your active subscriber base.</p>
           </div>
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-            <button 
-              onClick={() => refetchCustomers()}
-              disabled={isRefetching}
-              className="p-2.5 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-500 hover:text-primary transition-all shadow-sm group"
-              title="Refresh Data"
-            >
-              <RefreshCw size={18} className={cn(isRefetching && "animate-spin")} />
-            </button>
-            <button 
-              onClick={() => setShowAuditConfirm(true)}
-              disabled={isAuditing}
-              className="p-2.5 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/50 rounded-xl text-orange-600 hover:bg-orange-100 transition-all shadow-sm"
-              title="Run Grace Period Audit"
-            >
-              <ZapOff size={18} className={cn(isAuditing && "animate-pulse")} />
-            </button>
-            <div className="relative w-full sm:w-auto">
-              <button
-                onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                className="w-full sm:w-[200px] flex items-center justify-between pl-4 pr-3 py-2.5 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all shadow-sm"
+          <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+            <div className="flex flex-row items-center gap-2 w-full md:w-auto">
+              <button 
+                onClick={() => refetchCustomers()}
+                disabled={isRefetching}
+                className="p-2.5 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-500 hover:text-primary transition-all shadow-sm group shrink-0"
+                title="Refresh Data"
               >
-                <span className="capitalize">{statusFilter === "grace" ? "Grace Period" : statusFilter === "All" ? "All Subscribers" : `${statusFilter} Only`}</span>
-                <ChevronDown size={14} className={cn("transition-transform duration-300", isStatusDropdownOpen && "rotate-180")} />
+                <RefreshCw size={18} className={cn(isRefetching && "animate-spin")} />
               </button>
+              <button 
+                onClick={() => setShowAuditConfirm(true)}
+                disabled={isAuditing}
+                className="p-2.5 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/50 rounded-xl text-orange-600 hover:bg-orange-100 transition-all shadow-sm shrink-0"
+                title="Run Grace Period Audit"
+              >
+                <ZapOff size={18} className={cn(isAuditing && "animate-pulse")} />
+              </button>
+              <div className="relative flex-1 md:w-auto">
+                <button
+                  onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                  className="w-full md:w-[200px] flex items-center justify-between pl-3 md:pl-4 pr-2 md:pr-3 py-2.5 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-[11px] md:text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all shadow-sm"
+                >
+                  <span className="capitalize whitespace-nowrap overflow-hidden text-ellipsis">{statusFilter === "grace" ? "Grace Period" : statusFilter === "All" ? "All Subscribers" : `${statusFilter} Only`}</span>
+                  <ChevronDown size={14} className={cn("transition-transform duration-300 shrink-0", isStatusDropdownOpen && "rotate-180")} />
+                </button>
 
-              <AnimatePresence>
-                {isStatusDropdownOpen && (
-                  <>
-                    <div className="fixed inset-0 z-30" onClick={() => setIsStatusDropdownOpen(false)} />
-                    <m.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute left-0 right-0 mt-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-40 overflow-hidden py-1"
-                    >
-                      {[
-                        { label: "All Subscribers", value: "All" },
-                        { label: "Active Only", value: "active" },
-                        { label: "Inactive Only", value: "inactive" },
-                        { label: "Grace Period", value: "grace" }
-                      ].map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={() => {
-                            setStatusFilter(opt.value);
-                            setCurrentPage(1);
-                            setIsStatusDropdownOpen(false);
-                          }}
-                          className={cn(
-                            "w-full text-left px-4 py-3 text-xs font-bold transition-all flex items-center justify-between",
-                            statusFilter === opt.value 
-                              ? "bg-primary text-white" 
-                              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
-                          )}
-                        >
-                          {opt.label}
-                          {statusFilter === opt.value && <CheckCircle2 size={14} />}
-                        </button>
-                      ))}
-                    </m.div>
-                  </>
-                )}
-              </AnimatePresence>
+                <AnimatePresence>
+                  {isStatusDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-30" onClick={() => setIsStatusDropdownOpen(false)} />
+                      <m.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute left-0 right-0 mt-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-40 overflow-hidden py-1 min-w-[150px]"
+                      >
+                        {[
+                          { label: "All Subscribers", value: "All" },
+                          { label: "Active Only", value: "active" },
+                          { label: "Inactive Only", value: "inactive" },
+                          { label: "Grace Period", value: "grace" }
+                        ].map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => {
+                              setStatusFilter(opt.value);
+                              setCurrentPage(1);
+                              setIsStatusDropdownOpen(false);
+                            }}
+                            className={cn(
+                              "w-full text-left px-3 md:px-4 py-3 text-[11px] md:text-xs font-bold transition-all flex items-center justify-between",
+                              statusFilter === opt.value 
+                                ? "bg-primary text-white" 
+                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+                            )}
+                          >
+                            {opt.label}
+                            {statusFilter === opt.value && <CheckCircle2 size={14} />}
+                          </button>
+                        ))}
+                      </m.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
             
             <div className="relative w-full md:w-[320px] group">

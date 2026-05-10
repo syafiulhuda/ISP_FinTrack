@@ -146,6 +146,12 @@ export default function FinancePage() {
       const previewUrl = URL.createObjectURL(file);
       setUploadedImageUrl(previewUrl);
 
+      // Clear the file input value to prevent "InvalidStateError" 
+      // if React or extensions try to restore the value
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
       // Reset form states for new analysis
       setVendor("");
       setDate("");
@@ -398,12 +404,12 @@ export default function FinancePage() {
           <h1 className="text-6xl font-bold leading-tight tracking-tight text-slate-900 dark:text-slate-100 mb-2">Receipt OCR</h1>
           <p className="text-xl font-medium text-slate-500 max-w-2xl">Upload and verify financial documents for automated ledger entry.</p>
         </div>
-        <div className="flex-1 flex flex-col lg:flex-row gap-4">
+        <div className="flex-1 flex flex-row gap-2 md:gap-4">
           <div 
             onClick={() => fileInputRef.current?.click()}
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleFileUpload}
-            className="flex-1 bg-slate-100 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors group"
+            className="flex-1 bg-slate-100 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors group"
           >
             <input 
               type="file" 
@@ -412,10 +418,10 @@ export default function FinancePage() {
               className="hidden" 
               accept="image/*"
             />
-            <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center mb-3 group-hover:bg-primary group-hover:text-white transition-colors shadow-sm">
-              <CloudUpload size={20} className="text-primary group-hover:text-white" />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center mb-2 md:mb-3 group-hover:bg-primary group-hover:text-white transition-colors shadow-sm shrink-0">
+              <CloudUpload size={18} className="md:w-[20px] md:h-[20px] text-primary group-hover:text-white" />
             </div>
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">Drag & drop slip here</span>
+            <span className="text-[11px] md:text-sm font-semibold text-slate-900 dark:text-slate-100">Drag & drop slip here</span>
           </div>
           
           <button 
@@ -427,17 +433,17 @@ export default function FinancePage() {
               setUploadedImageUrl(null);
               setIsEditing(true);
             }}
-            className="px-8 py-6 bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all group"
+            className="flex-1 px-4 md:px-8 py-4 md:py-6 bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all group"
           >
-            <Sparkles size={24} className="text-blue-500 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-black uppercase tracking-widest text-slate-500">Input Manual</span>
+            <Sparkles size={20} className="md:w-[24px] md:h-[24px] text-blue-500 group-hover:scale-110 transition-transform shrink-0" />
+            <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-500 text-center">Input Manual</span>
           </button>
         </div>
       </div>
 
       {/* Verification Mode Split View */}
       <div className="bg-slate-100 dark:bg-slate-800/50 rounded-2xl p-3">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Left: Uploaded Slip Image */}
           <div className="bg-white dark:bg-slate-900 rounded-xl p-8 flex flex-col relative overflow-hidden shadow-sm border border-slate-200/50 dark:border-slate-800">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
@@ -453,7 +459,7 @@ export default function FinancePage() {
             </div>
             <div 
               onClick={() => setIsZoomed(true)}
-              className="flex-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl overflow-hidden relative group border border-slate-200/50 dark:border-slate-700 cursor-zoom-in"
+              className="min-h-[450px] flex-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl overflow-hidden relative group border border-slate-200/50 dark:border-slate-700 cursor-zoom-in flex items-center justify-center"
             >
               <img 
                 alt="Receipt Source" 
@@ -502,20 +508,22 @@ export default function FinancePage() {
                 <button 
                   onClick={() => setActiveTab('pemasukan')}
                   className={cn(
-                    "flex-1 py-3 text-[11px] font-black uppercase tracking-widest relative z-10 transition-colors duration-300",
+                    "flex-1 py-2 flex flex-col items-center justify-center gap-0.5 text-[10px] font-black uppercase tracking-widest relative z-10 transition-colors duration-300",
                     activeTab === 'pemasukan' ? "text-white" : "text-slate-400"
                   )}
                 >
-                  Income (Pemasukan)
+                  <span>Income</span>
+                  <span className="opacity-70">(Pemasukan)</span>
                 </button>
                 <button 
                   onClick={() => setActiveTab('pengeluaran')}
                   className={cn(
-                    "flex-1 py-3 text-[11px] font-black uppercase tracking-widest relative z-10 transition-colors duration-300",
+                    "flex-1 py-2 flex flex-col items-center justify-center gap-0.5 text-[10px] font-black uppercase tracking-widest relative z-10 transition-colors duration-300",
                     activeTab === 'pengeluaran' ? "text-white" : "text-slate-400"
                   )}
                 >
-                  Expense (Pengeluaran)
+                  <span>Expense</span>
+                  <span className="opacity-70">(Pengeluaran)</span>
                 </button>
               </div>
               
@@ -686,55 +694,57 @@ export default function FinancePage() {
 
       {/* Recent Transactions Table List */}
       <div className="space-y-6 relative overflow-hidden">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Recent Processed Slips</h2>
-            <div className="relative group">
-              <select
-                value={selectedKeterangan}
-                onChange={(e) => {
-                  setSelectedKeterangan(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-5 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-10 shadow-sm"
-              >
-                <option value="All">Semua Transaksi</option>
-                <option value="pemasukan">Income (Pemasukan)</option>
-                <option value="pengeluaran">Outcome (Pengeluaran)</option>
-              </select>
-              <FilterIcon size={12} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            </div>
-            
-            <div className="flex gap-2">
+        <div className="flex flex-col gap-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Recent Processed Slips</h2>
+          
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 md:gap-6 overflow-x-auto pb-1 hide-scrollbar w-full md:w-auto">
+              <div className="relative shrink-0">
+                <select
+                  value={selectedKeterangan}
+                  onChange={(e) => {
+                    setSelectedKeterangan(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="bg-slate-100 dark:bg-slate-800 border-none rounded-xl pl-3 pr-8 md:px-5 py-2 text-[11px] md:text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none shadow-sm"
+                >
+                  <option value="All">Semua Transaksi</option>
+                  <option value="pemasukan">Income (Pemasukan)</option>
+                  <option value="pengeluaran">Outcome (Pengeluaran)</option>
+                </select>
+                <FilterIcon size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+              
               <button 
                 onClick={() => exportToExcel(filteredByKeterangan, 'finance_report.xlsx')}
-                className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 p-2.5 rounded-xl hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 transition-all flex items-center gap-2 px-4 shadow-sm border border-slate-200/50 dark:border-slate-800"
+                className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 p-2 md:p-2.5 rounded-xl hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 transition-all flex items-center gap-1.5 md:gap-2 px-3 md:px-4 shadow-sm border border-slate-200/50 dark:border-slate-800 shrink-0"
                 title="Export to Excel"
               >
-                <Download size={18} />
-                <span className="text-xs font-bold uppercase tracking-wider">Export Excel</span>
+                <Download size={14} className="md:w-[18px] md:h-[18px]" />
+                <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider">Export Excel</span>
               </button>
             </div>
+            
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="text-primary text-[11px] md:text-sm font-bold hover:underline flex items-center gap-1 shrink-0 whitespace-nowrap"
+            >
+              View All <ChevronRight size={14} className="md:w-[16px] md:h-[16px]" />
+            </button>
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="text-primary text-sm font-bold hover:underline flex items-center gap-1"
-          >
-            View All <ChevronRight size={16} />
-          </button>
         </div>
         
-        <div id="finance-table" className="space-y-3 bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl min-w-[1000px]">
-          {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 px-8 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 mb-2">
+        <div id="finance-table" className="space-y-3 bg-slate-50 dark:bg-slate-950 p-2 md:p-4 rounded-2xl w-full overflow-hidden">
+          {/* Table Header (Hidden on Mobile) */}
+          <div className="hidden md:grid grid-cols-12 gap-2 px-8 py-3 text-[9px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200 dark:border-slate-800 mb-1">
             <div className="col-span-1">LNK-ID</div>
             <div className="col-span-2">TRX-ID</div>
-            <div className="col-span-1">Method</div>
-            <div className="col-span-1">Type</div>
-            <div className="col-span-1">City</div>
+            <div className="col-span-2">Method</div>
+            <div className="col-span-1 text-center">Type</div>
+            <div className="col-span-1 text-center">City</div>
             <div className="col-span-2 text-right">Amount</div>
             <div className="col-span-1 text-center">Status</div>
-            <div className="col-span-3 text-right">Timestamp</div>
+            <div className="col-span-2 text-right">Timestamp</div>
           </div>
 
           {/* Transaction Rows */}
@@ -745,33 +755,83 @@ export default function FinancePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 + index * 0.1 }}
               className={cn(
-                "grid grid-cols-12 gap-4 bg-white dark:bg-slate-900 items-center px-8 py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer border border-slate-200/50 dark:border-slate-800 relative overflow-hidden shadow-sm",
+                "flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 bg-white dark:bg-slate-900 md:items-center px-4 md:px-8 py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer border border-slate-200/50 dark:border-slate-800 relative overflow-hidden shadow-sm",
                 trx.isWarning && "border-orange-500/20"
               )}
             >
               {trx.isWarning && <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>}
               
-              <div className="col-span-1 text-[10px] font-mono font-bold text-slate-400">
+              {/* --- MOBILE VIEW (Card Layout) --- */}
+              <div className="flex flex-col md:hidden w-full gap-3">
+                {/* Header: ID & Status */}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-[12px] font-mono font-bold text-slate-900 dark:text-slate-100">{trx.id}</p>
+                    <p className="text-[10px] font-mono font-bold text-slate-400 mt-0.5">LNK: {trx.linked_id || "-"}</p>
+                  </div>
+                  <div className={cn(
+                    "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider shrink-0",
+                    trx.status === "Verified" ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600"
+                  )}>
+                    {trx.status}
+                  </div>
+                </div>
+
+                {/* Details Group Box */}
+                <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-800/30 p-3 rounded-lg mt-1">
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase mb-0.5">Method</span>
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{trx.method}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase mb-0.5">Type</span>
+                    <span className="inline-block text-[9px] font-black uppercase px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600">
+                      {trx.type}
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase mb-0.5">City</span>
+                    <span className="text-[11px] font-medium text-slate-500 truncate block">{trx.city || "-"}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[9px] font-bold text-slate-400 block uppercase mb-0.5">Amount</span>
+                    <span className="text-base font-black text-slate-900 dark:text-slate-100">
+                      {String(trx.amount).startsWith('Rp') ? trx.amount : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(String(trx.amount).replace(/[^0-9]/g, '')))}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Timestamp */}
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-2 mt-1">
+                  <span className="text-[10px] font-medium text-slate-400 font-mono">
+                    {typeof trx.timestamp === 'object' ? trx.timestamp.toLocaleString('id-ID') : trx.timestamp}
+                  </span>
+                </div>
+              </div>
+
+              {/* --- DESKTOP VIEW (Grid Layout) --- */}
+              <div className="hidden md:block col-span-1 text-[10px] font-mono font-bold text-slate-400">
                 {trx.linked_id || "-"}
               </div>
-              <div className="col-span-2 text-[11px] font-mono font-bold text-slate-900 dark:text-slate-100">
+              <div className="hidden md:block col-span-2 text-[11px] font-mono font-bold text-slate-900 dark:text-slate-100 truncate">
                 {trx.id}
               </div>
-              <div className="col-span-1 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+              <div className="hidden md:block col-span-2 text-[11px] font-bold text-slate-700 dark:text-slate-300">
                 {trx.method}
               </div>
-              <div className="col-span-1">
+              <div className="hidden md:block col-span-1 text-center">
                 <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
                   {trx.type}
                 </span>
               </div>
-              <div className="col-span-1 text-[10px] font-medium text-slate-500 truncate">
+              <div className="hidden md:block col-span-1 text-center text-[10px] font-medium text-slate-500 truncate">
                 {trx.city || "-"}
               </div>
-              <div className="col-span-2 text-right text-sm font-black text-slate-900 dark:text-slate-100">
+              <div className="hidden md:block col-span-2 text-right text-sm font-black text-slate-900 dark:text-slate-100 truncate">
                 {trx.amount}
               </div>
-              <div className="col-span-1 flex justify-center">
+              <div className="hidden md:flex col-span-1 justify-center">
                 <div className={cn(
                   "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider",
                   trx.status === "Verified" ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600"
@@ -779,7 +839,7 @@ export default function FinancePage() {
                   {trx.status}
                 </div>
               </div>
-              <div className="col-span-3 text-right text-[11px] font-medium text-slate-500 font-mono">
+              <div className="hidden md:block col-span-2 text-right text-[11px] font-medium text-slate-500 font-mono truncate">
                 {typeof trx.timestamp === 'object' ? trx.timestamp.toLocaleString('id-ID') : trx.timestamp}
               </div>
             </m.div>
@@ -788,8 +848,8 @@ export default function FinancePage() {
 
         {/* Pagination Controls */}
         {filteredByKeterangan.length > 0 && (
-          <div className="p-10 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-white/5">
-            <p className="text-xs font-bold text-slate-400">
+          <div className="p-10 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-white/5">
+            <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
               Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, filteredByKeterangan.length)}</span> of <span className="text-slate-900 dark:text-white">{filteredByKeterangan.length}</span> results
             </p>
             <div className="flex items-center gap-2">

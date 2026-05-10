@@ -236,9 +236,8 @@ export default function RegionalAnalysisPage() {
         </div>
       </div>
 
-      {/* Filter Section */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-slate-800">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { 
               label: "Province", 
@@ -359,14 +358,14 @@ export default function RegionalAnalysisPage() {
             { 
               header: "Monthly Revenue", 
               accessor: "revenue", 
-              className: "px-10 py-6 font-black text-slate-900 dark:text-slate-100",
-              render: (row: any) => `Rp ${row.revenue}`
+              className: "px-10 py-6 font-black text-slate-900 dark:text-slate-100 whitespace-nowrap",
+              render: (row: any) => <span className="tabular-nums">Rp {row.revenue}</span>
             },
             { 
               header: "ARPU", 
               accessor: "arpu", 
-              className: "px-10 py-6 font-bold text-blue-600 dark:text-blue-400",
-              render: (row: any) => `Rp ${row.arpu}`
+              className: "px-10 py-6 font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap",
+              render: (row: any) => <span className="tabular-nums">Rp {row.arpu}</span>
             },
             { 
               header: "Node Status", 
@@ -383,8 +382,8 @@ export default function RegionalAnalysisPage() {
         
         {/* Pagination Profit */}
         {dynamicData.length > 0 && (
-          <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-white/5">
-            <p className="text-xs font-bold text-slate-400">
+          <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/30 dark:bg-white/5">
+            <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
               Showing <span className="text-slate-900 dark:text-white">{(profitPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(profitPage*itemsPerPage, dynamicData.length)}</span> of <span className="text-slate-900 dark:text-white">{dynamicData.length}</span> nodes
             </p>
             <div className="flex items-center gap-2">
@@ -449,34 +448,34 @@ export default function RegionalAnalysisPage() {
             { 
               header: "0-30 Days", 
               accessor: "aging", 
-              className: "px-10 py-6 font-bold text-slate-600 dark:text-slate-400",
-              render: (row: any) => `Rp ${row.aging["0-30"]}`
+              className: "px-10 py-6 font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap",
+              render: (row: any) => <span className="tabular-nums">Rp {row.aging["0-30"]}</span>
             },
             { 
               header: "31-60 Days", 
               accessor: "aging", 
-              className: "px-10 py-6 font-bold text-orange-600",
-              render: (row: any) => `Rp ${row.aging["31-60"]}`
+              className: "px-10 py-6 font-bold text-orange-600 whitespace-nowrap",
+              render: (row: any) => <span className="tabular-nums">Rp {row.aging["31-60"]}</span>
             },
             { 
               header: "61-90 Days", 
               accessor: "aging", 
-              className: "px-10 py-6 font-bold text-red-600",
-              render: (row: any) => `Rp ${row.aging["61-90"]}`
+              className: "px-10 py-6 font-bold text-red-600 whitespace-nowrap",
+              render: (row: any) => <span className="tabular-nums">Rp {row.aging["61-90"]}</span>
             },
             { 
               header: "90+ Days", 
               accessor: "aging", 
-              className: "px-10 py-6 font-black text-red-800",
-              render: (row: any) => `Rp ${row.aging["90Plus"]}`
+              className: "px-10 py-6 font-black text-red-800 whitespace-nowrap",
+              render: (row: any) => <span className="tabular-nums">Rp {row.aging["90Plus"]}</span>
             },
           ]}
         />
         
         {/* Pagination Aging */}
         {dynamicData.length > 0 && (
-          <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-white/5">
-            <p className="text-xs font-bold text-slate-400">
+          <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/30 dark:bg-white/5">
+            <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
               Showing <span className="text-slate-900 dark:text-white">{(agingPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(agingPage*itemsPerPage, dynamicData.length)}</span> of <span className="text-slate-900 dark:text-white">{dynamicData.length}</span> nodes
             </p>
             <div className="flex items-center gap-2">

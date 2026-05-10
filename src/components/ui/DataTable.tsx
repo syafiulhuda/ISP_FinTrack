@@ -29,7 +29,7 @@ export function DataTable<T>({
   rowClassName
 }: DataTableProps<T>) {
   return (
-    <div className={cn("overflow-x-auto custom-scrollbar", className)}>
+    <div className={cn("overflow-x-auto no-scrollbar", className)}>
       <table className="w-full text-left border-collapse">
         <thead>
           <tr className="border-b border-slate-100 dark:border-slate-800">

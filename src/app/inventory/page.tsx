@@ -20,7 +20,8 @@ import {
   ShieldX,
   Calendar,
   X,
-  Plus
+  Plus,
+  MapPin
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getAssetRoster, getStockAssets, getWarehouses, createAsset, deleteAsset, updateAssetCondition, deployAsset, startMaintenance } from "@/actions/assets";
@@ -386,7 +387,7 @@ export default function InventoryPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {dynamicStats.map((stat, index) => {
           const Icon = IconMap[stat.trendIcon as keyof typeof IconMap] || Cpu;
           return (
@@ -426,8 +427,8 @@ export default function InventoryPage() {
                 </span>
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
-                <h3 className="text-4xl font-black text-slate-900 dark:text-slate-100 mt-1">{stat.value}</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
+                <h3 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-slate-100 mt-1">{stat.value}</h3>
               </div>
             </m.div>
           );
@@ -441,25 +442,25 @@ export default function InventoryPage() {
         transition={{ delay: 0.4 }}
         className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-slate-800"
       >
-        <div className="p-6 md:p-8 border-b border-slate-200 dark:border-slate-800 flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-6">
+        <div className="p-6 md:p-8 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="shrink-0">
             <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Asset Roster</h3>
             <p className="text-[12px] font-medium text-slate-500 mt-0.5">Detailed list of managed network components.</p>
           </div>
           
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full 2xl:w-auto">
+          <div className="flex flex-row items-center gap-2 md:gap-3 w-full md:w-auto">
             <m.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleResetFilters}
-              className="w-full sm:w-auto p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-primary rounded-xl border border-slate-200 dark:border-slate-800 transition-all shadow-sm flex items-center justify-center gap-2 group shrink-0"
+              className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-primary rounded-xl border border-slate-200 dark:border-slate-800 transition-all shadow-sm flex flex-row items-center justify-center gap-2 group shrink-0"
               title="Reset Filters"
             >
               <RotateCcw size={16} className="group-hover:text-primary transition-colors" />
-              <span className="text-[9px] font-black uppercase tracking-widest">Reset</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">Reset</span>
             </m.button>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full 2xl:w-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 flex-1 md:w-auto">
               <div className="relative group min-w-0">
                 <select
                   value={selectedType}
@@ -478,7 +479,7 @@ export default function InventoryPage() {
                   <option value="ONT">ONT</option>
                   <option value="ODP">ODP</option>
                 </select>
-                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
               
               <div className="relative group min-w-0">
@@ -494,7 +495,7 @@ export default function InventoryPage() {
                   <option value="Good">Healthy</option>
                   <option value="Maintenance">Maintenance</option>
                 </select>
-                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
 
               <div className="relative group min-w-0">
@@ -510,7 +511,7 @@ export default function InventoryPage() {
                   <option value="Stock">Ready Stock</option>
                   <option value="In Use">In Use</option>
                 </select>
-                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
 
               <div className="relative group min-w-0">
@@ -527,14 +528,14 @@ export default function InventoryPage() {
                   <option value="Sewa">Sewa</option>
                   <option value="Dijual">Sold</option>
                 </select>
-                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="overflow-visible min-h-[400px]">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto hide-scrollbar min-h-[400px] w-full">
+          <table className="w-full text-left border-collapse min-w-[800px] md:min-w-full">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-800/50">
                 <th className="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Asset Details</th>
@@ -628,19 +629,20 @@ export default function InventoryPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-6">
-                        <div className="flex flex-col min-w-[120px]">
-                          <span className="text-[13px] font-bold text-slate-700 dark:text-slate-300 leading-tight">
-                            {asset.location ? (
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-pulse shrink-0" />
-                                {asset.location}
-                              </span>
-                            ) : "Warehouse"}
-                          </span>
-                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5 bg-slate-50 dark:bg-slate-800/50 w-fit px-1.5 py-0.5 rounded-md">
-                            ZONE 4 / {asset.type === 'OLT' ? 'CORE' : 'DIST'}
-                          </span>
+                      <td className="px-6 py-6 text-slate-900 dark:text-slate-100">
+                        <div className="flex items-start gap-3 min-w-[160px]">
+                          <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 shrink-0 mt-0.5 group-hover:bg-primary/10 group-hover:text-primary transition-all">
+                            <MapPin size={14} />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[13px] font-black text-slate-900 dark:text-slate-100 leading-tight truncate">
+                              {asset.location || "Warehouse"}
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1 flex items-center gap-1.5">
+                              <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                              ZONE 4 / {asset.type === 'OLT' ? 'CORE' : 'DIST'}
+                            </span>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-6 text-right relative">

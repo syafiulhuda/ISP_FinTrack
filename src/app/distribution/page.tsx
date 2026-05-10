@@ -160,8 +160,8 @@ export default function DistributionMapPage() {
       </header>
 
         {/* Main Map Content */}
-        <div className="flex-1 mt-16 relative">
-          <div className="absolute inset-0 z-0">
+        <div className="flex-1 mt-16 relative bg-slate-50 dark:bg-slate-950">
+          <div className="absolute inset-0 z-0 m-4 md:m-0 rounded-[2rem] md:rounded-none overflow-hidden border border-slate-200 dark:border-slate-800 md:border-none shadow-2xl md:shadow-none">
             <IndonesiaMap 
               assets={filteredAssets} 
               onSelectNode={setSelectedNode} 

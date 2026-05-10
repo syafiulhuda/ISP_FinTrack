@@ -182,7 +182,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Lifetime Value (LTV)", value: formatCurrency(data.ltv), icon: TrendingUp, color: "text-indigo-500", bg: "bg-indigo-500/10" },
           { label: "Payment Frequency", value: `${data.txCount}x`, icon: CreditCard, color: "text-emerald-500", bg: "bg-emerald-500/10" },
@@ -199,16 +199,15 @@ export default function CustomerDetailView({ data }: { data: any }) {
               <k.icon size={20} />
             </div>
             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{k.label}</p>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">{k.value}</h3>
+            <h3 className="text-lg sm:text-xl xl:text-2xl font-black text-slate-900 dark:text-white mt-1 whitespace-nowrap tabular-nums">{k.value}</h3>
           </m.div>
         ))}
       </div>
 
       {/* Main Analysis Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
         {/* Left Column: Health & CRM */}
-        <div className="space-y-8">
+        <div className="flex flex-col gap-8 h-full">
           <HealthScoreGauge score={data.healthScore} />
           
           <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -221,16 +220,19 @@ export default function CustomerDetailView({ data }: { data: any }) {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-             <h3 className="text-lg font-black mb-6 flex items-center gap-2"><Users size={20} className="text-indigo-500" /> CRM Intelligence</h3>
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex-1">
+             <h3 className="text-base sm:text-lg font-black mb-6 flex items-start gap-3">
+               <Users size={20} className="text-indigo-500 mt-1 shrink-0" /> 
+               <span>CRM Intelligence</span>
+             </h3>
              <div className="space-y-6">
                 <div>
                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Customer Segment</p>
-                   <p className={cn("text-lg font-black", segmentColor.split(' ')[0])}>{segment}</p>
+                   <p className={cn("text-base sm:text-lg font-black", segmentColor.split(' ')[0])}>{segment}</p>
                 </div>
                 <div>
                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Churn Risk Level</p>
-                   <p className={cn("text-lg font-black", churnColor)}>{churnPct}</p>
+                   <p className={cn("text-base sm:text-lg font-black", churnColor)}>{churnPct}</p>
                 </div>
                 <div>
                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Service</p>
@@ -254,7 +256,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
         </div>
 
         {/* Right Column: Charts & Tables */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 flex flex-col gap-8 h-full">
           
           {/* Payment Timeline */}
           <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -366,8 +368,8 @@ export default function CustomerDetailView({ data }: { data: any }) {
              </div>
           </div>
 
-          {/* Retention Strategy Recommendation */}
-          <div className={cn("p-8 rounded-3xl border shadow-lg flex flex-col md:flex-row items-center gap-8",
+          {/* Retention Strategy Recommendation (Back to Right Column) */}
+          <div className={cn("p-8 rounded-3xl border shadow-lg flex flex-col md:flex-row items-center gap-8 flex-1",
             isAtRisk ? "bg-rose-500/5 border-rose-500/20" : isExcellent ? "bg-emerald-500/5 border-emerald-500/20" : "bg-indigo-500/5 border-indigo-500/20"
           )}>
             <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0",
@@ -375,25 +377,24 @@ export default function CustomerDetailView({ data }: { data: any }) {
             )}>
               {isAtRisk ? <Zap size={32} /> : isExcellent ? <ArrowUpRight size={32} /> : <Activity size={32} />}
             </div>
-            <div className="flex-1 text-center md:text-left">
-              <h4 className="text-xl font-black mb-2 uppercase tracking-tight">
-                {isAtRisk ? "Priority Retention Alert" : isExcellent ? "Premium Upsell Opportunity" : "Steady Growth Maintenance"}
+            <div className="flex-1 text-left">
+              <h4 className="text-lg md:text-xl font-black mb-2 uppercase tracking-tight">
+                {isAtRisk ? "Retention Alert" : isExcellent ? "Upsell Opportunity" : "Growth Maintenance"}
               </h4>
-              <p className="text-slate-500 font-medium">
+              <p className="text-slate-500 font-medium text-sm leading-relaxed">
                 {isAtRisk 
-                  ? "Pelanggan ini berada di zona risiko churn tinggi. Kami merekomendasikan diskon loyalitas atau pengecekan teknis jaringan ke lokasi." 
+                  ? "Pelanggan berada di zona risiko churn tinggi. Rekomendasi: diskon loyalitas segera." 
                   : isExcellent 
-                    ? "Pelanggan menunjukkan loyalitas yang sangat tinggi. Direkomendasikan untuk menawarkan paket Gamera/Premium dengan kontrak tahunan."
-                    : "Terus pantau stabilitas pembayaran. Pelanggan ini memberikan kontribusi MRR yang stabil bagi perusahaan."}
+                    ? "Loyalitas sangat tinggi. Tawarkan paket Gamera/Premium dengan kontrak tahunan."
+                    : "Stabilitas pembayaran terjaga. Terus pantau kontribusi MRR yang stabil."}
               </p>
             </div>
             <button className={cn("px-8 py-4 rounded-2xl font-black text-sm whitespace-nowrap transition-all hover:scale-105 active:scale-95",
-              isAtRisk ? "bg-rose-500 text-white" : isExcellent ? "bg-emerald-500 text-white" : "bg-indigo-500 text-white"
+              isAtRisk ? "bg-rose-500 text-white shadow-rose-500/20" : isExcellent ? "bg-emerald-500 text-white shadow-emerald-500/20" : "bg-indigo-500 text-white shadow-indigo-500/20"
             )}>
-              {isAtRisk ? "Launch Retention Task" : isExcellent ? "Upsell Packages" : "Log Observation"}
+              {isAtRisk ? "Launch Task" : isExcellent ? "Upsell Now" : "Log Observation"}
             </button>
           </div>
-
         </div>
       </div>
     </div>

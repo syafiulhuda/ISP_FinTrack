@@ -140,7 +140,7 @@ export default function CustomerAnalysisPage() {
           </div>
 
           {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <m.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -153,7 +153,7 @@ export default function CustomerAnalysisPage() {
                 </div>
                 <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Total Portfolio LTV</span>
               </div>
-              <h3 className="text-4xl font-black text-slate-900 dark:text-white">{formatCompactNumber(stats.totalLtv)}</h3>
+              <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap tabular-nums">{formatCompactNumber(stats.totalLtv)}</h3>
               <p className="text-xs text-slate-400 mt-2 font-medium">Cumulative revenue from {data.length} customers</p>
             </m.div>
 
@@ -170,7 +170,7 @@ export default function CustomerAnalysisPage() {
                 </div>
                 <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Avg. Health Score</span>
               </div>
-              <h3 className="text-4xl font-black text-slate-900 dark:text-white">{stats.avgHealth}%</h3>
+              <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap">{stats.avgHealth}%</h3>
               <div className="flex items-center gap-2 mt-2">
                 <div className="h-1.5 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <m.div 
@@ -195,7 +195,7 @@ export default function CustomerAnalysisPage() {
                 </div>
                 <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Churn Risk High</span>
               </div>
-              <h3 className="text-4xl font-black text-slate-900 dark:text-white">{stats.atRisk}</h3>
+              <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap">{stats.atRisk}</h3>
               <p className="text-xs text-rose-500 mt-2 font-bold uppercase tracking-wider">Requires Immediate Attention</p>
             </m.div>
           </div>
@@ -210,11 +210,11 @@ export default function CustomerAnalysisPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-800">
-                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Customer Info</th>
-                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Financial LTV</th>
-                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Payment Perf.</th>
-                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Health Score</th>
-                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Action</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Customer Info</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Financial LTV</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Payment Perf.</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Health Score</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
@@ -243,7 +243,7 @@ export default function CustomerAnalysisPage() {
                       
                       <td className="p-6">
                         <div className="space-y-1">
-                          <p className="font-black text-slate-900 dark:text-white text-sm">{formatCurrency(customer.ltv)}</p>
+                          <p className="font-black text-slate-900 dark:text-white text-sm whitespace-nowrap tabular-nums">{formatCurrency(customer.ltv)}</p>
                           <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
                             <CreditCard size={10} />
                             <span>{customer.txCount} Payments</span>

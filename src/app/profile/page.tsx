@@ -135,7 +135,7 @@ export default function ProfilePage() {
     >
       {/* Profile Header */}
       <m.section variants={itemVariants} className="mb-12">
-        <div className="flex flex-col md:flex-row items-end gap-6">
+        <div className="flex flex-col md:flex-row items-center md:items-end gap-6 text-center md:text-left">
           <div className="relative group">
             <div className="w-32 h-32 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 border-4 border-white dark:border-slate-950 shadow-xl relative">
               <img
@@ -160,7 +160,7 @@ export default function ProfilePage() {
             </button>
           </div>
           <div className="flex-1 pb-2">
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 opacity-70">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 opacity-70">
               Internal Profile
             </span>
             <h2 className="text-4xl font-bold tracking-tighter text-slate-900 dark:text-slate-100 mt-1">
@@ -174,9 +174,10 @@ export default function ProfilePage() {
       </m.section>
 
       {/* Bento Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Column 1 & 2: Personal Information */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+        {/* Left Column: Personal Info & Sessions */}
+        <div className="md:col-span-1 lg:col-span-2 flex flex-col gap-6 h-full">
+          {/* Personal Information */}
           <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -198,7 +199,7 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold uppercase text-slate-500 tracking-wider">
                   Full Name
@@ -284,8 +285,8 @@ export default function ProfilePage() {
             </div>
           </m.div>
 
-          {/* Session Management */}
-          <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800">
+          {/* Session Management (Moved here to eliminate gaps) */}
+          <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800 flex-1">
             <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-2">
               Session Management
             </h3>
@@ -294,7 +295,7 @@ export default function ProfilePage() {
             </p>
             <div className="space-y-4">
               {/* Session Item 1 */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl gap-4">
+              <div className="flex flex-wrap items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-700 rounded-full text-primary shadow-sm shrink-0">
                     <Laptop size={18} />
@@ -308,12 +309,12 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
-                <span className="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-widest self-start sm:self-auto">
+                <span className="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-wider">
                   Active Now
                 </span>
               </div>
               {/* Session Item 2 */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl gap-4">
+              <div className="flex flex-wrap items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-700 rounded-full text-slate-400 shadow-sm shrink-0">
                     <Smartphone size={18} />
@@ -327,7 +328,7 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
-                <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="text-orange-600 dark:text-orange-500 text-xs font-bold hover:underline self-start sm:self-auto">
+                <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="text-orange-600 dark:text-orange-500 text-xs font-bold hover:underline">
                   Revoke
                 </button>
               </div>
@@ -340,8 +341,9 @@ export default function ProfilePage() {
           </m.div>
         </div>
 
-        {/* Column 3: Account Security */}
-        <div className="space-y-6">
+        {/* Right Column: Security & Danger Zone */}
+        <div className="md:col-span-1 lg:col-span-1 flex flex-col gap-6 h-full">
+          {/* Account Security */}
           <AnimatePresence>
             {isPasswordModalOpen && (
               <m.div
@@ -367,7 +369,7 @@ export default function ProfilePage() {
 
                 <form onSubmit={handleChangePassword} className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Current Password</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider ml-1">Current Password</label>
                     <div className="relative group">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
                       <input 
@@ -381,7 +383,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">New Password</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider ml-1">New Password</label>
                     <div className="relative group">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
                       <input 
@@ -395,7 +397,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Confirm Password</label>
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider ml-1">Confirm Password</label>
                     <div className="relative group">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
                       <input 
@@ -426,15 +428,16 @@ export default function ProfilePage() {
               </m.div>
             )}
           </AnimatePresence>
+
           <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800">
             <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-8">
               Account Security
             </h3>
             <div className="space-y-8">
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 mb-4">
                   <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Password</label>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                     Last changed: 3mo ago
                   </span>
                 </div>
@@ -447,14 +450,14 @@ export default function ProfilePage() {
                 </button>
               </div>
               <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-4">
                   <div>
                     <label className="text-sm font-bold block text-slate-700 dark:text-slate-300">
                       Two-Factor Auth
                     </label>
                     <p className="text-xs text-slate-500 mt-1">Recommended for admins</p>
                   </div>
-                  <div className="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-tighter">
+                  <div className="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-wider">
                     Enabled
                   </div>
                 </div>
@@ -466,7 +469,7 @@ export default function ProfilePage() {
                     </p>
                     <p className="text-[10px] text-slate-500 truncate">Google Authenticator active</p>
                   </div>
-                  <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="text-primary text-[10px] font-bold uppercase tracking-widest hover:underline shrink-0">
+                  <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="text-primary text-[10px] font-bold uppercase tracking-wider hover:underline shrink-0">
                     Manage
                   </button>
                 </div>
@@ -495,15 +498,15 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
-                <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="mt-6 w-full text-center text-[11px] font-bold text-primary uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 py-3 rounded-xl transition-all">
-                  View Full History
-                </button>
+          <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="mt-6 w-full text-center text-[11px] font-bold text-primary uppercase tracking-wider hover:bg-blue-50 dark:hover:bg-blue-900/20 py-3 rounded-xl transition-all">
+            View Full History
+          </button>
               </div>
             </div>
           </m.div>
 
-          {/* Danger Zone */}
-          <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group">
+          {/* Danger Zone (Moved here to eliminate gaps) */}
+          <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group flex-1">
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-600" />
             <h3 className="text-xl font-bold tracking-tight text-red-600 dark:text-red-500 mb-4">
               Danger Zone
@@ -517,7 +520,6 @@ export default function ProfilePage() {
           </m.div>
         </div>
       </div>
-
 
     </m.div>
   );

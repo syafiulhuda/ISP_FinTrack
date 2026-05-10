@@ -12,7 +12,7 @@ import {
   SlidersHorizontal, 
   Palette, 
   Puzzle, 
-  Users, 
+  Users as UsersIcon, 
   Info, 
   ImagePlus, 
   Pipette, 
@@ -204,7 +204,7 @@ export default function SettingsPage() {
               >
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                    <Users size={12} /> Full Name
+                    <UsersIcon size={12} /> Full Name
                   </label>
                   <input 
                     required
@@ -289,70 +289,70 @@ export default function SettingsPage() {
       </m.div>
 
       {/* Bento Grid Settings Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
         
         {/* Left Nav: Category Selection */}
-        <m.nav variants={itemVariants} className="lg:col-span-3 flex flex-col gap-2 p-1 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <m.nav variants={itemVariants} className="md:col-span-8 lg:col-span-5 xl:col-span-3 flex flex-col gap-2 p-1 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-200 dark:border-slate-800">
           <button 
             onClick={() => setActiveTab('general')}
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold",
+              "flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap",
               activeTab === 'general' 
                 ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700" 
                 : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
             )}
           >
-            <SlidersHorizontal size={18} />
-            General
+            <SlidersHorizontal size={18} className="shrink-0" />
+            <span>General</span>
           </button>
           <button 
             onClick={() => setActiveTab('branding')}
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold",
+              "flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap",
               activeTab === 'branding' 
                 ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700" 
                 : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
             )}
           >
-            <Palette size={18} />
-            Branding
+            <Palette size={18} className="shrink-0" />
+            <span>Branding</span>
           </button>
           <button 
             onClick={() => setActiveTab('integrations')}
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold",
+              "flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap",
               activeTab === 'integrations' 
                 ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700" 
                 : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
             )}
           >
-            <Puzzle size={18} />
-            Integrations
+            <Puzzle size={18} className="shrink-0" />
+            <span>Integrations</span>
           </button>
           <button 
             onClick={() => setActiveTab('users')}
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold",
+              "flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap",
               activeTab === 'users' 
                 ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700" 
                 : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
             )}
           >
-            <Users size={18} />
-            User Management
+            <UsersIcon size={18} className="shrink-0" />
+            <span>User Management</span>
           </button>
           
           <Link 
             href="/settings/audit"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+            className="flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
           >
-            <ShieldCheck size={18} />
-            Security & Audit
+            <ShieldCheck size={18} className="shrink-0" />
+            <span>Security & Audit</span>
           </Link>
         </m.nav>
 
         {/* Right Content */}
-        <div className="lg:col-span-9 space-y-6">
+        <div className="md:col-span-4 lg:col-span-7 xl:col-span-9 space-y-6">
           
           {/* Section 1: General Info */}
           {activeTab === 'general' && (

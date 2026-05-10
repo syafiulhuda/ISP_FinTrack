@@ -365,24 +365,24 @@ export default function ExecutiveDashboard() {
             <p className="text-slate-500 text-sm mt-1 font-medium">Single-pane-of-glass overview of ISP-FinTrack metrics.</p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800">
-              <Calendar className="w-4 h-4 text-slate-400" />
-              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent text-sm font-medium text-slate-700 dark:text-slate-300 outline-none" />
-              <span className="text-slate-300">-</span>
-              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent text-sm font-medium text-slate-700 dark:text-slate-300 outline-none" />
+          <div className="flex flex-row items-center gap-2 w-full md:w-auto">
+            <div className="flex items-center justify-between gap-1 md:gap-2 bg-slate-100 dark:bg-slate-900 px-2 md:px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 flex-1 md:flex-none">
+              <Calendar className="w-3 h-3 md:w-4 md:h-4 text-slate-400 shrink-0" />
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent text-[9px] min-[380px]:text-[10px] md:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-20 min-[380px]:w-24 md:w-auto" />
+              <span className="text-slate-300 text-[10px] md:text-sm shrink-0">-</span>
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent text-[9px] min-[380px]:text-[10px] md:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-20 min-[380px]:w-24 md:w-auto" />
             </div>
 
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative shrink-0" ref={dropdownRef}>
               <button 
                 onClick={() => setIsRegionOpen(!isRegionOpen)}
-                className="flex items-center justify-between gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 min-w-[160px] hover:border-indigo-500/50 transition-all active:scale-95"
+                className="flex items-center justify-between gap-1.5 md:gap-3 bg-slate-100 dark:bg-slate-900 px-2 md:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 min-w-[100px] md:min-w-[160px] hover:border-indigo-500/50 transition-all active:scale-95"
               >
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-indigo-500" />
-                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{selectedProvince}</span>
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <MapPin className="w-3 h-3 md:w-4 md:h-4 text-indigo-500 shrink-0" />
+                  <span className="text-[10px] md:text-sm font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">{selectedProvince}</span>
                 </div>
-                <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-300 ${isRegionOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 text-slate-400 shrink-0 transition-transform duration-300 ${isRegionOpen ? 'rotate-180' : ''}`} />
               </button>
 
               <AnimatePresence>
@@ -429,7 +429,7 @@ export default function ExecutiveDashboard() {
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-5 py-3 rounded-t-xl font-semibold text-sm transition-all duration-300 ${
+              className={`flex items-center gap-2 px-4 md:px-5 py-3 rounded-t-xl font-semibold text-[11px] md:text-sm whitespace-nowrap transition-all duration-300 ${
                 activeTab === tab.id 
                   ? "bg-slate-100 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 border-t-2 border-indigo-500" 
                   : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/50"
@@ -454,7 +454,7 @@ export default function ExecutiveDashboard() {
             {/* TAB 1: FINANCIAL OVERVIEW */}
             {activeTab === 'financial' && (
               <div className="space-y-8">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                   {[
                     { title: "Revenue", val: processedData.financial.totalRevenue, icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10" },
                     { title: "Gross Profit", val: processedData.financial.grossProfit, icon: Target, color: "text-blue-500", bg: "bg-blue-500/10" },
@@ -467,7 +467,7 @@ export default function ExecutiveDashboard() {
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{k.title}</p>
                         <div className={`p-2 rounded-lg ${k.bg} ${k.color}`}><k.icon className="w-4 h-4" /></div>
                       </div>
-                      <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">{k.val}</h3>
+                      <h3 className="text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100 whitespace-nowrap">{k.val}</h3>
                     </div>
                   ))}
                 </div>

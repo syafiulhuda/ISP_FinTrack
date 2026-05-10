@@ -150,7 +150,7 @@ export default function IndonesiaMap({
   const focusZoom = selectedNode ? 12 : zoom;
 
   return (
-    <div className="w-full h-full relative" id="map-parent">
+    <div className="w-full h-full relative">
       <MapContainer
         center={defaultCenter}
         zoom={zoom}
