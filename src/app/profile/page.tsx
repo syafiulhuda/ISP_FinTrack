@@ -179,12 +179,12 @@ export default function ProfilePage() {
         <div className="md:col-span-1 lg:col-span-2 flex flex-col gap-6 h-full">
           {/* Personal Information */}
           <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-start sm:items-center justify-between gap-4 mb-8">
               <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                 Personal Information
               </h3>
               {!isEditing ? (
-                <button onClick={handleEdit} className="text-primary font-bold text-sm hover:underline px-3 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                <button onClick={handleEdit} className="text-primary font-bold text-sm whitespace-nowrap hover:underline px-3 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
                   Update info
                 </button>
               ) : (

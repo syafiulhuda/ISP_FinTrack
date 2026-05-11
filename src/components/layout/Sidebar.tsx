@@ -114,7 +114,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
             )}
           </m.div>
           <div className="flex flex-col">
-            <h1 className="font-black text-lg tracking-tight text-slate-900 dark:text-white leading-none">{settings.appName}</h1>
+            <h1 className="font-black text-lg tracking-tight text-slate-900 dark:text-white leading-none whitespace-nowrap">{settings.appName}</h1>
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Enterprise Finance</p>
           </div>
         </div>
@@ -152,7 +152,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 mt-6">
+      <nav className="flex-1 space-y-1 mt-6 overflow-y-auto min-h-0 pb-4">
         {navigation.map((item) => {
           const isActive = item.href === "/" 
             ? pathname === "/" || pathname === "/profitability"

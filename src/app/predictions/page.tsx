@@ -111,7 +111,7 @@ export default function PredictionsPage() {
           <p className="text-slate-500 font-medium mt-1">Next-Month Financial & Churn Projections</p>
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-inner w-fit">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-inner w-full lg:w-fit overflow-x-auto">
           <button 
             onClick={() => setModelType('lr')}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-[1.5rem] text-sm font-black transition-all duration-300 whitespace-nowrap ${

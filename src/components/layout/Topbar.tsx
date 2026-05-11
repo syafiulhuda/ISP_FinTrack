@@ -30,7 +30,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           <button className="text-on-surface" onClick={onMenuClick}>
             <Menu size={24} />
           </button>
-          <span className="text-xl font-bold tracking-tight text-blue-700 dark:text-blue-500">ISP-FinTrack</span>
+          <span className="text-xl font-bold tracking-tight text-blue-700 dark:text-blue-500 whitespace-nowrap">ISP-FinTrack</span>
         </div>
 
         {/* Dark Mode Toggle (Desktop & Mobile) */}

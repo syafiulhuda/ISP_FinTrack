@@ -556,16 +556,16 @@ export default function Dashboard() {
               transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.4 }}
               className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-full"
             >
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
                   <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Revenue Growth</h3>
-                  <p className="text-sm font-medium text-slate-500 mt-1">{dynamicData.dateRangeLabel}</p>
+                  <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">{dynamicData.dateRangeLabel}</p>
                 </div>
                 <Link
                   href="/profitability"
                   className="
-                    flex items-center gap-2
-                    px-4 py-3 rounded-xl
+                    inline-flex items-center justify-center gap-2
+                    px-4 py-3 rounded-xl w-full sm:w-auto
                     bg-slate-50 dark:bg-slate-800
                     text-primary
                     hover:bg-primary hover:text-primary-foreground
