@@ -39741,3 +39741,977 @@ export const MOCK_AR_AGING = [
     "REAL 90+ DAYS": "0"
   }
 ];
+
+export const MOCK_NOTIFICATIONS = [
+  {
+    "id": 95,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750,000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": true,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T18:02:05.772Z"
+  },
+  {
+    "id": 94,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T06:42:19.849Z"
+  },
+  {
+    "id": 93,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T06:42:19.849Z"
+  },
+  {
+    "id": 92,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T06:42:19.849Z"
+  },
+  {
+    "id": 91,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T06:42:19.849Z"
+  },
+  {
+    "id": 90,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 120.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T06:42:19.849Z"
+  },
+  {
+    "id": 89,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 120.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T06:42:19.849Z"
+  },
+  {
+    "id": 88,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 87,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 86,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 85,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 84,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 83,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 82,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 81,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 80,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 79,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 78,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 77,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 76,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 75,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 74,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 73,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 72,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 71,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 70,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 69,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 750.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 68,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 67,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 66,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 65,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 64,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 63,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 62,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 61,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 60,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 59,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 58,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 57,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 56,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 55,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 54,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 53,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 52,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 51,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 50,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 49,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 400.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 48,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 47,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 46,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 45,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 44,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 43,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 42,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 41,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 40,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 39,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 38,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 37,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 36,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 35,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 34,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 33,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 32,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 31,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 30,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 29,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 28,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 27,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via Bank Transfer has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 26,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 25,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 24,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 23,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 22,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 21,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 20,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 19,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 18,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 17,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 16,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 15,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 14,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 13,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via QRIS Dynamic has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 12,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 11,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 10,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 9,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 150.000 via E-Wallet Payment has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-25T02:03:05.326Z"
+  },
+  {
+    "id": 8,
+    "category": "Inventory",
+    "title": "Hardware SN-6651-P0Q4 reported Maintenance",
+    "message": "Asset type OLT at Warehouse Main, Makassar, Sulawesi Selatan requires attention. Condition: Maintenance",
+    "type": "hardware",
+    "is_unread": false,
+    "action_label": "Schedule Dispatch",
+    "created_at": "2026-04-25T01:23:47.028Z"
+  },
+  {
+    "id": 7,
+    "category": "Inventory",
+    "title": "Hardware SN-8924-A1B2 reported Maintenance",
+    "message": "Asset type ONT at Warehouse Main, DKI Jakarta requires attention. Condition: Maintenance",
+    "type": "hardware",
+    "is_unread": false,
+    "action_label": "Schedule Dispatch",
+    "created_at": "2026-04-24T10:40:56.609Z"
+  },
+  {
+    "id": 6,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 250.000 via QRIS Dynamic (ID: TRX-004) has been logged.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-24T10:33:54.947Z"
+  },
+  {
+    "id": 5,
+    "category": "System",
+    "title": "Security Audit Passed",
+    "message": "Monthly automated security scan finished with 0 critical vulnerabilities found across all active nodes.",
+    "type": "audit",
+    "is_unread": false,
+    "action_label": null,
+    "created_at": "2026-04-24T08:26:13.305Z"
+  },
+  {
+    "id": 4,
+    "category": "System",
+    "title": "System Backup Completed",
+    "message": "Weekly financial ledger and inventory snapshot successfully archived to Secure Vault 01.",
+    "type": "backup",
+    "is_unread": false,
+    "action_label": null,
+    "created_at": "2026-04-24T08:26:13.305Z"
+  },
+  {
+    "id": 3,
+    "category": "Inventory",
+    "title": "Hardware SN-8924 reported faulty",
+    "message": "Node-X Edge Router at site B-12 reports critical fan failure. Immediate dispatch required.",
+    "type": "hardware",
+    "is_unread": false,
+    "action_label": "Schedule Dispatch",
+    "created_at": "2026-04-24T08:26:13.305Z"
+  },
+  {
+    "id": 2,
+    "category": "Finance",
+    "title": "OCR Verification needed",
+    "message": "Receipt scan from 'Mega Indah Solusindo' requires manual review of total amount.",
+    "type": "ocr",
+    "is_unread": false,
+    "action_label": "Launch OCR",
+    "created_at": "2026-04-24T08:26:13.305Z"
+  },
+  {
+    "id": 1,
+    "category": "Finance",
+    "title": "New transaction detected",
+    "message": "Incoming payment of Rp 1,240,000 from Enterprise Client #882 has been logged into the ledger.",
+    "type": "transaction",
+    "is_unread": false,
+    "action_label": "View Details",
+    "created_at": "2026-04-24T08:26:13.305Z"
+  }
+];
+
+export const MOCK_OCR = {
+  id: "ocr_1",
+  image: "https://images.unsplash.com/photo-1554224155-169746991c99?q=80&w=2000&auto=format&fit=crop",
+  vendor: "PT Mega Indah Solusindo",
+  date: "31 Des 2026",
+  amount: "1.250.000",
+  reference: "TRX-CT113",
+  confidence: "94.2%",
+  method: "Bank Transfer"
+};
+
+export const MOCK_ADMIN = {
+  fullName: "Super Admin",
+  email: "admin@isp-fintrack.com",
+  role: "General Manager",
+  department: "Executive",
+  image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=256&h=256"
+};
+export const MOCK_ASSETS = MOCK_ASSET_ROSTER;
+export const MOCK_STOCK = MOCK_STOCK_ASSET_ROSTER;

@@ -25,11 +25,11 @@ export interface Asset {
   sn: string;
   status: string;
   location: string;
-  kepemilikan?: string;
-  tanggal_perubahan?: string;
-  mac?: string;
+  kepemilikan?: string | null;
+  tanggal_perubahan?: string | null;
+  mac?: string | null;
   condition: string;
-  color?: string;
+  color?: string | null;
   latitude: string | number;
   longitude: string | number;
 }
