@@ -482,10 +482,10 @@ export default function FinancePage() {
           </div>
 
           {/* Right: AI Extracted Data Form */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-10 flex flex-col justify-between shadow-sm border border-slate-200/50 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 md:p-10 flex flex-col justify-between shadow-sm border border-slate-200/50 dark:border-slate-800">
             <div>
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Extracted Data</h2>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 md:mb-8">
+                <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Extracted Data</h2>
                 <div className="px-4 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-primary rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-2">
                   <Sparkles size={14} />
                   AI Confidence: {ocrData.confidence}
@@ -493,7 +493,7 @@ export default function FinancePage() {
               </div>
 
               {/* Income / Expense Tabs */}
-              <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl mb-10 relative">
+              <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl md:p-1.5 md:rounded-2xl mb-8 md:mb-10 relative">
                 <m.div 
                   className={cn(
                     "absolute h-[calc(100%-12px)] top-1.5 rounded-xl shadow-sm z-0",
@@ -508,7 +508,7 @@ export default function FinancePage() {
                 <button 
                   onClick={() => setActiveTab('pemasukan')}
                   className={cn(
-                    "flex-1 py-2 flex flex-col items-center justify-center gap-0.5 text-[10px] font-black uppercase tracking-widest relative z-10 transition-colors duration-300",
+                    "flex-1 py-1.5 md:py-2 flex flex-col items-center justify-center gap-0.5 text-[8px] sm:text-[10px] font-black uppercase tracking-wider md:tracking-widest relative z-10 transition-colors duration-300",
                     activeTab === 'pemasukan' ? "text-white" : "text-slate-400"
                   )}
                 >
@@ -518,7 +518,7 @@ export default function FinancePage() {
                 <button 
                   onClick={() => setActiveTab('pengeluaran')}
                   className={cn(
-                    "flex-1 py-2 flex flex-col items-center justify-center gap-0.5 text-[10px] font-black uppercase tracking-widest relative z-10 transition-colors duration-300",
+                    "flex-1 py-1.5 md:py-2 flex flex-col items-center justify-center gap-0.5 text-[8px] sm:text-[10px] font-black uppercase tracking-wider md:tracking-widest relative z-10 transition-colors duration-300",
                     activeTab === 'pengeluaran' ? "text-white" : "text-slate-400"
                   )}
                 >

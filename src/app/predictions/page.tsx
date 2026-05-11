@@ -111,10 +111,10 @@ export default function PredictionsPage() {
           <p className="text-slate-500 font-medium mt-1">Next-Month Financial & Churn Projections</p>
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-inner w-full lg:w-fit overflow-x-auto">
+        <div className="flex flex-wrap justify-center items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-inner w-full lg:w-fit">
           <button 
             onClick={() => setModelType('lr')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-[1.5rem] text-sm font-black transition-all duration-300 whitespace-nowrap ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-[1.5rem] text-sm font-black transition-all duration-300 ${
               modelType === 'lr' 
               ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-indigo-500/50" 
               : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
@@ -125,7 +125,7 @@ export default function PredictionsPage() {
           </button>
           <button 
             onClick={() => setModelType('nn')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-[1.5rem] text-sm font-black transition-all duration-300 whitespace-nowrap ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-[1.5rem] text-sm font-black transition-all duration-300 ${
               modelType === 'nn' 
               ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-indigo-500/50" 
               : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"

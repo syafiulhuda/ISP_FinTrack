@@ -259,9 +259,9 @@ export default function CustomerDetailView({ data }: { data: any }) {
         <div className="lg:col-span-2 flex flex-col gap-8 h-full">
           
           {/* Payment Timeline */}
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-xl font-black">Payment Performance Timeline</h3>
+          <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+              <h3 className="text-lg md:text-xl font-black">Payment Performance Timeline</h3>
               <div className="flex gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-emerald-500" />
@@ -327,10 +327,10 @@ export default function CustomerDetailView({ data }: { data: any }) {
           </div>
 
           {/* Late Payments Detailed Table */}
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
              <h3 className="text-xl font-black mb-8 flex items-center gap-2"><Clock size={24} className="text-rose-500" /> Late Payment Breakdown</h3>
-             <div className="overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800">
-               <table className="w-full text-left">
+             <div className="overflow-x-auto no-scrollbar rounded-2xl border border-slate-100 dark:border-slate-800">
+               <table className="w-full text-left min-w-[500px]">
                   <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                     <tr>
                       <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Billing Month</th>
@@ -369,7 +369,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
           </div>
 
           {/* Retention Strategy Recommendation (Back to Right Column) */}
-          <div className={cn("p-8 rounded-3xl border shadow-lg flex flex-col md:flex-row items-center gap-8 flex-1",
+          <div className={cn("p-4 md:p-8 rounded-3xl border shadow-lg flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8 flex-1",
             isAtRisk ? "bg-rose-500/5 border-rose-500/20" : isExcellent ? "bg-emerald-500/5 border-emerald-500/20" : "bg-indigo-500/5 border-indigo-500/20"
           )}>
             <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0",

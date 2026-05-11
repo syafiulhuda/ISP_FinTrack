@@ -64,7 +64,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
             <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-50 dark:border-slate-900"></span>
           )}
         </Link>
-        <Link href="/settings" className="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 rounded-full active:opacity-80 hidden xs:block">
+        <Link href="/settings" className="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 rounded-full active:opacity-80">
           <Settings size={20} />
         </Link>
         <Link href="/profile" className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 ml-1 md:ml-2 block shrink-0">

@@ -893,11 +893,11 @@ export default function InventoryPage() {
 
         {/* Pagination Controls */}
         {filteredAssets.length > 0 && (
-          <div className="p-10 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-white/5">
+          <div className="p-4 md:p-10 flex flex-col sm:flex-row flex-wrap items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-white/5">
             <p className="text-xs font-bold text-slate-400">
               Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, filteredAssets.length)}</span> of <span className="text-slate-900 dark:text-white">{filteredAssets.length}</span> assets
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap justify-center items-center gap-2">
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
