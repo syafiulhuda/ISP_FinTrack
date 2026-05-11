@@ -1,62 +1,69 @@
-# Implementation Plan: Comprehensive Responsive Design Enhancement
+# Strategi Go-Live: ISP_FinTrack (Vercel Free Tier)
 
-## Goal Description
+Dokumen ini adalah panduan teknis implementasi dan deployment **ISP_FinTrack** ke **Vercel (Free Tier)**. Vercel sangat cocok untuk fase awal karena setup instan dan skalabilitas otomatis. Namun, kita harus menyesuaikan beberapa aspek dari sistem saat ini agar bisa berjalan optimal di lingkungan *Serverless*.
 
-Melakukan riset dan pengembangan antarmuka (UI) dari project **ISP-FinTrack** agar sepenuhnya responsif pada 4 ukuran layar utama: Monitor (Ultra-wide/Desktop Besar), Laptop (Desktop Standar), Tablet, dan Smartphone. Tujuan utamanya adalah memastikan "Single-Pane-of-Glass" experience tetap optimal tanpa mengorbankan fungsionalitas di perangkat berlayar kecil, serta memaksimalkan ruang di layar besar.
+## 1. Persiapan Database (Eksternal)
 
-## Research Findings
+Vercel bersifat *Serverless Computing*, sehingga database PostgreSQL tidak bisa berada di *localhost*. Kita butuh layanan database cloud gratis.
 
-Berdasarkan analisis arsitektur frontend (`ClientLayout.tsx`, `Sidebar.tsx`, `Topbar.tsx`, dan halaman-halaman utama seperti `page.tsx` dan `finance/page.tsx`):
-
-1. **Current State:** Proyek ini sudah menggunakan framework Tailwind CSS dengan beberapa _breakpoint_ standar (seperti `md:grid-cols-2`, `lg:grid-cols-4`).
-2. **Layout Shell:** Konsep Sidebar yang _collapsible_ di layar kecil (`isMobileMenuOpen`) sudah diimplementasikan di `ClientLayout.tsx` dan `Sidebar.tsx`.
-3. **Gaps:**
-   - Belum ada optimasi khusus untuk layar sangat besar (Monitor/Ultrawide - `2xl:`). Komponen seringkali memiliki `max-w-7xl` yang membuatnya terpusat dengan _whitespace_ berlebih di layar besar.
-   - Tabel data (seperti di halaman Finance/Customer) berisiko _clipping_ atau memaksakan _horizontal scroll_ yang kurang intuitif di Smartphone.
-   - Ukuran _touch targets_ (tombol, input) di Smartphone perlu diperhatikan.
-
-## Open Questions
+**Rekomendasi Layanan DB (Gratis):**
+- **Neon.tech** (Sangat disarankan karena memiliki fitur Serverless Connection Pooling bawaan).
+- **Supabase** (Tersedia Supavisor untuk connection pooling).
 
 > [!IMPORTANT]
-> **Klarifikasi Resolusi Layar & Layout**
->
-> 1. Untuk tampilan **Monitor**, apakah Anda ingin membiarkan lebar konten maksimum (contoh: melepas limit `max-w-7xl` menjadi _full-width_ dengan _padding_ tertentu) agar tabel dan grafik bisa memanjang penuh?
-> 2. Untuk tabel kompleks di **Smartphone** (misal: Finance Transactions), apakah Anda lebih suka tabel tersebut memiliki _horizontal scrollbar_ (bisa digeser ke kanan), atau diubah menjadi desain _Card-based_ (stacking data per transaksi)?
+> **Tugas Anda:** Silakan buat akun di [Neon.tech](https://neon.tech/) atau [Supabase](https://supabase.com/), buat proyek PostgreSQL baru, dan dapatkan `DATABASE_URL` (Connection String). Pilih yang versi **Pooled Connection** (contoh: port 6543 atau ditandai sebagai pooler).
 
-## Proposed Changes
+## 2. Refactor Node-Cron ke Vercel Cron
 
-### 1. Global Shell & Layout Configurations
+Di Vercel, *background job* seperti `node-cron` yang berjalan terus-menerus di `instrumentation.ts` tidak akan bekerja karena instance Vercel akan otomatis "tertidur" saat tidak ada trafik.
 
-- Update `ClientLayout.tsx` untuk memastikan transisi _padding_ dan _margin_ yang lebih halus di semua _breakpoints_.
-- Modifikasi limit lebar maksimum (`max-w-7xl` -> `max-w-screen-2xl` atau kustomisasi di `2xl:`) untuk mengakomodasi ukuran **Monitor**.
+**Solusi yang akan saya kerjakan:**
+1. Membuat API Route khusus: `src/app/api/cron/route.ts` yang bertugas menjalankan fungsi `refreshAgingMV()` dan `refreshPredictions()`.
+2. Mendaftarkan jadwal di `vercel.json` untuk menjalankan endpoint `/api/cron` secara otomatis (misal: setiap hari jam 00:00).
+3. Menonaktifkan `node-cron` di lingkungan produksi (`instrumentation.ts`).
 
-### 2. Dashboard (`src/app/page.tsx`)
+## 3. Penanganan Timeout (OCR Tesseract)
 
-- **Smartphone (`< 768px`)**: Stack seluruh KPI Cards dan Chart menjadi 1 kolom. Sembunyikan elemen dekoratif yang memakan ruang.
-- **Tablet (`md:`)**: KPI Cards menjadi 2 kolom. Chart utama menyesuaikan proporsi lebar.
-- **Laptop (`lg:`)**: KPI Cards menjadi 4 kolom. Chart berdampingan (seperti saat ini).
-- **Monitor (`2xl:`)**: Perbesar tinggi chart dan perluas area visualisasi agar tidak terlalu banyak _whitespace_ di sisi kanan-kiri.
+Pada Vercel Hobby (Free Tier), batas maksimal waktu eksekusi *Serverless Function* adalah **10 detik** (bisa dinaikkan maksimal hingga **60 detik**). Ekstraksi teks gambar struk (OCR) bisa memakan waktu lama.
 
-### 3. Finance & Data Heavy Pages (`src/app/finance/page.tsx`, dll)
+**Solusi yang akan saya kerjakan:**
+- Mengatur konfigurasi khusus di fungsi Server Actions yang memproses OCR agar menggunakan `maxDuration: 60` untuk meminimalisir risiko Error 504 (Timeout).
 
-- **Smartphone**: Implementasi class `overflow-x-auto` yang konsisten pada semua _table container_ agar bisa di-scroll horizontal tanpa merusak layout luar.
-- **Tablet & Laptop**: Penyesuaian _grid_ untuk form input ("Manual Input") dan Preview Struk (50/50 split).
-- **Monitor**: Optimasi lebar kolom tabel agar informasi referensi yang panjang tidak terpotong (truncate).
+## 4. Persiapan Deployment (Vercel CLI / GitHub)
 
-### 4. Navigation (Sidebar & Topbar)
+Deployment paling direkomendasikan adalah dengan menghubungkan *repository* GitHub Anda langsung ke Vercel Dashboard.
 
-- Peningkatan visibilitas tombol "Hamburger Menu" di **Smartphone** dan **Tablet**.
-- Penyempurnaan sistem _backdrop blur_ saat menu terbuka di perangkat mobile agar lebih fokus.
+**Langkah Deployment:**
+1. Login ke [vercel.com](https://vercel.com/)
+2. Klik **Add New Project** -> **Import dari GitHub**.
+3. Pilih repository `ISP_FinTrack`.
+4. Di bagian **Environment Variables**, tambahkan:
+   - `DATABASE_USER`, `DATABASE_HOST`, `DATABASE_NAME`, `DATABASE_PASSWORD`, `DATABASE_PORT`
+   - **ATAU** gunakan satu variabel `DATABASE_URL` sesuai connection string cloud.
+   - Variabel SMTP (`GMAIL_USER`, `GMAIL_APP_PASSWORD`).
+5. Klik **Deploy**.
 
-### 5. Documentation Update
+---
 
-- **[NEW/MODIFIED]** Update `GEMINI.md`, `CLAUDE.md`, dan `AGENTS.md` untuk memasukkan pedoman baru terkait resolusi _Responsive Design_ (Tailwind Breakpoints guidelines untuk proyek ini).
+## Proposed Changes (Kode yang harus diubah)
 
-## Verification Plan
+### [MODIFY] `src/instrumentation.ts`
+Menonaktifkan `node-cron` untuk *production* agar tidak memicu error atau konsumsi RAM berlebih di Vercel.
 
-### Manual Verification
+### [NEW] `src/app/api/cron/route.ts`
+Membuat endpoint REST API yang aman (diproteksi dengan *Cron Secret*) untuk memicu pembaruan *Materialized Views* dan metrik prediktif.
 
-1. **Monitor (>= 1536px)**: Test menggunakan Chrome DevTools (Responsive mode, width 1920px). Pastikan konten tidak terasa "terjepit" di tengah.
-2. **Laptop (>= 1024px)**: Test pada width 1366px. Pastikan sidebar berfungsi dengan baik.
-3. **Tablet (>= 768px)**: Test pada width 768px (iPad size). Pastikan sidebar tersembunyi dengan benar dan form tidak terpotong.
-4. **Smartphone (< 768px)**: Test pada width 375px (iPhone size). Pastikan teks bisa dibaca, tombol mudah ditekan (_touch-friendly_), dan tabel bisa di-scroll secara horizontal.
+### [NEW] `vercel.json`
+Mendeklarasikan Vercel Cron Job yang menembak `/api/cron` setiap hari pukul 00:00 WIB.
+
+### [MODIFY] `src/lib/db.ts`
+(Opsional) Memastikan konfigurasi `pg` (Pool) mendukung koneksi dari Vercel via `DATABASE_URL` (misal penambahan `ssl: { rejectUnauthorized: false }`).
+
+---
+
+## User Review Required
+
+> [!WARNING]
+> **Klarifikasi Database:** Apakah Anda sudah membuat database PostgreSQL online (Neon/Supabase) dan memiliki Connection String-nya? Jika belum, saya sarankan membuatnya terlebih dahulu karena Vercel butuh ini agar sistem berfungsi.
+
+Jika Anda menyetujui langkah-langkah penyesuaian kode di atas (Cron Job & Timeout Config), beritahu saya untuk mulai merombak kodenya.
