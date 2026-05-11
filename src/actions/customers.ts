@@ -324,7 +324,7 @@ export async function getCustomerAnalysis() {
 
 export async function getCustomer360(customerId: string) {
   try {
-    const customerRes = await query('SELECT id, name, service, status, is_vip, "createdAt" AT TIME ZONE \'Asia/Jakarta\' as created_at FROM customers WHERE id = $1', [customerId]);
+    const customerRes = await query('SELECT id, name, service, status, is_vip, no_telp, city, province, "createdAt" AT TIME ZONE \'Asia/Jakarta\' as created_at FROM customers WHERE id = $1', [customerId]);
     if (customerRes.rows.length === 0) return null;
     const c = customerRes.rows[0];
 

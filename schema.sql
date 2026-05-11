@@ -38,9 +38,9 @@ CREATE FUNCTION public.fn_set_inputter_tms() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
       BEGIN
-        -- Set inputter_tms ke WIB jika kosong
+        -- Set inputter_tms ke UTC jika kosong (PostgreSQL handles display via AT TIME ZONE)
         IF NEW.inputter_tms IS NULL THEN
-          NEW.inputter_tms := (NOW() AT TIME ZONE 'Asia/Jakarta');
+          NEW.inputter_tms := NOW();
         END IF;
         
         -- Jika inputter NULL pada INSERT, ambil nickname dari admin (fallback ke System jika admin kosong)

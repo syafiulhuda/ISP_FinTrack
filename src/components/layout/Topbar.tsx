@@ -71,7 +71,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           <img 
             alt="User profile avatar" 
             className="w-full h-full object-cover" 
-            src={adminProfile?.image || "https://lh3.googleusercontent.com/aida-public/AB6AXuB16vqPWetcC6kIf85x6AAuF-x6yUt8WmOitBoxEKyYPnR5Vh6FmA5-VNcyKgEltts0AfO1q2wcP-2k913aaSTQ30Yx1mGAKXpX9KpWy0fldOAPSKlR5LcX3A2T9qaDeb7gcKEkIDsuK_NTXGEPwUSK-qy-V9CC9EMhUxUpn2WxZmoeeIzklcIVHET9Y6TwBaYeuGMVj8v5gf8f9CTdXAf1TBAAJtKQi_hUdDgPSEQ8Y8cWd8f86xPw7IgvKV83_lusd_Q-AXKDJPI"}
+            src={adminProfile?.image || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=256&h=256"}
           />
         </Link>
       </div>

@@ -385,7 +385,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
                 {isAtRisk 
                   ? "Pelanggan berada di zona risiko churn tinggi. Rekomendasi: diskon loyalitas segera." 
                   : isExcellent 
-                    ? "Loyalitas sangat tinggi. Tawarkan paket Gamera/Premium dengan kontrak tahunan."
+                    ? "Loyalitas sangat tinggi. Tawarkan paket Gamers/Premium dengan kontrak tahunan."
                     : "Stabilitas pembayaran terjaga. Terus pantau kontribusi MRR yang stabil."}
               </p>
             </div>

@@ -302,10 +302,10 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                      MacBook Pro 16" • Chrome
+                      ASUS ExpertBook • Chrome
                     </p>
                     <p className="text-[11px] text-slate-500 uppercase tracking-wider mt-0.5">
-                      San Francisco, CA • Current Session
+                      Jakarta, Indonesia • Current Session
                     </p>
                   </div>
                 </div>
@@ -321,10 +321,10 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                      iPhone 15 Pro • App
+                      Samsung Galaxy S24 • App
                     </p>
                     <p className="text-[11px] text-slate-500 uppercase tracking-wider mt-0.5">
-                      San Francisco, CA • 2 hours ago
+                      Jakarta, Indonesia • 2 hours ago
                     </p>
                   </div>
                 </div>

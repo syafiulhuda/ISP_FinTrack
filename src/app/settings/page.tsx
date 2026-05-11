@@ -51,8 +51,8 @@ export default function SettingsPage() {
     appSubtitle: settings.appSubtitle,
     accentColor: settings.accentColor,
     appLogo: settings.appLogo,
-    timezone: settings.timezone || 'UTC +08:00 Singapore Time',
-    language: settings.language || 'English (Universal)',
+    timezone: settings.timezone || 'Asia/Jakarta (UTC+07)',
+    language: settings.language || 'Indonesian (ID)',
   });
 
   const colorPickerRef = useRef<HTMLInputElement>(null);
@@ -86,8 +86,8 @@ export default function SettingsPage() {
       appSubtitle: settings.appSubtitle,
       accentColor: settings.accentColor,
       appLogo: settings.appLogo,
-      timezone: settings.timezone || 'UTC +08:00 Singapore Time',
-      language: settings.language || 'English (Universal)',
+      timezone: settings.timezone || 'Asia/Jakarta (UTC+07)',
+      language: settings.language || 'Indonesian (ID)',
     });
   }, [settings]);
 
@@ -110,8 +110,8 @@ export default function SettingsPage() {
         appSubtitle: settings.appSubtitle,
         accentColor: settings.accentColor,
         appLogo: settings.appLogo,
-        timezone: settings.timezone || 'UTC +08:00 Singapore Time',
-        language: settings.language || 'English (Universal)',
+        timezone: settings.timezone || 'Asia/Jakarta (UTC+07)',
+        language: settings.language || 'Indonesian (ID)',
       });
       setIsDiscarding(false);
       setIsEditing(false);
@@ -396,9 +396,9 @@ export default function SettingsPage() {
                     onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
                     className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    <option>UTC -05:00 Eastern Time</option>
-                    <option>UTC +00:00 Greenwich Mean Time</option>
-                    <option>UTC +08:00 Singapore Time</option>
+                    <option>Asia/Jakarta (UTC+07)</option>
+                    <option>Asia/Makassar (UTC+08)</option>
+                    <option>Asia/Jayapura (UTC+09)</option>
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -411,9 +411,9 @@ export default function SettingsPage() {
                     onChange={(e) => setFormData({ ...formData, language: e.target.value })}
                     className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                   >
+                    <option>Indonesian (ID)</option>
                     <option>English (Universal)</option>
-                    <option>Spanish (ES)</option>
-                    <option>French (FR)</option>
+                    <option>Javanese (JV)</option>
                   </select>
                 </div>
               </div>

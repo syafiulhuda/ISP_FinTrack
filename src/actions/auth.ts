@@ -5,11 +5,12 @@ import crypto from "crypto";
 import { sendResetPasswordEmail } from "@/lib/mail";
 import bcrypt from "bcryptjs";
 import { createSession, destroySession, getSession } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export async function loginAction(email: string, password: string): Promise<{ success: boolean; error?: string }> {
   try {
     const res = await query(
-      'SELECT id, email, password FROM admin WHERE email = $1 LIMIT 1',
+      'SELECT id, email, password, nickname FROM admin WHERE email = $1 LIMIT 1',
       [email]
     );
 
@@ -23,6 +24,15 @@ export async function loginAction(email: string, password: string): Promise<{ su
     if (!isMatch) {
       return { success: false, error: 'Password salah.' };
     }
+
+    // Log the login activity
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
+
+    await query(
+      'INSERT INTO login_logs (admin_id, nickname, ip_address) VALUES ($1, $2, $3)',
+      [admin.id, admin.nickname || admin.email.split('@')[0], ip]
+    );
 
     await createSession(admin.id);
     return { success: true };

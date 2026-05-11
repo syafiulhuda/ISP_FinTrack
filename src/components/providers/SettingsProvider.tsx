@@ -21,8 +21,8 @@ const defaultSettings: SettingsState = {
   appSubtitle: "Enterprise Finance",
   accentColor: "blue",
   appLogo: "",
-  timezone: "UTC +08:00 Singapore Time",
-  language: "English (Universal)",
+  timezone: "Asia/Jakarta (UTC+07)",
+  language: "Indonesian (ID)",
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
