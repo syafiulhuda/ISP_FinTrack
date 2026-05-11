@@ -108,8 +108,8 @@ export default function AuditTrailPage() {
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
         
         {/* Filters */}
-        <div className="flex flex-row items-center gap-3 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800 overflow-x-auto no-scrollbar">
-          <div className="relative flex-1 min-w-[160px] max-w-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800 flex-wrap">
+          <div className="relative w-full sm:flex-1 sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input 
               type="text" 
@@ -120,13 +120,13 @@ export default function AuditTrailPage() {
             />
           </div>
           
-          <div className="relative shrink-0">
+          <div className="relative w-full sm:w-auto shrink-0">
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input 
               type="date" 
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-auto bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-900 dark:text-slate-100"
+              className="w-full sm:w-auto bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-900 dark:text-slate-100"
             />
           </div>
 
@@ -153,8 +153,8 @@ export default function AuditTrailPage() {
 
         {/* Pagination */}
         {!isLoading && sortedAndFilteredLogs.length > 0 && (
-          <div className="flex flex-row items-center justify-between gap-3 mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
-            <p className="text-[8px] sm:text-xs font-black text-slate-400 uppercase tracking-widest leading-tight max-w-[80px] sm:max-w-none text-left">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+            <p className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest leading-tight text-center sm:text-left">
               Showing <span className="text-slate-900 dark:text-slate-100">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-slate-100">{Math.min(currentPage * itemsPerPage, sortedAndFilteredLogs.length)}</span> of <span className="text-slate-900 dark:text-slate-100">{sortedAndFilteredLogs.length}</span> entries
             </p>
 

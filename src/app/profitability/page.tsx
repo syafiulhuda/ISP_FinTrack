@@ -452,8 +452,8 @@ export default function ProfitabilityPage() {
             <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Profitability Analysis</h2>
             <p className="text-xs md:text-sm font-medium text-slate-500 mt-1">Segmented performance and unit economics audit.</p>
           </div>
-          <div className="flex flex-row items-center justify-center md:justify-end gap-2 md:gap-4 w-full md:w-auto overflow-x-auto pb-1">
-            <div className="flex items-center justify-center gap-1 md:gap-2 bg-white dark:bg-slate-900 p-1.5 md:p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
+          <div className="flex flex-row items-center justify-between md:justify-end gap-2 md:gap-4 w-full md:w-auto overflow-x-auto pb-1">
+            <div className="flex items-center justify-between md:justify-center gap-1 md:gap-2 bg-white dark:bg-slate-900 p-1.5 md:p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
               <input 
                 type="date" 
                 value={startDate} 

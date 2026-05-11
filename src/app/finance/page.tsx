@@ -628,11 +628,11 @@ export default function FinancePage() {
               </div>
             </div>
 
-            <div className="mt-12 flex gap-4">
+            <div className="mt-12 flex flex-col sm:flex-row gap-4">
               <button 
                 onClick={() => isEditing ? handleCancel() : setIsEditing(true)}
                 className={cn(
-                  "flex-1 rounded-xl py-4 text-sm font-bold transition-all",
+                  "w-full sm:flex-1 rounded-xl py-4 px-4 text-sm font-bold transition-all",
                   isEditing 
                     ? "bg-red-500 text-white shadow-xl hover:bg-red-600" 
                     : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200"
@@ -644,7 +644,7 @@ export default function FinancePage() {
                 onClick={() => isEditing ? handleSaveAndPost() : handlePost()}
                 disabled={isPosting}
                 className={cn(
-                  "flex-[2] text-white rounded-xl py-4 text-sm font-bold transition-all shadow-lg",
+                  "w-full sm:flex-[2] text-white rounded-xl py-4 px-4 text-sm font-bold transition-all shadow-lg",
                   isEditing 
                     ? "bg-green-500 hover:bg-green-600 shadow-green-500/20" 
                     : "bg-gradient-to-r from-primary to-blue-700 hover:opacity-90 shadow-blue-500/25",
@@ -698,15 +698,15 @@ export default function FinancePage() {
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Recent Processed Slips</h2>
           
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 md:gap-6 overflow-x-auto pb-1 hide-scrollbar w-full md:w-auto">
-              <div className="relative shrink-0">
+            <div className="flex flex-wrap items-center gap-2 md:gap-6 w-full md:w-auto">
+              <div className="relative shrink-0 flex-1 sm:flex-none min-w-[140px]">
                 <select
                   value={selectedKeterangan}
                   onChange={(e) => {
                     setSelectedKeterangan(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="bg-slate-100 dark:bg-slate-800 border-none rounded-xl pl-3 pr-8 md:px-5 py-2 text-[11px] md:text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none shadow-sm"
+                  className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl pl-3 pr-8 md:px-5 py-2.5 md:py-2 text-[11px] md:text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none shadow-sm"
                 >
                   <option value="All">Semua Transaksi</option>
                   <option value="pemasukan">Income (Pemasukan)</option>
@@ -717,7 +717,7 @@ export default function FinancePage() {
               
               <button 
                 onClick={() => exportToExcel(filteredByKeterangan, 'finance_report.xlsx')}
-                className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 p-2 md:p-2.5 rounded-xl hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 transition-all flex items-center gap-1.5 md:gap-2 px-3 md:px-4 shadow-sm border border-slate-200/50 dark:border-slate-800 shrink-0"
+                className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 p-2.5 md:p-2.5 rounded-xl hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 transition-all flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 shadow-sm border border-slate-200/50 dark:border-slate-800 shrink-0 flex-1 sm:flex-none"
                 title="Export to Excel"
               >
                 <Download size={14} className="md:w-[18px] md:h-[18px]" />

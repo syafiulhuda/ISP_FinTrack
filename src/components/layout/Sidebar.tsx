@@ -14,7 +14,8 @@ import {
   LogOut,
   AlertTriangle,
   TrendingUp,
-  Users
+  Users,
+  Menu
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { m, AnimatePresence } from "framer-motion";
@@ -88,19 +89,17 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
         "fixed left-0 top-0 bottom-0 w-64 z-50 bg-slate-100 dark:bg-slate-950 flex-col h-full p-4 space-y-2 border-r border-slate-200 dark:border-slate-800 transition-transform duration-300 md:flex md:translate-x-0 shadow-2xl md:shadow-none",
         isOpen ? "flex translate-x-0" : "-translate-x-full hidden"
       )}>
-        {/* Mobile Close Button */}
-        {isOpen && (
-          <button 
-            onClick={onClose}
-            className="absolute right-4 top-4 p-2 md:hidden text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full z-50"
-          >
-            <X size={20} />
-          </button>
-        )}
-
       {/* Header */}
       <div className="mb-6 px-2">
         <div className="flex items-center space-x-3 mb-4 px-2">
+          {isOpen && (
+            <button 
+              onClick={onClose}
+              className="md:hidden text-slate-700 dark:text-slate-300 hover:text-primary transition-colors shrink-0 -ml-2 p-1"
+            >
+              <Menu size={24} />
+            </button>
+          )}
           <m.div 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}

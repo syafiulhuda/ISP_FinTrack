@@ -164,19 +164,19 @@ export default function NotificationsPage() {
       animate="show"
       className="space-y-8 pb-10"
     >
-      <m.div variants={itemVariants} className="flex items-center justify-between mb-8">
+      <m.div variants={itemVariants} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Notifications
           </h2>
           <p className="text-sm text-slate-500 mt-1">Manage system alerts and broadcasts</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto">
           {unreadAlerts > 0 && (
             <button 
               onClick={() => markAllReadMutation.mutate()}
               disabled={markAllReadMutation.isPending}
-              className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-widest disabled:opacity-50"
+              className="text-[10px] sm:text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-widest disabled:opacity-50"
             >
               Mark All as Read
             </button>
@@ -187,7 +187,7 @@ export default function NotificationsPage() {
                 hideAllMutation.mutate();
               }
             }}
-            className="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest"
+            className="text-[10px] sm:text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest"
           >
             Clear All
           </button>
