@@ -158,7 +158,7 @@ export default function AuditTrailPage() {
               Showing <span className="text-slate-900 dark:text-slate-100">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-slate-100">{Math.min(currentPage * itemsPerPage, sortedAndFilteredLogs.length)}</span> of <span className="text-slate-900 dark:text-slate-100">{sortedAndFilteredLogs.length}</span> entries
             </p>
 
-            <div className="flex items-center gap-1 sm:gap-2 bg-slate-50 dark:bg-slate-800/40 p-1 rounded-lg sm:p-1.5 sm:rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shrink-0">
+            <div className="flex flex-wrap justify-center items-center gap-1 sm:gap-2 bg-slate-50 dark:bg-slate-800/40 p-1 rounded-lg sm:p-1.5 sm:rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shrink-0">
               <button
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}

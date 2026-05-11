@@ -33,9 +33,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         <div className="flex min-h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-950">
           <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
           <div className="flex-1 flex flex-col min-w-0 relative md:pl-64 transition-all duration-300">
-            <Topbar onMenuClick={() => setIsMobileMenuOpen(true)} />
+            <Topbar onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
 
-            <main className="flex-1 overflow-y-auto pt-24 pb-12 px-4 sm:px-6 lg:px-8 2xl:px-12">
+            <main className="flex-1 overflow-y-auto overflow-x-hidden pt-24 pb-12 px-4 sm:px-6 lg:px-8 2xl:px-12">
               <div className="w-full max-w-[2000px] mx-auto">
                 <ErrorBoundary>
                   <AnimatePresence mode="wait">

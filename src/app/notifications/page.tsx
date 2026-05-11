@@ -195,7 +195,7 @@ export default function NotificationsPage() {
       </m.div>
 
       {/* Overview Header */}
-      <m.div variants={itemVariants} className="grid grid-cols-3 gap-3 md:gap-6">
+      <m.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
         <div className="bg-white dark:bg-slate-900/50 p-3 md:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 border-l-4 border-l-primary shadow-sm">
           <p className="text-[8px] md:text-[0.6875rem] font-bold text-slate-500 uppercase tracking-widest truncate">
             Unread Alerts
