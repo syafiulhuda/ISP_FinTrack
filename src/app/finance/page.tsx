@@ -848,7 +848,7 @@ export default function FinancePage() {
 
         {/* Pagination Controls */}
         {filteredByKeterangan.length > 0 && (
-          <div className="p-4 md:p-10 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-white/5">
+          <div className="p-4 md:p-10 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-white/5">
             <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
               Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, filteredByKeterangan.length)}</span> of <span className="text-slate-900 dark:text-white">{filteredByKeterangan.length}</span> results
             </p>

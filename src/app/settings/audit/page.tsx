@@ -174,7 +174,7 @@ export default function AuditTrailPage() {
                 <ChevronLeft size={16} />
               </button>
               
-              <div className="flex items-center gap-1 px-1">
+              <div className="flex flex-wrap justify-center items-center gap-1 px-1">
                 {[...Array(Math.min(5, totalPages))].map((_, i) => {
                   let pageNum: number;
                   if (totalPages <= 5) {

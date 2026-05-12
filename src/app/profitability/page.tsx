@@ -452,32 +452,32 @@ export default function ProfitabilityPage() {
             <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Profitability Analysis</h2>
             <p className="text-xs md:text-sm font-medium text-slate-500 mt-1">Segmented performance and unit economics audit.</p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between md:justify-end gap-2 md:gap-4 w-full md:w-auto pb-1">
-            <div className="flex items-center justify-between md:justify-center gap-1 md:gap-2 bg-white dark:bg-slate-900 p-1.5 md:p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
+          <div className="flex flex-row items-center justify-start md:justify-end gap-1 md:gap-4 w-full md:w-auto pb-1">
+            <div className="flex items-center justify-between gap-1 bg-white dark:bg-slate-900 p-1 md:p-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
               <input 
                 type="date" 
                 value={startDate} 
                 onChange={(e) => setStartDate(e.target.value)}
-                className="bg-transparent border-none text-[9px] min-[380px]:text-[10px] md:text-xs font-bold outline-none text-slate-600 px-1 md:px-2 w-20 min-[380px]:w-24 md:w-auto"
+                className="bg-transparent border-none text-[8px] sm:text-xs font-bold outline-none text-slate-600 px-0.5 w-[72px] sm:w-auto shrink-0"
               />
-              <span className="text-slate-300 text-[10px] md:text-xs shrink-0">|</span>
+              <span className="text-slate-300 text-[8px] sm:text-xs shrink-0">|</span>
               <input 
                 type="date" 
                 value={endDate} 
                 onChange={(e) => setEndDate(e.target.value)}
-                className="bg-transparent border-none text-[9px] min-[380px]:text-[10px] md:text-xs font-bold outline-none text-slate-600 px-1 md:px-2 w-20 min-[380px]:w-24 md:w-auto"
+                className="bg-transparent border-none text-[8px] sm:text-xs font-bold outline-none text-slate-600 px-0.5 w-[72px] sm:w-auto shrink-0"
               />
               <button 
                 onClick={handleResetDates}
-                className="p-1 md:p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors shrink-0"
+                className="p-0.5 sm:p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors shrink-0"
                 title="Reset Date Range"
               >
-                <RotateCcw size={12} className="md:w-[14px] md:h-[14px]" />
+                <RotateCcw size={10} className="sm:w-[14px] sm:h-[14px]" />
               </button>
             </div>
 
             <div className="relative shrink-0" ref={dropdownRef}>
-              <m.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-1.5 md:gap-3 px-3 md:px-6 py-2.5 md:py-3.5 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 text-[10px] md:text-sm font-bold min-w-[100px] md:min-w-[200px]">
+              <m.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-1 sm:gap-3 px-2 sm:px-6 py-1.5 sm:py-3.5 bg-white dark:bg-slate-900 rounded-[1rem] shadow-sm border border-slate-200 dark:border-slate-800 text-[8px] sm:text-sm font-bold min-w-[70px] sm:min-w-[200px]">
                 <Filter size={14} className="md:w-[18px] md:h-[18px] text-primary shrink-0" />
                 <span className="flex-1 text-left whitespace-nowrap">{selectedProvince}</span>
                 <ChevronDown size={14} className={cn("md:w-[16px] md:h-[16px] shrink-0 transition-transform", isDropdownOpen && "rotate-180")} />

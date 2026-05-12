@@ -111,28 +111,28 @@ export default function PredictionsPage() {
           <p className="text-slate-500 font-medium mt-1">Next-Month Financial & Churn Projections</p>
         </div>
 
-        <div className="flex flex-wrap justify-center items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-inner w-full lg:w-fit">
+        <div className="flex flex-nowrap justify-between items-center gap-0.5 sm:gap-1 bg-slate-100 dark:bg-slate-900/50 p-1 sm:p-1.5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-inner w-full lg:w-fit overflow-hidden">
           <button 
             onClick={() => setModelType('lr')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-[1.5rem] text-sm font-black transition-all duration-300 ${
+            className={`flex items-center justify-center gap-1 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2.5 rounded-[1.5rem] text-[9px] sm:text-sm font-black transition-all duration-300 whitespace-nowrap flex-1 ${
               modelType === 'lr' 
               ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-indigo-500/50" 
               : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
-            <TrendingUp size={16} />
-            Linear Regression
+            <TrendingUp size={12} className="sm:w-[16px] sm:h-[16px] shrink-0" />
+            <span className="truncate">Linear Regression</span>
           </button>
           <button 
             onClick={() => setModelType('nn')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-[1.5rem] text-sm font-black transition-all duration-300 ${
+            className={`flex items-center justify-center gap-1 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2.5 rounded-[1.5rem] text-[9px] sm:text-sm font-black transition-all duration-300 whitespace-nowrap flex-1 ${
               modelType === 'nn' 
               ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-indigo-500/50" 
               : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
-            <Brain size={16} />
-            Neural Network
+            <Brain size={12} className="sm:w-[16px] sm:h-[16px] shrink-0" />
+            <span className="truncate">Neural Network</span>
           </button>
           <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-2" />
           <button 
@@ -141,7 +141,7 @@ export default function PredictionsPage() {
             className="p-2.5 text-slate-400 hover:text-indigo-500 transition-colors disabled:opacity-50"
             title="Refresh Data"
           >
-            <RefreshCw size={18} className={isFetching ? "animate-spin" : ""} />
+            <RefreshCw size={14} className={cn("sm:w-[18px] sm:h-[18px]", isFetching && "animate-spin")} />
           </button>
         </div>
       </div>

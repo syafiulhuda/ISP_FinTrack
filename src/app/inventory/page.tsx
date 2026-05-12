@@ -395,7 +395,7 @@ export default function InventoryPage() {
               key={stat.label}
               whileHover={{ y: -5 }}
               className={cn(
-                "p-8 rounded-[2.5rem] border shadow-sm flex flex-col justify-between h-48 relative overflow-hidden group transition-all",
+                "p-3 sm:p-5 lg:p-8 rounded-3xl md:rounded-[2.5rem] border shadow-sm flex flex-col justify-between h-auto min-h-[140px] md:h-48 relative overflow-hidden group transition-all",
                 stat.isAlert
                   ? "bg-white dark:bg-slate-900 border-orange-200 dark:border-orange-900/50 hover:shadow-orange-500/10"
                   : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:shadow-primary/10 hover:border-primary/50"
@@ -408,7 +408,7 @@ export default function InventoryPage() {
                   className="absolute top-6 right-6 w-3 h-3 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]"
                 />
               )}
-              <div className="flex justify-between items-start gap-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-4">
                 <div className={cn(
                   "p-3.5 rounded-2xl shrink-0",
                   stat.isAlert
@@ -418,7 +418,7 @@ export default function InventoryPage() {
                   <Icon size={24} />
                 </div>
                 <span className={cn(
-                  "text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-wider border transition-colors",
+                  "text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl uppercase tracking-wider border transition-colors mt-1 sm:mt-0 max-w-full text-center truncate",
                   stat.isAlert
                     ? "bg-orange-50/50 text-orange-700 border-orange-200/50"
                     : "bg-slate-50/50 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-slate-700/50 group-hover:border-primary/20"
@@ -426,9 +426,9 @@ export default function InventoryPage() {
                   {stat.trend}
                 </span>
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
-                <h3 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-slate-100 mt-1">{stat.value}</h3>
+              <div className="mt-2 sm:mt-0">
+                <p className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider sm:tracking-widest truncate">{stat.label}</p>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 dark:text-slate-100 mt-0.5 sm:mt-1">{stat.value}</h3>
               </div>
             </m.div>
           );
@@ -893,8 +893,8 @@ export default function InventoryPage() {
 
         {/* Pagination Controls */}
         {filteredAssets.length > 0 && (
-          <div className="p-4 md:p-10 flex flex-col sm:flex-row flex-wrap items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-white/5">
-            <p className="text-xs font-bold text-slate-400">
+          <div className="p-4 md:p-10 flex flex-col sm:flex-row flex-wrap items-center justify-center sm:justify-between gap-4 border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-white/5">
+            <p className="text-[10px] sm:text-xs font-bold text-slate-400 text-center sm:text-left">
               Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, filteredAssets.length)}</span> of <span className="text-slate-900 dark:text-white">{filteredAssets.length}</span> assets
             </p>
             <div className="flex flex-wrap justify-center items-center gap-2">
@@ -905,7 +905,7 @@ export default function InventoryPage() {
               >
                 Previous
               </button>
-              <div className="flex items-center gap-1">
+              <div className="flex flex-wrap justify-center items-center gap-1">
                 {[...Array(Math.min(5, totalPages))].map((_, i) => {
                   let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
                   if (pageNum <= 0 || pageNum > totalPages) return null;
