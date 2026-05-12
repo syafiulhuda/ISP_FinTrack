@@ -394,6 +394,7 @@ export default function InventoryPage() {
             <m.div
               key={stat.label}
               whileHover={{ y: -5 }}
+              className={cn(
                 "p-3 lg-phone:p-5 tablet:p-8 rounded-3xl tablet:rounded-[2.5rem] border shadow-sm flex flex-col justify-between h-auto min-h-[140px] tablet:h-48 relative overflow-hidden group transition-all",
                 stat.isAlert
                   ? "bg-white dark:bg-slate-900 border-orange-200 dark:border-orange-900/50 hover:shadow-orange-500/10"
