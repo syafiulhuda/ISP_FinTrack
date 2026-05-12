@@ -47,6 +47,16 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* --- VIEWPORT BREAKPOINTS --- */
+  --breakpoint-sm-phone: 320px;
+  --breakpoint-md-phone: 361px;
+  --breakpoint-lg-phone: 394px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-tablet-lg: 960px;
+  --breakpoint-laptop: 1366px;
+  --breakpoint-desktop: 1536px;
+  --breakpoint-monitor-xl: 1920px;
 }
 
 :root {

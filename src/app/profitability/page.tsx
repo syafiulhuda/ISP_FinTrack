@@ -458,26 +458,26 @@ export default function ProfitabilityPage() {
                 type="date" 
                 value={startDate} 
                 onChange={(e) => setStartDate(e.target.value)}
-                className="bg-transparent border-none text-[8px] sm:text-xs font-bold outline-none text-slate-600 px-0.5 w-[72px] sm:w-auto shrink-0"
+                className="bg-transparent border-none text-[8px] lg-phone:text-xs font-bold outline-none text-slate-600 px-0.5 w-[72px] lg-phone:w-auto shrink-0"
               />
-              <span className="text-slate-300 text-[8px] sm:text-xs shrink-0">|</span>
+              <span className="text-slate-300 text-[8px] lg-phone:text-xs shrink-0">|</span>
               <input 
                 type="date" 
                 value={endDate} 
                 onChange={(e) => setEndDate(e.target.value)}
-                className="bg-transparent border-none text-[8px] sm:text-xs font-bold outline-none text-slate-600 px-0.5 w-[72px] sm:w-auto shrink-0"
+                className="bg-transparent border-none text-[8px] lg-phone:text-xs font-bold outline-none text-slate-600 px-0.5 w-[72px] lg-phone:w-auto shrink-0"
               />
               <button 
                 onClick={handleResetDates}
-                className="p-0.5 sm:p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors shrink-0"
+                className="p-0.5 lg-phone:p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors shrink-0"
                 title="Reset Date Range"
               >
-                <RotateCcw size={10} className="sm:w-[14px] sm:h-[14px]" />
+                <RotateCcw size={10} className="lg-phone:w-[14px] lg-phone:h-[14px]" />
               </button>
             </div>
 
             <div className="relative shrink-0" ref={dropdownRef}>
-              <m.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-1 sm:gap-3 px-2 sm:px-6 py-1.5 sm:py-3.5 bg-white dark:bg-slate-900 rounded-[1rem] shadow-sm border border-slate-200 dark:border-slate-800 text-[8px] sm:text-sm font-bold min-w-[70px] sm:min-w-[200px]">
+              <m.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-1 lg-phone:gap-3 px-2 lg-phone:px-6 py-1.5 lg-phone:py-3.5 bg-white dark:bg-slate-900 rounded-[1rem] shadow-sm border border-slate-200 dark:border-slate-800 text-[8px] lg-phone:text-sm font-bold min-w-[70px] lg-phone:min-w-[200px]">
                 <Filter size={14} className="md:w-[18px] md:h-[18px] text-primary shrink-0" />
                 <span className="flex-1 text-left whitespace-nowrap">{selectedProvince}</span>
                 <ChevronDown size={14} className={cn("md:w-[16px] md:h-[16px] shrink-0 transition-transform", isDropdownOpen && "rotate-180")} />

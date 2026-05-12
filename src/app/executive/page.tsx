@@ -365,22 +365,22 @@ export default function ExecutiveDashboard() {
             <p className="text-slate-500 text-sm mt-1 font-medium">Single-pane-of-glass overview of ISP-FinTrack metrics.</p>
           </div>
 
-          <div className="flex flex-row items-center justify-between gap-1 w-full md:w-auto">
-            <div className="flex items-center justify-between gap-1 md:gap-2 bg-slate-100 dark:bg-slate-900 px-1.5 md:px-3 py-1.5 md:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 shrink-0">
-              <Calendar className="w-3 h-3 md:w-4 md:h-4 text-slate-400 shrink-0 hidden min-[320px]:block" />
-              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent text-[8px] min-[380px]:text-[10px] md:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-[66px] min-[380px]:w-24 md:w-auto px-0.5" />
-              <span className="text-slate-300 text-[8px] md:text-sm shrink-0">-</span>
-              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent text-[8px] min-[380px]:text-[10px] md:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-[66px] min-[380px]:w-24 md:w-auto px-0.5" />
+          <div className="flex flex-row items-center justify-between gap-1 w-full tablet:w-auto">
+            <div className="flex items-center justify-between gap-1 tablet:gap-2 bg-slate-100 dark:bg-slate-900 px-1.5 tablet:px-3 py-1.5 tablet:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 shrink-0">
+              <Calendar className="w-3 h-3 tablet:w-4 tablet:h-4 text-slate-400 shrink-0 hidden sm-phone:block" />
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent text-[8px] lg-phone:text-[10px] tablet:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-[66px] lg-phone:w-24 tablet:w-auto px-0.5" />
+              <span className="text-slate-300 text-[8px] tablet:text-sm shrink-0">-</span>
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent text-[8px] lg-phone:text-[10px] tablet:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-[66px] lg-phone:w-24 tablet:w-auto px-0.5" />
             </div>
 
             <div className="relative shrink-0" ref={dropdownRef}>
               <button 
                 onClick={() => setIsRegionOpen(!isRegionOpen)}
-                className="flex items-center justify-between gap-1 md:gap-3 bg-slate-100 dark:bg-slate-900 px-2 md:px-4 py-1.5 md:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 min-w-[70px] md:min-w-[160px] max-w-[90px] md:max-w-none hover:border-indigo-500/50 transition-all active:scale-95 shrink-0"
+                className="flex items-center justify-between gap-1 tablet:gap-3 bg-slate-100 dark:bg-slate-900 px-2 tablet:px-4 py-1.5 tablet:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 min-w-[70px] tablet:min-w-[160px] max-w-[90px] tablet:max-w-none hover:border-indigo-500/50 transition-all active:scale-95 shrink-0"
               >
-                <div className="flex items-center gap-1 md:gap-2 overflow-hidden">
-                  <MapPin className="w-3 h-3 md:w-4 md:h-4 text-indigo-500 shrink-0 hidden min-[320px]:block" />
-                  <span className="text-[8px] md:text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{selectedProvince}</span>
+                <div className="flex items-center gap-1 tablet:gap-2 overflow-hidden">
+                  <MapPin className="w-3 h-3 tablet:w-4 tablet:h-4 text-indigo-500 shrink-0 hidden sm-phone:block" />
+                  <span className="text-[8px] tablet:text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{selectedProvince}</span>
                 </div>
                 <ChevronDown className={`w-3 h-3 text-slate-400 shrink-0 transition-transform duration-300 ${isRegionOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -420,7 +420,7 @@ export default function ExecutiveDashboard() {
         </div>
 
         {/* DYNAMIC TABS */}
-        <div className="flex gap-0.5 sm:gap-1 overflow-x-auto pb-1 hide-scrollbar justify-between w-full">
+        <div className="flex gap-0.5 lg-phone:gap-1 overflow-x-auto pb-1 hide-scrollbar justify-between w-full">
           {[
             { id: 'financial', label: 'Financial & Profitability', mobileLabel: 'Financial', icon: DollarSign },
             { id: 'inventory', label: 'Inventory & Assets', mobileLabel: 'Inventory', icon: Server },
@@ -429,15 +429,15 @@ export default function ExecutiveDashboard() {
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-1 items-center justify-center gap-1 sm:gap-2 px-1 sm:px-4 md:px-5 py-2 md:py-3 rounded-t-xl font-bold text-[9px] min-[380px]:text-[11px] md:text-sm whitespace-nowrap transition-all duration-300 ${
+              className={`flex flex-1 items-center justify-center gap-1 lg-phone:gap-2 px-1 lg-phone:px-4 tablet:px-5 py-2 tablet:py-3 rounded-t-xl font-bold text-[9px] lg-phone:text-[11px] tablet:text-sm whitespace-nowrap transition-all duration-300 ${
                 activeTab === tab.id 
                   ? "bg-slate-100 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 border-t-2 border-indigo-500" 
                   : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/50"
               }`}
             >
-              <tab.icon className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
-              <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden">{tab.mobileLabel}</span>
+              <tab.icon className="w-3 h-3 lg-phone:w-4 lg-phone:h-4 shrink-0" />
+              <span className="hidden lg-phone:inline">{tab.label}</span>
+              <span className="lg-phone:hidden">{tab.mobileLabel}</span>
             </button>
           ))}
         </div>

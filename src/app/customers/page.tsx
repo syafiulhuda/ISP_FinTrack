@@ -301,8 +301,8 @@ export default function CustomerAnalysisPage() {
             
             {/* Pagination Controls */}
             {sortedAndFilteredData.length > 0 && (
-              <div className="p-4 md:p-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 bg-slate-50/30 dark:bg-white/5">
-                <p className="text-[10px] sm:text-xs font-bold text-slate-400 text-center sm:text-left">
+              <div className="p-4 tablet:p-6 border-t border-slate-100 dark:border-slate-800 flex flex-col lg-phone:flex-row items-center justify-center lg-phone:justify-between gap-4 bg-slate-50/30 dark:bg-white/5">
+                <p className="text-[10px] lg-phone:text-xs font-bold text-slate-400 text-center lg-phone:text-left">
                   Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, sortedAndFilteredData.length)}</span> of <span className="text-slate-900 dark:text-white">{sortedAndFilteredData.length}</span> customers
                 </p>
                 <div className="flex flex-wrap justify-center items-center gap-2">

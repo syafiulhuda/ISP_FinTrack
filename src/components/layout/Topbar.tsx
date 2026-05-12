@@ -22,15 +22,15 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const unreadCount = notifications.filter((n: any) => n.is_unread).length;
 
   return (
-    <header className="fixed top-0 right-0 left-0 md:left-64 z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0px_12px_32px_rgba(25,28,30,0.06)] flex items-center justify-between px-3 md:px-6 h-16 w-auto">
+    <header className="fixed top-0 right-0 left-0 tablet:left-64 z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0px_12px_32px_rgba(25,28,30,0.06)] flex items-center justify-between px-3 tablet:px-6 h-16 w-auto">
       {/* Mobile Brand/Menu & Title Wrapper */}
-      <div className="flex items-center space-x-2 md:space-x-4">
+      <div className="flex items-center space-x-2 tablet:space-x-4">
         {/* Mobile Menu */}
-        <div className="flex items-center md:hidden space-x-2 md:space-x-4">
+        <div className="flex items-center tablet:hidden space-x-2 tablet:space-x-4">
           <button className="text-on-surface" onClick={onMenuClick}>
             <Menu size={24} />
           </button>
-          <span className="text-lg md:text-xl font-bold tracking-tight text-blue-700 dark:text-blue-500 whitespace-nowrap">ISP-FinTrack</span>
+          <span className="text-lg tablet:text-xl font-bold tracking-tight text-blue-700 dark:text-blue-500 whitespace-nowrap">ISP-FinTrack</span>
         </div>
 
         {/* Dark Mode Toggle (Desktop & Mobile) */}
@@ -43,14 +43,14 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
         </button>
 
         {/* Page Title (Desktop) */}
-        <div className="hidden md:block">
+        <div className="hidden tablet:block">
           <h2 className="text-xl font-bold tracking-tight text-on-surface dark:text-slate-100">Executive Overview</h2>
         </div>
       </div>
 
       {/* Right Actions */}
-      <div className="flex items-center space-x-1 md:space-x-4">
-        <div className="relative hidden sm:block">
+      <div className="flex items-center space-x-1 tablet:space-x-4">
+        <div className="relative hidden lg-phone:block">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
             className="bg-slate-200/50 dark:bg-slate-800/50 text-on-surface dark:text-slate-100 pl-9 pr-4 py-1.5 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 border-none w-48 transition-all" 
@@ -67,7 +67,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
         <Link href="/settings" className="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 rounded-full active:opacity-80">
           <Settings size={20} />
         </Link>
-        <Link href="/profile" className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 ml-1 md:ml-2 block shrink-0">
+        <Link href="/profile" className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 ml-1 tablet:ml-2 block shrink-0">
           <img 
             alt="User profile avatar" 
             className="w-full h-full object-cover" 

@@ -153,23 +153,23 @@ export default function AuditTrailPage() {
 
         {/* Pagination */}
         {!isLoading && sortedAndFilteredLogs.length > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
-            <p className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest leading-tight text-center sm:text-left">
+          <div className="flex flex-col lg-phone:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+            <p className="text-[10px] lg-phone:text-xs font-black text-slate-400 uppercase tracking-widest leading-tight text-center lg-phone:text-left">
               Showing <span className="text-slate-900 dark:text-slate-100">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-slate-100">{Math.min(currentPage * itemsPerPage, sortedAndFilteredLogs.length)}</span> of <span className="text-slate-900 dark:text-slate-100">{sortedAndFilteredLogs.length}</span> entries
             </p>
 
-            <div className="flex flex-wrap justify-center items-center gap-1 sm:gap-2 bg-slate-50 dark:bg-slate-800/40 p-1 rounded-lg sm:p-1.5 sm:rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shrink-0">
+            <div className="flex flex-wrap justify-center items-center gap-1 lg-phone:gap-2 bg-slate-50 dark:bg-slate-800/40 p-1 rounded-lg lg-phone:p-1.5 lg-phone:rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shrink-0">
               <button
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className="p-1.5 sm:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-slate-600 dark:text-slate-400"
+                className="p-1.5 lg-phone:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-slate-600 dark:text-slate-400"
               >
                 <ChevronsLeft size={16} />
               </button>
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="p-1.5 sm:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-slate-600 dark:text-slate-400"
+                className="p-1.5 lg-phone:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-slate-600 dark:text-slate-400"
               >
                 <ChevronLeft size={16} />
               </button>
