@@ -42,6 +42,74 @@ const IndonesiaMap = dynamic(() => import('@/components/map/IndonesiaMap'), {
   loading: () => <div className="w-full h-full bg-slate-900 animate-pulse flex items-center justify-center text-slate-500 font-black">INITIALIZING GEOGRAPHIC ENGINE...</div>
 });
 
+function LegendContent({ nodeStats }: { nodeStats: any }) {
+  return (
+    <>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Map Architecture</h3>
+          <p className="text-lg font-black tracking-tighter">Network Nodes</p>
+        </div>
+        <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+          <Database size={20} />
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between group">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <Database size={16} />
+            </div>
+            <span className="text-[12px] font-bold">OLT Terminal</span>
+          </div>
+          <span className="text-[10px] font-bold text-slate-400">{String(nodeStats.olt).padStart(2, '0')} units</span>
+        </div>
+        <div className="flex items-center justify-between group">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:indigo-400">
+              <Cpu size={16} />
+            </div>
+            <span className="text-[12px] font-bold">ODP Node</span>
+          </div>
+          <span className="text-[10px] font-bold text-slate-400">{String(nodeStats.odp).padStart(2, '0')} units</span>
+        </div>
+        <div className="flex items-center justify-between group">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800/30 flex items-center justify-center text-slate-600 dark:text-slate-400">
+              <Wifi size={16} />
+            </div>
+            <span className="text-[12px] font-bold">ONT Terminal</span>
+          </div>
+          <span className="text-[10px] font-bold text-slate-400">{String(nodeStats.ont).padStart(2, '0')} units</span>
+        </div>
+        <div className="flex items-center justify-between group">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+              <ServerIcon size={16} />
+            </div>
+            <span className="text-[12px] font-bold">Core Server</span>
+          </div>
+          <span className="text-[10px] font-bold text-slate-400">{String(nodeStats.server).padStart(2, '0')} units</span>
+        </div>
+        
+        <hr className="border-slate-200 dark:border-slate-800 my-4"/>
+        
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+            <span className="text-[9px] font-bold text-slate-500 uppercase">Good</span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+            <span className="text-[9px] font-bold text-slate-500 uppercase">Maint.</span>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function DistributionMapPage() {
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,6 +129,7 @@ export default function DistributionMapPage() {
 
   const [maintenanceHistory, setMaintenanceHistory] = useState<any[]>([]);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isLegendOpen, setIsLegendOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -226,87 +295,53 @@ export default function DistributionMapPage() {
           </div>
 
         {/* Floating Legend */}
-        <div className="absolute top-6 left-6 z-10 flex flex-col gap-4 pointer-events-none">
+        <div className="absolute top-6 left-6 z-40 flex flex-col gap-4 pointer-events-none">
+          {/* Mobile Toggle */}
+          <div className="relative pointer-events-auto tablet:hidden">
+            <button 
+              onClick={() => setIsLegendOpen(!isLegendOpen)}
+              className={cn(
+                "bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-800/50 text-blue-600 dark:text-blue-400 transition-all active:scale-95",
+                isLegendOpen && "bg-blue-600 text-white border-blue-600"
+              )}
+            >
+              {isLegendOpen ? <XIcon size={20} /> : <Database size={20} />}
+            </button>
+            <AnimatePresence>
+               {isLegendOpen && (
+                 <m.div 
+                   initial={{ opacity: 0, scale: 0.95, x: -10 }}
+                   animate={{ opacity: 1, scale: 1, x: 0 }}
+                   exit={{ opacity: 0, scale: 0.95, x: -10 }}
+                   className="absolute top-0 left-full ml-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-6 w-64 z-50"
+                 >
+                    <LegendContent nodeStats={nodeStats} />
+                 </m.div>
+               )}
+            </AnimatePresence>
+          </div>
+
+          {/* Desktop Panel */}
           <m.div 
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-5 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-800/50 w-64 pointer-events-auto"
+            className="hidden tablet:block bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-5 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-800/50 w-64 pointer-events-auto"
           >
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Map Architecture</h3>
-                <p className="text-lg font-black tracking-tighter">Network Nodes</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                <Database size={20} />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between group">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                    <Database size={16} />
-                  </div>
-                  <span className="text-[12px] font-bold">OLT Terminal</span>
-                </div>
-                <span className="text-[10px] font-bold text-slate-400">{String(nodeStats.olt).padStart(2, '0')} units</span>
-              </div>
-              <div className="flex items-center justify-between group">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:indigo-400">
-                    <Cpu size={16} />
-                  </div>
-                  <span className="text-[12px] font-bold">ODP Node</span>
-                </div>
-                <span className="text-[10px] font-bold text-slate-400">{String(nodeStats.odp).padStart(2, '0')} units</span>
-              </div>
-              <div className="flex items-center justify-between group">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800/30 flex items-center justify-center text-slate-600 dark:text-slate-400">
-                    <Wifi size={16} />
-                  </div>
-                  <span className="text-[12px] font-bold">ONT Terminal</span>
-                </div>
-                <span className="text-[10px] font-bold text-slate-400">{String(nodeStats.ont).padStart(2, '0')} units</span>
-              </div>
-              <div className="flex items-center justify-between group">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
-                    <ServerIcon size={16} />
-                  </div>
-                  <span className="text-[12px] font-bold">Core Server</span>
-                </div>
-                <span className="text-[10px] font-bold text-slate-400">{String(nodeStats.server).padStart(2, '0')} units</span>
-              </div>
-              
-              <hr className="border-slate-200 dark:border-slate-800 my-4"/>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                  <span className="text-[9px] font-bold text-slate-500 uppercase">Good</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-                  <span className="text-[9px] font-bold text-slate-500 uppercase">Maint.</span>
-                </div>
-              </div>
-            </div>
+            <LegendContent nodeStats={nodeStats} />
           </m.div>
         </div>
-
+        
         {/* Selected Node Drawer & Location Card */}
         <AnimatePresence>
           {selectedNode && (
-            <div className="absolute top-6 bottom-6 right-6 flex items-start gap-4 z-50 pointer-events-none">
-              {/* Location Detail Card (Left Side) */}
+            <div className="absolute top-20 md:top-6 bottom-6 right-6 flex items-start gap-4 z-50 pointer-events-none max-w-[calc(100%-48px)] md:max-w-none">
+              {/* Location Detail Card (Left Side) - Hidden on mobile to save space */}
               <m.div 
                 initial={{ x: 100, opacity: 0, scale: 0.9 }}
                 animate={{ x: 0, opacity: 1, scale: 1 }}
                 exit={{ x: 100, opacity: 0, scale: 0.9 }}
                 transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.1 }}
-                className="w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/20 dark:border-slate-800/50 p-6 flex flex-col pointer-events-auto h-full overflow-y-auto scrollbar-hide"
+                className="w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/20 dark:border-slate-800/50 p-6 flex flex-col pointer-events-auto h-full overflow-y-auto scrollbar-hide hidden xl:flex"
               >
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -370,13 +405,13 @@ export default function DistributionMapPage() {
                 initial={{ x: 400, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 400, opacity: 0 }}
-                className="w-96 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-slate-800/50 flex flex-col overflow-hidden pointer-events-auto h-full"
+                className="w-full max-w-[340px] md:w-96 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-slate-800/50 flex flex-col overflow-hidden pointer-events-auto h-full"
               >
-                <div className="p-8 border-b border-slate-200 dark:border-slate-800">
-                  <div className="flex justify-between items-start mb-6">
+                <div className="p-6 md:p-8 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex justify-between items-start mb-4 md:mb-6">
                     <div>
                       <span className={cn(
-                        "text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full",
+                        "text-[9px] md:text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full",
                         selectedNode.status === 'Online' ? "bg-green-100 dark:bg-green-900/30 text-green-600" :
                         selectedNode.status === 'Maintenance' ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" :
                         selectedNode.status === 'Warning' ? "bg-red-100 dark:bg-red-900/30 text-red-600" :
@@ -384,7 +419,7 @@ export default function DistributionMapPage() {
                       )}>
                         {selectedNode.status} Node
                       </span>
-                      <h2 className="text-2xl font-black mt-3 tracking-tight">{selectedNode.sn}</h2>
+                      <h2 className="text-xl md:text-2xl font-black mt-2 md:mt-3 tracking-tight truncate">{selectedNode.sn}</h2>
                     </div>
                     <button 
                       onClick={() => setSelectedNode(null)}
@@ -394,106 +429,85 @@ export default function DistributionMapPage() {
                     </button>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
-                      <p className="text-[10px] text-slate-400 font-black uppercase mb-1">Capacity</p>
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 md:p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                      <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase mb-1">Capacity</p>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-lg font-black">12</span>
-                        <span className="text-xs text-slate-400 font-bold">/ 16 Ports</span>
+                        <span className="text-base md:text-lg font-black">12</span>
+                        <span className="text-[10px] md:text-xs text-slate-400 font-bold">/ 16 Ports</span>
                       </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 md:h-1.5 rounded-full mt-2 md:mt-3 overflow-hidden">
                         <div className="bg-blue-600 h-full w-[75%]" />
                       </div>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
-                      <p className="text-[10px] text-slate-400 font-black uppercase mb-1">Health</p>
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 md:p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                      <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase mb-1">Health</p>
                       <div className="flex items-baseline gap-1">
-                        <span className={cn("text-lg font-black", selectedNode.status === 'Online' ? "text-green-500" : "text-amber-500")}>
+                        <span className={cn("text-base md:text-lg font-black", selectedNode.status === 'Online' ? "text-green-500" : "text-amber-500")}>
                           {selectedNode.status === 'Online' ? '98.4%' : '64.1%'}
                         </span>
                       </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 md:h-1.5 rounded-full mt-2 md:mt-3 overflow-hidden">
                         <div className={cn("h-full", selectedNode.status === 'Online' ? "bg-green-500 w-[98%]" : "bg-amber-500 w-[64%]")} />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 md:space-y-8 scrollbar-hide">
                   <section>
-                    <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <h4 className="text-[10px] md:text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                       <InfoIcon size={14} />
-                      Technical Intelligence
+                      Technical Info
                     </h4>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
-                        <span className="text-xs font-bold text-slate-500">Model</span>
-                        <span className="text-xs font-black">Huawei SmartAX MA5608T</span>
+                    <div className="space-y-3 md:space-y-4">
+                      <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 p-2.5 md:p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
+                        <span className="text-[10px] md:text-xs font-bold text-slate-500">Model</span>
+                        <span className="text-[10px] md:text-xs font-black truncate max-w-[150px] md:max-w-none text-right">Huawei MA5608T</span>
                       </div>
-                      <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
-                        <span className="text-xs font-bold text-slate-500">MAC Address</span>
-                        <span className="text-xs font-mono font-black">{selectedNode.mac}</span>
+                      <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 p-2.5 md:p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
+                        <span className="text-[10px] md:text-xs font-bold text-slate-500">MAC</span>
+                        <span className="text-[10px] md:text-xs font-mono font-black">{selectedNode.mac}</span>
                       </div>
-                      <div className="flex flex-col gap-2 bg-slate-50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
-                        <span className="text-xs font-bold text-slate-500">Physical Location</span>
-                        <span className="text-xs font-black leading-relaxed">{selectedNode.location}</span>
+                      <div className="flex flex-col gap-1.5 md:gap-2 bg-slate-50 dark:bg-slate-800/30 p-2.5 md:p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
+                        <span className="text-[10px] md:text-xs font-bold text-slate-500">Physical Location</span>
+                        <span className="text-[10px] md:text-xs font-black leading-relaxed">{selectedNode.location}</span>
                       </div>
-                      <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
-                        <span className="text-xs font-bold text-slate-500">Kepemilikan</span>
-                        <span className={cn(
-                          "text-[10px] font-black uppercase px-3 py-1 rounded-full",
-                          (selectedNode.kepemilikan === 'Dimiliki' || !selectedNode.kepemilikan) 
-                            ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600"
-                            : "bg-red-100 dark:bg-red-900/30 text-red-600"
-                        )}>
-                          {selectedNode.kepemilikan || 'Dimiliki'}
-                        </span>
-                      </div>
-                      {selectedNode.tanggal_perubahan && (
-                        <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
-                          <span className="text-xs font-bold text-slate-500">Tgl. Perubahan</span>
-                          <span className="text-xs font-black">
-                            {selectedNode.tanggal_perubahan instanceof Date 
-                              ? selectedNode.tanggal_perubahan.toLocaleString() 
-                              : String(selectedNode.tanggal_perubahan)}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   </section>
 
                   <section>
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <h4 className="text-[10px] md:text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <AlertTriangle size={14} />
-                        Active Incidents
+                        Incidents
                       </h4>
                       {selectedNode.status !== 'Online' && (
-                        <span className="text-[9px] bg-red-100 dark:bg-red-900/30 text-red-600 px-2 py-0.5 rounded-full font-black">1 Critical</span>
+                        <span className="text-[8px] md:text-[9px] bg-red-100 dark:bg-red-900/30 text-red-600 px-2 py-0.5 rounded-full font-black">1 Critical</span>
                       )}
                     </div>
                     
                     {selectedNode.status === 'Online' ? (
-                      <div className="flex flex-col items-center justify-center py-8 bg-slate-50 dark:bg-slate-800/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-                        <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center text-green-500 mb-3">
-                          <Activity size={20} />
+                      <div className="flex flex-col items-center justify-center py-6 md:py-8 bg-slate-50 dark:bg-slate-800/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center text-green-500 mb-2 md:mb-3">
+                          <Activity size={18} />
                         </div>
-                        <p className="text-xs font-bold text-slate-500 italic">No active incidents found</p>
+                        <p className="text-[10px] md:text-xs font-bold text-slate-500 italic">Perfect condition</p>
                       </div>
                     ) : (
-                      <div className="bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 rounded-r-2xl">
+                      <div className="bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-3 md:p-4 rounded-r-2xl">
                         <div className="flex justify-between mb-2">
-                          <p className="text-xs font-black text-amber-600">#TCK-8921-X</p>
-                          <div className="flex items-center gap-1 text-[10px] text-slate-400 font-bold">
+                          <p className="text-[10px] md:text-xs font-black text-amber-600">#TCK-8921-X</p>
+                          <div className="flex items-center gap-1 text-[8px] md:text-[10px] text-slate-400 font-bold">
                             <Clock size={10} />
                             <span>2h ago</span>
                           </div>
                         </div>
-                        <p className="text-[12px] font-bold text-slate-700 dark:text-slate-300 leading-relaxed mb-4">
-                          Power loss detected at main supply. Backup UPS engaged but reporting low voltage.
+                        <p className="text-[11px] md:text-[12px] font-bold text-slate-700 dark:text-slate-300 leading-relaxed mb-3 md:mb-4">
+                          Power loss detected at main supply.
                         </p>
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-slate-200 overflow-hidden ring-2 ring-white dark:ring-slate-800">
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-slate-200 overflow-hidden ring-2 ring-white dark:ring-slate-800">
                             <img 
                               src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=100" 
                               className="w-full h-full object-cover"
@@ -501,32 +515,16 @@ export default function DistributionMapPage() {
                             />
                           </div>
                           <div>
-                            <p className="text-[11px] font-black">Budi Santoso</p>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Field Engineer (Dispatching)</p>
+                            <p className="text-[10px] md:text-[11px] font-black">Budi Santoso</p>
+                            <p className="text-[8px] md:text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate max-w-[100px] md:max-w-none">Field Engineer</p>
                           </div>
                         </div>
                       </div>
                     )}
                   </section>
-
-                  <section>
-                    <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Service Impact Analysis</h4>
-                    <div className="bg-slate-900 dark:bg-black p-6 rounded-[2rem] flex items-center justify-between text-white shadow-xl shadow-slate-900/10">
-                      <div className="text-center flex-1 border-r border-slate-800">
-                        <p className="text-3xl font-black">24</p>
-                        <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mt-1">Subscribers</p>
-                      </div>
-                      <div className="text-center flex-1">
-                        <p className={cn("text-3xl font-black", selectedNode.status === 'Online' ? "text-green-400" : "text-red-400")}>
-                          {selectedNode.status === 'Online' ? '0%' : '12%'}
-                        </p>
-                        <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mt-1">SLA Drop</p>
-                      </div>
-                    </div>
-                  </section>
                 </div>
 
-                <div className="p-8 bg-slate-50/50 dark:bg-slate-800/30 space-y-3">
+                <div className="p-6 md:p-8 bg-slate-50/50 dark:bg-slate-800/30 space-y-3">
                   <button 
                     onClick={async () => {
                       const res = await dispatchTechnician(selectedNode.id, selectedNode.sn);
@@ -537,20 +535,10 @@ export default function DistributionMapPage() {
                         toast.error("Failed to dispatch technician.");
                       }
                     }}
-                    className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-500/20 hover:translate-y-[-2px] transition-all flex items-center justify-center gap-3"
+                    className="w-full bg-blue-600 text-white py-3 md:py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-500/20 hover:translate-y-[-2px] transition-all flex items-center justify-center gap-3"
                   >
                     <Activity size={18} />
-                    Dispatch Technician
-                  </button>
-                  <button 
-                    onClick={async () => {
-                      const history = await getMaintenanceHistory(selectedNode.id);
-                      setMaintenanceHistory(history);
-                      setIsHistoryModalOpen(true);
-                    }}
-                    className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 py-4 rounded-2xl font-black text-sm border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
-                  >
-                    View Maintenance History
+                    Dispatch
                   </button>
                 </div>
               </m.div>
@@ -559,36 +547,36 @@ export default function DistributionMapPage() {
         </AnimatePresence>
 
         {/* Bottom Floating Stats */}
-        <div className="absolute bottom-6 left-6 z-10 flex gap-4">
+        <div className="absolute bottom-6 left-6 z-40 flex gap-2 md:gap-4 pointer-events-none">
           <m.div 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-6 py-4 rounded-[2rem] shadow-xl border border-slate-200/50 dark:border-slate-800/50 flex items-center gap-4 group hover:bg-white dark:hover:bg-slate-900 transition-all cursor-default"
+            className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 md:px-6 py-2 md:py-4 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-slate-200/50 dark:border-slate-800/50 flex items-center gap-2 md:gap-4 group hover:bg-white dark:hover:bg-slate-900 transition-all cursor-default pointer-events-auto"
           >
-            <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-2xl text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
-              <Activity size={24} />
+            <div className="bg-blue-100 dark:bg-blue-900/30 p-2 md:p-3 rounded-xl md:rounded-2xl text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
+              <Activity size={16} className="md:w-6 md:h-6" />
             </div>
             <div>
-              <p className="text-2xl font-black leading-none tracking-tighter">
+              <p className="text-sm md:text-2xl font-black leading-none tracking-tighter">
                 {assets.length > 0 ? ((assets.filter(a => (a.condition || a.status) === 'Good' || (a.condition || a.status) === 'Online').length / assets.length) * 100).toFixed(1) : 0}%
               </p>
-              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Network Health</p>
+              <p className="text-[8px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5 md:mt-1">Health</p>
             </div>
           </m.div>
           <m.div 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-6 py-4 rounded-[2rem] shadow-xl border border-slate-200/50 dark:border-slate-800/50 flex items-center gap-4 group hover:bg-white dark:hover:bg-slate-900 transition-all cursor-default"
+            className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 md:px-6 py-2 md:py-4 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-slate-200/50 dark:border-slate-800/50 flex items-center gap-2 md:gap-4 group hover:bg-white dark:hover:bg-slate-900 transition-all cursor-default pointer-events-auto"
           >
-            <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-2xl text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform">
-              <AlertTriangle size={24} />
+            <div className="bg-red-100 dark:bg-red-900/30 p-2 md:p-3 rounded-xl md:rounded-2xl text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform">
+              <AlertTriangle size={16} className="md:w-6 md:h-6" />
             </div>
             <div>
-              <p className="text-2xl font-black leading-none tracking-tighter text-red-600">
+              <p className="text-sm md:text-2xl font-black leading-none tracking-tighter text-red-600">
                 {String(assets.filter(a => (a.condition || a.status) !== 'Good' && (a.condition || a.status) !== 'Online').length).padStart(2, '0')}
               </p>
-              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Active Outages</p>
+              <p className="text-[8px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5 md:mt-1">Outages</p>
             </div>
           </m.div>
         </div>

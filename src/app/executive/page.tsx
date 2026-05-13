@@ -534,7 +534,22 @@ export default function ExecutiveDashboard() {
                             </div>
                           )} 
                         />
-                        <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} formatter={(value) => <span className="text-slate-400 font-medium mr-6">{value}</span>} />
+                        <Legend 
+                          verticalAlign="bottom" 
+                          height={36}
+                          content={({ payload }) => (
+                            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-6">
+                              {payload?.map((entry: any, index: number) => (
+                                <div key={`item-${index}`} className="flex items-center gap-1.5">
+                                  <div className="w-1.5 h-1.5 tablet:w-2 tablet:h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                  <span className="text-[10px] tablet:text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                    {entry.value}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        />
                         <Area type="monotone" dataKey="revenue" name="Gross Revenue" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
                         <Line type="monotone" dataKey="expenses" name="Expenses" stroke="#f43f5e" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                         <Line type="monotone" dataKey="profit" name="Net Profit" stroke="#10b981" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
