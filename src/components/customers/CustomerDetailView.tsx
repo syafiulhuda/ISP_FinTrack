@@ -289,21 +289,21 @@ export default function CustomerDetailView({ data }: { data: any }) {
                   <Tooltip 
                     cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
                     content={({ active, payload }) => active && payload && payload.length && (
-                      <div className="bg-slate-900/95 backdrop-blur-xl text-white px-6 py-4 rounded-2xl shadow-2xl border border-white/10 ring-1 ring-white/5">
-                        <p className="opacity-50 mb-3 uppercase tracking-widest text-[10px] font-black">{payload[0].payload.month}</p>
-                        <div className="space-y-3">
+                      <div className="bg-slate-900/95 backdrop-blur-xl text-white px-3 md:px-6 py-2 md:py-4 rounded-2xl shadow-2xl border border-white/10 ring-1 ring-white/5 min-w-[140px] md:min-w-[240px]">
+                        <p className="opacity-50 mb-2 md:mb-3 uppercase tracking-widest text-[8px] md:text-[10px] font-black">{payload[0].payload.month}</p>
+                        <div className="space-y-2 md:space-y-3">
                           {payload.map((entry: any, i: number) => (
-                            <div key={i} className="flex items-center justify-between gap-12">
-                              <span className="flex items-center gap-3">
-                                <div className="w-2.5 h-2.5 rounded-full shadow-lg" style={{ backgroundColor: entry.color }} />
-                                <span className="text-sm font-bold opacity-90">{entry.name === 'ontime' ? 'Tepat Waktu' : 'Terlambat'}</span>
+                            <div key={i} className="flex items-center justify-between gap-4 md:gap-12">
+                              <span className="flex items-center gap-2 md:gap-3">
+                                <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full shadow-lg" style={{ backgroundColor: entry.color }} />
+                                <span className="text-[10px] md:text-sm font-bold opacity-90">{entry.name === 'ontime' ? 'Tepat Waktu' : 'Terlambat'}</span>
                               </span>
-                              <span className="text-sm font-black font-mono text-indigo-400">{formatCurrency(entry.value)}</span>
+                              <span className="text-[10px] md:text-sm font-black font-mono text-indigo-400">{formatCurrency(entry.value)}</span>
                             </div>
                           ))}
-                          <div className="pt-3 border-t border-white/10 flex justify-between gap-12">
-                             <span className="text-[10px] font-black opacity-40 uppercase">Total Revenue Bulan Ini</span>
-                             <span className="text-sm font-black font-mono text-emerald-400">{formatCurrency(payload.reduce((acc, curr) => acc + Number(curr.value), 0))}</span>
+                          <div className="pt-2 md:pt-3 border-t border-white/10 flex justify-between items-center gap-4 md:gap-12">
+                             <span className="text-[8px] md:text-[10px] font-black opacity-40 uppercase">Total Revenue</span>
+                             <span className="text-[10px] md:text-sm font-black font-mono text-emerald-400">{formatCurrency(payload.reduce((acc, curr) => acc + Number(curr.value), 0))}</span>
                           </div>
                         </div>
                       </div>
