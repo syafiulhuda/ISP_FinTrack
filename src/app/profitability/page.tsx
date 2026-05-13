@@ -137,10 +137,22 @@ export default function ProfitabilityPage() {
     }
   }, [transactions, expenseList, customerList, dateRange, datesInitialized, handleResetDates]);
 
-  const provinces = useMemo(() => [
-    "All Regions",
-    ...Array.from(new Set(customerList.map((c: Customer) => c.province).filter(Boolean) as string[])).sort()
-  ], [customerList]);
+  const provinces = useMemo(() => {
+    const rawProvs = customerList.map((c: Customer) => c.province).filter(Boolean) as string[];
+    const normalized = new Map<string, string>();
+    
+    rawProvs.forEach(p => {
+      const trimmed = p.trim();
+      const key = trimmed.toLowerCase();
+      if (!normalized.has(key) || (trimmed !== key && normalized.get(key) === key)) {
+        // Prefer Title Case or whatever isn't all lowercase
+        const formatted = trimmed.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+        normalized.set(key, formatted);
+      }
+    });
+
+    return ["All Regions", ...Array.from(normalized.values()).sort()];
+  }, [customerList]);
 
   const [mounted, setMounted] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -189,6 +201,8 @@ export default function ProfitabilityPage() {
       };
     }
     const isAllRegions = selectedProvince === "All Regions";
+    const normalize = (val: string) => val ? val.toLowerCase().trim() : "";
+    const selectedProvLower = normalize(selectedProvince);
     
     // 1. Calculate Selected Range & Months
     const startMonthStr = startDate.substring(0, 7);
@@ -251,13 +265,13 @@ export default function ProfitabilityPage() {
         // Region Filter Logic
         if (!isAllRegions) {
           const cityProv = getProvinceFromCity(tx.city) || tx.city;
-          const matchesDirectly = cityProv && String(cityProv).toLowerCase().includes(selectedProvince.toLowerCase());
+          const matchesDirectly = cityProv && normalize(String(cityProv)).includes(selectedProvLower);
           
           if (!matchesDirectly) {
             const idSuffix = tx.id?.split('-')[1];
             if (tx.keterangan === "pemasukan") {
               const customer = customerList.find((c: Customer) => String(c.id) === idSuffix);
-              if (customer?.province !== selectedProvince) return;
+              if (normalize(customer?.province || "") !== selectedProvLower) return;
             } else {
               return;
             }
@@ -349,7 +363,7 @@ export default function ProfitabilityPage() {
 
     const incomeByType: Record<string, number> = {};
     const expenseByType: Record<string, number> = {};
-    const allocationFactor = isAllRegions ? 1 : (customerList.length > 0 ? (customerList.filter((c: any) => c.province === selectedProvince).length / customerList.length) : 0);
+    const allocationFactor = isAllRegions ? 1 : (customerList.length > 0 ? (customerList.filter((c: any) => normalize(c.province || "") === selectedProvLower).length / customerList.length) : 0);
     
     // For Income (Revenue Component) - purely from transactions
     transactions.forEach((tx: any) => {
@@ -358,12 +372,12 @@ export default function ProfitabilityPage() {
 
       if (!isAllRegions) {
         const cityProv = getProvinceFromCity(tx.city) || tx.city;
-        const matchesDirectly = cityProv && String(cityProv).toLowerCase().includes(selectedProvince.toLowerCase());
+        const matchesDirectly = cityProv && normalize(String(cityProv)).includes(selectedProvLower);
         if (!matchesDirectly) {
           const idSuffix = tx.id?.split('-')[1];
           if (tx.keterangan === "pemasukan") {
             const customer = customerList.find((c: any) => String(c.id) === idSuffix);
-            if (customer?.province !== selectedProvince) return;
+            if (normalize(customer?.province || "") !== selectedProvLower) return;
           } else return;
         }
       }
@@ -381,7 +395,7 @@ export default function ProfitabilityPage() {
       if (expDate < startDate || expDate > endDate) return;
 
       const expProv = getProvinceFromCity(exp.city) || exp.city;
-      if (!isAllRegions && expProv && !String(expProv).toLowerCase().includes(selectedProvince.toLowerCase())) return;
+      if (!isAllRegions && expProv && !normalize(String(expProv)).includes(selectedProvLower)) return;
 
       const type = exp.category || "General Expense";
       const allocatedAmount = Math.abs(exp.amount || 0) * (isAllRegions ? 1 : allocationFactor);
@@ -395,7 +409,7 @@ export default function ProfitabilityPage() {
 
     const activeCustomers = customerList.filter((c: any) => {
       const joinDate = getLocalDate(c.createdAt || c.registration_date);
-      return joinDate <= endDate && c.status === "Active" && (isAllRegions || c.province === selectedProvince);
+      return joinDate <= endDate && c.status === "Active" && (isAllRegions || normalize(c.province || "") === selectedProvLower);
     });
 
     const distribution = ["Premium", "Standard", "Basic", "Gamers"].map(name => {
@@ -477,16 +491,45 @@ export default function ProfitabilityPage() {
             </div>
 
             <div className="relative shrink-0" ref={dropdownRef}>
-              <m.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-1 lg-phone:gap-3 px-2 lg-phone:px-6 py-1.5 lg-phone:py-3.5 bg-white dark:bg-slate-900 rounded-[1rem] shadow-sm border border-slate-200 dark:border-slate-800 text-[8px] lg-phone:text-sm font-bold min-w-[70px] lg-phone:min-w-[200px]">
-                <Filter size={14} className="md:w-[18px] md:h-[18px] text-primary shrink-0" />
-                <span className="flex-1 text-left whitespace-nowrap">{selectedProvince}</span>
-                <ChevronDown size={14} className={cn("md:w-[16px] md:h-[16px] shrink-0 transition-transform", isDropdownOpen && "rotate-180")} />
-              </m.button>
+              <button 
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center justify-between gap-1 tablet:gap-3 bg-slate-100 dark:bg-slate-900 px-2 tablet:px-4 py-1.5 tablet:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 min-w-[70px] tablet:min-w-[160px] max-w-[90px] tablet:max-w-none hover:border-indigo-500/50 transition-all active:scale-95 shrink-0"
+              >
+                <div className="flex items-center gap-1 tablet:gap-2 overflow-hidden">
+                  <MapPin className="w-3 h-3 tablet:w-4 tablet:h-4 text-indigo-500 shrink-0 hidden sm-phone:block" />
+                  <span className="text-[8px] tablet:text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{selectedProvince}</span>
+                </div>
+                <ChevronDown className={`w-3 h-3 text-slate-400 shrink-0 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
               <AnimatePresence>
                 {isDropdownOpen && (
-                  <m.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -4 }} className="absolute right-0 top-full mt-2 w-[320px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
-                    <div className="p-4 bg-slate-50/50 dark:bg-slate-900/50 border-b dark:border-slate-800"><div className="relative flex items-center"><Search className="absolute left-3 text-slate-400" size={16} /><input autoFocus className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20" placeholder="Search regions..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div></div>
-                    <div className="max-h-[300px] overflow-y-auto p-2">{filteredProvinces.map((p) => (<button key={p} onClick={() => { setSelectedProvince(p); setIsDropdownOpen(false); }} className={cn("w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold mb-1", p === selectedProvince ? "bg-primary text-white shadow-md" : "hover:bg-slate-100 dark:hover:bg-slate-800")}>{p}{p === selectedProvince && <Check size={16} />}</button>))}</div>
+                  <m.div 
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-xl"
+                  >
+                    <div className="p-1">
+                      {provinces.map((p: string) => (
+                        <button
+                          key={p}
+                          onClick={() => {
+                            setSelectedProvince(p);
+                            setIsDropdownOpen(false);
+                            setSearchQuery("");
+                          }}
+                          className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-between group ${
+                            selectedProvince === p 
+                              ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
+                              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          {p}
+                          {selectedProvince === p && <m.div layoutId="activeCheck" className="w-1.5 h-1.5 bg-white rounded-full" />}
+                        </button>
+                      ))}
+                    </div>
                   </m.div>
                 )}
               </AnimatePresence>

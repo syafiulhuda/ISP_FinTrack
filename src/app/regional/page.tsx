@@ -82,31 +82,66 @@ export default function RegionalAnalysisPage() {
     setMounted(true);
   }, []);
 
-  // Dynamic Options
-  const provinces = useMemo(() => ["All Provinces", ...Array.from(new Set(customerList.map(c => c.province).filter(Boolean)))], [customerList]);
+  // Helper to normalize strings to Title Case
+  const normalize = (val: string) => {
+    if (!val) return "";
+    return val.trim().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+  };
+
+  // Dynamic Options with Normalization
+  const provinces = useMemo(() => {
+    const raw = customerList.map(c => c.province).filter(Boolean) as string[];
+    const normalized = new Map<string, string>();
+    raw.forEach(p => {
+      const key = p.toLowerCase().trim();
+      if (!normalized.has(key)) normalized.set(key, normalize(p));
+    });
+    return ["All Provinces", ...Array.from(normalized.values()).sort()];
+  }, [customerList]);
   
   const cities = useMemo(() => {
-    const list = selectedProvince === "All Provinces" ? customerList : customerList.filter(c => c.province === selectedProvince);
-    const sortedRegions = ["All Cities", ...Array.from(new Set(list.map(c => c.city).filter(Boolean)))];
-    return sortedRegions;
+    const list = selectedProvince === "All Provinces" ? customerList : customerList.filter(c => normalize(c.province) === selectedProvince);
+    const raw = list.map(c => c.city).filter(Boolean) as string[];
+    const normalized = new Map<string, string>();
+    raw.forEach(p => {
+      const key = p.toLowerCase().trim();
+      if (!normalized.has(key)) normalized.set(key, normalize(p));
+    });
+    return ["All Cities", ...Array.from(normalized.values()).sort()];
   }, [selectedProvince, customerList]);
 
   const districts = useMemo(() => {
-    const list = selectedCity === "All Cities" ? (selectedProvince === "All Provinces" ? customerList : customerList.filter(c => c.province === selectedProvince)) : customerList.filter(c => c.city === selectedCity);
-    return ["All Districts", ...Array.from(new Set(list.map(c => c.district).filter(Boolean)))];
+    const list = selectedCity === "All Cities" 
+      ? (selectedProvince === "All Provinces" ? customerList : customerList.filter(c => normalize(c.province) === selectedProvince)) 
+      : customerList.filter(c => normalize(c.city) === selectedCity);
+    const raw = list.map(c => c.district).filter(Boolean) as string[];
+    const normalized = new Map<string, string>();
+    raw.forEach(p => {
+      const key = p.toLowerCase().trim();
+      if (!normalized.has(key)) normalized.set(key, normalize(p));
+    });
+    return ["All Districts", ...Array.from(normalized.values()).sort()];
   }, [selectedProvince, selectedCity, customerList]);
 
   const subDistricts = useMemo(() => {
-    const list = selectedDistrict === "All Districts" ? (selectedCity === "All Cities" ? customerList : customerList.filter(c => c.city === selectedCity)) : customerList.filter(c => c.district === selectedDistrict);
-    return ["All Sub-districts", ...Array.from(new Set(list.map(c => c.village).filter(Boolean)))];
+    const list = selectedDistrict === "All Districts" 
+      ? (selectedCity === "All Cities" ? (selectedProvince === "All Provinces" ? customerList : customerList.filter(c => normalize(c.province) === selectedProvince)) : customerList.filter(c => normalize(c.city) === selectedCity)) 
+      : customerList.filter(c => normalize(c.district) === selectedDistrict);
+    const raw = list.map(c => c.village || c.village).filter(Boolean) as string[];
+    const normalized = new Map<string, string>();
+    raw.forEach(p => {
+      const key = p.toLowerCase().trim();
+      if (!normalized.has(key)) normalized.set(key, normalize(p));
+    });
+    return ["All Sub-districts", ...Array.from(normalized.values()).sort()];
   }, [selectedProvince, selectedCity, selectedDistrict, customerList]);
 
   const dynamicData = useMemo(() => {
     let filtered = customerList.filter(c => {
-      const pMatch = selectedProvince === "All Provinces" || c.province === selectedProvince;
-      const cMatch = selectedCity === "All Cities" || c.city === selectedCity;
-      const dMatch = selectedDistrict === "All Districts" || c.district === selectedDistrict;
-      const sMatch = selectedSubDistrict === "All Sub-districts" || c.village === selectedSubDistrict;
+      const pMatch = selectedProvince === "All Provinces" || normalize(c.province) === selectedProvince;
+      const cMatch = selectedCity === "All Cities" || normalize(c.city) === selectedCity;
+      const dMatch = selectedDistrict === "All Districts" || normalize(c.district) === selectedDistrict;
+      const sMatch = selectedSubDistrict === "All Sub-districts" || normalize(c.village) === selectedSubDistrict;
       return pMatch && cMatch && dMatch && sMatch;
     });
 

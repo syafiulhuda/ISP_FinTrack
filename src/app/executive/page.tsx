@@ -70,8 +70,19 @@ export default function ExecutiveDashboard() {
   // Derive provinces list
   const provinces = useMemo(() => {
     if (!data?.customers) return ["All Regions"];
-    const provs = new Set(data.customers.map((c: any) => c.province).filter(Boolean));
-    return ["All Regions", ...Array.from(provs)];
+    const rawProvs = data.customers.map((c: any) => c.province).filter(Boolean) as string[];
+    const normalized = new Map<string, string>();
+    
+    rawProvs.forEach(p => {
+      const trimmed = p.trim();
+      const key = trimmed.toLowerCase();
+      if (!normalized.has(key) || (trimmed !== key && normalized.get(key) === key)) {
+        const formatted = trimmed.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+        normalized.set(key, formatted);
+      }
+    });
+
+    return ["All Regions", ...Array.from(normalized.values()).sort()];
   }, [data?.customers]);
 
   const processedData = useMemo(() => {
@@ -79,6 +90,12 @@ export default function ExecutiveDashboard() {
 
     const { customers, transactions, expenses, assetRoster, stockAssets } = data;
     const isAllRegions = selectedProvince === "All Regions";
+    const normalize = (val: string) => val ? val.toLowerCase().trim() : "";
+    const selectedProvLower = normalize(selectedProvince);
+    const toTitleCase = (val: string) => {
+      if (!val) return "";
+      return val.trim().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+    };
 
     // --- UTILITIES ---
     const getLocalDate = (d?: string | Date | null) => {
@@ -131,7 +148,7 @@ export default function ExecutiveDashboard() {
     const filteredCustomers = customers.filter((c: any) => {
       const joinDate = getLocalDate(c.createdAt || c.registration_date);
       if (joinDate > endDate) return false;
-      if (!isAllRegions && c.province !== selectedProvince) return false;
+      if (!isAllRegions && normalize(c.province || "") !== selectedProvLower) return false;
       return true;
     });
 
@@ -152,7 +169,7 @@ export default function ExecutiveDashboard() {
         else if (lon > 106.5 && lon < 107 && lat > -6.5 && lat < -6) prov = "DKI Jakarta";
       }
 
-      if (!isAllRegions && !String(prov).toLowerCase().includes(selectedProvince.toLowerCase())) return false;
+      if (!isAllRegions && !normalize(String(prov)).includes(selectedProvLower)) return false;
       return true;
     });
 
@@ -171,7 +188,7 @@ export default function ExecutiveDashboard() {
         else if (lon > 106.5 && lon < 107 && lat > -6.5 && lat < -6) prov = "DKI Jakarta";
       }
 
-      if (!isAllRegions && !String(prov).toLowerCase().includes(selectedProvince.toLowerCase())) return false;
+      if (!isAllRegions && !normalize(String(prov)).includes(selectedProvLower)) return false;
       return true;
     });
 
@@ -198,7 +215,7 @@ export default function ExecutiveDashboard() {
         txProvince = cityProv || "Other";
       }
 
-      if (!isAllRegions && !String(txProvince).toLowerCase().includes(selectedProvince.toLowerCase())) return;
+      if (!isAllRegions && !normalize(String(txProvince)).includes(selectedProvLower)) return;
 
       const amt = Number(tx.numericAmount || String(tx.amount).replace(/[^0-9]/g, ''));
       const monthStr = txDate.substring(0, 7);
@@ -206,8 +223,9 @@ export default function ExecutiveDashboard() {
       if (tx.status === "Verified") {
         if (tx.keterangan === "pemasukan") {
           totalRevenue += amt;
+          const normProv = toTitleCase(txProvince);
           monthlyRevenue[monthStr] = (monthlyRevenue[monthStr] || 0) + amt;
-          profitByProvince[txProvince] = (profitByProvince[txProvince] || 0) + amt;
+          profitByProvince[normProv] = (profitByProvince[normProv] || 0) + amt;
         }
         if (tx.keterangan === "pengeluaran") {
           totalExpenses += amt;
@@ -218,8 +236,9 @@ export default function ExecutiveDashboard() {
             directCosts += amt;
           }
 
+          const normProv = toTitleCase(txProvince);
           monthlyExpenses[monthStr] = (monthlyExpenses[monthStr] || 0) + amt;
-          profitByProvince[txProvince] = (profitByProvince[txProvince] || 0) - amt;
+          profitByProvince[normProv] = (profitByProvince[normProv] || 0) - amt;
         }
       }
     });
