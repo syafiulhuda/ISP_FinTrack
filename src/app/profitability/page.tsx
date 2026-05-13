@@ -467,28 +467,22 @@ export default function ProfitabilityPage() {
             <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Profitability Analysis</h2>
             <p className="text-xs md:text-sm font-medium text-slate-500 mt-1">Segmented performance and unit economics audit.</p>
           </div>
-          <div className="flex flex-row items-center justify-start md:justify-end gap-1 md:gap-4 w-full md:w-auto pb-1">
-            <div className="flex items-center justify-between gap-1 bg-white dark:bg-slate-900 p-1 md:p-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
+          <div className="flex flex-row items-center justify-between gap-1 w-full tablet:w-auto">
+            <div className="flex items-center justify-between gap-1 tablet:gap-2 bg-slate-100 dark:bg-slate-900 px-1.5 tablet:px-3 py-1.5 tablet:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 shrink-0 shadow-sm">
+              <Calendar className="w-3 h-3 tablet:w-4 tablet:h-4 text-slate-400 shrink-0 hidden sm-phone:block" />
               <input 
                 type="date" 
                 value={startDate} 
                 onChange={(e) => setStartDate(e.target.value)}
-                className="bg-transparent border-none text-[8px] lg-phone:text-xs font-bold outline-none text-slate-600 px-0.5 w-[72px] lg-phone:w-auto shrink-0"
+                className="bg-transparent text-[8px] lg-phone:text-[10px] tablet:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-[66px] lg-phone:w-24 tablet:w-auto px-0.5"
               />
-              <span className="text-slate-300 text-[8px] lg-phone:text-xs shrink-0">|</span>
+              <span className="text-slate-300 text-[8px] tablet:text-sm shrink-0">-</span>
               <input 
                 type="date" 
                 value={endDate} 
                 onChange={(e) => setEndDate(e.target.value)}
-                className="bg-transparent border-none text-[8px] lg-phone:text-xs font-bold outline-none text-slate-600 px-0.5 w-[72px] lg-phone:w-auto shrink-0"
+                className="bg-transparent text-[8px] lg-phone:text-[10px] tablet:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-[66px] lg-phone:w-24 tablet:w-auto px-0.5"
               />
-              <button 
-                onClick={handleResetDates}
-                className="p-0.5 lg-phone:p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors shrink-0"
-                title="Reset Date Range"
-              >
-                <RotateCcw size={10} className="lg-phone:w-[14px] lg-phone:h-[14px]" />
-              </button>
             </div>
 
             <div className="relative shrink-0" ref={dropdownRef}>
