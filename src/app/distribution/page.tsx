@@ -310,10 +310,10 @@ export default function DistributionMapPage() {
             <AnimatePresence>
                {isLegendOpen && (
                  <m.div 
-                   initial={{ opacity: 0, scale: 0.95, x: -10 }}
-                   animate={{ opacity: 1, scale: 1, x: 0 }}
-                   exit={{ opacity: 0, scale: 0.95, x: -10 }}
-                   className="absolute top-0 left-full ml-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-6 w-64 z-50"
+                   initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                   animate={{ opacity: 1, scale: 1, y: 0 }}
+                   exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                   className="absolute top-full mt-3 left-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-6 w-64 z-50"
                  >
                     <LegendContent nodeStats={nodeStats} />
                  </m.div>
