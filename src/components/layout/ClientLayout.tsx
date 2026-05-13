@@ -6,11 +6,22 @@ import { Topbar } from "@/components/layout/Topbar";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { SettingsProvider } from "@/components/providers/SettingsProvider";
 import { m, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
 
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/logout" || pathname.startsWith("/reset-password");
