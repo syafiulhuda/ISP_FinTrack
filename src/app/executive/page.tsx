@@ -419,8 +419,8 @@ export default function ExecutiveDashboard() {
           </div>
         </div>
 
-        {/* DYNAMIC TABS */}
-        <div className="flex gap-0.5 lg-phone:gap-1 overflow-x-auto pb-1 no-scrollbar justify-between w-full">
+        {/* DYNAMIC TABS - Segmented Control Style */}
+        <div className="bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded-2xl flex gap-1 overflow-x-auto no-scrollbar w-full tablet:w-fit mx-auto tablet:mx-0">
           {[
             { id: 'financial', label: 'Financial & Profitability', mobileLabel: 'Financial', icon: DollarSign },
             { id: 'inventory', label: 'Inventory & Assets', mobileLabel: 'Inventory', icon: Server },
@@ -429,15 +429,22 @@ export default function ExecutiveDashboard() {
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-1 items-center justify-center gap-1 lg-phone:gap-2 px-1 lg-phone:px-4 tablet:px-5 py-2 tablet:py-3 rounded-t-xl font-bold text-[9px] lg-phone:text-[11px] tablet:text-sm whitespace-nowrap transition-all duration-300 ${
+              className={`relative flex flex-1 tablet:flex-none items-center justify-center gap-2 px-3 lg-phone:px-6 py-2.5 tablet:py-3 rounded-xl font-bold text-[10px] lg-phone:text-[11px] tablet:text-sm whitespace-nowrap transition-all duration-300 group ${
                 activeTab === tab.id 
-                  ? "bg-slate-100 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 border-t-2 border-indigo-500" 
-                  : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/50"
+                  ? "text-white shadow-lg shadow-indigo-500/20" 
+                  : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
               }`}
             >
-              <tab.icon className="w-3 h-3 lg-phone:w-4 lg-phone:h-4 shrink-0" />
-              <span className="hidden lg-phone:inline">{tab.label}</span>
-              <span className="lg-phone:hidden">{tab.mobileLabel}</span>
+              {activeTab === tab.id && (
+                <m.div 
+                  layoutId="activeTabPill"
+                  className="absolute inset-0 bg-indigo-500 rounded-xl z-0"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              <tab.icon className={`w-3.5 h-3.5 lg-phone:w-4 lg-phone:h-4 shrink-0 relative z-10 transition-transform group-hover:scale-110 ${activeTab === tab.id ? 'text-white' : 'text-slate-400'}`} />
+              <span className="hidden lg-phone:inline relative z-10">{tab.label}</span>
+              <span className="lg-phone:hidden relative z-10">{tab.mobileLabel}</span>
             </button>
           ))}
         </div>
