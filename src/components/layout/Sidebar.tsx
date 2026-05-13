@@ -152,7 +152,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 mt-4 overflow-y-auto hide-scrollbar min-h-0 pb-4">
+      <nav className="flex-1 space-y-1 mt-4 overflow-y-auto no-scrollbar min-h-0 pb-4">
         {navigation.map((item) => {
           const isActive = item.href === "/" 
             ? pathname === "/" || pathname === "/profitability"

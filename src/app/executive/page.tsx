@@ -420,7 +420,7 @@ export default function ExecutiveDashboard() {
         </div>
 
         {/* DYNAMIC TABS */}
-        <div className="flex gap-0.5 lg-phone:gap-1 overflow-x-auto pb-1 hide-scrollbar justify-between w-full">
+        <div className="flex gap-0.5 lg-phone:gap-1 overflow-x-auto pb-1 no-scrollbar justify-between w-full">
           {[
             { id: 'financial', label: 'Financial & Profitability', mobileLabel: 'Financial', icon: DollarSign },
             { id: 'inventory', label: 'Inventory & Assets', mobileLabel: 'Inventory', icon: Server },

@@ -534,7 +534,7 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto hide-scrollbar min-h-[400px] w-full">
+        <div className="overflow-x-auto no-scrollbar min-h-[400px] w-full">
           <table className="w-full text-left border-collapse min-w-[800px] md:min-w-full">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-800/50">
