@@ -2,6 +2,7 @@
 
 import { m, AnimatePresence } from "framer-motion";
 import { 
+  MapPin,
   TrendingUp, 
   ArrowUp, 
   ArrowDown,
