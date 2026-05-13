@@ -24,7 +24,7 @@ export async function getReportData(params: {
     const searchProvince = regionMap[region] || region;
 
     if (type === "Revenue") {
-      const amountParser = `SUM(CAST(REPLACE(REPLACE(REPLACE(t.amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT))`;
+      const amountParser = `SUM(t.amount::numeric)`;
       let queryParams: any[] = [startDate, endDate];
 
       if (isAllRegions) {
@@ -101,7 +101,7 @@ export async function getReportData(params: {
         const mainSql = `
           WITH base AS (
             -- INCOME
-            SELECT t.timestamp as ts, CAST(REPLACE(REPLACE(REPLACE(t.amount, 'Rp ', ''), '.', ''), ',', '') AS BIGINT) as val
+            SELECT t.timestamp as ts, t.amount::numeric as val
             FROM transactions t 
             JOIN customers c ON c.id = split_part(t.id,'-',2)
             WHERE t.status ILIKE 'verified' 

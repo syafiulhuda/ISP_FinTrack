@@ -48,6 +48,7 @@ yarn-error.log*
 ISP_FinTrack_Development_Guide.md
 AGENTS.md
 CLAUDE.md
+GEMINI.md
 
 # Debug & Temp Logs
 debug_tx*.txt

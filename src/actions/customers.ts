@@ -278,7 +278,7 @@ export async function getCustomerAnalysis() {
       const customerTxs = transactions.filter((t: any) => t.customer_id === c.id);
       
       // Calculate LTV
-      const ltv = customerTxs.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount).replace(/[^0-9]/g, '')) || 0), 0);
+      const ltv = customerTxs.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
       
       // Calculate Late Payment Ratio
       // Due day is the day of registration
@@ -349,7 +349,7 @@ export async function getCustomer360(customerId: string) {
     const monthGroups: Record<string, { ontime: number, late: number, total: number }> = {};
 
     txs.forEach((t: any) => {
-      const amt = Number(t.amount) || 0;
+      const amt = parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0;
       ltv += amt;
       const txDate = new Date(t.tx_date);
       const isLate = txDate.getDate() > dueDay + 3;

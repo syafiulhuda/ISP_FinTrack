@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       allowedOrigins: ['10.10.12.158', '10.10.12.119', 'localhost:3000'],
     },
+    optimizePackageImports: ['lucide-react', 'recharts', 'framer-motion'],
   },
 };
 

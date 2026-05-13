@@ -560,7 +560,40 @@ export default function FinancePage() {
                       placeholder="DD/MM/YYYY"
                       type="text" 
                       value={date}
-                      onChange={(e) => setDate(e.target.value)}
+                      onChange={(e) => {
+                        const newDate = e.target.value;
+                        setDate(newDate);
+                        
+                        // Fix for Reference number formatting inconsistency
+                        if (newDate) {
+                          const dParts = newDate.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+                          if (dParts) {
+                            const day = dParts[1].padStart(2, '0');
+                            const month = dParts[2].padStart(2, '0');
+                            let year = dParts[3];
+                            if (year.length === 2) year = "20" + year;
+                            
+                            setReference(prev => {
+                              if (!prev) return prev;
+                              
+                              if (activeTab === 'pengeluaran') {
+                                return `OUT-AUTO-${year}${month}${day}`;
+                              } else {
+                                // For income, reference is usually TRX-ID-YYYYMMDD
+                                const parts = prev.split('-');
+                                if (parts.length >= 2 && parts[0] === 'TRX') {
+                                  const idPart = parts[1];
+                                  // Just in case there are multiple dashes in the ID, but usually it's TRX-CUSTID-YYYYMMDD
+                                  // Find if the last part is a date (starts with 20)
+                                  const base = prev.replace(/-\d{8}$/, '');
+                                  return `${base}-${year}${month}${day}`;
+                                }
+                                return prev;
+                              }
+                            });
+                          }
+                        }
+                      }}
                     />
                     {!isEditing && <CheckCircle2 size={20} className="absolute right-4 top-4 text-green-500" />}
                   </div>

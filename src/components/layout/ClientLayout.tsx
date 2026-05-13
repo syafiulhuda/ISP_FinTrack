@@ -14,12 +14,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflowY = 'hidden';
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflowY = '';
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflowY = '';
     };
   }, [isMobileMenuOpen]);
 

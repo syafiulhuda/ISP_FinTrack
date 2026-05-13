@@ -137,6 +137,17 @@
 [data-theme-transition="to-light"]::view-transition-new(root) { z-index: 1; }
 
 @layer base {
+  html, body {
+    @apply overflow-x-hidden w-full;
+    max-width: 100vw;
+  }
+  
+  .sidebar-fixed {
+    width: 256px !important;
+    min-width: 256px !important;
+    max-width: 256px !important;
+  }
+  
   body {
     @apply bg-background text-foreground;
   }

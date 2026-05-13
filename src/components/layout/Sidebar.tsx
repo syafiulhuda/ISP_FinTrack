@@ -86,11 +86,11 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
       )}
       
       <aside className={cn(
-        "fixed left-0 top-0 bottom-0 w-64 z-50 bg-slate-100 dark:bg-slate-950 flex-col h-full p-4 space-y-2 border-r border-slate-200 dark:border-slate-800 transition-transform duration-300 md:flex md:translate-x-0 shadow-2xl md:shadow-none",
-        isOpen ? "flex translate-x-0" : "-translate-x-full hidden"
+        "sidebar-fixed fixed left-0 top-0 bottom-0 z-50 bg-slate-100 dark:bg-slate-950 flex flex-col h-full border-r border-slate-200 dark:border-slate-800 md:translate-x-0 shadow-2xl md:shadow-none overflow-hidden touch-none",
+        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
       {/* Header */}
-      <div className="mb-6 px-2">
+      <div className="pt-6 px-6">
         <div className="flex items-center space-x-3 mb-4 px-2">
           {isOpen && (
             <button 
@@ -117,13 +117,14 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Enterprise Finance</p>
           </div>
         </div>
+      </div>
 
-        {/* Executive Summary Button (Premium Sleek Design) */}
+      <div className="px-4 w-full overflow-hidden">
         <Link 
           href="/executive"
           onClick={onClose}
           className={cn(
-            "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300",
+            "group relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 overflow-hidden w-full",
             pathname === '/executive' 
               ? cn(theme.bg, "shadow-xl dark:bg-white/10 border border-white/10 dark:border-indigo-500/50", !theme.isCustom && theme.shadow) 
               : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/30"
@@ -152,7 +153,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 mt-4 overflow-y-auto no-scrollbar min-h-0 pb-4">
+      <nav className="flex-1 space-y-1 mt-4 px-4 overflow-y-auto overflow-x-hidden no-scrollbar min-h-0 pb-4">
         {navigation.map((item) => {
           const isActive = item.href === "/" 
             ? pathname === "/" || pathname === "/profitability"
@@ -164,34 +165,32 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
               href={item.href}
               onClick={onClose}
               className={cn(
-                "group relative flex items-center space-x-3 px-4 py-2.5 rounded-xl transition-colors duration-200",
+                "group relative flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors duration-200 overflow-hidden w-full flex-nowrap",
                 isActive 
                   ? cn("font-bold", theme.textActive) 
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
               )}
             >
               {isActive && (
-                <m.div
-                  layoutId="active-pill"
-                  className="absolute inset-0 bg-white dark:bg-slate-900 shadow-sm border border-slate-200/50 dark:border-slate-800 rounded-xl"
-                  transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
+                <div
+                  className="absolute inset-0 bg-white dark:bg-slate-900 shadow-sm border border-slate-200/50 dark:border-slate-800 rounded-xl pointer-events-none"
                 />
               )}
-              <item.icon size={20} className={cn("relative z-10", isActive && !theme.isCustom ? theme.textActive : "group-hover:scale-110 transition-transform")} style={isActive && theme.isCustom ? { color: theme.color } : {}} />
-              <span className="relative z-10 text-[13px]" style={isActive && theme.isCustom ? { color: theme.color, fontWeight: 'bold' } : {}}>{item.name}</span>
+              <item.icon size={20} className={cn("relative z-10 shrink-0", isActive && !theme.isCustom ? theme.textActive : "group-hover:scale-110 transition-transform")} style={isActive && theme.isCustom ? { color: theme.color } : {}} />
+              <span className="relative z-10 text-[13px] truncate min-w-0" style={isActive && theme.isCustom ? { color: theme.color, fontWeight: 'bold' } : {}}>{item.name}</span>
             </Link>
           );
         })}
       </nav>
 
       {/* Footer: Logout Button */}
-      <div className="mt-auto pt-4 space-y-1">
+      <div className="mt-auto p-4 space-y-1">
         <button
           onClick={() => setIsLogoutConfirmOpen(true)}
-          className="group w-full flex items-center space-x-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-xl transition-all"
+          className="group w-full flex items-center space-x-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-xl transition-all overflow-hidden"
         >
-          <Power size={20} className="group-hover:rotate-12 transition-transform" />
-          <span className="text-[13px] font-bold">Logout</span>
+          <Power size={20} className="group-hover:rotate-12 transition-transform shrink-0" />
+          <span className="text-[13px] font-bold truncate min-w-0">Logout</span>
         </button>
       </div>
       </aside>

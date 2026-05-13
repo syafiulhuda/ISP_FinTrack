@@ -18,20 +18,17 @@ import {
   Zap,
   Globe
 } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  AreaChart,
-  Area
-} from "recharts";
+import dynamic from 'next/dynamic';
+
+const DashboardRevenueChart = dynamic(
+  () => import('@/components/charts/DashboardCharts').then(mod => mod.DashboardRevenueChart),
+  { ssr: false, loading: () => <div className="h-full w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" /> }
+);
+
+const DashboardCustomerChart = dynamic(
+  () => import('@/components/charts/DashboardCharts').then(mod => mod.DashboardCustomerChart),
+  { ssr: false, loading: () => <div className="h-full w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" /> }
+);
 import { useQuery } from "@tanstack/react-query";
 import { getDashboardData } from '@/actions/dashboard';
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
@@ -41,51 +38,7 @@ import { useRouter } from "next/navigation";
 import { StatCard } from "@/components/ui/StatCard";
 import { Transaction, ServiceTier, Customer } from "@/types";
 
-interface TooltipProps {
-  active?: boolean;
-  payload?: any[];
-  label?: string;
-}
-
-const CustomTooltip = ({ active, payload }: TooltipProps) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white dark:bg-slate-800 px-3 py-2 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700">
-        <p className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: payload[0].payload.color }}></span>
-          {`${payload[0].name}: ${payload[0].value}%`}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
-
-const RevenueTooltip = ({ active, payload, label }: TooltipProps) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white dark:bg-slate-800 px-4 py-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700">
-        <p className="text-xs font-bold text-slate-400 uppercase mb-2">{label}</p>
-        <div className="space-y-1">
-          {payload.map((item: any, index: number) => (
-            <div key={index} className="text-sm font-black flex items-center justify-between gap-4">
-              <span className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                <span className="text-slate-600 dark:text-slate-400 font-bold capitalize">{item.name}:</span>
-              </span>
-              <span className="text-slate-900 dark:text-slate-100">
-                {item.value >= 1000000
-                  ? `Rp ${(item.value / 1000000).toFixed(2)}M`
-                  : `Rp ${(item.value / 1000).toFixed(0)}k`}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
+// Tooltips extracted to DashboardCharts.tsx
 
 export default function Dashboard() {
   const router = useRouter();
@@ -132,7 +85,7 @@ export default function Dashboard() {
 
     const verifiedTxTotal = transactions
       .filter((t: any) => t.status === "Verified")
-      .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
+      .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
     // Disable the automated flood of notifications
     /*
@@ -189,7 +142,7 @@ export default function Dashboard() {
         t.keterangan === "pemasukan" && 
         extractMonth(t.timestamp) === monthStr
       );
-      const rev = txs.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
+      const rev = txs.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
       
       // 2. Active Count (for ARPU denominator): status='Active' AND createdAt <= month
       const activeCount = customerList.filter((c: any) => 
@@ -205,7 +158,7 @@ export default function Dashboard() {
         t.keterangan === "pengeluaran" && 
         extractMonth(t.timestamp) === monthStr
       );
-      const totalExp = txExps.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
+      const totalExp = txExps.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
       
       // 4. New Customers: createdAt in month
       const newCustsInMonth = customerList.filter((c: any) => 
@@ -327,11 +280,11 @@ export default function Dashboard() {
 
       const rev = dayTxs
         .filter((t: any) => t.keterangan === 'pemasukan')
-        .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
+        .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
       
       const exp = dayTxs
         .filter((t: any) => t.keterangan === 'pengeluaran')
-        .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
+        .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
       dailyTrendData.push({
         month: `${day} ${latestTxDate.toLocaleString('default', { month: 'short' })}`,
@@ -580,40 +533,7 @@ export default function Dashboard() {
               </div>
               <div className="flex-1 w-full mt-4 min-h-[300px]">
                 {mounted && (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart 
-                      data={dynamicData.trendData.filter((d: any) => d.growth !== null)} 
-                      margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
-                      <XAxis 
-                        dataKey="month" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }} 
-                        dy={10} 
-                        interval={4}
-                      />
-                      <YAxis hide domain={['auto', 'auto']} />
-                      <Tooltip content={<RevenueTooltip />} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="revenue" 
-                        stroke="#004ac6" 
-                        strokeWidth={4} 
-                        dot={{ r: 2, fill: '#004ac6', strokeWidth: 1, stroke: '#fff' }} 
-                        activeDot={{ r: 4, strokeWidth: 0 }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="expenses" 
-                        stroke="#94a3b8" 
-                        strokeWidth={2} 
-                        strokeDasharray="5 5" 
-                        dot={false} 
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <DashboardRevenueChart data={dynamicData.trendData.filter((d: any) => d.growth !== null)} />
                 )}
               </div>
             </m.section>
@@ -632,51 +552,7 @@ export default function Dashboard() {
             </div>
             <div className="h-[220px] w-full">
               {mounted && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart 
-                    data={(dynamicData.growthTrend as any[]).filter((d: any) => d.growth !== null)} 
-                    margin={{ top: 10, right: 20, left: 20, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="colorGrowth" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
-                    <XAxis 
-                      dataKey="month" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }} 
-                      interval={4}
-                    />
-                    <YAxis hide domain={['auto', 'auto']} />
-                    <Tooltip 
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-xl">
-                              <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">{payload[0].payload.month}</p>
-                              <p className="text-sm font-black text-slate-900 dark:text-white">{payload[0].value} Active</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="growth" 
-                      stroke="#0ea5e9" 
-                      strokeWidth={3} 
-                      fillOpacity={1} 
-                      fill="url(#colorGrowth)" 
-                      dot={{ r: 2, fill: '#0ea5e9', strokeWidth: 1, stroke: '#fff' }} 
-                      activeDot={{ r: 4, strokeWidth: 0 }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                  <DashboardCustomerChart data={(dynamicData.growthTrend as any[]).filter((d: any) => d.growth !== null)} />
               )}
             </div>
 

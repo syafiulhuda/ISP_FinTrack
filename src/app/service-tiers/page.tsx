@@ -403,15 +403,15 @@ export default function ServiceTiersPage() {
           (isRefetching) ? "opacity-50 pointer-events-none" : "opacity-100"
         )}>
           <div className="min-h-[650px]" style={{ overflowAnchor: 'none' }}>
-            <table className="w-full text-left border-collapse table-fixed min-w-[1000px]">
+            <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50">
-                  <th className="w-[120px] px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Status</th>
-                  <th className="w-[130px] px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Subscriber</th>
-                  <th className="w-[180px] px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Full Name</th>
-                  <th className="w-[240px] px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Service Address</th>
-                  <th className="w-[150px] px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Region</th>
-                  <th className="w-[150px] px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">City/Regency</th>
+                  <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Status</th>
+                  <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Subscriber</th>
+                  <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Full Name</th>
+                  <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] hidden sm:table-cell">Service Address</th>
+                  <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] hidden md:table-cell">Region</th>
+                  <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] hidden md:table-cell">City/Regency</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -423,10 +423,10 @@ export default function ServiceTiersPage() {
                     transition={{ delay: isSearching ? 0 : idx * 0.05 }}
                     className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-all group h-[92px]"
                   >
-                    <td className="px-6 py-5">
+                    <td className="px-3 md:px-6 py-5">
                       <div className="h-12 flex flex-col justify-center">
                         <div className={cn(
-                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all w-fit",
+                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all w-fit whitespace-nowrap",
                           cust.status?.toLowerCase() === 'active' 
                             ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 ring-1 ring-emerald-500/20" 
                             : "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 ring-1 ring-rose-500/20"
@@ -439,7 +439,7 @@ export default function ServiceTiersPage() {
                         </div>
                           {cust.grace_days !== null && cust.grace_days <= 3 && (
                             <div className={cn(
-                              "mt-1 flex items-center gap-1 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter w-fit leading-tight",
+                              "mt-1 flex items-center gap-1 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter w-fit leading-tight whitespace-nowrap",
                               cust.grace_days === 1 ? "text-orange-600 bg-orange-100" :
                               cust.grace_days === 0 ? "text-amber-600 bg-amber-100 ring-1 ring-amber-500/20" :
                               cust.grace_days < 0 ? "text-rose-600 bg-rose-100 ring-1 ring-rose-500/20" :
@@ -456,28 +456,28 @@ export default function ServiceTiersPage() {
                           )}
                       </div>
                     </td>
-                    <td className="px-6 py-5">
-                      <div className="flex flex-col gap-0.5">
+                    <td className="px-3 md:px-6 py-5">
+                      <div className="flex flex-col gap-0.5 whitespace-nowrap">
                         <span className="text-[11px] font-black text-slate-900 dark:text-slate-100 tracking-tight">{cust.id}</span>
                         <span className="text-[9px] font-bold text-primary uppercase tracking-tighter opacity-80">{cust.service || 'Standard'} Plan</span>
                       </div>
                     </td>
-                    <td className="px-6 py-5">
-                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">{cust.name}</span>
+                    <td className="px-3 md:px-6 py-5 max-w-[120px] md:max-w-[180px]">
+                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors block truncate" title={cust.name}>{cust.name}</span>
                     </td>
-                    <td className="px-6 py-5">
+                    <td className="px-3 md:px-6 py-5 max-w-[150px] md:max-w-[240px] hidden sm:table-cell">
                       <div className="flex flex-col">
-                        <span className="text-xs text-slate-600 dark:text-slate-400 font-medium line-clamp-1">{cust.address}</span>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wide mt-0.5">{cust.village}</span>
+                        <span className="text-xs text-slate-600 dark:text-slate-400 font-medium truncate" title={cust.address}>{cust.address}</span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wide mt-0.5 truncate" title={cust.village}>{cust.village}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-5">
-                      <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{cust.district}</span>
+                    <td className="px-3 md:px-6 py-5 hidden md:table-cell max-w-[150px]">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold truncate block" title={cust.district}>{cust.district}</span>
                     </td>
-                    <td className="px-6 py-5">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{cust.city}</span>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">{cust.province}</span>
+                    <td className="px-3 md:px-6 py-5 hidden md:table-cell">
+                      <div className="flex flex-col whitespace-nowrap">
+                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate" title={cust.city}>{cust.city}</span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase truncate" title={cust.province}>{cust.province}</span>
                       </div>
                     </td>
                   </m.tr>

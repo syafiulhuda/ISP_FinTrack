@@ -132,7 +132,7 @@ export default function Dashboard() {
 
     const verifiedTxTotal = transactions
       .filter((t: any) => t.status === "Verified")
-      .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
+      .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
     // Disable the automated flood of notifications
     /*
@@ -189,7 +189,7 @@ export default function Dashboard() {
         t.keterangan === "pemasukan" && 
         extractMonth(t.timestamp) === monthStr
       );
-      const rev = txs.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
+      const rev = txs.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
       
       // 2. Active Count (for ARPU denominator): status='Active' AND createdAt <= month
       const activeCount = customerList.filter((c: any) => 
@@ -205,7 +205,7 @@ export default function Dashboard() {
         t.keterangan === "pengeluaran" && 
         extractMonth(t.timestamp) === monthStr
       );
-      const totalExp = txExps.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9]/g, '')) || 0), 0);
+      const totalExp = txExps.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
       
       // 4. New Customers: createdAt in month
       const newCustsInMonth = customerList.filter((c: any) => 

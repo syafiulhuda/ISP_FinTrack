@@ -418,7 +418,7 @@ export default function InventoryPage() {
                   <Icon size={24} />
                 </div>
                 <span className={cn(
-                  "text-[8px] lg-phone:text-[10px] font-black px-2 lg-phone:px-3 py-1 lg-phone:py-1.5 rounded-lg lg-phone:rounded-xl uppercase tracking-wider border transition-colors mt-1 lg-phone:mt-0 max-w-full text-center truncate",
+                  "text-[8px] lg-phone:text-[10px] font-black px-2 lg-phone:px-3 py-1 lg-phone:py-1.5 rounded-lg lg-phone:rounded-xl uppercase tracking-wider border transition-colors mt-1 lg-phone:mt-0 text-left lg-phone:text-right whitespace-normal leading-tight",
                   stat.isAlert
                     ? "bg-orange-50/50 text-orange-700 border-orange-200/50"
                     : "bg-slate-50/50 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-slate-700/50 group-hover:border-primary/20"
@@ -535,15 +535,15 @@ export default function InventoryPage() {
         </div>
 
         <div className="overflow-x-auto no-scrollbar min-h-[400px] w-full">
-          <table className="w-full text-left border-collapse min-w-[800px] md:min-w-full">
+          <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-800/50">
-                <th className="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Asset Details</th>
-                <th className="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Category</th>
-                <th className="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Condition</th>
-                <th className="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Kepemilikan</th>
-                <th className="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Location</th>
-                <th className="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+                <th className="px-3 md:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Asset Details</th>
+                <th className="px-3 md:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest hidden sm:table-cell">Category</th>
+                <th className="px-3 md:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Condition</th>
+                <th className="px-3 md:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Kepemilikan</th>
+                <th className="px-3 md:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Location</th>
+                <th className="px-3 md:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -559,9 +559,9 @@ export default function InventoryPage() {
                       exit={{ opacity: 0 }}
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group relative"
                     >
-                      <td className="px-6 py-6">
+                      <td className="px-3 md:px-6 py-6 max-w-[200px]">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all shrink-0">
+                          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all shrink-0">
                             {asset.type === "Router" && <Router size={24} />}
                             {asset.type === "Switch" && <Box size={24} />}
                             {asset.type === "Server" && <Cpu size={24} />}
@@ -572,31 +572,31 @@ export default function InventoryPage() {
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-black text-slate-900 dark:text-slate-100 text-base truncate">{asset.sn}</p>
+                              <p className="font-black text-slate-900 dark:text-slate-100 text-sm md:text-base truncate whitespace-nowrap" title={asset.sn}>{asset.sn}</p>
                               {!asset.isStock && asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual" && (
-                                <span className="bg-blue-100 text-blue-700 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tight">
+                                <span className="bg-blue-100 text-blue-700 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tight hidden sm:inline-block">
                                   Deployed
                                 </span>
                               )}
                               {asset.isStock && (
-                                <span className="bg-amber-100 text-amber-700 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tight">
+                                <span className="bg-amber-100 text-amber-700 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tight hidden sm:inline-block">
                                   Stock
                                 </span>
                               )}
                             </div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5 tracking-tighter truncate">{asset.mac}</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5 tracking-tighter truncate whitespace-nowrap hidden md:block" title={asset.mac}>{asset.mac}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-6">
-                        <span className="text-[9px] font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg uppercase tracking-wider">
+                      <td className="px-3 md:px-6 py-6 hidden sm:table-cell">
+                        <span className="text-[9px] font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg uppercase tracking-wider whitespace-nowrap">
                           {asset.type}
                         </span>
                       </td>
-                      <td className="px-6 py-6">
+                      <td className="px-3 md:px-6 py-6">
                         {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") ? (
                           <div className={cn(
-                            "flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit",
+                            "flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit whitespace-nowrap",
                             asset.condition === "Good" ? "bg-green-100 text-green-700" :
                             asset.condition === "Maintenance" ? "bg-blue-100 text-blue-700" :
                             asset.condition === "Warning" ? "bg-orange-100 text-orange-700" :
@@ -609,8 +609,8 @@ export default function InventoryPage() {
                           <span className="text-[10px] font-bold text-slate-300 italic">---</span>
                         )}
                       </td>
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
+                      <td className="px-3 md:px-6 py-6 hidden md:table-cell">
+                        <div className="flex items-center gap-2 whitespace-nowrap">
                           {(asset.kepemilikan === "Dimiliki" || !asset.kepemilikan) ? (
                             <div className="flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit bg-emerald-100 text-emerald-700">
                               <ShieldCheck size={12} />
@@ -629,23 +629,23 @@ export default function InventoryPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-6 text-slate-900 dark:text-slate-100">
-                        <div className="flex items-start gap-3 min-w-[160px]">
+                      <td className="px-3 md:px-6 py-6 text-slate-900 dark:text-slate-100 hidden md:table-cell max-w-[250px]">
+                        <div className="flex items-start gap-3">
                           <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 shrink-0 mt-0.5 group-hover:bg-primary/10 group-hover:text-primary transition-all">
                             <MapPin size={14} />
                           </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-[13px] font-black text-slate-900 dark:text-slate-100 leading-tight truncate">
+                          <div className="flex flex-col min-w-0 w-full overflow-hidden">
+                            <span className="text-[13px] font-black text-slate-900 dark:text-slate-100 leading-tight truncate block" title={asset.location || "Warehouse"}>
                               {asset.location || "Warehouse"}
                             </span>
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1 flex items-center gap-1.5">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1 flex items-center gap-1.5 whitespace-nowrap">
                               <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
                               ZONE 4 / {asset.type === 'OLT' ? 'CORE' : 'DIST'}
                             </span>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-6 text-right relative">
+                      <td className="px-3 md:px-6 py-6 text-right relative">
                         {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") ? (
                           <div ref={activeActionMenu === asset.sn ? actionMenuRef : null} className="inline-block">
                             {asset.condition !== 'Broken' && (
