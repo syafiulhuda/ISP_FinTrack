@@ -204,12 +204,12 @@ export default function DistributionMapPage() {
   return (
     <div className="flex-1 flex flex-col min-h-screen relative overflow-hidden bg-slate-50 dark:bg-slate-950">
       {/* Header Overlay */}
-      <header className="absolute top-0 right-0 w-full z-40 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md flex justify-between items-center h-16 px-8 border-b border-slate-200/50 dark:border-slate-800/50">
+      <header className="absolute top-0 left-0 w-full z-40 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md flex justify-start tablet:justify-between items-center h-16 px-2 sm-phone:px-4 md:px-8 border-b border-slate-200/50 dark:border-slate-800/50">
         <div className="flex items-center gap-4">
           <div className="relative flex items-center">
             <SearchIcon className="absolute left-3 text-slate-400" size={18} />
             <input 
-              className="bg-white/60 dark:bg-slate-800/60 border-none rounded-full pl-10 pr-4 py-1.5 text-sm w-80 focus:ring-2 focus:ring-blue-500/20 placeholder:text-slate-400"
+              className="bg-white/80 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-full pl-10 pr-4 py-1.5 text-sm w-full max-w-[180px] sm-phone:max-w-[220px] md:max-w-80 focus:ring-2 focus:ring-blue-500/20 placeholder:text-slate-400 shadow-sm"
               placeholder="Search Node ID, SN, or Location..."
               type="text"
               value={searchQuery}
@@ -230,7 +230,7 @@ export default function DistributionMapPage() {
 
         {/* Main Map Content */}
         <div className="flex-1 mt-16 relative bg-slate-50 dark:bg-slate-950">
-          <div className="absolute inset-0 z-0 m-4 md:m-0 rounded-[2rem] md:rounded-none overflow-hidden border border-slate-200 dark:border-slate-800 md:border-none shadow-2xl md:shadow-none">
+          <div className="absolute inset-0 z-0 mx-2 sm-phone:mx-4 my-4 md:m-0 rounded-[2rem] md:rounded-none overflow-hidden border border-slate-200 dark:border-slate-800 md:border-none shadow-2xl md:shadow-none">
             <IndonesiaMap 
               assets={filteredAssets} 
               onSelectNode={setSelectedNode} 

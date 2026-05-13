@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
-import { useEffect, memo, useMemo } from 'react';
+import { useEffect, memo, useMemo, useState } from 'react';
 
 // ─── Server-computed color logic (mirrored here for icon creation only) ────────
 const getMarkerColor = (condition: string, status: string): string => {
@@ -90,11 +90,19 @@ function ChangeView({ center, zoom }: { center: [number, number] | null | undefi
 
   useEffect(() => {
     if (!map) return;
-    if (center) {
-      const id = setTimeout(() => map.setView(center, zoom, { animate: true }), 0);
-      return () => clearTimeout(id);
-    } else {
-      map.setZoom(zoom, { animate: true });
+    try {
+      if (center) {
+        const id = setTimeout(() => {
+          if (map.getContainer()) {
+            map.setView(center, zoom, { animate: true });
+          }
+        }, 0);
+        return () => clearTimeout(id);
+      } else {
+        map.setZoom(zoom, { animate: true });
+      }
+    } catch (e) {
+      console.warn("Leaflet view update failed:", e);
     }
   }, [center, zoom, map]);
 
@@ -138,6 +146,13 @@ export default function IndonesiaMap({
   zoom = 5,
   center: propsCenter,
 }: IndonesiaMapProps) {
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setIsReady(true), 100);
+    return () => clearTimeout(t);
+  }, []);
+
   const defaultCenter: [number, number] = [-2.5489, 118.0149]; // Center of Indonesia
 
   const focusCenter = useMemo(() => {
@@ -149,15 +164,18 @@ export default function IndonesiaMap({
 
   const focusZoom = selectedNode ? 12 : zoom;
 
+  if (!isReady) return <div className="w-full h-full bg-slate-900 animate-pulse rounded-[2rem]" />;
+
   return (
     <div className="w-full h-full relative">
       <MapContainer
+        key={`map-${assets.length > 0 ? 'active' : 'empty'}`}
         center={defaultCenter}
         zoom={zoom}
         style={{ height: '100%', width: '100%', background: '#0f172a' }}
         zoomControl={false}
         scrollWheelZoom={true}
-        preferCanvas={true}   // ← Task 1: Render via HTML5 Canvas, not SVG
+        preferCanvas={true}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
