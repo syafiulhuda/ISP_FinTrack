@@ -83,7 +83,7 @@ export default function RegionalAnalysisPage() {
   }, []);
 
   // Helper to normalize strings to Title Case
-  const normalize = (val: string) => {
+  const normalize = (val: string | undefined | null) => {
     if (!val) return "";
     return val.trim().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
   };
@@ -127,7 +127,7 @@ export default function RegionalAnalysisPage() {
     const list = selectedDistrict === "All Districts" 
       ? (selectedCity === "All Cities" ? (selectedProvince === "All Provinces" ? customerList : customerList.filter(c => normalize(c.province) === selectedProvince)) : customerList.filter(c => normalize(c.city) === selectedCity)) 
       : customerList.filter(c => normalize(c.district) === selectedDistrict);
-    const raw = list.map(c => c.village || c.village).filter(Boolean) as string[];
+    const raw = list.map(c => c.village).filter(Boolean) as string[];
     const normalized = new Map<string, string>();
     raw.forEach(p => {
       const key = p.toLowerCase().trim();

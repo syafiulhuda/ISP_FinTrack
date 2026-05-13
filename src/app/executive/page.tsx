@@ -90,7 +90,7 @@ export default function ExecutiveDashboard() {
 
     const { customers, transactions, expenses, assetRoster, stockAssets } = data;
     const isAllRegions = selectedProvince === "All Regions";
-    const normalize = (val: string) => val ? val.toLowerCase().trim() : "";
+    const normalize = (val: any) => val ? String(val).toLowerCase().trim() : "";
     const selectedProvLower = normalize(selectedProvince);
     const toTitleCase = (val: string) => {
       if (!val) return "";

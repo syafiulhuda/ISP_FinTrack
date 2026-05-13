@@ -202,7 +202,7 @@ export default function ProfitabilityPage() {
       };
     }
     const isAllRegions = selectedProvince === "All Regions";
-    const normalize = (val: string) => val ? val.toLowerCase().trim() : "";
+    const normalize = (val: any) => val ? String(val).toLowerCase().trim() : "";
     const selectedProvLower = normalize(selectedProvince);
     
     // 1. Calculate Selected Range & Months
