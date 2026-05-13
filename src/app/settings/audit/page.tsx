@@ -153,49 +153,30 @@ export default function AuditTrailPage() {
 
         {/* Pagination */}
         {!isLoading && sortedAndFilteredLogs.length > 0 && (
-          <div className="flex flex-col lg-phone:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
-            <p className="text-[10px] lg-phone:text-xs font-black text-slate-400 uppercase tracking-widest leading-tight text-center lg-phone:text-left">
-              Showing <span className="text-slate-900 dark:text-slate-100">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-slate-100">{Math.min(currentPage * itemsPerPage, sortedAndFilteredLogs.length)}</span> of <span className="text-slate-900 dark:text-slate-100">{sortedAndFilteredLogs.length}</span> entries
+          <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/30 dark:bg-white/5 mt-8">
+            <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
+              Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, sortedAndFilteredLogs.length)}</span> of <span className="text-slate-900 dark:text-white">{sortedAndFilteredLogs.length}</span> entries
             </p>
-
-            <div className="flex flex-wrap justify-center items-center gap-1 lg-phone:gap-2 bg-slate-50 dark:bg-slate-800/40 p-1 rounded-lg lg-phone:p-1.5 lg-phone:rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shrink-0">
-              <button
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                className="p-1.5 lg-phone:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-slate-600 dark:text-slate-400"
-              >
-                <ChevronsLeft size={16} />
-              </button>
-              <button
+            <div className="flex items-center gap-2">
+              <button 
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="p-1.5 lg-phone:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-slate-600 dark:text-slate-400"
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
-                <ChevronLeft size={16} />
+                Previous
               </button>
-              
-              <div className="flex flex-wrap justify-center items-center gap-1 px-1">
+              <div className="flex items-center gap-1">
                 {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                  let pageNum: number;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-
+                  let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
+                  if (pageNum <= 0 || pageNum > totalPages) return null;
+                  
                   return (
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
                       className={cn(
-                        "w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-[10px] sm:text-xs font-black transition-all",
-                        currentPage === pageNum 
-                          ? "bg-primary text-white shadow-md shadow-primary/20" 
-                          : "text-slate-400 hover:bg-white dark:hover:bg-slate-700"
+                        "w-8 h-8 rounded-lg text-xs font-bold transition-all",
+                        currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
                       )}
                     >
                       {pageNum}
@@ -203,20 +184,12 @@ export default function AuditTrailPage() {
                   );
                 })}
               </div>
-
-              <button
+              <button 
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="p-1.5 sm:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-slate-600 dark:text-slate-400"
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
-                <ChevronRight size={16} />
-              </button>
-              <button
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                className="p-1.5 sm:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-slate-600 dark:text-slate-400"
-              >
-                <ChevronsRight size={16} />
+                Next
               </button>
             </div>
           </div>

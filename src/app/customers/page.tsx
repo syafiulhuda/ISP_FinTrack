@@ -301,19 +301,19 @@ export default function CustomerAnalysisPage() {
             
             {/* Pagination Controls */}
             {sortedAndFilteredData.length > 0 && (
-              <div className="p-4 tablet:p-6 border-t border-slate-100 dark:border-slate-800 flex flex-col lg-phone:flex-row items-center justify-center lg-phone:justify-between gap-4 bg-slate-50/30 dark:bg-white/5">
-                <p className="text-[10px] lg-phone:text-xs font-bold text-slate-400 text-center lg-phone:text-left">
+              <div className="p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/30 dark:bg-white/5">
+                <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
                   Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, sortedAndFilteredData.length)}</span> of <span className="text-slate-900 dark:text-white">{sortedAndFilteredData.length}</span> customers
                 </p>
-                <div className="flex flex-wrap justify-center items-center gap-2">
+                <div className="flex items-center gap-2">
                   <button 
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all"
+                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
                   >
                     Previous
                   </button>
-                  <div className="flex flex-wrap justify-center items-center gap-1">
+                  <div className="flex items-center gap-1">
                     {[...Array(Math.min(5, totalPages))].map((_, i) => {
                       let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
                       if (pageNum <= 0 || pageNum > totalPages) return null;
@@ -324,7 +324,7 @@ export default function CustomerAnalysisPage() {
                           onClick={() => setCurrentPage(pageNum)}
                           className={cn(
                             "w-8 h-8 rounded-lg text-xs font-bold transition-all",
-                            currentPage === pageNum ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                            currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
                           )}
                         >
                           {pageNum}
@@ -335,7 +335,7 @@ export default function CustomerAnalysisPage() {
                   <button 
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all"
+                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
                   >
                     Next
                   </button>
