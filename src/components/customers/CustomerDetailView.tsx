@@ -26,8 +26,8 @@ function HealthScoreGauge({ score }: { score: number }) {
   const color = score >= 80 ? "#10b981" : score >= 50 ? "#f59e0b" : "#f43f5e";
   const label = score >= 80 ? "Excellent" : score >= 50 ? "Stable" : "At Risk";
   return (
-    <div className="flex flex-col items-center gap-4 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-      <div className="relative w-40 h-40">
+    <div className="flex flex-col items-center gap-3 tablet:gap-4 bg-white dark:bg-slate-900 p-6 tablet:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="relative w-32 h-32 tablet:w-40 tablet:h-40">
         <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
           <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8"
             className="text-slate-100 dark:text-slate-800" />
@@ -40,12 +40,12 @@ function HealthScoreGauge({ score }: { score: number }) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-4xl font-black" style={{ color }}>{score}</span>
-          <span className="text-xs font-bold text-slate-400">HEALTH SCORE</span>
+          <span className="text-2xl tablet:text-4xl font-black" style={{ color }}>{score}</span>
+          <span className="text-[10px] tablet:text-xs font-bold text-slate-400">HEALTH SCORE</span>
         </div>
       </div>
       <div className="flex flex-col items-center">
-        <span className="text-sm font-black px-4 py-1 rounded-full uppercase tracking-widest"
+        <span className="text-[10px] tablet:text-sm font-black px-3 tablet:px-4 py-1 rounded-full uppercase tracking-widest"
           style={{ backgroundColor: `${color}20`, color }}>{label}</span>
       </div>
     </div>
@@ -126,80 +126,90 @@ export default function CustomerDetailView({ data }: { data: any }) {
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20">
       {/* Header & Back Button */}
+      {/* Header & Back Button */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="flex items-center gap-4">
-          <Link href="/customers" className="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:scale-105 transition-transform">
-            <ChevronLeft size={20} className="text-slate-500" />
+        <div className="flex items-start tablet:items-center gap-3 tablet:gap-4 w-full">
+          <Link href="/customers" className="p-2.5 tablet:p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:scale-105 transition-transform shrink-0 mt-1 tablet:mt-0">
+            <ChevronLeft size={18} className="text-slate-500" />
           </Link>
-          <div>
-            <div className="flex items-center gap-3">
-               <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+               <h1 className="text-xl sm:text-2xl tablet:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2 truncate">
                  {data.name}
                  {isVip && (
                    <m.div
                      initial={{ scale: 0 }}
                      animate={{ scale: 1 }}
-                     className="bg-gradient-to-tr from-amber-400 to-yellow-600 p-1 rounded-full shadow-lg shadow-amber-500/20"
+                     className="bg-gradient-to-tr from-amber-400 to-yellow-600 p-1 rounded-full shadow-lg shadow-amber-500/20 shrink-0"
                    >
-                     <Crown size={16} className="text-white" />
+                     <Crown size={14} className="text-white" />
                    </m.div>
                  )}
                </h1>
-               <span className={cn("text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider",
+               <span className={cn("text-[9px] tablet:text-xs font-black px-2 tablet:px-3 py-0.5 tablet:py-1 rounded-full uppercase tracking-wider shrink-0",
                   isActive ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
                )}>{data.status}</span>
             </div>
-            <p className="text-slate-500 font-medium flex items-center gap-2 mt-1">
-              <ShieldCheck size={14} className="text-indigo-500" />
-              ID: {data.id} • {data.service} Plan • {data.city}, {data.province}
-            </p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+              <p className="text-[10px] tablet:text-sm text-slate-500 font-medium flex items-center gap-1">
+                <ShieldCheck size={12} className="text-indigo-500 shrink-0" />
+                ID: {data.id}
+              </p>
+              <span className="hidden sm-phone:inline text-slate-300">•</span>
+              <p className="text-[10px] tablet:text-sm text-slate-500 font-medium">{data.service} Plan</p>
+              <span className="hidden sm-phone:inline text-slate-300">•</span>
+              <p className="text-[10px] tablet:text-sm text-slate-500 font-medium flex items-center gap-1">
+                <MapPin size={12} className="text-slate-400 shrink-0" />
+                {data.city}, {data.province}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex gap-3 w-full md:w-auto">
+        <div className="grid grid-cols-2 tablet:flex gap-3 w-full tablet:w-auto">
           <button 
             onClick={handleSendReminder}
             disabled={isSending}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
           >
-            <Bell size={18} className={cn(isSending && "animate-bounce")} />
-            {isSending ? "Sending..." : "Send Reminder"}
+            <Bell size={16} className={cn(isSending && "animate-bounce")} />
+            <span className="truncate">{isSending ? "Sending..." : "Send Reminder"}</span>
           </button>
           <button 
             onClick={handleToggleVip}
             disabled={isTogglingVip}
             className={cn(
-              "flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 border rounded-2xl font-bold transition-all disabled:opacity-50",
+              "flex items-center justify-center gap-2 px-4 tablet:px-6 py-3 border rounded-2xl font-bold text-xs tablet:text-sm transition-all disabled:opacity-50",
               isVip 
                 ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400"
                 : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
             )}
           >
-            <Star size={18} className={cn(isVip && "fill-current")} />
-            {isTogglingVip ? "Updating..." : isVip ? "VIP Member" : "Mark VIP"}
+            <Star size={16} className={cn(isVip && "fill-current")} />
+            <span className="truncate">{isTogglingVip ? "Updating..." : isVip ? "VIP Member" : "Mark VIP"}</span>
           </button>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 tablet:gap-4">
         {[
-          { label: "Lifetime Value (LTV)", value: formatCurrency(data.ltv), icon: TrendingUp, color: "text-indigo-500", bg: "bg-indigo-500/10" },
+          { label: "Lifetime Value (LTV)", value: formatCompactNumber(data.ltv), icon: TrendingUp, color: "text-indigo-500", bg: "bg-indigo-500/10" },
           { label: "Payment Frequency", value: `${data.txCount}x`, icon: CreditCard, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-          { label: "Avg. Monthly Payment", value: formatCurrency(avgPayment), icon: Activity, color: "text-violet-500", bg: "bg-violet-500/10" },
+          { label: "Avg. Monthly Payment", value: formatCompactNumber(avgPayment), icon: Activity, color: "text-violet-500", bg: "bg-violet-500/10" },
           { label: "Tenure (Months)", value: `${tenureMonths || 0} Mo`, icon: Milestone, color: "text-cyan-500", bg: "bg-cyan-500/10" }
         ].map((k, i) => (
           <m.div key={i} 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm"
+            className="bg-white dark:bg-slate-900 p-4 tablet:p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm"
           >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${k.bg} ${k.color}`}>
-              <k.icon size={20} />
+            <div className={`w-8 h-8 tablet:w-10 tablet:h-10 rounded-xl flex items-center justify-center mb-3 tablet:mb-4 ${k.bg} ${k.color}`}>
+              <k.icon size={16} className="tablet:w-5 tablet:h-5" />
             </div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{k.label}</p>
-            <h3 className="text-lg sm:text-xl xl:text-2xl font-black text-slate-900 dark:text-white mt-1 whitespace-nowrap tabular-nums">{k.value}</h3>
+            <p className="text-[10px] tablet:text-xs font-bold text-slate-500 uppercase tracking-widest leading-tight">{k.label}</p>
+            <h3 className="text-sm sm:text-lg tablet:text-xl xl:text-2xl font-black text-slate-900 dark:text-white mt-1 whitespace-nowrap tabular-nums">{k.value}</h3>
           </m.div>
         ))}
       </div>
@@ -352,7 +362,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
                           {new Date(lp.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                         </td>
                         <td className="px-6 py-4 text-right font-black text-slate-900 dark:text-white">
-                          {formatCurrency(lp.amount)}
+                          {formatCompactNumber(lp.amount)}
                         </td>
                       </tr>
                     ))}

@@ -111,10 +111,10 @@ export default function PredictionsPage() {
           <p className="text-slate-500 font-medium mt-1">Next-Month Financial & Churn Projections</p>
         </div>
 
-        <div className="flex flex-nowrap justify-between items-center gap-0.5 lg-phone:gap-1 bg-slate-100 dark:bg-slate-900/50 p-1 lg-phone:p-1.5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-inner w-full lg:w-fit overflow-hidden">
+        <div className="flex flex-nowrap items-center gap-1 bg-slate-100 dark:bg-slate-900/50 px-2 py-1.5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-inner w-full lg:w-fit overflow-hidden">
           <button 
             onClick={() => setModelType('lr')}
-            className={`flex items-center justify-center gap-1 lg-phone:gap-2 px-1 lg-phone:px-5 py-1.5 lg-phone:py-2.5 rounded-[1.5rem] text-[9px] lg-phone:text-sm font-black transition-all duration-300 whitespace-nowrap flex-1 ${
+            className={`flex items-center justify-center gap-1 lg-phone:gap-2 px-2 lg-phone:px-5 py-1.5 lg-phone:py-2.5 rounded-[1.5rem] text-[9px] lg-phone:text-sm font-black transition-all duration-300 whitespace-nowrap flex-1 ${
               modelType === 'lr' 
               ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-indigo-500/50" 
               : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
@@ -125,7 +125,7 @@ export default function PredictionsPage() {
           </button>
           <button 
             onClick={() => setModelType('nn')}
-            className={`flex items-center justify-center gap-1 lg-phone:gap-2 px-1 lg-phone:px-5 py-1.5 lg-phone:py-2.5 rounded-[1.5rem] text-[9px] lg-phone:text-sm font-black transition-all duration-300 whitespace-nowrap flex-1 ${
+            className={`flex items-center justify-center gap-1 lg-phone:gap-2 px-2 lg-phone:px-5 py-1.5 lg-phone:py-2.5 rounded-[1.5rem] text-[9px] lg-phone:text-sm font-black transition-all duration-300 whitespace-nowrap flex-1 ${
               modelType === 'nn' 
               ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-indigo-500/50" 
               : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"

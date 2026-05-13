@@ -474,21 +474,21 @@ export default function ProfitabilityPage() {
                 type="date" 
                 value={startDate} 
                 onChange={(e) => setStartDate(e.target.value)}
-                className="bg-transparent text-[8px] lg-phone:text-[10px] tablet:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-[66px] lg-phone:w-24 tablet:w-auto px-0.5"
+                className="bg-transparent text-[8px] lg-phone:text-[10px] tablet:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-[76px] lg-phone:w-24 tablet:w-auto px-0.5"
               />
               <span className="text-slate-300 text-[8px] tablet:text-sm shrink-0">-</span>
               <input 
                 type="date" 
                 value={endDate} 
                 onChange={(e) => setEndDate(e.target.value)}
-                className="bg-transparent text-[8px] lg-phone:text-[10px] tablet:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-[66px] lg-phone:w-24 tablet:w-auto px-0.5"
+                className="bg-transparent text-[8px] lg-phone:text-[10px] tablet:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-[76px] lg-phone:w-24 tablet:w-auto px-0.5"
               />
             </div>
 
             <div className="relative shrink-0" ref={dropdownRef}>
               <button 
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center justify-between gap-1 tablet:gap-3 bg-slate-100 dark:bg-slate-900 px-2 tablet:px-4 py-1.5 tablet:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 min-w-[70px] tablet:min-w-[160px] max-w-[90px] tablet:max-w-none hover:border-indigo-500/50 transition-all active:scale-95 shrink-0"
+                className="flex items-center justify-between gap-1 tablet:gap-3 bg-slate-100 dark:bg-slate-900 px-2 tablet:px-4 py-1.5 tablet:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 min-w-[84px] tablet:min-w-[160px] max-w-[110px] lg-phone:max-w-[140px] tablet:max-w-none hover:border-indigo-500/50 transition-all active:scale-95 shrink-0"
               >
                 <div className="flex items-center gap-1 tablet:gap-2 overflow-hidden">
                   <MapPin className="w-3 h-3 tablet:w-4 tablet:h-4 text-indigo-500 shrink-0 hidden sm-phone:block" />
