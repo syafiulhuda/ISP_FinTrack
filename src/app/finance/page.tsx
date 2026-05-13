@@ -706,7 +706,7 @@ export default function FinancePage() {
                     setSelectedKeterangan(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl pl-3 pr-8 md:px-5 py-2.5 md:py-2 text-[11px] md:text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none shadow-sm"
+                  className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl pl-3 pr-10 md:px-5 py-2.5 md:py-2 text-[11px] md:text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none shadow-sm"
                 >
                   <option value="All">Semua Transaksi</option>
                   <option value="pemasukan">Income (Pemasukan)</option>

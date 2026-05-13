@@ -468,7 +468,7 @@ export default function InventoryPage() {
                     setSelectedType(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-8 shadow-sm"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-10 shadow-sm"
                 >
                   <option value="All">All Types</option>
                   <option value="Router">Routers</option>
@@ -489,7 +489,7 @@ export default function InventoryPage() {
                     setSelectedCondition(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-8 shadow-sm"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-10 shadow-sm"
                 >
                   <option value="All">All Conditions</option>
                   <option value="Good">Healthy</option>
@@ -505,7 +505,7 @@ export default function InventoryPage() {
                     setSelectedUsage(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-8 shadow-sm"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-10 shadow-sm"
                 >
                   <option value="All">All Status</option>
                   <option value="Stock">Ready Stock</option>
@@ -521,7 +521,7 @@ export default function InventoryPage() {
                     setSelectedOwnership(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-8 shadow-sm"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-10 shadow-sm"
                 >
                   <option value="All">Ownership</option>
                   <option value="Dimiliki">Dimiliki</option>

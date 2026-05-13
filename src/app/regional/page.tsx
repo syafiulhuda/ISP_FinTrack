@@ -286,7 +286,7 @@ export default function RegionalAnalysisPage() {
                     setProfitPage(1);
                     setAgingPage(1);
                   }}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-4 text-xs font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none cursor-pointer shadow-sm"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl pl-5 pr-12 py-4 text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none cursor-pointer shadow-sm truncate"
                 >
                   {filter.options.map((opt, idx) => (
                     <option key={idx} value={opt}>{opt}</option>
