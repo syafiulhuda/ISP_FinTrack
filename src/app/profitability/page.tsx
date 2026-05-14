@@ -24,6 +24,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Line, Area, AreaChart, ReferenceLine
 } from "recharts";
 import { WaterfallChart, ServiceMixChart, ProfitabilityTrendChart } from "@/components/charts/ProfitabilityCharts";
+import { ChartContainer } from "@/components/charts/ChartContainer";
 
 import { useQuery } from "@tanstack/react-query";
 import { getProfitabilityData } from "@/actions/profitability";
@@ -537,26 +538,26 @@ export default function ProfitabilityPage() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           <m.section initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 md:p-8 pb-4 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex items-center justify-between mb-8"><div><h3 className="text-xl font-black">Revenue Waterfall</h3><p className="text-xs text-slate-500 mt-1">Gross Margin vs Real Opex.</p></div><BarChart3 className="text-slate-300" size={28} /></div>
-            <div className="h-[400px] md:h-[500px] w-full">
+            <ChartContainer className="h-[400px] md:h-[500px] w-full">
               {isDataLoading ? (
                 <div className="w-full h-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl" />
               ) : (
                 <WaterfallChart data={dynamicData.waterfallData} />
               )}
-            </div>
+            </ChartContainer>
           </m.section>
 
           <div className="space-y-8">
             <m.section initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
               <h3 className="text-xl font-black mb-8 text-slate-900 dark:text-white">Service Plan Mix</h3>
               <div className="flex flex-col sm:flex-row items-center gap-10">
-                <div className="h-[220px] w-full sm:w-1/2 relative group shrink-0">
+                <ChartContainer className="h-[220px] w-full sm:w-1/2 relative group shrink-0">
                   {isDataLoading ? (
                     <div className="w-full h-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[100%]" />
                   ) : (
                     <ServiceMixChart data={dynamicData.distribution as any} totalActiveUsers={dynamicData.totalActiveUsers} />
                   )}
-                </div>
+                </ChartContainer>
                 <div className="space-y-6 w-full sm:w-1/2">
                   {isDataLoading ? (
                     Array.from({ length: 4 }).map((_, i) => (
@@ -593,13 +594,13 @@ export default function ProfitabilityPage() {
                     {dynamicData.latestProfit >= 0 ? "↑ trending" : "↓ deficit"}
                   </span>
                 </div>
-                <div className="h-[160px] w-full">
+                <ChartContainer className="h-[160px] w-full">
                   {isDataLoading ? (
                     <div className="w-full h-full bg-slate-800/50 animate-pulse rounded-2xl" />
                   ) : (
                     <ProfitabilityTrendChart data={dynamicData.growthTrend} />
                   )}
-                </div>
+                </ChartContainer>
               </div>
             </m.section>
           </div>

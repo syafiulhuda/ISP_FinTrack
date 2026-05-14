@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { RevenueProjectionChart, ChurnForecastChart } from "@/components/charts/PredictionCharts";
+import { ChartContainer } from "@/components/charts/ChartContainer";
 import { getPredictions, refreshPredictions, PredictionResult } from "@/actions/predictions";
 import { formatCurrency, formatCompactNumber, cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -192,9 +193,9 @@ export default function PredictionsPage() {
                     <span className="text-[10px] font-black text-indigo-500 uppercase tracking-wider">1-Month Outlook</span>
                   </div>
                 </div>
-                <div className="h-[320px] w-full mt-auto">
+                <ChartContainer className="h-[320px] w-full mt-auto">
                   <RevenueProjectionChart data={chartData} />
-                </div>
+                </ChartContainer>
               </m.div>
 
               {/* Churn Rate Trend Chart */}
@@ -205,9 +206,9 @@ export default function PredictionsPage() {
                     <p className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">Subscriber Retention Projections</p>
                   </div>
                 </div>
-                <div className="h-[320px] w-full mt-auto">
+                <ChartContainer className="h-[320px] w-full mt-auto">
                   <ChurnForecastChart data={chartData} />
-                </div>
+                </ChartContainer>
               </m.div>
             </div>
           </m.div>
