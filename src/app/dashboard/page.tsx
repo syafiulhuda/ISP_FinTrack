@@ -541,7 +541,7 @@ export default function Dashboard() {
               </div>
               <div className="flex-1 w-full mt-4 min-h-[300px]">
                 {mounted && (
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <LineChart
                       data={dynamicData.trendData.filter((d: any) => d.growth !== null)}
                       margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
@@ -592,7 +592,7 @@ export default function Dashboard() {
                 </div>
                 <div className="h-[220px] w-full">
                   {mounted && (
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <AreaChart
                         data={(dynamicData.growthTrend as any[]).filter((d: any) => d.growth !== null)}
                         margin={{ top: 10, right: 20, left: 20, bottom: 0 }}

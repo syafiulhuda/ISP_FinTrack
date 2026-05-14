@@ -285,7 +285,7 @@ export function CustomerDetailDrawer({ customer, onClose }: CustomerDetailDrawer
                 <div className="bg-slate-50 dark:bg-slate-900 rounded-2xl p-4">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Payment Timeline</p>
                   <div className="h-40 w-full mt-2">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <BarChart data={data.payment_history} margin={{ top: 30, right: 10, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
                         <XAxis 

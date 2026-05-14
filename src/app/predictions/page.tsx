@@ -144,7 +144,7 @@ export default function PredictionsPage() {
           <p className="text-slate-500 mt-2">Need at least 3 months of historical data to run projections.</p>
         </div>
       ) : (
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           <m.div 
             key={modelType}
             initial={{ opacity: 0, y: 20 }}
