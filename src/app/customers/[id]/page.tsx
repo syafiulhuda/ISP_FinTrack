@@ -9,9 +9,13 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
+  const data = await getCustomer360(id);
+  
   return {
-    title: `Customer 360: ${id} | ISP-FinTrack`,
-    description: `Detailed business intelligence and financial analysis for customer ${id}.`,
+    title: data ? `${data.name} | Customer 360` : `Customer ${id} | ISP-FinTrack`,
+    description: data 
+      ? `Detailed analysis for ${data.name} (${data.service} plan) in ${data.city}.`
+      : `Detailed business intelligence and financial analysis for customer ${id}.`,
   };
 }
 
