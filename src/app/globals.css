@@ -165,4 +165,18 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.3; }
+    33% { transform: translate(30px, -50px) scale(1.1) rotate(30deg); opacity: 0.5; }
+    66% { transform: translate(-20px, 20px) scale(0.9) rotate(-15deg); opacity: 0.4; }
+  }
+
+  .animate-float {
+    animation: float 20s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float 15s ease-in-out infinite reverse;
+  }
 }

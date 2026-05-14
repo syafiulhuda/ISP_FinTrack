@@ -53,18 +53,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-white dark:bg-slate-950 overflow-hidden font-sans">
+    <div className="min-h-screen w-full flex bg-background overflow-hidden font-sans">
       {/* Left side - Visual & Branding */}
       <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-primary via-blue-700 to-indigo-900 relative p-16 flex-col justify-between overflow-hidden">
-        <m.div 
-          animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl"
+        <div 
+          className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-float"
         />
-        <m.div 
-          animate={{ scale: [1, 1.3, 1], rotate: [0, -45, 0], opacity: [0.2, 0.4, 0.2] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          className="absolute -bottom-48 -right-48 w-[500px] h-[500px] bg-blue-400/20 rounded-full blur-3xl"
+        <div 
+          className="absolute -bottom-48 -right-48 w-[500px] h-[500px] bg-blue-400/20 rounded-full blur-3xl animate-float-delayed"
         />
 
         <div className="relative z-10 flex items-center gap-3">
@@ -75,14 +71,14 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 max-w-lg">
-          <m.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.1 }}>
+          <div>
             <h1 className="text-6xl font-black text-white leading-[1.1] mb-6">
               Empowering <span className="text-blue-300">ISP Growth</span> Through Data.
             </h1>
             <p className="text-blue-100/80 text-xl leading-relaxed font-medium">
               Enterprise-grade financial intelligence, income automation, and inventory control tailored for internet service providers.
             </p>
-          </m.div>
+          </div>
           <div className="mt-12 flex gap-8">
             <div className="flex flex-col gap-1">
               <span className="text-3xl font-black text-white">1.2B+</span>
