@@ -35,7 +35,7 @@ export async function getCustomers(page: number = 1, limit: number = 10): Promis
       ORDER BY c."createdAt" DESC, c.id DESC
       LIMIT $1 OFFSET $2
     `, [limit, offset]);
-    
+
     return {
       customers: res.rows.length > 0 ? res.rows as Customer[] : (page === 1 ? [...Mock.MOCK_CUSTOMERS].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) as Customer[] : []),
       total: total || (page === 1 ? Mock.MOCK_CUSTOMERS.length : 0)
@@ -60,7 +60,7 @@ export async function getInactiveCust() {
       FROM inactive_cust 
       ORDER BY inactiveat DESC
     `);
-    
+
     // Strictly format response to ensure safe React Flight serialization to Client Components
     return res.rows.map(r => ({
       ...r,
@@ -88,7 +88,7 @@ export async function auditCustomerGracePeriod() {
         )
       RETURNING id
     `);
-    
+
     if (res.rows.length > 0) {
       for (const row of res.rows) {
         await query(`
@@ -117,7 +117,7 @@ export async function getCustomerGrowthTrend() {
       GROUP BY 1
       ORDER BY 1 ASC
     `);
-    
+
     const rawData = (res.rows || []).map(row => ({
       monthKey: row.Month,
       growth: parseInt(row.Growth || '0')
@@ -136,7 +136,7 @@ export async function getCustomerGrowthTrend() {
       const monthNum = i + 1;
       const monthStr = `${currentYear}-${String(monthNum).padStart(2, '0')}`;
       const existing = rawData.find(d => d.monthKey === monthStr);
-      
+
       if (existing) {
         cumulative += existing.growth;
       }
@@ -172,7 +172,7 @@ export async function getCustomerGrowthTrend() {
 export async function getServiceMix(province?: string) {
   try {
     const tiersRes = await query('SELECT name FROM service_tiers');
-    const tierNames = tiersRes.rows.length > 0 
+    const tierNames = tiersRes.rows.length > 0
       ? tiersRes.rows.map(r => r.name)
       : ['Premium', 'Standard', 'Basic', 'Gamers'];
 
@@ -187,16 +187,16 @@ export async function getServiceMix(province?: string) {
       WHERE 1=1
     `;
     const params = [];
-    
+
     if (province && province !== "All Regions") {
       sql += ' AND province = $1';
       params.push(province);
     }
-    
+
     sql += ' GROUP BY service_name';
-    
+
     const res = await query(sql, params);
-    
+
     return tierNames.map(name => {
       const row = res.rows.find(r => r.service_name.toLowerCase() === name.toLowerCase());
       return {
@@ -210,15 +210,15 @@ export async function getServiceMix(province?: string) {
   }
 }
 
-export async function createCustomer(data: { 
-  name: string, 
-  no_telp: string, 
-  service: string, 
-  province: string, 
-  city: string, 
-  district: string, 
-  village: string, 
-  address: string 
+export async function createCustomer(data: {
+  name: string,
+  no_telp: string,
+  service: string,
+  province: string,
+  city: string,
+  district: string,
+  village: string,
+  address: string
 }): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
     const maxIdRes = await query("SELECT id FROM customers WHERE id LIKE 'CT%' ORDER BY id DESC LIMIT 1");
@@ -232,7 +232,7 @@ export async function createCustomer(data: {
 
     const profile = await getAdminProfile();
     const inputter = profile.fullName || 'Unknown Admin';
-    
+
     await query(`
       INSERT INTO customers (id, name, no_telp, service, province, city, district, village, address, status, "createdAt", inputter, inputter_tms)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Active', NOW(), $10, NOW())
@@ -273,18 +273,18 @@ export async function getCustomerAnalysis() {
     const res = await query(`
       WITH tx_stats AS (
         SELECT
-          split_part(id, '-', 2)                                              AS customer_id,
+          split_part(t2.id, '-', 2)                                           AS customer_id,
           COUNT(*)                                                             AS tx_count,
-          COALESCE(SUM(amount), 0)                                             AS ltv,
-          MAX(timestamp AT TIME ZONE 'Asia/Jakarta')                          AS last_payment,
+          COALESCE(SUM(t2.amount), 0)                                          AS ltv,
+          MAX(t2.timestamp AT TIME ZONE 'Asia/Jakarta')                       AS last_payment,
           COUNT(*) FILTER (
-            WHERE EXTRACT(DAY FROM (timestamp AT TIME ZONE 'Asia/Jakarta')) >
+            WHERE EXTRACT(DAY FROM (t2.timestamp AT TIME ZONE 'Asia/Jakarta')) >
                   EXTRACT(DAY FROM (c2."createdAt" AT TIME ZONE 'Asia/Jakarta')) + 3
           )                                                                    AS late_count
         FROM transactions t2
         JOIN customers c2 ON split_part(t2.id, '-', 2) = c2.id
         WHERE t2.status = 'Verified' AND t2.keterangan = 'pemasukan'
-        GROUP BY split_part(id, '-', 2)
+        GROUP BY split_part(t2.id, '-', 2)
       )
       SELECT
         c.id,
@@ -333,7 +333,7 @@ export async function getCustomer360(customerId: string) {
     `, [customerId]);
 
     const txs = txRes.rows;
-    
+
     const regDate = new Date(c.created_at);
     const dueDay = regDate.getDate();
 
@@ -350,7 +350,7 @@ export async function getCustomer360(customerId: string) {
       ltv += amt;
       const txDate = new Date(t.tx_date);
       const isLate = txDate.getDate() > dueDay + 3;
-      
+
       const monthKey = txDate.toLocaleString('default', { month: 'short', year: 'numeric' });
       if (!monthGroups[monthKey]) {
         monthGroups[monthKey] = { ontime: 0, late: 0, total: 0 };
@@ -423,7 +423,7 @@ export async function sendPaymentReminder(customerId: string) {
 
     // Mock WhatsApp/Fonnte integration logic
     console.log(`[WA REMINDER] Sending to ${customer.name} (${customer.no_telp})...`);
-    
+
     // Record in notifications
     await query(`
       INSERT INTO notifications (type, category, title, message, created_at, is_unread)

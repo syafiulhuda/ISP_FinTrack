@@ -90,7 +90,7 @@ const RevenueTooltip = ({ active, payload, label }: TooltipProps) => {
 export default function Dashboard() {
   const router = useRouter();
   const dashboardRef = useRef<HTMLDivElement>(null);
-  
+
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['dashboardData'],
     queryFn: getDashboardData
@@ -164,13 +164,13 @@ export default function Dashboard() {
 
   const dynamicData = useMemo(() => {
     const activeCustomers = customerList.filter((c: any) => c.status === "Active");
-    
+
     const extractMonth = (dateVal: any) => {
       if (!dateVal) return "";
       try {
         const d = new Date(dateVal);
         if (isNaN(d.getTime())) return String(dateVal).slice(0, 7);
-        
+
         // Force evaluation in Asia/Jakarta timezone (UTC+7) using pure math
         const localTime = d.getTime() + (7 * 60 * 60 * 1000);
         const localDate = new Date(localTime);
@@ -184,45 +184,45 @@ export default function Dashboard() {
 
     const getMonthStats = (monthStr: string) => {
       // 1. Revenue: Verified pemasukan in month
-      const txs = transactions.filter((t: any) => 
-        t.status === "Verified" && 
-        t.keterangan === "pemasukan" && 
+      const txs = transactions.filter((t: any) =>
+        t.status === "Verified" &&
+        t.keterangan === "pemasukan" &&
         extractMonth(t.timestamp) === monthStr
       );
       const rev = txs.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
-      
+
       // 2. Active Count (for ARPU denominator): status='Active' AND createdAt <= month
-      const activeCount = customerList.filter((c: any) => 
-        c.status === "Active" && 
+      const activeCount = customerList.filter((c: any) =>
+        c.status === "Active" &&
         extractMonth(c.createdAt) <= monthStr
       ).length;
-      
+
       const arpu = activeCount > 0 ? rev / activeCount : 0;
-      
+
       // 3. Expense: Verified pengeluaran in month
-      const txExps = transactions.filter((t: any) => 
-        t.status === "Verified" && 
-        t.keterangan === "pengeluaran" && 
+      const txExps = transactions.filter((t: any) =>
+        t.status === "Verified" &&
+        t.keterangan === "pengeluaran" &&
         extractMonth(t.timestamp) === monthStr
       );
       const totalExp = txExps.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
-      
+
       // 4. New Customers: createdAt in month
-      const newCustsInMonth = customerList.filter((c: any) => 
+      const newCustsInMonth = customerList.filter((c: any) =>
         extractMonth(c.createdAt) === monthStr
       ).length;
-      
+
       const cac = newCustsInMonth > 0 ? totalExp / newCustsInMonth : 0;
-      
+
       // 5. Inactive this month: From inactive_cust table
-      const inactiveInMonth = (inactiveCust as any[]).filter((ic: any) => 
+      const inactiveInMonth = (inactiveCust as any[]).filter((ic: any) =>
         (ic.inactive_month && ic.inactive_month === monthStr) || extractMonth(ic.inactiveat) === monthStr
       ).length;
-      
+
       // 6. Total Customers (Churn denominator): status='Active' AND createdAt <= month
       // User SQL uses: (SELECT COUNT(*) FROM customers WHERE status = 'Active' and TO_CHAR("createdAt"::date, 'YYYY-MM') <= m.month)
-      const totalCustsAtEnd = activeCount; 
-      
+      const totalCustsAtEnd = activeCount;
+
       const churn = totalCustsAtEnd > 0 ? (inactiveInMonth / totalCustsAtEnd) * 100 : 0;
 
       return { rev, arpu, cac, churn, totalExp, newCusts: newCustsInMonth };
@@ -264,13 +264,13 @@ export default function Dashboard() {
       .map((t: any) => extractMonth(t.timestamp))
       .filter((m: string) => m.match(/^\d{4}-\d{2}$/))
       .sort();
-    
+
     // Default to 2026-05 and 2026-04 for consistency with user SQL
     const latestMonthStr = monthsWithData.length > 0 ? monthsWithData[monthsWithData.length - 1] : "2026-05";
     const [year, month] = latestMonthStr.split('-').map(Number);
-    
+
     const latestStats = getMonthStats(latestMonthStr);
-    
+
     let prevMonthStr = "";
     if (month === 1) {
       prevMonthStr = `${year - 1}-12`;
@@ -304,7 +304,7 @@ export default function Dashboard() {
     const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
     const currentYear = new Date().getFullYear();
     const currentMonthIdx = new Date().getMonth();
-    
+
     const calculatedTrendData = [];
     for (let i = 5; i >= 0; i--) {
       let mIdx = currentMonthIdx - i;
@@ -341,7 +341,7 @@ export default function Dashboard() {
           .map((t: any) => new Date(t.timestamp || ""))
           .filter((d: any) => !isNaN(d.getTime()))
           .sort((a: any, b: any) => b.getTime() - a.getTime());
-        
+
         const latestDate = trxDates.length > 0 ? trxDates[0] : new Date();
         const monthName = latestDate.toLocaleString("en-US", { month: "short" });
         const quarter = Math.floor(latestDate.getMonth() / 3) + 1;
@@ -351,33 +351,33 @@ export default function Dashboard() {
   }, [customerList, serviceTiers, expenseList, transactions, trendData, customerGrowthTrend]);
 
   const kpis = [
-    { 
-      name: "ARPU", 
-      value: dynamicData.arpu, 
-      trend: dynamicData.trends.arpu, 
-      trendType: (dynamicData.trends.arpu === "0%" || dynamicData.trends.arpu.includes('0.0%')) ? "neutral" : (dynamicData.trends.arpu.startsWith('+') ? "up" : "down") as any, 
-      icon: User 
+    {
+      name: "ARPU",
+      value: dynamicData.arpu,
+      trend: dynamicData.trends.arpu,
+      trendType: (dynamicData.trends.arpu === "0%" || dynamicData.trends.arpu.includes('0.0%')) ? "neutral" : (dynamicData.trends.arpu.startsWith('+') ? "up" : "down") as any,
+      icon: User
     },
-    { 
-      name: "CAC", 
-      value: dynamicData.cac, 
-      trend: dynamicData.trends.cac, 
+    {
+      name: "CAC",
+      value: dynamicData.cac,
+      trend: dynamicData.trends.cac,
       trendType: (dynamicData.trends.cac === "-" || dynamicData.trends.cac === "0%" || dynamicData.trends.cac.includes('0.0%')) ? "neutral" : (dynamicData.trends.cac.startsWith('+') ? "down" : "up") as any, // CAC up is bad
-      icon: DollarSign 
+      icon: DollarSign
     },
-    { 
-      name: "Churn Rate", 
-      value: dynamicData.churnRate, 
-      trend: dynamicData.trends.churn, 
+    {
+      name: "Churn Rate",
+      value: dynamicData.churnRate,
+      trend: dynamicData.trends.churn,
       trendType: (dynamicData.trends.churn === "0%" || dynamicData.trends.churn.includes('0.0%') || dynamicData.trends.churn === "-") ? "neutral" : (dynamicData.trends.churn.startsWith('+') ? "down" : "up") as any, // Churn up is bad
-      icon: UserMinus 
+      icon: UserMinus
     },
-    { 
-      name: "Total Revenue", 
-      value: dynamicData.totalRevenue, 
-      trend: dynamicData.trends.revenue, 
-      trendType: (dynamicData.trends.revenue === "0%" || dynamicData.trends.revenue.includes('0.0%')) ? "neutral" : (dynamicData.trends.revenue.startsWith('+') ? "up" : "down") as any, 
-      icon: Wallet 
+    {
+      name: "Total Revenue",
+      value: dynamicData.totalRevenue,
+      trend: dynamicData.trends.revenue,
+      trendType: (dynamicData.trends.revenue === "0%" || dynamicData.trends.revenue.includes('0.0%')) ? "neutral" : (dynamicData.trends.revenue.startsWith('+') ? "up" : "down") as any,
+      icon: Wallet
     },
   ];
 
@@ -416,14 +416,14 @@ export default function Dashboard() {
                   <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Infrastructure Roadmap 2026</h3>
                   <p className="text-sm font-medium text-slate-500 mt-1">Expansion and upgrade schedule for West Java regions.</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsRoadmapOpen(false)}
                   className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400"
                 >
                   <X size={24} />
                 </button>
               </div>
-              
+
               <div className="p-8 space-y-6">
                 {[
                   { phase: "Phase 1: Bandung Central", status: "In Progress", date: "Q1 2026", icon: Zap, color: "text-blue-500 bg-blue-50" },
@@ -444,9 +444,9 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-              
+
               <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex justify-end">
-                <button 
+                <button
                   onClick={() => setIsRoadmapOpen(false)}
                   className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20"
                 >
@@ -459,13 +459,13 @@ export default function Dashboard() {
       </AnimatePresence>
 
       <div ref={dashboardRef} className="space-y-8 pb-10">
-        <m.div 
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="space-y-8"
         >
           {/* Header */}
-          <m.div 
+          <m.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 24 }}
@@ -486,7 +486,7 @@ export default function Dashboard() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <button 
+                <button
                   onClick={() => router.push('/profitability')}
                   className="bg-primary text-white p-3 rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all"
                 >
@@ -542,35 +542,35 @@ export default function Dashboard() {
               <div className="flex-1 w-full mt-4 min-h-[300px]">
                 {mounted && (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart 
-                      data={dynamicData.trendData.filter((d: any) => d.growth !== null)} 
+                    <LineChart
+                      data={dynamicData.trendData.filter((d: any) => d.growth !== null)}
                       margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
-                      <XAxis 
-                        dataKey="month" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fontSize: 11, fontWeight: 'bold', fill: '#64748b' }} 
-                        dy={10} 
+                      <XAxis
+                        dataKey="month"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fontWeight: 'bold', fill: '#64748b' }}
+                        dy={10}
                       />
                       <YAxis hide domain={['auto', 'auto']} />
                       <Tooltip content={<RevenueTooltip />} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="revenue" 
-                        stroke="#004ac6" 
-                        strokeWidth={4} 
-                        dot={{ r: 4, fill: '#004ac6', strokeWidth: 2, stroke: '#fff' }} 
+                      <Line
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="#004ac6"
+                        strokeWidth={4}
+                        dot={{ r: 4, fill: '#004ac6', strokeWidth: 2, stroke: '#fff' }}
                         activeDot={{ r: 6, strokeWidth: 0 }}
                       />
-                      <Line 
-                        type="monotone" 
-                        dataKey="expenses" 
-                        stroke="#94a3b8" 
-                        strokeWidth={2} 
-                        strokeDasharray="5 5" 
-                        dot={false} 
+                      <Line
+                        type="monotone"
+                        dataKey="expenses"
+                        stroke="#94a3b8"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={false}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -580,65 +580,65 @@ export default function Dashboard() {
 
             <div className="space-y-8">
               {/* Right Column: Customer Mix */}
-              <m.section 
+              <m.section
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.5 }}
                 className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-200 dark:border-slate-800 shadow-sm"
               >
-            <div className="mb-8">
-              <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Customer Growth</h3>
-              <p className="text-sm font-medium text-slate-500 mt-1">Segmentation</p>
-            </div>
-            <div className="h-[220px] w-full">
-              {mounted && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart 
-                    data={(dynamicData.growthTrend as any[]).filter((d: any) => d.growth !== null)} 
-                    margin={{ top: 10, right: 20, left: 20, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="colorGrowth" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
-                    <XAxis 
-                      dataKey="month" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }} 
-                      interval={0}
-                    />
-                    <YAxis hide domain={['auto', 'auto']} />
-                    <Tooltip 
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-xl">
-                              <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">{payload[0].payload.month}</p>
-                              <p className="text-sm font-black text-slate-900 dark:text-white">{payload[0].value} Active</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="growth" 
-                      stroke="#0ea5e9" 
-                      strokeWidth={3} 
-                      fillOpacity={1} 
-                      fill="url(#colorGrowth)" 
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
+                <div className="mb-8">
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Customer Growth</h3>
+                  <p className="text-sm font-medium text-slate-500 mt-1">Segmentation</p>
+                </div>
+                <div className="h-[220px] w-full">
+                  {mounted && (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={(dynamicData.growthTrend as any[]).filter((d: any) => d.growth !== null)}
+                        margin={{ top: 10, right: 20, left: 20, bottom: 0 }}
+                      >
+                        <defs>
+                          <linearGradient id="colorGrowth" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.1} />
+                            <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
+                        <XAxis
+                          dataKey="month"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }}
+                          interval={0}
+                        />
+                        <YAxis hide domain={['auto', 'auto']} />
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              return (
+                                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-xl">
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">{payload[0].payload.month}</p>
+                                  <p className="text-sm font-black text-slate-900 dark:text-white">{payload[0].value} Active</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="growth"
+                          stroke="#0ea5e9"
+                          strokeWidth={3}
+                          fillOpacity={1}
+                          fill="url(#colorGrowth)"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
 
-          </m.section>
+              </m.section>
 
               <m.section
                 initial={{ opacity: 0, x: 20 }}

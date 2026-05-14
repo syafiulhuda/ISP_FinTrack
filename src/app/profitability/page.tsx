@@ -1,13 +1,13 @@
 "use client";
 
 import { m, AnimatePresence } from "framer-motion";
-import { 
+import {
   MapPin,
-  TrendingUp, 
-  ArrowUp, 
+  TrendingUp,
+  ArrowUp,
   ArrowDown,
-  Target, 
-  UserCheck, 
+  Target,
+  UserCheck,
   PieChart as PieChartIcon,
   BarChart3,
   Calendar,
@@ -19,13 +19,13 @@ import {
   X,
   RotateCcw
 } from "lucide-react";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -92,11 +92,11 @@ export default function ProfitabilityPage() {
     }
 
     if (!transactions.length && !expenseList.length && !customerList.length) return;
-    
+
     // Find min and max dates from all data (Fallback)
     let minDateStr = "9999-12-31";
     let maxDateStr = "0000-01-01";
-    
+
     const updateMinMax = (val: string | Date | null | undefined) => {
       if (!val) return;
       let d = "";
@@ -107,22 +107,22 @@ export default function ProfitabilityPage() {
       } else {
         d = String(val).substring(0, 10);
       }
-      
+
       if (!d || d.length < 10) return;
       if (d < minDateStr) minDateStr = d;
       if (d > maxDateStr) maxDateStr = d;
     };
-    
+
     transactions.forEach((t: Transaction) => updateMinMax(t.timestamp));
     expenseList.forEach((e: Expense) => updateMinMax(e.date));
     customerList.forEach((c: Customer) => updateMinMax(c.createdAt));
-    
+
     if (minDateStr === "9999-12-31") {
       const year = new Date().getFullYear();
       minDateStr = `${year}-01-01`;
       maxDateStr = `${year}-12-31`;
     }
-    
+
     setStartDate(minDateStr);
     setEndDate(maxDateStr);
   }, [transactions, expenseList, customerList, dateRange]);
@@ -140,7 +140,7 @@ export default function ProfitabilityPage() {
   const provinces = useMemo(() => {
     const rawProvs = customerList.map((c: Customer) => c.province).filter(Boolean) as string[];
     const normalized = new Map<string, string>();
-    
+
     rawProvs.forEach(p => {
       const trimmed = p.trim();
       const key = trimmed.toLowerCase();
@@ -182,7 +182,7 @@ export default function ProfitabilityPage() {
   const formatCompactNumber = (number: number) => {
     const absNum = Math.abs(number);
     const sign = number < 0 ? "-" : "";
-    
+
     if (absNum >= 1000000000) return `${sign}Rp ${(absNum / 1000000000).toFixed(2)}B`;
     if (absNum >= 1000000) return `${sign}Rp ${(absNum / 1000000).toFixed(2)}M`;
     if (absNum >= 1000) return `${sign}Rp ${(absNum / 1000).toFixed(1)}k`;
@@ -203,11 +203,11 @@ export default function ProfitabilityPage() {
     const isAllRegions = selectedProvince === "All Regions";
     const normalize = (val: any) => val ? String(val).toLowerCase().trim() : "";
     const selectedProvLower = normalize(selectedProvince);
-    
+
     // 1. Calculate Selected Range & Months
     const startMonthStr = startDate.substring(0, 7);
     const endMonthStr = endDate.substring(0, 7);
-    
+
     const selectedMonths: string[] = [];
     if (startDate && endDate) {
       let current = new Date(startDate.substring(0, 7) + "-01");
@@ -230,14 +230,14 @@ export default function ProfitabilityPage() {
       if (!d) return "";
       const date = new Date(d);
       if (isNaN(date.getTime())) return String(d).split('T')[0];
-      
+
       // Force UTC+7 evaluation using pure math (Identical to AT TIME ZONE 'Asia/Jakarta')
       const localTime = date.getTime() + (7 * 60 * 60 * 1000);
       const localDate = new Date(localTime);
       const year = localDate.getUTCFullYear();
       const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
       const day = String(localDate.getUTCDate()).padStart(2, '0');
-      
+
       return `${year}-${month}-${day}`;
     };
 
@@ -257,7 +257,7 @@ export default function ProfitabilityPage() {
     const getStatsForRange = (start: string, end: string) => {
       let revenue = 0;
       let expenses = 0;
-      
+
       transactions.forEach((tx: Transaction) => {
         const txDate = getLocalDate(tx.timestamp);
         if (txDate < start || txDate > end) return;
@@ -266,7 +266,7 @@ export default function ProfitabilityPage() {
         if (!isAllRegions) {
           const cityProv = getProvinceFromCity(tx.city) || tx.city;
           const matchesDirectly = cityProv && normalize(String(cityProv)).includes(selectedProvLower);
-          
+
           if (!matchesDirectly) {
             const idSuffix = tx.id?.split('-')[1];
             if (tx.keterangan === "pemasukan") {
@@ -301,7 +301,7 @@ export default function ProfitabilityPage() {
 
     // 3. Calculate Final KPIs
     const rangeStats = getStatsForRange(startDate, endDate);
-    
+
     // Calculate MoM (Month-over-Month) trend based on the end date's month
     let endMStr = endDate.substring(0, 7);
     let endYear = parseInt(endMStr.split('-')[0]);
@@ -314,24 +314,24 @@ export default function ProfitabilityPage() {
 
     const calculateTrend = (current: number, previous: number | null, isMargin = false) => {
       if (previous === null || previous === 0) {
-         if (isMargin && current !== 0) {
-             return { text: `+${current.toFixed(1)}%`, type: current > 0 ? "up" : "danger" };
-         }
-         return { text: "0%", type: "neutral" };
+        if (isMargin && current !== 0) {
+          return { text: `+${current.toFixed(1)}%`, type: current > 0 ? "up" : "danger" };
+        }
+        return { text: "0%", type: "neutral" };
       }
-      
+
       // Match SQL Exact Formulas:
       // Margin: curr_margin - prev_margin
       // Profit: ((curr_profit - prev_profit) / ABS(prev_profit)) * 100
-      const diff = isMargin 
-        ? (current - previous) 
+      const diff = isMargin
+        ? (current - previous)
         : (((current - previous) / Math.abs(previous)) * 100);
-      
+
       if (Math.abs(diff) < 0.01) return { text: "0.0%", type: "neutral" };
-      
-      return { 
-        text: `${diff > 0 ? "+" : ""}${diff.toFixed(1)}%`, 
-        type: diff > 0 ? "up" : "danger" 
+
+      return {
+        text: `${diff > 0 ? "+" : ""}${diff.toFixed(1)}%`,
+        type: diff > 0 ? "up" : "danger"
       };
     };
 
@@ -356,7 +356,7 @@ export default function ProfitabilityPage() {
       const [year, month] = mStr.split("-");
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       return {
-        month: `${monthNames[parseInt(month)-1]}`,
+        month: `${monthNames[parseInt(month) - 1]}`,
         value: stats.profit
       };
     });
@@ -364,7 +364,7 @@ export default function ProfitabilityPage() {
     const incomeByType: Record<string, number> = {};
     const expenseByType: Record<string, number> = {};
     const allocationFactor = isAllRegions ? 1 : (customerList.length > 0 ? (customerList.filter((c: any) => normalize(c.province || "") === selectedProvLower).length / customerList.length) : 0);
-    
+
     // For Income (Revenue Component) - purely from transactions
     transactions.forEach((tx: any) => {
       const txDate = getLocalDate(tx.timestamp);
@@ -415,9 +415,9 @@ export default function ProfitabilityPage() {
     const distribution = ["Premium", "Standard", "Basic", "Gamers"].map(name => {
       const count = activeCustomers.filter(c => (c.service === 'Gamers Node' ? 'Gamers' : c.service) === name).length;
       const colors: Record<string, string> = { 'Premium': '#004ac6', 'Standard': '#64748b', 'Basic': '#bc4800', 'Gamers': '#16a34a' };
-      return { 
-        name, 
-        count, 
+      return {
+        name,
+        count,
         value: activeCustomers.length > 0 ? Math.round((count / activeCustomers.length) * 100) : 0,
         color: colors[name] || '#94a3b8'
       };
@@ -443,8 +443,8 @@ export default function ProfitabilityPage() {
     };
   }, [selectedProvince, startDate, endDate, customerList, transactions, expenseList]);
 
-  const filteredProvinces = useMemo(() => 
-    provinces.filter((p: any) => p.toLowerCase().includes(searchQuery.toLowerCase())), 
+  const filteredProvinces = useMemo(() =>
+    provinces.filter((p: any) => p.toLowerCase().includes(searchQuery.toLowerCase())),
     [searchQuery, provinces]
   );
 
@@ -465,23 +465,23 @@ export default function ProfitabilityPage() {
           <div className="flex flex-row items-center justify-between gap-1 w-full tablet:w-auto">
             <div className="flex items-center justify-between gap-1 tablet:gap-2 bg-slate-100 dark:bg-slate-900 px-1.5 tablet:px-3 py-1.5 tablet:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 shrink-0 shadow-sm">
               <Calendar className="w-3 h-3 tablet:w-4 tablet:h-4 text-slate-400 shrink-0 hidden sm-phone:block" />
-              <input 
-                type="date" 
-                value={startDate} 
+              <input
+                type="date"
+                value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 className="bg-transparent text-[8px] lg-phone:text-[10px] tablet:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-[76px] lg-phone:w-24 tablet:w-auto px-0.5"
               />
               <span className="text-slate-300 text-[8px] tablet:text-sm shrink-0">-</span>
-              <input 
-                type="date" 
-                value={endDate} 
+              <input
+                type="date"
+                value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 className="bg-transparent text-[8px] lg-phone:text-[10px] tablet:text-sm font-medium text-slate-700 dark:text-slate-300 outline-none w-[76px] lg-phone:w-24 tablet:w-auto px-0.5"
               />
             </div>
 
             <div className="relative shrink-0" ref={dropdownRef}>
-              <button 
+              <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="flex items-center justify-between gap-1 tablet:gap-3 bg-slate-100 dark:bg-slate-900 px-2 tablet:px-4 py-1.5 tablet:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 min-w-[84px] tablet:min-w-[160px] max-w-[110px] lg-phone:max-w-[140px] tablet:max-w-none hover:border-indigo-500/50 transition-all active:scale-95 shrink-0"
               >
@@ -494,7 +494,7 @@ export default function ProfitabilityPage() {
 
               <AnimatePresence>
                 {isDropdownOpen && (
-                  <m.div 
+                  <m.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -509,11 +509,10 @@ export default function ProfitabilityPage() {
                             setIsDropdownOpen(false);
                             setSearchQuery("");
                           }}
-                          className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-between group ${
-                            selectedProvince === p 
-                              ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
+                          className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-between group ${selectedProvince === p
+                              ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20"
                               : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                          }`}
+                            }`}
                         >
                           {p}
                           {selectedProvince === p && <m.div layoutId="activeCheck" className="w-1.5 h-1.5 bg-white rounded-full" />}
@@ -557,29 +556,29 @@ export default function ProfitabilityPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={dynamicData.waterfallData} margin={{ top: 10, right: 20, left: 20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }} 
-                      dy={12} 
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }}
+                      dy={12}
                       interval={0}
                     />
                     <YAxis hide domain={['auto', 'auto']} />
-                    <Tooltip 
-                      cursor={{ fill: 'transparent' }} 
+                    <Tooltip
+                      cursor={{ fill: 'transparent' }}
                       content={({ active, payload }) => active && payload && payload.length && (
                         <div className="bg-slate-900 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl border border-white/10 backdrop-blur-md">
                           <p className="opacity-60 mb-1 uppercase tracking-tighter">{payload[0].payload.name}</p>
                           <p className="text-sm font-black">Rp {Math.abs(Number(payload[0].value)).toLocaleString()}</p>
                         </div>
-                      )} 
+                      )}
                     />
                     <Bar dataKey="value" barSize={32} radius={[20, 20, 20, 20]}>
                       {dynamicData.waterfallData.map((entry: any, index: number) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={entry.isExpense ? "#f43f5e" : "#10b981"} 
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.isExpense ? "#f43f5e" : "#10b981"}
                         />
                       ))}
                     </Bar>
@@ -607,14 +606,14 @@ export default function ProfitabilityPage() {
                           Users
                         </span>
                       </div>
-                      
+
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                          <Pie 
-                            data={dynamicData.distribution} 
-                            innerRadius={70} 
-                            outerRadius={90} 
-                            paddingAngle={15} 
+                          <Pie
+                            data={dynamicData.distribution}
+                            innerRadius={70}
+                            outerRadius={90}
+                            paddingAngle={15}
                             dataKey="value"
                             startAngle={180}
                             endAngle={-180}
@@ -625,7 +624,7 @@ export default function ProfitabilityPage() {
                               <Cell key={`cell-${index}`} fill={(entry as any).color} />
                             ))}
                           </Pie>
-                          <Tooltip 
+                          <Tooltip
                             contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                             formatter={(value: any, name: any, props: any) => [`${props.payload.count} Users`, name]}
                           />
@@ -678,12 +677,12 @@ export default function ProfitabilityPage() {
                       <AreaChart data={dynamicData.growthTrend} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
                         <defs><linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#004ac6" stopOpacity={0.4} /><stop offset="100%" stopColor="#004ac6" stopOpacity={0} /></linearGradient></defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                        <XAxis 
-                          dataKey="month" 
-                          axisLine={false} 
-                          tickLine={false} 
-                          tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} 
-                          interval={0} 
+                        <XAxis
+                          dataKey="month"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
+                          interval={0}
                           padding={{ left: 20, right: 20 }}
                         />
                         <YAxis hide />
