@@ -49,7 +49,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             <main className="flex-1 overflow-y-auto overflow-x-hidden pt-24 pb-12 px-4 sm:px-6 lg:px-8 2xl:px-12">
               <div className="w-full max-w-[2000px] mx-auto">
                 <ErrorBoundary>
-                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="animate-in fade-in duration-300">
                     {children}
                   </div>
                 </ErrorBoundary>

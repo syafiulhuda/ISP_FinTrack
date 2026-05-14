@@ -7,6 +7,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: 'swap',
 });
 
 import QueryProvider from "@/components/providers/QueryProvider";

@@ -1,69 +1,47 @@
-# Strategi Go-Live: ISP_FinTrack (Vercel Free Tier)
+# Dokumen Analisis & Eksekusi Optimasi Web Vitals (ISP-FinTrack)
 
-Dokumen ini adalah panduan teknis implementasi dan deployment **ISP_FinTrack** ke **Vercel (Free Tier)**. Vercel sangat cocok untuk fase awal karena setup instan dan skalabilitas otomatis. Namun, kita harus menyesuaikan beberapa aspek dari sistem saat ini agar bisa berjalan optimal di lingkungan *Serverless*.
+## 1. Laporan Metrik Vercel Speed Insights Terkini
 
-## 1. Persiapan Database (Eksternal)
+Berikut adalah data performa terbaru dari Vercel Speed Insights. Masalah *Interaction to Next Paint* (INP) sudah teratasi, namun masih terdapat masalah kritis pada FCP, LCP, dan CLS:
 
-Vercel bersifat *Serverless Computing*, sehingga database PostgreSQL tidak bisa berada di *localhost*. Kita butuh layanan database cloud gratis.
-
-**Rekomendasi Layanan DB (Gratis):**
-- **Neon.tech** (Sangat disarankan karena memiliki fitur Serverless Connection Pooling bawaan).
-- **Supabase** (Tersedia Supavisor untuk connection pooling).
-
-> [!IMPORTANT]
-> **Tugas Anda:** Silakan buat akun di [Neon.tech](https://neon.tech/) atau [Supabase](https://supabase.com/), buat proyek PostgreSQL baru, dan dapatkan `DATABASE_URL` (Connection String). Pilih yang versi **Pooled Connection** (contoh: port 6543 atau ditandai sebagai pooler).
-
-## 2. Refactor Node-Cron ke Vercel Cron
-
-Di Vercel, *background job* seperti `node-cron` yang berjalan terus-menerus di `instrumentation.ts` tidak akan bekerja karena instance Vercel akan otomatis "tertidur" saat tidak ada trafik.
-
-**Solusi yang akan saya kerjakan:**
-1. Membuat API Route khusus: `src/app/api/cron/route.ts` yang bertugas menjalankan fungsi `refreshAgingMV()` dan `refreshPredictions()`.
-2. Mendaftarkan jadwal di `vercel.json` untuk menjalankan endpoint `/api/cron` secara otomatis (misal: setiap hari jam 00:00).
-3. Menonaktifkan `node-cron` di lingkungan produksi (`instrumentation.ts`).
-
-## 3. Penanganan Timeout (OCR Tesseract)
-
-Pada Vercel Hobby (Free Tier), batas maksimal waktu eksekusi *Serverless Function* adalah **10 detik** (bisa dinaikkan maksimal hingga **60 detik**). Ekstraksi teks gambar struk (OCR) bisa memakan waktu lama.
-
-**Solusi yang akan saya kerjakan:**
-- Mengatur konfigurasi khusus di fungsi Server Actions yang memproses OCR agar menggunakan `maxDuration: 60` untuk meminimalisir risiko Error 504 (Timeout).
-
-## 4. Persiapan Deployment (Vercel CLI / GitHub)
-
-Deployment paling direkomendasikan adalah dengan menghubungkan *repository* GitHub Anda langsung ke Vercel Dashboard.
-
-**Langkah Deployment:**
-1. Login ke [vercel.com](https://vercel.com/)
-2. Klik **Add New Project** -> **Import dari GitHub**.
-3. Pilih repository `ISP_FinTrack`.
-4. Di bagian **Environment Variables**, tambahkan:
-   - `DATABASE_USER`, `DATABASE_HOST`, `DATABASE_NAME`, `DATABASE_PASSWORD`, `DATABASE_PORT`
-   - **ATAU** gunakan satu variabel `DATABASE_URL` sesuai connection string cloud.
-   - Variabel SMTP (`GMAIL_USER`, `GMAIL_APP_PASSWORD`).
-5. Klik **Deploy**.
+* **First Contentful Paint (FCP):** Tercatat sangat lambat di angka **2.43s**. Vercel secara spesifik menandai rute `src/app/page.tsx` (Dashboard) dan `src/app/login/page.tsx` sebagai halaman yang membutuhkan perbaikan (Need Improvements).
+* **Largest Contentful Paint (LCP):** Metrik ini tertahan oleh dua elemen teks utama. Vercel memberikan exact CSS selector berikut yang menjadi *bottleneck*:
+    1.  `div.relative.z-10.max-w-lg>div>h1.text-6xl.font-black.text-white.leading-[1.1].mb-6` (Ini adalah Hero Text di halaman Login).
+    2.  `h2.text-2xl.sm:text-3xl.md:text-4xl.font-bold.text-slate-900.dark:text-slate-100.tracking-tight.leading-tight` (Ini adalah judul/header utama halaman).
+* **Cumulative Layout Shift (CLS):** Vercel mendeteksi pergeseran layout (layout shift) pada dua kontainer pembungkus utama aplikasi:
+    1.  `div.animate-in.fade-in.slide-in-from-bottom-2.duration-300>div.relative`
+    2.  `div.w-full.max-w-[2000px].mx-auto>div>div.relative`
 
 ---
 
-## Proposed Changes (Kode yang harus diubah)
+## 2. Analisa Akar Masalah (Root Cause Analysis)
 
-### [MODIFY] `src/instrumentation.ts`
-Menonaktifkan `node-cron` untuk *production* agar tidak memicu error atau konsumsi RAM berlebih di Vercel.
+Dari hasil audit codebase, masalah di atas disebabkan oleh sisa-sisa animasi yang memblokir proses *rendering* awal browser:
 
-### [NEW] `src/app/api/cron/route.ts`
-Membuat endpoint REST API yang aman (diproteksi dengan *Cron Secret*) untuk memicu pembaruan *Materialized Views* dan metrik prediktif.
-
-### [NEW] `vercel.json`
-Mendeklarasikan Vercel Cron Job yang menembak `/api/cron` setiap hari pukul 00:00 WIB.
-
-### [MODIFY] `src/lib/db.ts`
-(Opsional) Memastikan konfigurasi `pg` (Pool) mendukung koneksi dari Vercel via `DATABASE_URL` (misal penambahan `ssl: { rejectUnauthorized: false }`).
+1.  **FCP (2.43s) & LCP Blockers:** Teks LCP dan kerangka halaman tidak langsung muncul karena terbungkus oleh komponen Framer Motion dengan `initial={{ opacity: 0 }}`. Browser terpaksa melukis HTML secara transparan (putih kosong) dan harus menunggu seluruh JavaScript selesai diunduh untuk mengubah opacity menjadi 1. Selain itu, konfigurasi font Inter belum diatur untuk menampilkan teks fallback secara instan (`display: 'swap'`).
+2.  **CLS Blockers:**
+    Pergeseran layout BUKAN disebabkan oleh komponen Toast, melainkan oleh *class* animasi Tailwind `slide-in-from-bottom-2` yang terpasang pada kontainer utama `{children}` di `ClientLayout.tsx`. Setiap kali halaman dimuat, seluruh body dokumen bergeser dari bawah ke atas, memicu pelanggaran CLS masif.
 
 ---
 
-## User Review Required
+## 3. Instruksi Eksekusi untuk AI Agent
 
-> [!WARNING]
-> **Klarifikasi Database:** Apakah Anda sudah membuat database PostgreSQL online (Neon/Supabase) dan memiliki Connection String-nya? Jika belum, saya sarankan membuatnya terlebih dahulu karena Vercel butuh ini agar sistem berfungsi.
+Role: Strict Senior Frontend Performance Engineer
 
-Jika Anda menyetujui langkah-langkah penyesuaian kode di atas (Cron Job & Timeout Config), beritahu saya untuk mulai merombak kodenya.
+Task: We need to fix the lingering FCP (2.43s), LCP, and CLS issues reported by Vercel Speed Insights. You missed removing the animation blockers in the previous step. Apply the exact changes below to the codebase. No deviations.
+
+**1. FIX FCP & LCP (Font Loading) in `src/app/layout.tsx`**
+Update the Google Font configuration to explicitly use `display: 'swap'` so text paints instantly before the font fully loads, preventing the Flash of Invisible Text.
+*Change to:*
+`const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: 'swap' });`
+
+**2. FIX MASSIVE CLS in `src/components/layout/ClientLayout.tsx`**
+The root cause of the layout shift is the tailwind class `slide-in-from-bottom-2` on the main children wrapper. Animating the entire document body flow triggers layout shifts.
+*Action:* Open `ClientLayout.tsx`. Find `<div className="animate-in fade-in slide-in-from-bottom-2 duration-300">`. Remove `slide-in-from-bottom-2` completely. Change it to just `<div className="w-full">` or `<div className="animate-in fade-in duration-300">`. We only want a pure opacity fade (or static render), absolutely no physical layout movement.
+
+**3. FIX FCP/LCP ANIMATION BLOCKERS in `src/app/login/page.tsx` & `src/app/page.tsx`**
+You left `<m.div initial={{ opacity: 0 }}>` wrappers around the main structural and LCP text elements. This forces the browser to paint invisible HTML until JS hydrates, ruining FCP (2.43s).
+* **In `login/page.tsx`:** Find the `<m.div>` wrapping the `h1.text-6xl` Hero text ("Empowering ISP Growth"). Change its prop to `initial={{ opacity: 1, y: 0 }}` OR remove the `<m.div>` wrapper around it entirely. Also apply `initial={false}` to the right-side form wrapper `<m.div initial={{ opacity: 0, x: 20 }}>` so the form structure paints instantly from the server.
+* **In `page.tsx` (Dashboard):** Find the `<m.div>` wrapping the `h2` "Executive Overview". Change it to `initial={false}` or `initial={{ opacity: 1, y: 0 }}`. Apply this `initial={false}` logic to any structural section wrappers that are hiding content on first load.
+
+Execute these exact changes to guarantee instant FCP paints and 0.00 Layout Shifts.

@@ -101,7 +101,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
             </button>
           )}
           <m.div 
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={false}
             animate={{ scale: 1, opacity: 1 }}
             className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg overflow-hidden shrink-0", !theme.isCustom && theme.bg, !theme.isCustom && theme.shadow)}
             style={theme.isCustom ? { backgroundColor: theme.color, boxShadow: `0 10px 15px -3px ${theme.color}44` } : {}}

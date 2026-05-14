@@ -448,7 +448,7 @@ export default function Dashboard() {
         <div className="space-y-8">
           {/* Header */}
           <m.div
-            initial={{ opacity: 0, y: -20 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 24 }}
             className="flex flex-row items-start md:items-center justify-between gap-2 md:gap-4"
@@ -498,7 +498,7 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <m.section
-              initial={{ opacity: 0, y: 20 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.4 }}
               className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-full"
@@ -537,7 +537,7 @@ export default function Dashboard() {
             <div className="space-y-8">
               {/* Right Column: Customer Mix */}
               <m.section
-                initial={{ opacity: 0, x: 20 }}
+                initial={false}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.5 }}
                 className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-200 dark:border-slate-800 shadow-sm"
@@ -557,7 +557,7 @@ export default function Dashboard() {
               </m.section>
 
               <m.section
-                initial={{ opacity: 0, x: 20 }}
+                initial={false}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.6 }}
                 className="bg-slate-900 rounded-3xl p-8 shadow-2xl relative overflow-hidden group"

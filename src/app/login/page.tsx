@@ -75,7 +75,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 max-w-lg">
-          <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <m.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.1 }}>
             <h1 className="text-6xl font-black text-white leading-[1.1] mb-6">
               Empowering <span className="text-blue-300">ISP Growth</span> Through Data.
             </h1>
@@ -107,7 +107,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <m.div 
             key={isForgotMode ? "forgot" : "login"}
-            initial={{ opacity: 0, x: 20 }} 
+            initial={false} 
             animate={{ opacity: 1, x: 0 }} 
             transition={{ duration: 0.5 }}
           >
