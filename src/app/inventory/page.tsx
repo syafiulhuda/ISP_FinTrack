@@ -362,9 +362,7 @@ export default function InventoryPage() {
     }
   };
 
-  if (loadingAssets || loadingStock) {
-    return <LoadingState message="Memuat data inventaris..." />;
-  }
+  const isLoadingAll = loadingAssets || loadingStock;
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-[#0f172a] p-4 md:p-6 pb-20 flex flex-col gap-10">
@@ -388,51 +386,57 @@ export default function InventoryPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-        {dynamicStats.map((stat, index) => {
-          const Icon = IconMap[stat.trendIcon as keyof typeof IconMap] || Cpu;
-          return (
-            <m.div
-              key={stat.label}
-              whileHover={{ y: -5 }}
-              className={cn(
-                "p-3 lg-phone:p-5 tablet:p-8 rounded-3xl tablet:rounded-[2.5rem] border shadow-sm flex flex-col justify-between h-auto min-h-[140px] tablet:h-48 relative overflow-hidden group transition-all",
-                stat.isAlert
-                  ? "bg-white dark:bg-slate-900 border-orange-200 dark:border-orange-900/50 hover:shadow-orange-500/10"
-                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:shadow-primary/10 hover:border-primary/50"
-              )}
-            >
-              {stat.isAlert && (
-                <m.div
-                  animate={{ opacity: [0.3, 0.6, 0.3] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                  className="absolute top-6 right-6 w-3 h-3 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]"
-                />
-              )}
-              <div className="flex flex-col lg-phone:flex-row justify-between items-start gap-2 lg-phone:gap-4">
-                <div className={cn(
-                  "p-3.5 rounded-2xl shrink-0",
+        {isLoadingAll ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-[140px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem]" />
+          ))
+        ) : (
+          dynamicStats.map((stat, index) => {
+            const Icon = IconMap[stat.trendIcon as keyof typeof IconMap] || Cpu;
+            return (
+              <m.div
+                key={stat.label}
+                whileHover={{ y: -5 }}
+                className={cn(
+                  "p-3 lg-phone:p-5 tablet:p-8 rounded-3xl tablet:rounded-[2.5rem] border shadow-sm flex flex-col justify-between h-auto min-h-[140px] tablet:h-48 relative overflow-hidden group transition-all",
                   stat.isAlert
-                    ? "bg-orange-100 text-orange-600"
-                    : "bg-slate-100 text-slate-600 dark:bg-slate-800/80 group-hover:bg-primary group-hover:text-white transition-all border border-slate-200/50 dark:border-slate-700/50"
-                )}>
-                  <Icon size={24} />
+                    ? "bg-white dark:bg-slate-900 border-orange-200 dark:border-orange-900/50 hover:shadow-orange-500/10"
+                    : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:shadow-primary/10 hover:border-primary/50"
+                )}
+              >
+                {stat.isAlert && (
+                  <m.div
+                    animate={{ opacity: [0.3, 0.6, 0.3] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="absolute top-6 right-6 w-3 h-3 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]"
+                  />
+                )}
+                <div className="flex flex-col lg-phone:flex-row justify-between items-start gap-2 lg-phone:gap-4">
+                  <div className={cn(
+                    "p-3.5 rounded-2xl shrink-0",
+                    stat.isAlert
+                      ? "bg-orange-100 text-orange-600"
+                      : "bg-slate-100 text-slate-600 dark:bg-slate-800/80 group-hover:bg-primary group-hover:text-white transition-all border border-slate-200/50 dark:border-slate-700/50"
+                  )}>
+                    <Icon size={24} />
+                  </div>
+                  <span className={cn(
+                    "text-[8px] lg-phone:text-[10px] font-black px-2 lg-phone:px-3 py-1 lg-phone:py-1.5 rounded-lg lg-phone:rounded-xl uppercase tracking-wider border transition-colors mt-1 lg-phone:mt-0 text-left lg-phone:text-right whitespace-normal leading-tight",
+                    stat.isAlert
+                      ? "bg-orange-50/50 text-orange-700 border-orange-200/50"
+                      : "bg-slate-50/50 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-slate-700/50 group-hover:border-primary/20"
+                  )}>
+                    {stat.trend}
+                  </span>
                 </div>
-                <span className={cn(
-                  "text-[8px] lg-phone:text-[10px] font-black px-2 lg-phone:px-3 py-1 lg-phone:py-1.5 rounded-lg lg-phone:rounded-xl uppercase tracking-wider border transition-colors mt-1 lg-phone:mt-0 text-left lg-phone:text-right whitespace-normal leading-tight",
-                  stat.isAlert
-                    ? "bg-orange-50/50 text-orange-700 border-orange-200/50"
-                    : "bg-slate-50/50 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-slate-700/50 group-hover:border-primary/20"
-                )}>
-                  {stat.trend}
-                </span>
-              </div>
-              <div className="mt-2 lg-phone:mt-0">
-                <p className="text-[8px] lg-phone:text-[10px] font-bold text-slate-400 uppercase tracking-wider lg-phone:tracking-widest truncate">{stat.label}</p>
-                <h3 className="text-2xl lg-phone:text-3xl tablet:text-4xl font-black text-slate-900 dark:text-slate-100 mt-0.5 lg-phone:mt-1">{stat.value}</h3>
-              </div>
-            </m.div>
-          );
-        })}
+                <div className="mt-2 lg-phone:mt-0">
+                  <p className="text-[8px] lg-phone:text-[10px] font-bold text-slate-400 uppercase tracking-wider lg-phone:tracking-widest truncate">{stat.label}</p>
+                  <h3 className="text-2xl lg-phone:text-3xl tablet:text-4xl font-black text-slate-900 dark:text-slate-100 mt-0.5 lg-phone:mt-1">{stat.value}</h3>
+                </div>
+              </m.div>
+            );
+          })
+        )}
       </div>
 
       {/* Assets Roster */}
@@ -548,7 +552,15 @@ export default function InventoryPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               <AnimatePresence mode="popLayout">
-                {paginatedAssets.map((asset, index) => {
+                {isLoadingAll ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}>
+                      <td colSpan={6} className="px-6 py-6">
+                        <div className="h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl w-full" />
+                      </td>
+                    </tr>
+                  ))
+                ) : paginatedAssets.map((asset, index) => {
                   const CondIcon = ConditionIcon[asset.condition as keyof typeof ConditionIcon] || AlertCircle;
                   return (
                     <m.tr

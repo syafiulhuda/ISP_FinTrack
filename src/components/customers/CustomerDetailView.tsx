@@ -14,7 +14,9 @@ import { toggleVipStatus, sendPaymentReminder } from "@/actions/customers";
 import { useState } from "react";
 import { toast } from "sonner";
 
-const formatCompactNumber = (number: number) => {
+const formatCompactNumber = (input: number | string) => {
+  const number = Number(input);
+  if (isNaN(number)) return "Rp 0";
   if (number >= 1000000000) return `Rp ${(number / 1000000000).toFixed(2)} B`;
   if (number >= 1000000) return `Rp ${(number / 1000000).toFixed(1)} M`;
   if (number >= 1000) return `Rp ${(number / 1000).toFixed(0)} K`;
@@ -103,10 +105,10 @@ export default function CustomerDetailView({ data }: { data: any }) {
   };
 
   const isActive = data.status === "Active";
-  const isAtRisk = data.healthScore < 50;
-  const isExcellent = data.healthScore >= 80;
-  const lateCount = data.txCount > 0 ? Math.round((data.paymentRatio / 100) * data.txCount) : 0;
-  const avgPayment = data.txCount > 0 ? data.ltv / data.txCount : 0;
+  const isAtRisk = Number(data.healthScore || 0) < 50;
+  const isExcellent = Number(data.healthScore || 0) >= 80;
+  const lateCount = Number(data.txCount || 0) > 0 ? Math.round((Number(data.paymentRatio || 0) / 100) * Number(data.txCount || 0)) : 0;
+  const avgPayment = Number(data.txCount || 0) > 0 ? Number(data.ltv || 0) / Number(data.txCount || 0) : 0;
 
   const segment = data.ltv >= 5000000 ? "Premium Subscriber"
     : data.ltv >= 2000000 ? "Regular Subscriber"

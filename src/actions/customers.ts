@@ -12,26 +12,30 @@ export async function getCustomers(page: number = 1, limit: number = 10): Promis
     const countRes = await query('SELECT COUNT(*) as total FROM customers');
     const total = parseInt(countRes.rows[0].total);
 
+    // Uses idx_transactions_customer_id (functional index on split_part(id,'-',2))
+    // Single LEFT JOIN against a pre-aggregated subquery — eliminates N+1 correlated subquery
     const res = await query(`
       SELECT c.*,
-        CASE 
-          WHEN c.status = 'Active' AND NOT EXISTS (
-            SELECT 1 FROM transactions t
-            WHERE split_part(t.id, '-', 2) = c.id
-              AND t.keterangan = 'pemasukan'
-              AND t.status = 'Verified'
-              AND EXTRACT(MONTH FROM (t.timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(MONTH FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
-              AND EXTRACT(YEAR FROM (t.timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(YEAR FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
-          )
+        EXTRACT(DAY FROM (c."createdAt" AT TIME ZONE 'Asia/Jakarta')) as due_day,
+        CASE
+          WHEN c.status = 'Active' AND paid.customer_id IS NULL
           THEN (EXTRACT(DAY FROM (c."createdAt" AT TIME ZONE 'Asia/Jakarta'))::int - EXTRACT(DAY FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))::int)
           ELSE null
-        END as grace_days,
-        EXTRACT(DAY FROM (c."createdAt" AT TIME ZONE 'Asia/Jakarta')) as due_day
+        END as grace_days
       FROM customers c
+      LEFT JOIN (
+        SELECT split_part(id, '-', 2) as customer_id
+        FROM transactions
+        WHERE keterangan = 'pemasukan'
+          AND status = 'Verified'
+          AND EXTRACT(MONTH FROM (timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(MONTH FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
+          AND EXTRACT(YEAR FROM (timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(YEAR FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
+        GROUP BY split_part(id, '-', 2)
+      ) paid ON paid.customer_id = c.id
       ORDER BY c."createdAt" DESC, c.id DESC
       LIMIT $1 OFFSET $2
     `, [limit, offset]);
-    
+
     return {
       customers: res.rows.length > 0 ? res.rows as Customer[] : (page === 1 ? [...Mock.MOCK_CUSTOMERS].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) as Customer[] : []),
       total: total || (page === 1 ? Mock.MOCK_CUSTOMERS.length : 0)
@@ -56,7 +60,7 @@ export async function getInactiveCust() {
       FROM inactive_cust 
       ORDER BY inactiveat DESC
     `);
-    
+
     // Strictly format response to ensure safe React Flight serialization to Client Components
     return res.rows.map(r => ({
       ...r,
@@ -84,7 +88,7 @@ export async function auditCustomerGracePeriod() {
         )
       RETURNING id
     `);
-    
+
     if (res.rows.length > 0) {
       for (const row of res.rows) {
         await query(`
@@ -113,7 +117,7 @@ export async function getCustomerGrowthTrend() {
       GROUP BY 1
       ORDER BY 1 ASC
     `);
-    
+
     const rawData = (res.rows || []).map(row => ({
       monthKey: row.Month,
       growth: parseInt(row.Growth || '0')
@@ -132,7 +136,7 @@ export async function getCustomerGrowthTrend() {
       const monthNum = i + 1;
       const monthStr = `${currentYear}-${String(monthNum).padStart(2, '0')}`;
       const existing = rawData.find(d => d.monthKey === monthStr);
-      
+
       if (existing) {
         cumulative += existing.growth;
       }
@@ -168,7 +172,7 @@ export async function getCustomerGrowthTrend() {
 export async function getServiceMix(province?: string) {
   try {
     const tiersRes = await query('SELECT name FROM service_tiers');
-    const tierNames = tiersRes.rows.length > 0 
+    const tierNames = tiersRes.rows.length > 0
       ? tiersRes.rows.map(r => r.name)
       : ['Premium', 'Standard', 'Basic', 'Gamers'];
 
@@ -183,16 +187,16 @@ export async function getServiceMix(province?: string) {
       WHERE 1=1
     `;
     const params = [];
-    
+
     if (province && province !== "All Regions") {
       sql += ' AND province = $1';
       params.push(province);
     }
-    
+
     sql += ' GROUP BY service_name';
-    
+
     const res = await query(sql, params);
-    
+
     return tierNames.map(name => {
       const row = res.rows.find(r => r.service_name.toLowerCase() === name.toLowerCase());
       return {
@@ -206,15 +210,15 @@ export async function getServiceMix(province?: string) {
   }
 }
 
-export async function createCustomer(data: { 
-  name: string, 
-  no_telp: string, 
-  service: string, 
-  province: string, 
-  city: string, 
-  district: string, 
-  village: string, 
-  address: string 
+export async function createCustomer(data: {
+  name: string,
+  no_telp: string,
+  service: string,
+  province: string,
+  city: string,
+  district: string,
+  village: string,
+  address: string
 }): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
     const maxIdRes = await query("SELECT id FROM customers WHERE id LIKE 'CT%' ORDER BY id DESC LIMIT 1");
@@ -228,7 +232,7 @@ export async function createCustomer(data: {
 
     const profile = await getAdminProfile();
     const inputter = profile.fullName || 'Unknown Admin';
-    
+
     await query(`
       INSERT INTO customers (id, name, no_telp, service, province, city, district, village, address, status, "createdAt", inputter, inputter_tms)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Active', NOW(), $10, NOW())
@@ -264,58 +268,51 @@ export async function getAgingMVData() {
 }
 export async function getCustomerAnalysis() {
   try {
-    const customersRes = await query('SELECT id, name, service, status, is_vip, "createdAt" AT TIME ZONE \'Asia/Jakarta\' as created_at FROM customers');
-    const transactionsRes = await query(`
-      SELECT split_part(id, '-', 2) as customer_id, amount, timestamp AT TIME ZONE 'Asia/Jakarta' as tx_date, status, keterangan
-      FROM transactions
-      WHERE status = 'Verified' AND keterangan = 'pemasukan'
+    // All computation done in PostgreSQL — no JS-side filtering of transactions.
+    // Uses idx_transactions_customer_id on split_part(id,'-',2) for the JOIN.
+    const res = await query(`
+      WITH tx_stats AS (
+        SELECT
+          split_part(t2.id, '-', 2)                                           AS customer_id,
+          COUNT(*)                                                             AS tx_count,
+          COALESCE(SUM(t2.amount), 0)                                          AS ltv,
+          MAX(t2.timestamp AT TIME ZONE 'Asia/Jakarta')                       AS last_payment,
+          COUNT(*) FILTER (
+            WHERE EXTRACT(DAY FROM (t2.timestamp AT TIME ZONE 'Asia/Jakarta')) >
+                  EXTRACT(DAY FROM (c2."createdAt" AT TIME ZONE 'Asia/Jakarta')) + 3
+          )                                                                    AS late_count
+        FROM transactions t2
+        JOIN customers c2 ON split_part(t2.id, '-', 2) = c2.id
+        WHERE t2.status = 'Verified' AND t2.keterangan = 'pemasukan'
+        GROUP BY split_part(t2.id, '-', 2)
+      )
+      SELECT
+        c.id,
+        c.name,
+        c.service,
+        c.status,
+        c.is_vip,
+        c."createdAt" AT TIME ZONE 'Asia/Jakarta'          AS created_at,
+        COALESCE(tx.ltv, 0)                                AS ltv,
+        COALESCE(tx.tx_count, 0)                           AS "txCount",
+        tx.last_payment                                    AS "lastPayment",
+        CASE
+          WHEN COALESCE(tx.tx_count, 0) = 0 THEN 0
+          ELSE ROUND((COALESCE(tx.late_count, 0)::numeric / tx.tx_count) * 100, 2)
+        END                                                AS "paymentRatio",
+        GREATEST(0, LEAST(100,
+          70
+          + CASE WHEN c.status = 'Active'   THEN 20 ELSE 0 END
+          + CASE WHEN c.status = 'Inactive' THEN -40 ELSE 0 END
+          - (COALESCE(tx.late_count, 0) * 10)
+          + CASE WHEN COALESCE(tx.ltv, 0) > 1000000 THEN 10 ELSE 0 END
+        ))                                                 AS "healthScore"
+      FROM customers c
+      LEFT JOIN tx_stats tx ON tx.customer_id = c.id
+      ORDER BY ltv DESC
     `);
 
-    const customers = customersRes.rows;
-    const transactions = transactionsRes.rows;
-
-    const analysis = customers.map((c: any) => {
-      const customerTxs = transactions.filter((t: any) => t.customer_id === c.id);
-      
-      // Calculate LTV
-      const ltv = customerTxs.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
-      
-      // Calculate Late Payment Ratio
-      // Due day is the day of registration
-      const regDate = new Date(c.created_at);
-      const dueDay = regDate.getDate();
-      
-      let lateCount = 0;
-      customerTxs.forEach((t: any) => {
-        const txDate = new Date(t.tx_date);
-        if (txDate.getDate() > dueDay + 3) { // 3 days grace period
-          lateCount++;
-        }
-      });
-      
-      const paymentRatio = customerTxs.length > 0 ? (lateCount / customerTxs.length) * 100 : 0;
-      
-      // Calculate Health Score (0-100)
-      let score = 70; // Baseline
-      if (c.status === 'Active') score += 20;
-      if (c.status === 'Inactive') score -= 40;
-      
-      score -= (lateCount * 10); // Deduct for each late payment
-      if (ltv > 1000000) score += 10; // Bonus for high value
-      
-      const healthScore = Math.max(0, Math.min(100, score));
-
-      return {
-        ...c,
-        ltv,
-        paymentRatio,
-        healthScore,
-        txCount: customerTxs.length,
-        lastPayment: customerTxs.length > 0 ? customerTxs.sort((a: any, b: any) => new Date(b.tx_date).getTime() - new Date(a.tx_date).getTime())[0].tx_date : null
-      };
-    });
-
-    return analysis;
+    return res.rows;
   } catch (e) {
     console.error("DB Error: getCustomerAnalysis", e);
     return [];
@@ -336,7 +333,7 @@ export async function getCustomer360(customerId: string) {
     `, [customerId]);
 
     const txs = txRes.rows;
-    
+
     const regDate = new Date(c.created_at);
     const dueDay = regDate.getDate();
 
@@ -353,7 +350,7 @@ export async function getCustomer360(customerId: string) {
       ltv += amt;
       const txDate = new Date(t.tx_date);
       const isLate = txDate.getDate() > dueDay + 3;
-      
+
       const monthKey = txDate.toLocaleString('default', { month: 'short', year: 'numeric' });
       if (!monthGroups[monthKey]) {
         monthGroups[monthKey] = { ontime: 0, late: 0, total: 0 };
@@ -426,7 +423,7 @@ export async function sendPaymentReminder(customerId: string) {
 
     // Mock WhatsApp/Fonnte integration logic
     console.log(`[WA REMINDER] Sending to ${customer.name} (${customer.no_telp})...`);
-    
+
     // Record in notifications
     await query(`
       INSERT INTO notifications (type, category, title, message, created_at, is_unread)

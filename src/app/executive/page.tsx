@@ -361,18 +361,7 @@ export default function ExecutiveDashboard() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[80vh]">
-        <div className="animate-pulse flex flex-col items-center gap-4 text-slate-500">
-          <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
-          <p className="font-medium tracking-widest uppercase text-xs">Compiling Executive Data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!processedData) return null;
+  const isDataLoading = isLoading || !processedData;
 
   return (
     <div className="min-h-screen pb-20">
@@ -481,7 +470,21 @@ export default function ExecutiveDashboard() {
             {/* TAB 1: FINANCIAL OVERVIEW */}
             {activeTab === 'financial' && (
               <div className="space-y-8">
-                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                {isDataLoading ? (
+                  <>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="h-[120px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl" />
+                      ))}
+                    </div>
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                      <div className="h-6 w-48 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-lg mb-6" />
+                      <div className="h-80 w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl" />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                   {[
                     { title: "Revenue", val: processedData.financial.totalRevenue, icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10" },
                     { title: "Gross Profit", val: processedData.financial.grossProfit, icon: Target, color: "text-blue-500", bg: "bg-blue-500/10" },
@@ -557,13 +560,25 @@ export default function ExecutiveDashboard() {
                     </ResponsiveContainer>
                   </div>
                 </div>
+                </>
+              )}
               </div>
             )}
 
             {/* TAB 2: INVENTORY & ASSETS */}
             {activeTab === 'inventory' && (
               <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {isDataLoading ? (
+                  <div className="animate-pulse space-y-8">
+                    <div className="h-32 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="h-80 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
+                      <div className="h-80 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm md:col-span-2">
                     <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Total Asset Valuation</p>
                     <h3 className="text-4xl font-black text-emerald-500">{processedData.inventory.valuation}</h3>
@@ -747,13 +762,24 @@ export default function ExecutiveDashboard() {
                     </div>
                   </div>
                 </div>
+                </>
+              )}
               </div>
             )}
 
             {/* TAB 3: REGIONAL ANALYTICS */}
             {activeTab === 'regional' && (
               <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {isDataLoading ? (
+                  <div className="animate-pulse space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="h-96 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
+                      <div className="h-96 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Subscriber Distribution by Province */}
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
@@ -834,6 +860,8 @@ export default function ExecutiveDashboard() {
                     {processedData.regional.provinceProfit.length === 0 && <p className="text-slate-500 italic">No financial data for selected filters.</p>}
                   </div>
                 </div>
+                </>
+              )}
               </div>
             )}
           </m.div>

@@ -16,7 +16,7 @@ export async function getDashboardData() {
   ] = await Promise.all([
     getCustomers(1, 1000),
     getServiceTiers(),
-    getTransactions(),
+    getTransactions(13),   // Last 13 months: current month + 12 for trend charts
     getInactiveCust(),
     getCustomerGrowthTrend(),
     getExpenses(),

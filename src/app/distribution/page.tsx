@@ -197,10 +197,6 @@ export default function DistributionMapPage() {
 
   if (!mounted) return null;
 
-  if (isLoading) {
-    return <LoadingState message="Memetakan jaringan ISP..." />;
-  }
-
   return (
     <div className="flex-1 flex flex-col min-h-screen relative overflow-hidden bg-slate-50 dark:bg-slate-950">
       {/* Header Overlay */}

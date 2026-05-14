@@ -194,10 +194,6 @@ export default function ServiceTiersPage() {
   // We handle loading states inline to prevent layout shifts and scroll jumps
   const isLoading = (loadingCustomers || loadingTiers) && allCustomers.length === 0;
 
-  if (isLoading) {
-    return <div className="h-full w-full flex items-center justify-center"><div className="animate-pulse flex flex-col items-center gap-4"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="text-slate-500 font-medium">Initializing Service Tiers...</p></div></div>;
-  }
-
   const totalPages = isSearching ? Math.ceil(filteredCustomers.length / itemsPerPage) : Math.ceil(totalCount / itemsPerPage);
   
   const displayCustomers = isSearching 
@@ -227,7 +223,12 @@ export default function ServiceTiersPage() {
 
       {/* Horizontal Scroll: Service Tiers */}
       <div className="flex overflow-x-auto pb-6 gap-6 no-scrollbar">
-        {serviceTiers.map((tier, index) => {
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+             <div key={i} className="min-w-[280px] h-[180px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl flex-shrink-0" />
+          ))
+        ) : (
+          serviceTiers.map((tier, index) => {
           const Icon = IconMap[tier.icon as keyof typeof IconMap] || Wifi;
           const isFeatured = tier.type === "featured";
           const isPriority = tier.type === "priority";
@@ -288,23 +289,25 @@ export default function ServiceTiersPage() {
               </div>
             </m.div>
           );
-        })}
+        }))}
 
         {/* Add New Tier Card */}
-        <m.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setIsAddTierModalOpen(true)}
-          className="flex-shrink-0 min-w-[280px] p-6 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-4 hover:border-primary hover:bg-primary/5 transition-all group"
-        >
-          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-            <Plus size={24} />
-          </div>
-          <div className="text-center">
-            <p className="font-bold text-slate-900 dark:text-slate-100">Add New Plan</p>
-            <p className="text-xs text-slate-500">Expand your service offerings</p>
-          </div>
-        </m.button>
+        {!isLoading && (
+          <m.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setIsAddTierModalOpen(true)}
+            className="flex-shrink-0 min-w-[280px] p-6 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-4 hover:border-primary hover:bg-primary/5 transition-all group"
+          >
+            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+              <Plus size={24} />
+            </div>
+            <div className="text-center">
+              <p className="font-bold text-slate-900 dark:text-slate-100">Add New Plan</p>
+              <p className="text-xs text-slate-500">Expand your service offerings</p>
+            </div>
+          </m.button>
+        )}
       </div>
 
       {/* Customer List Section */}
@@ -415,7 +418,15 @@ export default function ServiceTiersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {displayCustomers.map((cust: any, idx: number) => (
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}>
+                      <td colSpan={6} className="px-6 py-6">
+                        <div className="h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl w-full" />
+                      </td>
+                    </tr>
+                  ))
+                ) : displayCustomers.map((cust: any, idx: number) => (
                   <m.tr 
                     key={cust.id}
                     initial={{ opacity: 0, y: 10 }}
@@ -482,7 +493,7 @@ export default function ServiceTiersPage() {
                     </td>
                   </m.tr>
                 ))}
-                {displayCustomers.length === 0 && (
+                {(!isLoading && displayCustomers.length === 0) && (
                   <tr>
                     <td colSpan={7} className="px-6 py-12 text-center text-slate-400 font-medium">
                       No customers found matching your search criteria.
