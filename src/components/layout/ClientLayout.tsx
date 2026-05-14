@@ -49,20 +49,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             <main className="flex-1 overflow-y-auto overflow-x-hidden pt-24 pb-12 px-4 sm:px-6 lg:px-8 2xl:px-12">
               <div className="w-full max-w-[2000px] mx-auto">
                 <ErrorBoundary>
-                  <AnimatePresence mode="wait">
-                    <m.div
-                      key={pathname}
-                      initial={{ opacity: 0, y: 8, scale: 0.99, filter: "blur(8px)" }}
-                      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-                      exit={{ opacity: 0, y: -8, scale: 0.99, filter: "blur(8px)" }}
-                      transition={{ 
-                        duration: 0.4, 
-                        ease: [0.22, 1, 0.36, 1] 
-                      }}
-                    >
-                      {children}
-                    </m.div>
-                  </AnimatePresence>
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    {children}
+                  </div>
                 </ErrorBoundary>
               </div>
             </main>

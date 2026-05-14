@@ -25,7 +25,7 @@ const poolConfig: any = {
 };
 
 if (env.data.DATABASE_URL) {
-  poolConfig.connectionString = env.data.DATABASE_URL;
+  poolConfig.connectionString = env.data.DATABASE_URL.replace('sslmode=require', 'sslmode=verify-full');
 } else if (env.data.DATABASE_USER && env.data.DATABASE_HOST && env.data.DATABASE_NAME && env.data.DATABASE_PASSWORD) {
   poolConfig.user = env.data.DATABASE_USER;
   poolConfig.host = env.data.DATABASE_HOST;
