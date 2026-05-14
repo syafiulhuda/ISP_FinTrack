@@ -30,7 +30,7 @@ import { LoadingState } from "@/components/LoadingState";
 export default function FinancePage() {
   const { data: transactions = [], isLoading: loadingTx } = useQuery({ 
     queryKey: ['transactions'], 
-    queryFn: getTransactions,
+    queryFn: () => getTransactions(),
     refetchInterval: 60000 
   });
   const { data: ocrData, isLoading: loadingOcr } = useQuery({ queryKey: ['ocrData'], queryFn: getOcrData });

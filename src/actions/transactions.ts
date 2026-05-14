@@ -6,8 +6,12 @@ import * as Mock from '@/lib/mockData';
 import { Transaction, OcrData, Invoice } from '@/types';
 import { getAdminProfile } from './admin';
 
-export async function getTransactions(): Promise<(Transaction & { numericAmount?: number })[]> {
+export async function getTransactions(monthsBack?: number): Promise<(Transaction & { numericAmount?: number })[]> {
   try {
+    const dateFilter = monthsBack
+      ? `AND timestamp >= NOW() - INTERVAL '${monthsBack} months'`
+      : '';
+
     const res = await query(`
       SELECT 
         COALESCE(c.id, e.id::text) as linked_id,
@@ -15,6 +19,7 @@ export async function getTransactions(): Promise<(Transaction & { numericAmount?
       FROM transactions t
       LEFT JOIN customers c ON split_part(t.id, '-', 2) = c.id
       LEFT JOIN expenses e ON split_part(t.id, '-', 2) = e.id::text
+      WHERE 1=1 ${dateFilter}
       ORDER BY t.timestamp DESC
     `);
     

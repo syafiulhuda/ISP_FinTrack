@@ -87,14 +87,7 @@ export default function CustomerAnalysisPage() {
 
   return (
     <div className="space-y-8 p-2">
-      {loading ? (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-          <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-          <p className="text-slate-500 font-bold animate-pulse">Analyzing Customer Behavior...</p>
-        </div>
-      ) : (
-        <>
-          {/* Header */}
+      {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Customer Analysis</h1>
@@ -141,70 +134,78 @@ export default function CustomerAnalysisPage() {
 
           {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <m.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -mr-16 -mt-16 blur-3xl" />
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-indigo-500/10 text-indigo-500 rounded-2xl">
-                  <TrendingUp size={24} />
-                </div>
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Total Portfolio LTV</span>
-              </div>
-              <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap tabular-nums">{formatCompactNumber(stats.totalLtv)}</h3>
-              <p className="text-xs text-slate-400 mt-2 font-medium">Cumulative revenue from {data.length} customers</p>
-            </m.div>
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-[200px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem] border border-slate-200 dark:border-slate-800" />
+              ))
+            ) : (
+              <>
+                <m.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -mr-16 -mt-16 blur-3xl" />
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 bg-indigo-500/10 text-indigo-500 rounded-2xl">
+                      <TrendingUp size={24} />
+                    </div>
+                    <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Total Portfolio LTV</span>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap tabular-nums">{formatCompactNumber(stats.totalLtv)}</h3>
+                  <p className="text-xs text-slate-400 mt-2 font-medium">Cumulative revenue from {data.length} customers</p>
+                </m.div>
 
-            <m.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16 blur-3xl" />
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-2xl">
-                  <ShieldAlert size={24} />
-                </div>
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Avg. Health Score</span>
-              </div>
-              <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap">{stats.avgHealth}%</h3>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="h-1.5 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <m.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${stats.avgHealth}%` }}
-                    className="h-full bg-emerald-500"
-                  />
-                </div>
-              </div>
-            </m.div>
+                <m.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16 blur-3xl" />
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-2xl">
+                      <ShieldAlert size={24} />
+                    </div>
+                    <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Avg. Health Score</span>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap">{stats.avgHealth}%</h3>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="h-1.5 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <m.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${stats.avgHealth}%` }}
+                        className="h-full bg-emerald-500"
+                      />
+                    </div>
+                  </div>
+                </m.div>
 
-            <m.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full -mr-16 -mt-16 blur-3xl" />
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-rose-500/10 text-rose-500 rounded-2xl">
-                  <Clock size={24} />
-                </div>
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Churn Risk High</span>
-              </div>
-              <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap">{stats.atRisk}</h3>
-              <p className="text-xs text-rose-500 mt-2 font-bold uppercase tracking-wider">Requires Immediate Attention</p>
-            </m.div>
+                <m.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full -mr-16 -mt-16 blur-3xl" />
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 bg-rose-500/10 text-rose-500 rounded-2xl">
+                      <Clock size={24} />
+                    </div>
+                    <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Churn Risk High</span>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap">{stats.atRisk}</h3>
+                  <p className="text-xs text-rose-500 mt-2 font-bold uppercase tracking-wider">Requires Immediate Attention</p>
+                </m.div>
+              </>
+            )}
           </div>
 
           {/* Table */}
           <m.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative"
+            className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative min-h-[400px]"
           >
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -218,7 +219,16 @@ export default function CustomerAnalysisPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                  {paginatedData.map((customer, idx) => (
+                  {loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i}>
+                        <td colSpan={5} className="p-6">
+                          <div className="h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl w-full" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    paginatedData.map((customer, idx) => (
                     <m.tr 
                       key={customer.id}
                       initial={{ opacity: 0, x: -10 }}
@@ -294,7 +304,7 @@ export default function CustomerAnalysisPage() {
                         </Link>
                       </td>
                     </m.tr>
-                  ))}
+                  )))}
                 </tbody>
               </table>
             </div>
@@ -343,7 +353,7 @@ export default function CustomerAnalysisPage() {
               </div>
             )}
 
-            {sortedAndFilteredData.length === 0 && (
+            {(!loading && sortedAndFilteredData.length === 0) && (
               <div className="p-20 text-center">
                 <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-slate-400">
                   <Search size={32} />
@@ -353,8 +363,6 @@ export default function CustomerAnalysisPage() {
               </div>
             )}
           </m.div>
-        </>
-      )}
     </div>
   );
 }

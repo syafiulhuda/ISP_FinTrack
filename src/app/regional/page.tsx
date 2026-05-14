@@ -11,10 +11,7 @@ import {
   Banknote
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getAgingMVData } from "@/actions/customers";
-import { getServiceTiers } from "@/actions/tiers";
-import { getAssetRoster } from "@/actions/assets";
-import { getInvoices } from "@/actions/transactions";
+import { getRegionalData } from "@/actions/regional";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
 import { useState, useMemo, useEffect } from "react";
 import { LoadingState } from "@/components/LoadingState";
@@ -30,16 +27,23 @@ export default function RegionalAnalysisPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
 
-  const { data: customerData, isLoading: loadingCustomers } = useQuery({ 
-    queryKey: ['customers', 1, 1000], 
-    queryFn: () => getCustomers(1, 1000), 
-    refetchInterval: 60000 
+  const { data: pageData, isLoading: isPageLoading } = useQuery({
+    queryKey: ['regionalData'],
+    queryFn: getRegionalData,
+    refetchInterval: 60000,
   });
-  const customerList: Customer[] = customerData?.customers || [];
-  const { data: serviceTiers = [], isLoading: loadingTiers } = useQuery<ServiceTier[]>({ queryKey: ['serviceTiers'], queryFn: getServiceTiers, refetchInterval: 60000 });
-  const { data: assetRoster = [], isLoading: loadingAssets } = useQuery<Asset[]>({ queryKey: ['assetRoster'], queryFn: getAssetRoster, refetchInterval: 60000 });
-  const { data: invoicesList = [], isLoading: loadingInvoices } = useQuery<Invoice[]>({ queryKey: ['invoices'], queryFn: getInvoices, refetchInterval: 60000 });
-  const { data: agingMVData = [], isLoading: loadingMV } = useQuery<any[]>({ queryKey: ['agingMV'], queryFn: getAgingMVData, refetchInterval: 60000 });
+
+  const customerList: Customer[] = pageData?.customers || [];
+  const serviceTiers: ServiceTier[] = pageData?.serviceTiers || [];
+  const assetRoster: Asset[] = pageData?.assetRoster || [];
+  const invoicesList: Invoice[] = pageData?.invoicesList || [];
+  const agingMVData: any[] = pageData?.agingMVData || [];
+
+  const loadingCustomers = isPageLoading;
+  const loadingTiers = isPageLoading;
+  const loadingAssets = isPageLoading;
+  const loadingInvoices = isPageLoading;
+  const loadingMV = isPageLoading;
 
 
   const assetSummary = useMemo(() => {
@@ -257,9 +261,7 @@ export default function RegionalAnalysisPage() {
   const paginatedAging = dynamicData.slice((agingPage - 1) * itemsPerPage, agingPage * itemsPerPage);
   const totalAgingPages = Math.ceil(dynamicData.length / itemsPerPage);
 
-  if (loadingCustomers || loadingTiers || loadingAssets || loadingInvoices || loadingMV) {
-    return <LoadingState message="Mengkalkulasi analisis regional..." />;
-  }
+  const isLoadingAll = loadingCustomers || loadingTiers || loadingAssets || loadingInvoices || loadingMV;
 
   return (
     <div className="space-y-10">
@@ -336,23 +338,31 @@ export default function RegionalAnalysisPage() {
 
       {/* Asset Ownership Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard 
-          name="Total Aset" 
-          value={mounted ? formatNumber(assetSummary.total) : '---'} 
-          icon={MapPin} 
-        />
-        <StatCard 
-          name="Online" 
-          value={mounted ? formatNumber(assetSummary.online) : '---'} 
-          icon={TrendingUp}
-          iconClassName="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30"
-        />
-        <StatCard 
-          name="Sold" 
-          value={mounted ? formatNumber(assetSummary.sold) : '---'} 
-          icon={Banknote}
-          iconClassName="bg-rose-100 text-rose-600 dark:bg-rose-900/30"
-        />
+        {isLoadingAll ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-[140px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />
+          ))
+        ) : (
+          <>
+            <StatCard 
+              name="Total Aset" 
+              value={mounted ? formatNumber(assetSummary.total) : '---'} 
+              icon={MapPin} 
+            />
+            <StatCard 
+              name="Online" 
+              value={mounted ? formatNumber(assetSummary.online) : '---'} 
+              icon={TrendingUp}
+              iconClassName="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30"
+            />
+            <StatCard 
+              name="Sold" 
+              value={mounted ? formatNumber(assetSummary.sold) : '---'} 
+              icon={Banknote}
+              iconClassName="bg-rose-100 text-rose-600 dark:bg-rose-900/30"
+            />
+          </>
+        )}
       </div>
 
       {/* Profitability Table */}
@@ -368,9 +378,10 @@ export default function RegionalAnalysisPage() {
             Profitability by Kelurahan
           </h3>
         </div>
-        <DataTable
-          data={paginatedProfit}
-          isLoading={loadingCustomers}
+        <div className="min-h-[400px]">
+          <DataTable
+            data={paginatedProfit}
+            isLoading={isLoadingAll}
           keyExtractor={(row: any) => row.node}
           columns={[
             { 
@@ -458,6 +469,7 @@ export default function RegionalAnalysisPage() {
             </div>
           </div>
         )}
+        </div>
       </m.section>
 
       {/* AR Aging Table */}
@@ -473,9 +485,10 @@ export default function RegionalAnalysisPage() {
             AR Aging Analysis
           </h3>
         </div>
-        <DataTable
-          data={paginatedAging}
-          isLoading={loadingMV}
+        <div className="min-h-[400px]">
+          <DataTable
+            data={paginatedAging}
+            isLoading={isLoadingAll}
           keyExtractor={(row: any) => `aging-${row.node}`}
           rowClassName={(row: any) => row.aging.critical ? "bg-red-50/30 dark:bg-red-900/5" : ""}
           columns={[
@@ -550,6 +563,7 @@ export default function RegionalAnalysisPage() {
             </div>
           </div>
         )}
+        </div>
       </m.section>
     </div>
   );

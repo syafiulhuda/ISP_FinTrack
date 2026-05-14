@@ -22,12 +22,12 @@ import dynamic from 'next/dynamic';
 
 const DashboardRevenueChart = dynamic(
   () => import('@/components/charts/DashboardCharts').then(mod => mod.DashboardRevenueChart),
-  { ssr: false, loading: () => <div className="h-full w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" /> }
+  { ssr: false, loading: () => <div className="h-[300px] w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" /> }
 );
 
 const DashboardCustomerChart = dynamic(
   () => import('@/components/charts/DashboardCharts').then(mod => mod.DashboardCustomerChart),
-  { ssr: false, loading: () => <div className="h-full w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" /> }
+  { ssr: false, loading: () => <div className="h-[220px] w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" /> }
 );
 import { useQuery } from "@tanstack/react-query";
 import { getDashboardData } from '@/actions/dashboard';
@@ -376,16 +376,7 @@ export default function Dashboard() {
   ];
 
 
-  if (isLoading) {
-    return (
-      <div className="min-h-[70vh] w-full flex flex-col items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-          <p className="text-slate-500 font-bold tracking-wide">Loading Dashboard Data...</p>
-        </div>
-      </div>
-    );
-  }
+  // Removed full-page isLoading blocker to improve LCP
 
   return (
     <div className="relative">
@@ -453,11 +444,7 @@ export default function Dashboard() {
       </AnimatePresence>
 
       <div ref={dashboardRef} className="space-y-8 pb-10">
-        <m.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="space-y-8"
-        >
+        <div className="space-y-8">
           {/* Header */}
           <m.div 
             initial={{ opacity: 0, y: -20 }}
@@ -490,16 +477,22 @@ export default function Dashboard() {
 
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {kpis.map((kpi, index) => (
-              <StatCard
-                key={kpi.name}
-                name={kpi.name}
-                value={kpi.value}
-                icon={kpi.icon}
-                trend={kpi.trendType === 'neutral' ? undefined : kpi.trend}
-                trendType={kpi.trendType as any}
-              />
-            ))}
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-[140px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />
+              ))
+            ) : (
+              kpis.map((kpi, index) => (
+                <StatCard
+                  key={kpi.name}
+                  name={kpi.name}
+                  value={kpi.value}
+                  icon={kpi.icon}
+                  trend={kpi.trendType === 'neutral' ? undefined : kpi.trend}
+                  trendType={kpi.trendType as any}
+                />
+              ))
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -531,8 +524,10 @@ export default function Dashboard() {
                   <ExternalLink size={18} />
                 </Link>
               </div>
-              <div className="flex-1 w-full mt-4 min-h-[300px]">
-                {mounted && (
+              <div className="flex-1 w-full mt-4 h-[300px]">
+                {isLoading ? (
+                  <div className="h-full w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+                ) : (
                   <DashboardRevenueChart data={dynamicData.trendData.filter((d: any) => d.growth !== null)} />
                 )}
               </div>
@@ -550,9 +545,11 @@ export default function Dashboard() {
               <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Customer Growth</h3>
               <p className="text-xs font-medium text-slate-500 mt-1">{dynamicData.dateRangeLabel}</p>
             </div>
-            <div className="h-[220px] w-full">
-              {mounted && (
-                  <DashboardCustomerChart data={(dynamicData.growthTrend as any[]).filter((d: any) => d.growth !== null)} />
+            <div className="h-[220px] w-full mt-4">
+              {isLoading ? (
+                <div className="h-full w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+              ) : (
+                <DashboardCustomerChart data={(dynamicData.growthTrend as any[]).filter((d: any) => d.growth !== null)} />
               )}
             </div>
 
@@ -578,7 +575,7 @@ export default function Dashboard() {
               </m.section>
             </div>
           </div>
-        </m.div>
+        </div>
       </div>
     </div>
   );
