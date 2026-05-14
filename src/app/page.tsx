@@ -19,6 +19,7 @@ import {
   Globe
 } from "lucide-react";
 import dynamic from 'next/dynamic';
+import { ChartContainer } from '@/components/charts/ChartContainer';
 
 const DashboardRevenueChart = dynamic(
   () => import('@/components/charts/DashboardCharts').then(mod => mod.DashboardRevenueChart),
@@ -524,13 +525,13 @@ export default function Dashboard() {
                   <ExternalLink size={18} />
                 </Link>
               </div>
-              <div className="flex-1 w-full mt-4 h-[300px]">
+              <ChartContainer className="flex-1 w-full mt-4 h-[300px]">
                 {isLoading ? (
                   <div className="h-full w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
                 ) : (
                   <DashboardRevenueChart data={dynamicData.trendData.filter((d: any) => d.growth !== null)} />
                 )}
-              </div>
+              </ChartContainer>
             </m.section>
 
             <div className="space-y-8">
@@ -545,13 +546,13 @@ export default function Dashboard() {
                   <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Customer Growth</h3>
                   <p className="text-xs font-medium text-slate-500 mt-1">{dynamicData.dateRangeLabel}</p>
                 </div>
-                <div className="h-[220px] w-full mt-4">
+                <ChartContainer className="h-[220px] w-full mt-4">
                   {isLoading ? (
                     <div className="h-full w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
                   ) : (
                     <DashboardCustomerChart data={(dynamicData.growthTrend as any[]).filter((d: any) => d.growth !== null)} />
                   )}
-                </div>
+                </ChartContainer>
 
               </m.section>
 

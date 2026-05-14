@@ -1,0 +1,52 @@
+"use client";
+
+/**
+ * ChartContainer — wrapper that defers chart rendering until the browser
+ * has finished its first layout pass. This prevents Recharts from measuring
+ * a zero-size container and logging the width(-1)/height(-1) warning.
+ *
+ * Usage:
+ *   <ChartContainer className="h-[300px] w-full">
+ *     <MyChart />
+ *   </ChartContainer>
+ */
+
+import { useLayoutEffect, useState, useRef, ReactNode, CSSProperties } from "react";
+import { cn } from "@/lib/utils";
+
+interface ChartContainerProps {
+  children: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+  skeleton?: ReactNode;
+}
+
+export function ChartContainer({
+  children,
+  className,
+  style,
+  skeleton,
+}: ChartContainerProps) {
+  const [ready, setReady] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    // rAF gives the browser one full layout pass before rendering chart
+    const id = requestAnimationFrame(() => {
+      setReady(true);
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  return (
+    <div ref={ref} className={cn("relative", className)} style={style}>
+      {ready ? (
+        children
+      ) : (
+        skeleton ?? (
+          <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+        )
+      )}
+    </div>
+  );
+}

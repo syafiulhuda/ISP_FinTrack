@@ -47,7 +47,7 @@ export function DataTable<T>({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {isLoading ? (
               <tr>
                 <td colSpan={columns.length} className="px-6 py-12 text-center">

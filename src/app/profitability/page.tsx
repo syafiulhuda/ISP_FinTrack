@@ -20,22 +20,11 @@ import {
   RotateCcw
 } from "lucide-react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  Area,
-  AreaChart,
-  ReferenceLine
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell, Line, Area, AreaChart, ReferenceLine
 } from "recharts";
+import { WaterfallChart, ServiceMixChart, ProfitabilityTrendChart } from "@/components/charts/ProfitabilityCharts";
+import { ChartContainer } from "@/components/charts/ChartContainer";
 
 import { useQuery } from "@tanstack/react-query";
 import { getProfitabilityData } from "@/actions/profitability";
@@ -549,90 +538,26 @@ export default function ProfitabilityPage() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           <m.section initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 md:p-8 pb-4 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex items-center justify-between mb-8"><div><h3 className="text-xl font-black">Revenue Waterfall</h3><p className="text-xs text-slate-500 mt-1">Gross Margin vs Real Opex.</p></div><BarChart3 className="text-slate-300" size={28} /></div>
-            <div className="h-[400px] md:h-[500px] w-full">
+            <ChartContainer className="h-[400px] md:h-[500px] w-full">
               {isDataLoading ? (
                 <div className="w-full h-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl" />
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dynamicData.waterfallData} margin={{ top: 10, right: 20, left: 20, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fontWeight: 'bold', fill: '#64748b' }}
-                      dy={12}
-                      interval={0}
-                    />
-                    <YAxis hide domain={['auto', 'auto']} />
-                    <Tooltip
-                      cursor={{ fill: 'transparent' }}
-                      content={({ active, payload }) => active && payload && payload.length && (
-                        <div className="bg-slate-900 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl border border-white/10 backdrop-blur-md">
-                          <p className="opacity-60 mb-1 uppercase tracking-tighter">{payload[0].payload.name}</p>
-                          <p className="text-sm font-black">Rp {Math.abs(Number(payload[0].value)).toLocaleString()}</p>
-                        </div>
-                      )}
-                    />
-                    <Bar dataKey="value" barSize={32} radius={[20, 20, 20, 20]}>
-                      {dynamicData.waterfallData.map((entry: any, index: number) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={entry.isExpense ? "#f43f5e" : "#10b981"}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <WaterfallChart data={dynamicData.waterfallData} />
               )}
-            </div>
+            </ChartContainer>
           </m.section>
 
           <div className="space-y-8">
             <m.section initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
               <h3 className="text-xl font-black mb-8 text-slate-900 dark:text-white">Service Plan Mix</h3>
               <div className="flex flex-col sm:flex-row items-center gap-10">
-                <div className="h-[220px] w-full sm:w-1/2 relative group shrink-0">
+                <ChartContainer className="h-[220px] w-full sm:w-1/2 relative group shrink-0">
                   {isDataLoading ? (
                     <div className="w-full h-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[100%]" />
                   ) : (
-                    <>
-                      {/* Center Text Overlay */}
-                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
-                        <span className="text-4xl font-black text-slate-900 dark:text-white leading-none">
-                          {dynamicData.totalActiveUsers}
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                          Users
-                        </span>
-                      </div>
-
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={dynamicData.distribution}
-                            innerRadius={70}
-                            outerRadius={90}
-                            paddingAngle={15}
-                            dataKey="value"
-                            startAngle={180}
-                            endAngle={-180}
-                            stroke="none"
-                            cornerRadius={10}
-                          >
-                            {dynamicData.distribution.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={(entry as any).color} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                            formatter={(value: any, name: any, props: any) => [`${props.payload.count} Users`, name]}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </>
+                    <ServiceMixChart data={dynamicData.distribution as any} totalActiveUsers={dynamicData.totalActiveUsers} />
                   )}
-                </div>
+                </ChartContainer>
                 <div className="space-y-6 w-full sm:w-1/2">
                   {isDataLoading ? (
                     Array.from({ length: 4 }).map((_, i) => (
@@ -669,34 +594,13 @@ export default function ProfitabilityPage() {
                     {dynamicData.latestProfit >= 0 ? "↑ trending" : "↓ deficit"}
                   </span>
                 </div>
-                <div className="h-[160px] w-full">
+                <ChartContainer className="h-[160px] w-full">
                   {isDataLoading ? (
                     <div className="w-full h-full bg-slate-800/50 animate-pulse rounded-2xl" />
                   ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={dynamicData.growthTrend} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
-                        <defs><linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#004ac6" stopOpacity={0.4} /><stop offset="100%" stopColor="#004ac6" stopOpacity={0} /></linearGradient></defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                        <XAxis
-                          dataKey="month"
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
-                          interval={0}
-                          padding={{ left: 20, right: 20 }}
-                        />
-                        <YAxis hide />
-                        <Tooltip content={({ active, payload }) => active && payload && payload.length && (
-                          <div className="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/10 shadow-xl">
-                            <p className="text-xs font-black text-white">Rp {Number(payload[0].value).toLocaleString()}</p>
-                            <p className="text-[9px] font-bold text-slate-400 mt-0.5">{payload[0].payload.month}</p>
-                          </div>
-                        )} />
-                        <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fill="url(#growthGradient)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                    <ProfitabilityTrendChart data={dynamicData.growthTrend} />
                   )}
-                </div>
+                </ChartContainer>
               </div>
             </m.section>
           </div>

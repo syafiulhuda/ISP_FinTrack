@@ -46,7 +46,7 @@ const RevenueTooltip = ({ active, payload, label }: RevenueTooltipProps) => {
 
 export const DashboardRevenueChart = ({ data }: { data: any[] }) => {
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
       <LineChart 
         data={data} 
         margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
@@ -85,7 +85,7 @@ export const DashboardRevenueChart = ({ data }: { data: any[] }) => {
 
 export const DashboardCustomerChart = ({ data }: { data: any[] }) => {
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
       <AreaChart 
         data={data} 
         margin={{ top: 10, right: 20, left: 20, bottom: 0 }}
