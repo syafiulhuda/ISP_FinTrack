@@ -447,10 +447,7 @@ export default function Dashboard() {
       <div ref={dashboardRef} className="space-y-8 pb-10">
         <div className="space-y-8">
           {/* Header */}
-          <m.div
-            initial={false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 24 }}
+          <div
             className="flex flex-row items-start md:items-center justify-between gap-2 md:gap-4"
           >
             <div className="flex-1">
@@ -474,7 +471,7 @@ export default function Dashboard() {
                 <TrendingUp size={16} className="md:w-[20px] md:h-[20px]" />
               </button>
             </div>
-          </m.div>
+          </div>
 
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -497,10 +494,7 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <m.section
-              initial={false}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.4 }}
+            <section
               className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-full"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -532,14 +526,11 @@ export default function Dashboard() {
                   <DashboardRevenueChart data={dynamicData.trendData.filter((d: any) => d.growth !== null)} />
                 )}
               </ChartContainer>
-            </m.section>
+            </section>
 
             <div className="space-y-8">
               {/* Right Column: Customer Mix */}
-              <m.section
-                initial={false}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.5 }}
+              <section
                 className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-200 dark:border-slate-800 shadow-sm"
               >
                 <div className="mb-8">
@@ -554,12 +545,9 @@ export default function Dashboard() {
                   )}
                 </ChartContainer>
 
-              </m.section>
+              </section>
 
-              <m.section
-                initial={false}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.6 }}
+              <section
                 className="bg-slate-900 rounded-3xl p-8 shadow-2xl relative overflow-hidden group"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/20 transition-colors" />
@@ -573,7 +561,7 @@ export default function Dashboard() {
                 >
                   Review Roadmap <ArrowUpRight size={18} />
                 </m.button>
-              </m.section>
+              </section>
             </div>
           </div>
         </div>

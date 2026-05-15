@@ -28,7 +28,7 @@ export function StatCard({
       initial={false}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "bg-white dark:bg-slate-900 rounded-[1.5rem] p-4 border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden",
+        "h-[140px] bg-white dark:bg-slate-900 rounded-[1.5rem] p-4 border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden",
         className
       )}
     >
