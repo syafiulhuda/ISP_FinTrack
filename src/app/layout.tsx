@@ -38,11 +38,11 @@ export default function RootLayout({
           <FramerProvider>
             <ClientLayout>
               {children}
-              <SpeedInsights />
-              <Toaster position="top-right" richColors />
             </ClientLayout>
           </FramerProvider>
         </QueryProvider>
+        <SpeedInsights />
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   );
