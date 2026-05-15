@@ -1,4 +1,3 @@
-
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const cron = await import("node-cron");
@@ -7,6 +6,11 @@ export async function register() {
     const { refreshDashboardMV } = await import("./actions/dashboard");
     const { refreshProfitabilityMV } = await import("./actions/profitability");
     const { refreshExecutiveMV } = await import("./actions/executive");
+    const { pool } = await import("./lib/db");
+
+    // 0. WARM UP DATABASE POOL
+    console.log("STARTUP: Warming up DB pool...");
+    pool.query("SELECT 1").catch(err => console.error("STARTUP ERROR: DB Warmup failed", err));
 
     // 1. Jalankan job SEGERA saat server aktif (Startup Job)
     // Semua MV di-refresh secara non-blocking agar TTFB tidak terpengaruh

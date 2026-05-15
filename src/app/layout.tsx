@@ -4,6 +4,7 @@ import "./globals.css";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Toaster } from "sonner";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -32,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`} data-scroll-behavior="smooth" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden`}>
+      <body suppressHydrationWarning className={`${inter.className} min-h-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden`}>
         <QueryProvider>
           <FramerProvider>
             <ClientLayout>
