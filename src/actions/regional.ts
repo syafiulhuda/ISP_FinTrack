@@ -6,8 +6,14 @@ import { getAssetRoster } from '@/actions/assets';
 import { getInvoices } from '@/actions/transactions';
 
 /**
- * Aggregates all data needed by the Regional Analysis page in a single round-trip
- * using Promise.all — same pattern as getExecutiveReport() and getDashboardData().
+ * getRegionalData — Aggregates all data needed by the Regional Analysis page
+ * 
+ * Sudah optimal karena:
+ * - getAgingMVData() → SELECT * FROM ar_aging_mv (sudah MV)
+ * - Semua query dijalankan parallel via Promise.all
+ * 
+ * Tidak perlu MV baru karena data regional bersifat sangat interaktif
+ * (filter per node/province yang dinamis) sehingga raw data lebih fleksibel.
  */
 export async function getRegionalData() {
   const [
