@@ -149,10 +149,11 @@ export default function LoginPage() {
               transition={{ duration: 0.4 }}
             >
               <div className="space-y-2">
-                <label className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Work Email</label>
+                <label htmlFor="email" className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Work Email</label>
                 <div className="relative group">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
                   <input 
+                    id="email"
                     type="email" required value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@company.com"
@@ -164,7 +165,7 @@ export default function LoginPage() {
               {!isForgotMode && (
                 <div className="space-y-2">
                   <div className="flex justify-between items-end">
-                    <label className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Password</label>
+                    <label htmlFor="password" className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Password</label>
                     <button 
                       type="button" 
                       onClick={() => { setIsForgotMode(true); setError(""); setSuccess(""); }}
@@ -176,6 +177,7 @@ export default function LoginPage() {
                   <div className="relative group">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
                     <input 
+                      id="password"
                       type="password" required={!isForgotMode} value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"

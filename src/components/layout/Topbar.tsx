@@ -27,7 +27,11 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
       <div className="flex items-center space-x-2 tablet:space-x-4">
         {/* Mobile Menu */}
         <div className="flex items-center tablet:hidden space-x-2 tablet:space-x-4">
-          <button className="text-on-surface" onClick={onMenuClick}>
+          <button 
+            className="text-on-surface" 
+            onClick={onMenuClick}
+            aria-label="Open mobile menu"
+          >
             <Menu size={24} />
           </button>
           <span className="text-lg tablet:text-xl font-bold tracking-tight text-blue-700 dark:text-blue-500 whitespace-nowrap">ISP-FinTrack</span>
@@ -38,13 +42,14 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           onClick={(e) => toggleTheme(e)}
           className="p-2 rounded-xl bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary-container transition-all duration-300"
           title="Toggle theme"
+          aria-label="Toggle dark and light mode"
         >
           {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
         </button>
 
         {/* Page Title (Desktop) */}
         <div className="hidden tablet:block">
-          <h2 className="text-xl font-bold tracking-tight text-on-surface dark:text-slate-100">Executive Overview</h2>
+          <h1 className="text-xl font-bold tracking-tight text-on-surface dark:text-slate-100">Executive Overview</h1>
         </div>
       </div>
 
@@ -56,18 +61,19 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
             className="bg-slate-200/50 dark:bg-slate-800/50 text-on-surface dark:text-slate-100 pl-9 pr-4 py-1.5 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 border-none w-48 transition-all" 
             placeholder="Search..." 
             type="text"
+            aria-label="Search across platform"
           />
         </div>
-        <Link href="/notifications" className="relative text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 rounded-full active:opacity-80">
+        <Link href="/notifications" className="relative text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 rounded-full active:opacity-80" aria-label="View notifications">
           <Bell size={20} />
           {unreadCount > 0 && (
             <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-50 dark:border-slate-900"></span>
           )}
         </Link>
-        <Link href="/settings" className="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 rounded-full active:opacity-80">
+        <Link href="/settings" className="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 rounded-full active:opacity-80" aria-label="Settings">
           <Settings size={20} />
         </Link>
-        <Link href="/profile" className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 ml-1 tablet:ml-2 block shrink-0">
+        <Link href="/profile" className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 ml-1 tablet:ml-2 block shrink-0" aria-label="View user profile">
           <img 
             alt="User profile avatar" 
             className="w-full h-full object-cover" 

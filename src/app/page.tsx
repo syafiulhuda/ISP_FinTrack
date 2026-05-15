@@ -405,6 +405,7 @@ export default function Dashboard() {
                 <button
                   onClick={() => setIsRoadmapOpen(false)}
                   className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400"
+                  aria-label="Close roadmap"
                 >
                   <X size={24} />
                 </button>
@@ -467,6 +468,7 @@ export default function Dashboard() {
               <button
                 onClick={() => router.push('/profitability')}
                 className="bg-primary text-white p-2 md:p-3 rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all shrink-0"
+                aria-label="View Detailed Profitability Analysis"
               >
                 <TrendingUp size={16} className="md:w-[20px] md:h-[20px]" />
               </button>
@@ -551,7 +553,7 @@ export default function Dashboard() {
                 className="bg-slate-900 rounded-3xl p-8 shadow-2xl relative overflow-hidden group"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/20 transition-colors" />
-                <h4 className="text-white font-black text-lg mb-2 relative z-10">Upgrade Infrastructure</h4>
+                <h3 className="text-white font-black text-lg mb-2 relative z-10">Upgrade Infrastructure</h3>
                 <p className="text-slate-400 text-sm mb-6 font-medium leading-relaxed relative z-10">Expand nodes in the Bandung area to capture growing demand.</p>
                 <m.button
                   onClick={() => setIsRoadmapOpen(true)}

@@ -208,6 +208,7 @@ export default function DistributionMapPage() {
               className="bg-white/80 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-full pl-10 pr-4 py-1.5 text-sm w-full max-w-[180px] sm-phone:max-w-[220px] md:max-w-80 focus:ring-2 focus:ring-blue-500/20 placeholder:text-slate-400 shadow-sm"
               placeholder="Search Node ID, SN, or Location..."
               type="text"
+              aria-label="Search nodes by ID, serial number, or location"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -215,8 +216,8 @@ export default function DistributionMapPage() {
         </div>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-4 text-slate-500">
-            <button className="hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-2 rounded-full transition-colors"><LucideMap size={18} /></button>
-            <button className="hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-2 rounded-full transition-colors"><SettingsIcon size={18} /></button>
+            <button className="hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-2 rounded-full transition-colors" aria-label="View map"><LucideMap size={18} /></button>
+            <button className="hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-2 rounded-full transition-colors" aria-label="Map settings"><SettingsIcon size={18} /></button>
           </div>
           <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs">
             AD
@@ -300,6 +301,8 @@ export default function DistributionMapPage() {
                 "bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-800/50 text-blue-600 dark:text-blue-400 transition-all active:scale-95",
                 isLegendOpen && "bg-blue-600 text-white border-blue-600"
               )}
+              aria-label={isLegendOpen ? "Close legend" : "Open map legend"}
+              aria-expanded={isLegendOpen}
             >
               {isLegendOpen ? <XIcon size={20} /> : <Database size={20} />}
             </button>
@@ -420,6 +423,7 @@ export default function DistributionMapPage() {
                     <button 
                       onClick={() => setSelectedNode(null)}
                       className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                      aria-label="Close node details"
                     >
                       <XIcon size={20} />
                     </button>
@@ -584,6 +588,7 @@ export default function DistributionMapPage() {
               onClick={() => setZoom(prev => Math.min(prev + 1, 18))}
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-600 dark:text-slate-300"
               title="Zoom In"
+              aria-label="Zoom in map"
             >
               <ZoomIn size={14} />
             </button>
@@ -592,6 +597,7 @@ export default function DistributionMapPage() {
               onClick={() => setZoom(prev => Math.max(prev - 1, 3))}
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-600 dark:text-slate-300"
               title="Zoom Out"
+              aria-label="Zoom out map"
             >
               <ZoomOut size={14} />
             </button>
@@ -600,6 +606,7 @@ export default function DistributionMapPage() {
               onClick={handleReset}
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-600 dark:text-slate-300"
               title="Reset View"
+              aria-label="Reset map to default view"
             >
               <Maximize size={14} />
             </button>
@@ -630,7 +637,7 @@ export default function DistributionMapPage() {
                   <h3 className="text-2xl font-black tracking-tight">Maintenance Logs</h3>
                   <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Asset: {selectedNode?.sn}</p>
                 </div>
-                <button onClick={() => setIsHistoryModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                <button onClick={() => setIsHistoryModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" aria-label="Close maintenance history">
                   <XIcon size={20} />
                 </button>
               </div>

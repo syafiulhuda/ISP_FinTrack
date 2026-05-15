@@ -114,6 +114,7 @@ export default function CustomerAnalysisPage() {
                 setCurrentPage(1);
               }}
               className="pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full md:w-80 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-sm font-bold shadow-sm"
+              aria-label="Search customers by name or ID"
             />
           </div>
 
@@ -124,6 +125,7 @@ export default function CustomerAnalysisPage() {
               setCurrentPage(1);
             }}
             className="px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 outline-none cursor-pointer"
+            aria-label="Filter by customer status"
           >
             <option value="All">All Status</option>
             <option value="Active">Active</option>
@@ -134,6 +136,7 @@ export default function CustomerAnalysisPage() {
             onClick={resetFilters}
             className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-indigo-500 rounded-2xl transition-all"
             title="Reset Filters"
+            aria-label="Reset all search and status filters"
           >
             <Clock size={20} className="rotate-180" />
           </button>
@@ -307,6 +310,7 @@ export default function CustomerAnalysisPage() {
                       <Link
                         href={`/customers/${customer.id}`}
                         className="inline-block p-3 bg-slate-50 dark:bg-slate-800/50 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-600 rounded-2xl transition-all text-slate-400 group-hover:scale-110 shadow-sm"
+                        aria-label={`View details for customer ${customer.name}`}
                       >
                         <ChevronRight size={18} className="transition-transform group-hover:translate-x-0.5" />
                       </Link>

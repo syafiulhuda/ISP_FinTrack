@@ -314,9 +314,10 @@ export default function RegionalAnalysisPage() {
             },
           ].map((filter, i) => (
             <div key={i} className="space-y-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{filter.label}</label>
+              <label htmlFor={`filter-${filter.label.toLowerCase()}`} className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{filter.label}</label>
               <div className="relative group">
                 <select 
+                  id={`filter-${filter.label.toLowerCase()}`}
                   value={filter.value}
                   onChange={(e) => {
                     filter.setter(e.target.value);

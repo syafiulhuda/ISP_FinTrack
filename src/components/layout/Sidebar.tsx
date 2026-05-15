@@ -96,6 +96,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
             <button 
               onClick={onClose}
               className="md:hidden text-slate-700 dark:text-slate-300 hover:text-primary transition-colors shrink-0 -ml-2 p-1"
+              aria-label="Close menu"
             >
               <Menu size={24} />
             </button>
