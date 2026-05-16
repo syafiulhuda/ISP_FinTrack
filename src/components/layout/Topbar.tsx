@@ -22,19 +22,19 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const unreadCount = notifications.filter((n: any) => n.is_unread).length;
 
   return (
-    <header className="fixed top-0 right-0 left-0 tablet:left-64 z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0px_12px_32px_rgba(25,28,30,0.06)] flex items-center justify-between px-3 tablet:px-6 h-16 w-auto">
+    <header className="fixed top-0 right-0 left-0 md:left-64 z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0px_12px_32px_rgba(25,28,30,0.06)] flex items-center justify-between px-4 md:px-8 h-16 transition-all duration-300">
       {/* Mobile Brand/Menu & Title Wrapper */}
-      <div className="flex items-center space-x-2 tablet:space-x-4">
-        {/* Mobile Menu */}
-        <div className="flex items-center tablet:hidden space-x-2 tablet:space-x-4">
+      <div className="flex items-center space-x-2 md:space-x-4 min-w-0">
+        {/* Mobile Menu & Logo */}
+        <div className="flex items-center md:hidden space-x-3 shrink-0">
           <button 
-            className="text-on-surface" 
+            className="text-slate-900 dark:text-white p-1 -ml-1" 
             onClick={onMenuClick}
             aria-label="Open mobile menu"
           >
             <Menu size={24} />
           </button>
-          <span className="text-lg tablet:text-xl font-bold tracking-tight text-blue-700 dark:text-blue-500 whitespace-nowrap">ISP-FinTrack</span>
+          <span className="text-lg font-black tracking-tight text-blue-600 dark:text-blue-500 whitespace-nowrap shrink-0">ISP-FinTrack</span>
         </div>
 
         {/* Dark Mode Toggle (Desktop & Mobile) */}
@@ -48,13 +48,13 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
         </button>
 
         {/* Page Title (Desktop) */}
-        <div className="hidden tablet:block">
-          <h1 className="text-xl font-bold tracking-tight text-on-surface dark:text-slate-100">Executive Overview</h1>
+        <div className="hidden md:block">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Executive Overview</h1>
         </div>
       </div>
 
       {/* Right Actions */}
-      <div className="flex items-center space-x-1 tablet:space-x-4">
+      <div className="flex items-center space-x-1 md:space-x-4">
         <div className="relative hidden lg-phone:block">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 

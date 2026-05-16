@@ -80,27 +80,18 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
       {/* Mobile Backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[55] md:hidden"
           onClick={onClose}
         />
       )}
       
       <aside className={cn(
-        "sidebar-fixed fixed left-0 top-0 bottom-0 z-50 bg-slate-100 dark:bg-slate-950 flex flex-col h-full border-r border-slate-200 dark:border-slate-800 md:translate-x-0 shadow-2xl md:shadow-none overflow-hidden touch-none",
+        "sidebar-fixed fixed inset-y-0 left-0 z-[60] bg-slate-100 dark:bg-slate-950 flex flex-col h-screen border-r border-slate-200 dark:border-slate-800 md:translate-x-0 shadow-2xl md:shadow-none overflow-hidden touch-none",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
       {/* Header */}
       <div className="pt-6 px-6">
         <div className="flex items-center space-x-3 mb-4 px-2">
-          {isOpen && (
-            <button 
-              onClick={onClose}
-              className="md:hidden text-slate-700 dark:text-slate-300 hover:text-primary transition-colors shrink-0 -ml-2 p-1"
-              aria-label="Close menu"
-            >
-              <Menu size={24} />
-            </button>
-          )}
           <m.div 
             initial={false}
             animate={{ scale: 1, opacity: 1 }}
