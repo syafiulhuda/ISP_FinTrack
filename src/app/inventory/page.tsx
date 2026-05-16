@@ -377,6 +377,7 @@ export default function InventoryPage() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setIsRegisterModalOpen(true)}
+            aria-label="Register New Asset"
             className="bg-primary text-primary-foreground px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-primary/20 hover:opacity-95 transition-all"
           >
             Register New Asset
@@ -388,7 +389,7 @@ export default function InventoryPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {isLoadingAll ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-[140px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem]" />
+            <div key={i} className="min-h-[140px] tablet:h-48 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem]" />
           ))
         ) : (
           dynamicStats.map((stat, index) => {
@@ -467,6 +468,7 @@ export default function InventoryPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 flex-1 md:w-auto">
               <div className="relative group min-w-0">
                 <select
+                  aria-label="Filter by Type"
                   value={selectedType}
                   onChange={(e) => {
                     setSelectedType(e.target.value);
@@ -488,6 +490,7 @@ export default function InventoryPage() {
               
               <div className="relative group min-w-0">
                 <select
+                  aria-label="Filter by Condition"
                   value={selectedCondition}
                   onChange={(e) => {
                     setSelectedCondition(e.target.value);
@@ -504,6 +507,7 @@ export default function InventoryPage() {
 
               <div className="relative group min-w-0">
                 <select
+                  aria-label="Filter by Status"
                   value={selectedUsage}
                   onChange={(e) => {
                     setSelectedUsage(e.target.value);
@@ -520,6 +524,7 @@ export default function InventoryPage() {
 
               <div className="relative group min-w-0">
                 <select
+                  aria-label="Filter by Ownership"
                   value={selectedOwnership}
                   onChange={(e) => {
                     setSelectedOwnership(e.target.value);
@@ -538,7 +543,7 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto no-scrollbar min-h-[400px] w-full">
+        <div className="overflow-x-auto no-scrollbar min-h-[1000px] w-full">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-800/50">
@@ -553,10 +558,10 @@ export default function InventoryPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               <AnimatePresence mode="popLayout">
                 {isLoadingAll ? (
-                  Array.from({ length: 5 }).map((_, i) => (
+                  Array.from({ length: 10 }).map((_, i) => (
                     <tr key={i}>
                       <td colSpan={6} className="px-6 py-6">
-                        <div className="h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl w-full" />
+                        <div className="h-[88px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl w-full" />
                       </td>
                     </tr>
                   ))
@@ -662,6 +667,7 @@ export default function InventoryPage() {
                           <div ref={activeActionMenu === asset.sn ? actionMenuRef : null} className="inline-block">
                             {asset.condition !== 'Broken' && (
                               <m.button
+                                aria-label="Action Menu"
                                 whileHover={{ scale: 1.15, rotate: 90 }}
                                 whileTap={{ scale: 0.9 }}
                                 onClick={() => setActiveActionMenu(activeActionMenu === asset.sn ? null : asset.sn)}
@@ -806,7 +812,7 @@ export default function InventoryPage() {
                                   >
                                     <div className="flex justify-between items-center mb-4">
                                       <h4 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter text-emerald-500">Audit Resolution</h4>
-                                      <button onClick={() => setIsResolving(false)} className="text-slate-400 hover:text-red-500 transition-colors">
+                                      <button aria-label="Close Resolve Modal" onClick={() => setIsResolving(false)} className="text-slate-400 hover:text-red-500 transition-colors">
                                         <X size={16}/>
                                       </button>
                                     </div>
@@ -853,7 +859,7 @@ export default function InventoryPage() {
                                   >
                                     <div className="flex justify-between items-center mb-4">
                                       <h4 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter text-blue-500">Initiate Maintenance</h4>
-                                      <button onClick={() => setIsStartingMaintenance(false)} className="text-slate-400 hover:text-red-500 transition-colors">
+                                      <button aria-label="Close Maintenance Modal" onClick={() => setIsStartingMaintenance(false)} className="text-slate-400 hover:text-red-500 transition-colors">
                                         <X size={16}/>
                                       </button>
                                     </div>
@@ -965,10 +971,11 @@ export default function InventoryPage() {
                   <p className="text-xs font-medium text-slate-500 mt-1">Add hardware to infrastructure.</p>
                 </div>
                 <m.button
+                  aria-label="Close Modal"
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsRegisterModalOpen(false)}
-                  className="p-2 text-slate-400 hover:text-primary transition-colors"
+                  className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
                 >
                   <X size={24} />
                 </m.button>
@@ -1034,7 +1041,14 @@ export default function InventoryPage() {
                   <button type="submit" className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 transition-all hover:opacity-90 flex items-center justify-center gap-2">
                     <Plus size={18} /> Register Asset
                   </button>
-                  <button type="button" onClick={() => setIsRegisterModalOpen(false)} className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-sm transition-all hover:bg-slate-200">Cancel</button>
+                  <button 
+                    type="button" 
+                    aria-label="Close Modal" 
+                    onClick={() => setIsRegisterModalOpen(false)} 
+                    className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-sm transition-all hover:bg-slate-200"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </form>
             </m.div>

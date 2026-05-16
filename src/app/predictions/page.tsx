@@ -130,6 +130,7 @@ export default function PredictionsPage() {
           <button 
             onClick={handleRefresh}
             disabled={isFetching}
+            aria-label="Refresh Data"
             className="p-2.5 text-slate-400 hover:text-indigo-500 transition-colors disabled:opacity-50"
             title="Refresh Data"
           >
@@ -141,7 +142,7 @@ export default function PredictionsPage() {
       {!predictions ? (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-20 text-center">
           <AlertCircle size={48} className="mx-auto text-slate-300 mb-4" />
-          <h3 className="text-xl font-black text-slate-900 dark:text-white">Insufficient Data</h3>
+          <h2 className="text-xl font-black text-slate-900 dark:text-white">Insufficient Data</h2>
           <p className="text-slate-500 mt-2">Need at least 3 months of historical data to run projections.</p>
         </div>
       ) : (
@@ -186,7 +187,7 @@ export default function PredictionsPage() {
               <m.div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
                 <div className="flex items-center justify-between mb-10">
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Revenue Projection</h3>
+                    <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Revenue Projection</h2>
                     <p className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">Actual vs Forecasted Analysis</p>
                   </div>
                   <div className="px-3 py-1.5 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
@@ -202,7 +203,7 @@ export default function PredictionsPage() {
               <m.div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
                 <div className="flex items-center justify-between mb-10">
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Churn Rate Forecast</h3>
+                    <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Churn Rate Forecast</h2>
                     <p className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">Subscriber Retention Projections</p>
                   </div>
                 </div>
@@ -245,9 +246,9 @@ function PredictionCard({ title, value, change, icon, color, reverseColor = fals
         <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{title}</span>
       </div>
       
-      <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tighter tabular-nums whitespace-nowrap leading-none">
+      <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tighter tabular-nums whitespace-nowrap leading-none">
         {value}
-      </h3>
+      </h2>
       
       <div className="flex items-center gap-2 mt-4">
         <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black shadow-sm ${

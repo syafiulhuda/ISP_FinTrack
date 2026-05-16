@@ -322,6 +322,7 @@ export default function ServiceTiersPage() {
               <button 
                 onClick={() => refetchCustomers()}
                 disabled={isRefetching}
+                aria-label="Refresh Data"
                 className="p-2.5 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-500 hover:text-primary transition-all shadow-sm group shrink-0"
                 title="Refresh Data"
               >
@@ -330,6 +331,7 @@ export default function ServiceTiersPage() {
               <button 
                 onClick={() => setShowAuditConfirm(true)}
                 disabled={isAuditing}
+                aria-label="Run Grace Period Audit"
                 className="p-2.5 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/50 rounded-xl text-orange-600 hover:bg-orange-100 transition-all shadow-sm shrink-0"
                 title="Run Grace Period Audit"
               >
@@ -338,6 +340,7 @@ export default function ServiceTiersPage() {
               <div className="relative flex-1 md:w-auto">
                 <button
                   onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                  aria-label="Toggle Status Filter"
                   className="w-full md:w-[200px] flex items-center justify-between pl-3 md:pl-4 pr-2 md:pr-3 py-2.5 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-[11px] md:text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all shadow-sm"
                 >
                   <span className="capitalize whitespace-nowrap overflow-hidden text-ellipsis">{statusFilter === "grace" ? "Grace Period" : statusFilter === "All" ? "All Subscribers" : `${statusFilter} Only`}</span>
@@ -574,6 +577,7 @@ export default function ServiceTiersPage() {
                   <p className="text-xs font-medium text-slate-500 mt-1">Add a new subscriber to the network.</p>
                 </div>
                 <m.button 
+                  aria-label="Close Add Customer Modal"
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsAddModalOpen(false)} 
@@ -588,6 +592,7 @@ export default function ServiceTiersPage() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Full Name</label>
                     <input 
+                      aria-label="Full Name"
                       required
                       type="text" 
                       placeholder="Enter full name..."
@@ -600,6 +605,7 @@ export default function ServiceTiersPage() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Phone Number</label>
                     <input 
+                      aria-label="Phone Number"
                       required
                       type="tel" 
                       placeholder="0812..."
@@ -613,6 +619,7 @@ export default function ServiceTiersPage() {
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Package</label>
                     <div className="relative">
                       <select 
+                        aria-label="Package"
                         className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none"
                         value={newCustomer.service}
                         onChange={(e) => setNewCustomer({...newCustomer, service: e.target.value})}
@@ -627,6 +634,7 @@ export default function ServiceTiersPage() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Province</label>
                       <input 
+                        aria-label="Province"
                         required
                         type="text" 
                         placeholder="Province"
@@ -638,6 +646,7 @@ export default function ServiceTiersPage() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">City</label>
                       <input 
+                        aria-label="City"
                         required
                         type="text" 
                         placeholder="City"
@@ -652,6 +661,7 @@ export default function ServiceTiersPage() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">District</label>
                       <input 
+                        aria-label="District"
                         required
                         type="text" 
                         placeholder="District"
@@ -663,6 +673,7 @@ export default function ServiceTiersPage() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Village</label>
                       <input 
+                        aria-label="Village"
                         required
                         type="text" 
                         placeholder="Village"
@@ -676,6 +687,7 @@ export default function ServiceTiersPage() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Complete Address</label>
                     <textarea 
+                      aria-label="Complete Address"
                       required
                       rows={3}
                       placeholder="Street name, house number..."
@@ -724,6 +736,7 @@ export default function ServiceTiersPage() {
                   <p className="text-xs font-medium text-slate-500 mt-1">Configure a new internet plan for your customers.</p>
                 </div>
                 <m.button 
+                  aria-label="Close Add Plan Modal"
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsAddTierModalOpen(false)} 
@@ -738,6 +751,7 @@ export default function ServiceTiersPage() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Plan Name</label>
                     <input 
+                      aria-label="Plan Name"
                       required
                       type="text" 
                       placeholder="e.g. Ultra Gaming"
@@ -751,6 +765,7 @@ export default function ServiceTiersPage() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Speed Value</label>
                       <input 
+                        aria-label="Speed Value"
                         required
                         type="text" 
                         placeholder="e.g. 300"
@@ -763,6 +778,7 @@ export default function ServiceTiersPage() {
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Unit</label>
                       <div className="relative">
                         <select 
+                          aria-label="Unit"
                           className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none"
                           value={newTier.unit}
                           onChange={(e) => setNewTier({...newTier, unit: e.target.value})}
@@ -779,6 +795,7 @@ export default function ServiceTiersPage() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Price</label>
                       <input 
+                        aria-label="Price"
                         required
                         type="number" 
                         placeholder="e.g. 900000"
@@ -790,6 +807,7 @@ export default function ServiceTiersPage() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">FUP Limit</label>
                       <input 
+                        aria-label="FUP Limit"
                         required
                         type="text" 
                         placeholder="e.g. 2 TB or Unlimited"

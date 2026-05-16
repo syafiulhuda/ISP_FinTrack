@@ -53,7 +53,7 @@ export function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md min-h-[450px] flex flex-col justify-center">
       <m.div 
         key={isForgotMode ? "forgot" : "login"}
         initial={false} 

@@ -530,9 +530,10 @@ export default function FinancePage() {
               <div className="space-y-8">
                 {/* Vendor Field */}
                 <div className="space-y-2">
-                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Vendor / Payee</label>
+                  <label htmlFor="vendor" className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Vendor / Payee</label>
                   <div className="relative">
                     <input 
+                      id="vendor"
                       disabled={!isEditing && uploadedImageUrl !== null}
                       className={cn(
                         "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all",
@@ -549,9 +550,10 @@ export default function FinancePage() {
 
                 {/* Date Field */}
                 <div className="space-y-2">
-                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Transaction Date</label>
+                  <label htmlFor="date" className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Transaction Date</label>
                   <div className="relative">
                     <input 
+                      id="date"
                       disabled={!isEditing && uploadedImageUrl !== null}
                       className={cn(
                         "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all",
@@ -601,10 +603,11 @@ export default function FinancePage() {
 
                 {/* Amount Field */}
                 <div className="relative space-y-2">
-                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Amount</label>
+                  <label htmlFor="amount" className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Amount</label>
                   <div className="relative">
                     <span className="absolute left-5 top-4 text-slate-400 font-bold">Rp</span>
                     <input 
+                      id="amount"
                       disabled={!isEditing && uploadedImageUrl !== null}
                       placeholder="0"
                       className={cn(
@@ -621,8 +624,9 @@ export default function FinancePage() {
                 
                 {/* Payment Method Field */}
                 <div className="space-y-2">
-                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Payment Method</label>
+                  <label htmlFor="method" className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Payment Method</label>
                   <select 
+                    id="method"
                     disabled={!isEditing && uploadedImageUrl !== null}
                     className={cn(
                       "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all appearance-none cursor-pointer",
@@ -643,8 +647,9 @@ export default function FinancePage() {
 
                 {/* Reference No Field - Read Only because it's generated from DB logic */}
                 <div className="space-y-2">
-                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Reference No</label>
+                  <label htmlFor="reference" className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Reference No</label>
                   <input 
+                    id="reference"
                     disabled={!isEditing && uploadedImageUrl !== null}
                     placeholder="TRX-XXXXX"
                     className={cn(
@@ -709,6 +714,7 @@ export default function FinancePage() {
             >
               {/* Integrated Close Button */}
               <button 
+                aria-label="Close Zoom"
                 className="absolute -top-4 -right-4 w-12 h-12 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-full flex items-center justify-center shadow-xl border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform z-[110]"
                 onClick={() => setIsZoomed(false)}
               >
@@ -734,6 +740,7 @@ export default function FinancePage() {
             <div className="flex flex-wrap items-center gap-2 md:gap-6 w-full md:w-auto">
               <div className="relative shrink-0 flex-1 sm:flex-none min-w-[140px]">
                 <select
+                  aria-label="Filter by Type"
                   value={selectedKeterangan}
                   onChange={(e) => {
                     setSelectedKeterangan(e.target.value);
