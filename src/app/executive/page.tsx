@@ -500,15 +500,15 @@ export default function ExecutiveDashboard() {
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{k.title}</p>
                         <div className={`p-2 rounded-lg ${k.bg} ${k.color}`}><k.icon className="w-4 h-4" /></div>
                       </div>
-                      <h3 className="text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100 whitespace-nowrap">{k.val}</h3>
+                      <h2 className="text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100 whitespace-nowrap">{k.val}</h2>
                     </div>
                   ))}
                 </div>
 
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
                     <Activity className="w-5 h-5 text-indigo-500"/> Revenue & Net Profit Trajectory
-                  </h3>
+                  </h2>
                   <ChartContainer className="h-80">
                     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <ComposedChart data={processedData.financial.trendData}>
@@ -584,13 +584,13 @@ export default function ExecutiveDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm md:col-span-2">
                     <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Total Asset Valuation</p>
-                    <h3 className="text-4xl font-black text-emerald-500">{processedData.inventory.valuation}</h3>
+                    <h2 className="text-4xl font-black text-emerald-500">{processedData.inventory.valuation}</h2>
                     <p className="text-xs text-slate-400 mt-1">Combined value of {processedData.inventory.total} devices</p>
                   </div>
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between shadow-sm">
                     <div>
                       <p className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Total Assets</p>
-                      <h4 className="text-3xl font-black text-slate-900 dark:text-white">{processedData.inventory.total}</h4>
+                      <h3 className="text-3xl font-black text-slate-900 dark:text-white">{processedData.inventory.total}</h3>
                     </div>
                     
                     <div className="mt-4 flex flex-wrap gap-2">
@@ -616,14 +616,14 @@ export default function ExecutiveDashboard() {
                   </div>
                   <div className="bg-red-500/10 p-5 rounded-2xl border border-red-500/20 flex flex-col justify-center">
                     <p className="text-xs font-bold text-red-500 mb-1 uppercase">Broken Devices</p>
-                    <h4 className="text-3xl font-black text-red-600">{processedData.inventory.broken}</h4>
+                    <h3 className="text-3xl font-black text-red-600">{processedData.inventory.broken}</h3>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Asset Type Distribution */}
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Assets Group by Type (Deployed)</h3>
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Assets Group by Type (Deployed)</h2>
                     <ChartContainer className="h-64">
                       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <BarChart data={processedData.inventory.assetByType}>
@@ -652,7 +652,7 @@ export default function ExecutiveDashboard() {
 
                   {/* Stock Asset Group by Type */}
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Stock Assets by Type (Unused)</h3>
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Stock Assets by Type (Unused)</h2>
                     <ChartContainer className="h-64">
                       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <BarChart data={processedData.inventory.stockByType}>
@@ -681,7 +681,7 @@ export default function ExecutiveDashboard() {
 
                   {/* Assets by Location */}
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Assets by Location (Deployed)</h3>
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Assets by Location (Deployed)</h2>
                     <ChartContainer className="h-64">
                       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <BarChart data={processedData.inventory.assetByLocation} layout="vertical">
@@ -710,7 +710,7 @@ export default function ExecutiveDashboard() {
 
                   {/* Stock Assets by Province */}
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Stock Location (Warehouse)</h3>
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Stock Location (Warehouse)</h2>
                     <ChartContainer className="h-64">
                       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <BarChart data={processedData.inventory.stockByLocation} layout="vertical">
@@ -739,7 +739,7 @@ export default function ExecutiveDashboard() {
 
                   {/* Ownership Distribution */}
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm md:col-span-2">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Ownership & Acquisition Model</h3>
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Ownership & Acquisition Model</h2>
                     <ChartContainer className="h-64 flex items-center justify-center">
                       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <PieChart>
@@ -785,9 +785,9 @@ export default function ExecutiveDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Subscriber Distribution by Province */}
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
                       <Users className="w-5 h-5 text-indigo-500"/> Subscriber Distribution by Province
-                    </h3>
+                    </h2>
                     <ChartContainer className="h-80">
                       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <BarChart data={processedData.regional.provinceSubscribers} layout="vertical">
@@ -817,9 +817,9 @@ export default function ExecutiveDashboard() {
 
                   {/* Distribution by City (Top 8) */}
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-cyan-500"/> Distribution by City (Top 8)
-                    </h3>
+                    </h2>
                     <ChartContainer className="h-80">
                       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <BarChart data={processedData.regional.cityDist} layout="vertical">
@@ -850,9 +850,9 @@ export default function ExecutiveDashboard() {
 
                 {/* Profit per Province */}
                 <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
                     <DollarSign className="w-5 h-5 text-emerald-500"/> Profit Bersih tiap Province (Filter Range)
-                  </h3>
+                  </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {processedData.regional.provinceProfit.map((p: any, i: number) => (
                       <div key={i} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">

@@ -131,7 +131,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
       {/* Header & Back Button */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="flex items-start tablet:items-center gap-3 tablet:gap-4 w-full">
-          <Link href="/customers" className="p-2.5 tablet:p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:scale-105 transition-transform shrink-0 mt-1 tablet:mt-0">
+          <Link href="/customers" aria-label="Back to customer list" className="p-2.5 tablet:p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:scale-105 transition-transform shrink-0 mt-1 tablet:mt-0">
             <ChevronLeft size={18} className="text-slate-500" />
           </Link>
           <div className="flex-1 min-w-0">
@@ -211,7 +211,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
               <k.icon size={16} className="tablet:w-5 tablet:h-5" />
             </div>
             <p className="text-[10px] tablet:text-xs font-bold text-slate-500 uppercase tracking-widest leading-tight">{k.label}</p>
-            <h3 className="text-sm sm:text-lg tablet:text-xl xl:text-2xl font-black text-slate-900 dark:text-white mt-1 whitespace-nowrap tabular-nums">{k.value}</h3>
+            <h2 className="text-sm sm:text-lg tablet:text-xl xl:text-2xl font-black text-slate-900 dark:text-white mt-1 whitespace-nowrap tabular-nums">{k.value}</h2>
           </m.div>
         ))}
       </div>
@@ -223,7 +223,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
           <HealthScoreGauge score={data.healthScore} />
           
           <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <h3 className="text-lg font-black mb-6">Score Breakdown</h3>
+            <h2 className="text-lg font-black mb-6">Score Breakdown</h2>
             <div className="space-y-3">
               <ScoreItem label="Baseline" value={70} positive={true} />
               <ScoreItem label={`Status: ${data.status}`} value={isActive ? 20 : -40} positive={isActive} />
@@ -233,10 +233,10 @@ export default function CustomerDetailView({ data }: { data: any }) {
           </div>
 
           <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex-1">
-             <h3 className="text-base sm:text-lg font-black mb-6 flex items-start gap-3">
+             <h2 className="text-base sm:text-lg font-black mb-6 flex items-start gap-3">
                <Users size={20} className="text-indigo-500 mt-1 shrink-0" /> 
                <span>CRM Intelligence</span>
-             </h3>
+             </h2>
              <div className="space-y-6">
                 <div>
                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Customer Segment</p>
@@ -273,7 +273,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
           {/* Payment Timeline */}
           <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-              <h3 className="text-lg md:text-xl font-black">Payment Performance Timeline</h3>
+              <h2 className="text-lg md:text-xl font-black">Payment Performance Timeline</h2>
               <div className="flex gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-emerald-500" />
@@ -340,7 +340,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
 
           {/* Late Payments Detailed Table */}
           <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-             <h3 className="text-xl font-black mb-8 flex items-center gap-2"><Clock size={24} className="text-rose-500" /> Late Payment Breakdown</h3>
+             <h2 className="text-xl font-black mb-8 flex items-center gap-2"><Clock size={24} className="text-rose-500" /> Late Payment Breakdown</h2>
              <div className="overflow-x-auto no-scrollbar rounded-2xl border border-slate-100 dark:border-slate-800">
                <table className="w-full text-left min-w-[500px]">
                   <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
@@ -390,9 +390,9 @@ export default function CustomerDetailView({ data }: { data: any }) {
               {isAtRisk ? <Zap size={32} /> : isExcellent ? <ArrowUpRight size={32} /> : <Activity size={32} />}
             </div>
             <div className="flex-1 text-left">
-              <h4 className="text-lg md:text-xl font-black mb-2 uppercase tracking-tight">
+              <h3 className="text-lg md:text-xl font-black mb-2 uppercase tracking-tight">
                 {isAtRisk ? "Retention Alert" : isExcellent ? "Upsell Opportunity" : "Growth Maintenance"}
-              </h4>
+              </h3>
               <p className="text-slate-500 font-medium text-sm leading-relaxed">
                 {isAtRisk 
                   ? "Pelanggan berada di zona risiko churn tinggi. Rekomendasi: diskon loyalitas segera." 

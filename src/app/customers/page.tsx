@@ -163,7 +163,7 @@ export default function CustomerAnalysisPage() {
                 </div>
                 <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Total Portfolio LTV</span>
               </div>
-              <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap tabular-nums">{formatCompactNumber(stats.totalLtv)}</h3>
+              <h2 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap tabular-nums">{formatCompactNumber(stats.totalLtv)}</h2>
               <p className="text-xs text-slate-400 mt-2 font-medium">Cumulative revenue from {data.length} customers</p>
             </m.div>
 
@@ -180,7 +180,7 @@ export default function CustomerAnalysisPage() {
                 </div>
                 <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Avg. Health Score</span>
               </div>
-              <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap">{stats.avgHealth}%</h3>
+              <h2 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap">{stats.avgHealth}%</h2>
               <div className="flex items-center gap-2 mt-2">
                 <div className="h-1.5 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <m.div
@@ -205,7 +205,7 @@ export default function CustomerAnalysisPage() {
                 </div>
                 <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Churn Risk High</span>
               </div>
-              <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap">{stats.atRisk}</h3>
+              <h2 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-900 dark:text-white whitespace-nowrap">{stats.atRisk}</h2>
               <p className="text-xs text-rose-500 mt-2 font-bold uppercase tracking-wider">Requires Immediate Attention</p>
             </m.div>
           </>
@@ -370,7 +370,7 @@ export default function CustomerAnalysisPage() {
             <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-slate-400">
               <Search size={32} />
             </div>
-            <h3 className="text-xl font-black text-slate-900 dark:text-white">No results found</h3>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white">No results found</h2>
             <p className="text-slate-500 font-medium mt-1">Try adjusting your search or filters.</p>
           </div>
         )}

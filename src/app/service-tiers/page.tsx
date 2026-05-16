@@ -391,6 +391,7 @@ export default function ServiceTiersPage() {
             <div className="relative w-full md:w-[320px] group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
               <input 
+                aria-label="Search customer directory"
                 type="text" 
                 placeholder="Search name, ID or city..."
                 value={searchQuery}

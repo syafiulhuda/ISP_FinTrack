@@ -47,7 +47,7 @@ function LegendContent({ nodeStats }: { nodeStats: any }) {
     <>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Map Architecture</h3>
+          <h2 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Map Architecture</h2>
           <p className="text-lg font-black tracking-tighter">Network Nodes</p>
         </div>
         <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -347,7 +347,7 @@ export function DistributionClient() {
                     <Navigation size={20} />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Location</h4>
+                    <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Location</h3>
                     <p className="text-[10px] font-bold text-slate-500">Node ID: {selectedNode.id}</p>
                   </div>
                 </div>
@@ -456,10 +456,10 @@ export function DistributionClient() {
 
                 <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 md:space-y-8 scrollbar-hide">
                   <section>
-                    <h4 className="text-[10px] md:text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <h3 className="text-[10px] md:text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                       <InfoIcon size={14} />
                       Technical Info
-                    </h4>
+                    </h3>
                     <div className="space-y-3 md:space-y-4">
                       <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 p-2.5 md:p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
                         <span className="text-[10px] md:text-xs font-bold text-slate-500">Model</span>
@@ -478,10 +478,10 @@ export function DistributionClient() {
 
                   <section>
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-[10px] md:text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <h3 className="text-[10px] md:text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
                         <AlertTriangle size={14} />
                         Incidents
-                      </h4>
+                      </h3>
                       {selectedNode.status !== 'Online' && (
                         <span className="text-[8px] md:text-[9px] bg-red-100 dark:bg-red-900/30 text-red-600 px-2 py-0.5 rounded-full font-black">1 Critical</span>
                       )}

@@ -984,18 +984,18 @@ export default function InventoryPage() {
               <form onSubmit={handleRegisterAsset} className="space-y-6 overflow-y-auto custom-scrollbar pr-2">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 px-1">Serial Number</label>
-                    <input required type="text" placeholder="SN-..." className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all" value={newAsset.sn} onChange={e => setNewAsset({...newAsset, sn: e.target.value})} />
+                    <label htmlFor="sn" className="text-[10px] font-black uppercase text-slate-400 px-1">Serial Number</label>
+                    <input id="sn" required type="text" placeholder="SN-..." className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all" value={newAsset.sn} onChange={e => setNewAsset({...newAsset, sn: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 px-1">MAC Address</label>
-                    <input required type="text" placeholder="00:1A:..." className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all" value={newAsset.mac} onChange={e => setNewAsset({...newAsset, mac: e.target.value})} />
+                    <label htmlFor="mac" className="text-[10px] font-black uppercase text-slate-400 px-1">MAC Address</label>
+                    <input id="mac" required type="text" placeholder="00:1A:..." className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all" value={newAsset.mac} onChange={e => setNewAsset({...newAsset, mac: e.target.value})} />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 px-1">Device Type</label>
+                    <label htmlFor="deviceType" className="text-[10px] font-black uppercase text-slate-400 px-1">Device Type</label>
                     <div className="relative">
-                      <select className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none" value={newAsset.type} onChange={e => setNewAsset({...newAsset, type: e.target.value})}>
+                      <select id="deviceType" className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none" value={newAsset.type} onChange={e => setNewAsset({...newAsset, type: e.target.value})}>
                         <option value="Router">Router</option>
                         <option value="Switch">Switch</option>
                         <option value="OLT">OLT</option>
@@ -1007,9 +1007,10 @@ export default function InventoryPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 px-1">Location / Warehouse</label>
+                    <label htmlFor="location" className="text-[10px] font-black uppercase text-slate-400 px-1">Location / Warehouse</label>
                     <div className="relative">
                       <select 
+                        id="location"
                         required
                         className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none" 
                         value={newAsset.location} 

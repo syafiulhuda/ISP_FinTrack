@@ -412,6 +412,7 @@ export default function FinancePage() {
             className="flex-1 bg-slate-100 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors group"
           >
             <input 
+              aria-label="Upload document"
               type="file" 
               ref={fileInputRef} 
               onChange={handleFileUpload} 
