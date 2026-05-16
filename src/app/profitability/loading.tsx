@@ -22,7 +22,7 @@ export default function ProfitabilityLoading() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="h-[120px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl"
+            className="h-[140px] lg:h-[200px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl"
           />
         ))}
       </div>

@@ -271,7 +271,26 @@ export async function getCustomerAnalysis() {
     // All computation done in PostgreSQL — no JS-side filtering of transactions.
     // Uses idx_transactions_customer_id on split_part(id,'-',2) for the JOIN.
     const res = await query(`
-      WITH tx_stats AS (
+      WITH current_overdue AS (
+        -- Detect customers who haven't paid for the current month and are past due date
+        SELECT 
+          c2.id,
+          CASE 
+            WHEN NOT EXISTS (
+              SELECT 1 FROM transactions t3
+              WHERE split_part(t3.id, '-', 2) = c2.id
+                AND t3.status = 'Verified'
+                AND t3.keterangan = 'pemasukan'
+                AND EXTRACT(MONTH FROM (t3.timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(MONTH FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
+                AND EXTRACT(YEAR FROM (t3.timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(YEAR FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
+            )
+            AND EXTRACT(DAY FROM (NOW() AT TIME ZONE 'Asia/Jakarta')) > EXTRACT(DAY FROM (c2."createdAt" AT TIME ZONE 'Asia/Jakarta')) + 3
+            AND c2.status = 'Active'
+            THEN 1 ELSE 0 
+          END as current_overdue_penalty
+        FROM customers c2
+      ),
+      tx_stats AS (
         SELECT
           split_part(t2.id, '-', 2)                                           AS customer_id,
           COUNT(*)                                                             AS tx_count,
@@ -297,18 +316,21 @@ export async function getCustomerAnalysis() {
         COALESCE(tx.tx_count, 0)                           AS "txCount",
         tx.last_payment                                    AS "lastPayment",
         CASE
-          WHEN COALESCE(tx.tx_count, 0) = 0 THEN 0
-          ELSE ROUND((COALESCE(tx.late_count, 0)::numeric / tx.tx_count) * 100, 2)
+          WHEN COALESCE(tx.tx_count, 0) = 0 AND co.current_overdue_penalty = 0 THEN 0
+          WHEN COALESCE(tx.tx_count, 0) = 0 AND co.current_overdue_penalty > 0 THEN 100
+          ELSE ROUND(((COALESCE(tx.late_count, 0) + co.current_overdue_penalty)::numeric / 
+                (tx.tx_count + co.current_overdue_penalty)) * 100, 2)
         END                                                AS "paymentRatio",
         GREATEST(0, LEAST(100,
           70
           + CASE WHEN c.status = 'Active'   THEN 20 ELSE 0 END
           + CASE WHEN c.status = 'Inactive' THEN -40 ELSE 0 END
-          - (COALESCE(tx.late_count, 0) * 10)
+          - ((COALESCE(tx.late_count, 0) + co.current_overdue_penalty) * 10)
           + CASE WHEN COALESCE(tx.ltv, 0) > 1000000 THEN 10 ELSE 0 END
         ))                                                 AS "healthScore"
       FROM customers c
       LEFT JOIN tx_stats tx ON tx.customer_id = c.id
+      LEFT JOIN current_overdue co ON co.id = c.id
       ORDER BY ltv DESC
     `);
 
@@ -379,6 +401,36 @@ export async function getCustomer360(customerId: string) {
       });
     });
 
+    // BUSINESS LOGIC UPDATE: Track current month's overdue status even if unpaid
+    const now = new Date();
+    // Use the same formatting as monthGroups keys (e.g., "May 2026")
+    const currentMonthKey = now.toLocaleString('default', { month: 'short', year: 'numeric' });
+    
+    // If no payment recorded for this month AND we are past the grace period
+    if (!monthGroups[currentMonthKey] && now.getDate() > dueDay + 3 && c.status === 'Active') {
+      const daysOverdue = now.getDate() - dueDay;
+      
+      // Add to Late Breakdown
+      late_payments.push({
+        month: currentMonthKey,
+        date: now.toISOString(),
+        daysLate: daysOverdue,
+        amount: 0, // 0 because unpaid
+        isUnpaid: true
+      });
+      
+      // Add to Chart as a "Potential/Late" bar
+      payment_history.push({
+        month: currentMonthKey,
+        ontime: 0,
+        late: txs.length > 0 ? ltv / txs.length : 350000, // Use average or default price to make it visible
+        total: 0,
+        isUnpaid: true
+      });
+      
+      lateCount++;
+    }
+
     let score = 70;
     if (c.status === 'Active') score += 20;
     if (c.status === 'Inactive') score -= 40;
@@ -391,7 +443,7 @@ export async function getCustomer360(customerId: string) {
       ltv,
       healthScore,
       txCount: txs.length,
-      paymentRatio: txs.length > 0 ? (lateCount / txs.length) * 100 : 0,
+      paymentRatio: txs.length > 0 ? (lateCount / txs.length) * 100 : (lateCount > 0 ? 100 : 0),
       payment_history,
       late_payments
     };

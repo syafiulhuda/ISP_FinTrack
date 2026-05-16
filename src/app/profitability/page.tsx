@@ -518,7 +518,7 @@ export default function ProfitabilityPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {isDataLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-[140px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2rem] border border-slate-200 dark:border-slate-800" />
+              <div key={i} className="h-[140px] lg:h-[200px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl border border-slate-200 dark:border-slate-800" />
             ))
           ) : (
             dynamicData.metrics.map((kpi, i) => (
@@ -529,7 +529,9 @@ export default function ProfitabilityPage() {
                 icon={kpi.icon}
                 trend={kpi.trend}
                 trendType={kpi.trendType as any}
+                iconClassName="bg-blue-100 text-blue-600 dark:bg-blue-900/30"
                 description={kpi.detail}
+                className="h-[140px] lg:h-[200px]"
               />
             ))
           )}

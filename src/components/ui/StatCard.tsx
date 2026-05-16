@@ -28,13 +28,13 @@ export function StatCard({
       initial={false}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "h-[140px] bg-white dark:bg-slate-900 rounded-[1.5rem] p-4 border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden",
+        "h-[140px] bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-primary/5 transition-all group relative overflow-hidden flex flex-col",
         className
       )}
     >
-      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-primary/10 transition-colors" />
+      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none" />
       
-      <div className="flex items-center justify-between mb-3 relative z-10">
+      <div className="flex items-center justify-between relative z-10 mb-4">
         <div className={cn(
           "w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-sm",
           iconClassName
@@ -53,11 +53,11 @@ export function StatCard({
         )}
       </div>
       
-      <div className="relative z-10">
+      <div className="relative z-10 flex-1 flex flex-col justify-center">
         <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none">{name}</p>
-        <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-slate-100 mt-1.5">{value}</h3>
+        <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-slate-100 mt-1.5 lg:mt-2">{value}</h3>
         {description && (
-          <p className="text-[10px] font-bold text-slate-400 mt-3 uppercase tracking-tighter">{description}</p>
+          <p className="text-[10px] font-bold text-slate-400 mt-2 lg:mt-3 uppercase tracking-tighter opacity-70 line-clamp-2">{description}</p>
         )}
       </div>
     </m.div>

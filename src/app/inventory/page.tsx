@@ -388,7 +388,7 @@ export default function InventoryPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {isLoadingAll ? (
-          Array.from({ length: 4 }).map((_, i) => (
+          Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="min-h-[140px] tablet:h-48 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem]" />
           ))
         ) : (
@@ -547,12 +547,12 @@ export default function InventoryPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-800/50">
-                <th className="px-3 md:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Asset Details</th>
-                <th className="px-3 md:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest hidden sm:table-cell">Category</th>
-                <th className="px-3 md:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Condition</th>
-                <th className="px-3 md:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Kepemilikan</th>
-                <th className="px-3 md:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Location</th>
-                <th className="px-3 md:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+                <th className="px-3 lg:px-4 xl:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Asset Details</th>
+                <th className="px-3 lg:px-4 xl:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest hidden sm:table-cell">Category</th>
+                <th className="px-3 lg:px-4 xl:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Condition</th>
+                <th className="px-3 lg:px-4 xl:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Kepemilikan</th>
+                <th className="px-3 lg:px-4 xl:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Location</th>
+                <th className="px-3 lg:px-4 xl:px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -576,7 +576,7 @@ export default function InventoryPage() {
                       exit={{ opacity: 0 }}
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group relative"
                     >
-                      <td className="px-3 md:px-6 py-6 max-w-[200px]">
+                      <td className="px-3 lg:px-4 xl:px-6 py-6 max-w-[160px] lg:max-w-[200px]">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all shrink-0">
                             {asset.type === "Router" && <Router size={24} />}
@@ -605,12 +605,12 @@ export default function InventoryPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 md:px-6 py-6 hidden sm:table-cell">
+                      <td className="px-3 lg:px-4 xl:px-6 py-6 hidden sm:table-cell">
                         <span className="text-[9px] font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg uppercase tracking-wider whitespace-nowrap">
                           {asset.type}
                         </span>
                       </td>
-                      <td className="px-3 md:px-6 py-6">
+                      <td className="px-3 lg:px-4 xl:px-6 py-6">
                         {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") ? (
                           <div className={cn(
                             "flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit whitespace-nowrap",
@@ -626,7 +626,7 @@ export default function InventoryPage() {
                           <span className="text-[10px] font-bold text-slate-300 italic">---</span>
                         )}
                       </td>
-                      <td className="px-3 md:px-6 py-6 hidden md:table-cell">
+                      <td className="px-3 lg:px-4 xl:px-6 py-6 hidden md:table-cell">
                         <div className="flex items-center gap-2 whitespace-nowrap">
                           {(asset.kepemilikan === "Dimiliki" || !asset.kepemilikan) ? (
                             <div className="flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit bg-emerald-100 text-emerald-700">
@@ -646,7 +646,7 @@ export default function InventoryPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-3 md:px-6 py-6 text-slate-900 dark:text-slate-100 hidden md:table-cell max-w-[250px]">
+                      <td className="px-3 lg:px-4 xl:px-6 py-6 text-slate-900 dark:text-slate-100 hidden md:table-cell max-w-[180px] xl:max-w-[250px]">
                         <div className="flex items-start gap-3">
                           <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 shrink-0 mt-0.5 group-hover:bg-primary/10 group-hover:text-primary transition-all">
                             <MapPin size={14} />
@@ -662,7 +662,7 @@ export default function InventoryPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 md:px-6 py-6 text-right relative">
+                      <td className="px-3 lg:px-4 xl:px-6 py-6 text-right relative">
                         {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") ? (
                           <div ref={activeActionMenu === asset.sn ? actionMenuRef : null} className="inline-block">
                             {asset.condition !== 'Broken' && (

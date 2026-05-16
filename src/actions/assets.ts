@@ -8,7 +8,16 @@ import { getAdminProfile } from './admin';
 
 export async function getAssetRoster(): Promise<Asset[]> {
   try {
-    const res = await query('SELECT * FROM asset_roster ORDER BY id ASC');
+    const res = await query(`
+      SELECT 
+        id, sn, mac, type, condition, color, latitude, longitude, status, kepemilikan, tanggal_perubahan, inputter, inputter_tms,
+        CASE 
+          WHEN location LIKE '%-%' THEN TRIM(split_part(location, '-', 2))
+          ELSE location 
+        END as location
+      FROM asset_roster 
+      ORDER BY id ASC
+    `);
     return res.rows.length > 0 ? res.rows as Asset[] : Mock.MOCK_ASSETS as Asset[];
   } catch (e) {
     console.error("DB Error: getAssetRoster", e);

@@ -59,7 +59,7 @@ function ScoreItem({ label, value, positive }: { label: string; value: number; p
     <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
       <span className="text-sm font-bold text-slate-500">{label}</span>
       <div className="flex items-center gap-2">
-         <span className={cn("text-sm font-black px-3 py-1 rounded-lg",
+        <span className={cn("text-sm font-black px-3 py-1 rounded-lg",
           positive ? "text-emerald-600 bg-emerald-500/10" : "text-rose-600 bg-rose-500/10"
         )}>
           {value > 0 ? "+" : ""}{value}
@@ -112,10 +112,10 @@ export default function CustomerDetailView({ data }: { data: any }) {
 
   const segment = data.ltv >= 5000000 ? "Premium Subscriber"
     : data.ltv >= 2000000 ? "Regular Subscriber"
-    : "New / Low-Value";
+      : "New / Low-Value";
   const segmentColor = data.ltv >= 5000000 ? "text-violet-600 bg-violet-500/10"
     : data.ltv >= 2000000 ? "text-indigo-600 bg-indigo-500/10"
-    : "text-slate-500 bg-slate-800";
+      : "text-slate-500 bg-slate-800";
 
   const churnPct = isAtRisk ? "High (>60%)" : data.healthScore >= 80 ? "Low (<10%)" : "Medium (20-40%)";
   const churnColor = isAtRisk ? "text-rose-600" : isExcellent ? "text-emerald-600" : "text-amber-600";
@@ -136,21 +136,21 @@ export default function CustomerDetailView({ data }: { data: any }) {
           </Link>
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-               <h1 className="text-xl sm:text-2xl tablet:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2 truncate">
-                 {data.name}
-                 {isVip && (
-                   <m.div
-                     initial={{ scale: 0 }}
-                     animate={{ scale: 1 }}
-                     className="bg-gradient-to-tr from-amber-400 to-yellow-600 p-1 rounded-full shadow-lg shadow-amber-500/20 shrink-0"
-                   >
-                     <Crown size={14} className="text-white" />
-                   </m.div>
-                 )}
-               </h1>
-               <span className={cn("text-[9px] tablet:text-xs font-black px-2 tablet:px-3 py-0.5 tablet:py-1 rounded-full uppercase tracking-wider shrink-0",
-                  isActive ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
-               )}>{data.status}</span>
+              <h1 className="text-xl sm:text-2xl tablet:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2 truncate">
+                {data.name}
+                {isVip && (
+                  <m.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="bg-gradient-to-tr from-amber-400 to-yellow-600 p-1 rounded-full shadow-lg shadow-amber-500/20 shrink-0"
+                  >
+                    <Crown size={14} className="text-white" />
+                  </m.div>
+                )}
+              </h1>
+              <span className={cn("text-[9px] tablet:text-xs font-black px-2 tablet:px-3 py-0.5 tablet:py-1 rounded-full uppercase tracking-wider shrink-0",
+                isActive ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
+              )}>{data.status}</span>
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
               <p className="text-[10px] tablet:text-sm text-slate-500 font-medium flex items-center gap-1">
@@ -169,7 +169,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
         </div>
 
         <div className="grid grid-cols-2 tablet:flex gap-3 w-full tablet:w-auto">
-          <button 
+          <button
             onClick={handleSendReminder}
             disabled={isSending}
             className="flex items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
@@ -177,12 +177,12 @@ export default function CustomerDetailView({ data }: { data: any }) {
             <Bell size={16} className={cn(isSending && "animate-bounce")} />
             <span className="truncate">{isSending ? "Sending..." : "Send Reminder"}</span>
           </button>
-          <button 
+          <button
             onClick={handleToggleVip}
             disabled={isTogglingVip}
             className={cn(
               "flex items-center justify-center gap-2 px-4 tablet:px-6 py-3 border rounded-2xl font-bold text-xs tablet:text-sm transition-all disabled:opacity-50",
-              isVip 
+              isVip
                 ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400"
                 : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
             )}
@@ -201,7 +201,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
           { label: "Avg. Monthly Payment", value: formatCompactNumber(avgPayment), icon: Activity, color: "text-violet-500", bg: "bg-violet-500/10" },
           { label: "Tenure (Months)", value: `${tenureMonths || 0} Mo`, icon: Milestone, color: "text-cyan-500", bg: "bg-cyan-500/10" }
         ].map((k, i) => (
-          <m.div key={i} 
+          <m.div key={i}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
@@ -221,7 +221,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
         {/* Left Column: Health & CRM */}
         <div className="flex flex-col gap-8 h-full">
           <HealthScoreGauge score={data.healthScore} />
-          
+
           <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <h2 className="text-lg font-black mb-6">Score Breakdown</h2>
             <div className="space-y-3">
@@ -233,43 +233,43 @@ export default function CustomerDetailView({ data }: { data: any }) {
           </div>
 
           <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex-1">
-             <h2 className="text-base sm:text-lg font-black mb-6 flex items-start gap-3">
-               <Users size={20} className="text-indigo-500 mt-1 shrink-0" /> 
-               <span>CRM Intelligence</span>
-             </h2>
-             <div className="space-y-6">
+            <h2 className="text-base sm:text-lg font-black mb-6 flex items-start gap-3">
+              <Users size={20} className="text-indigo-500 mt-1 shrink-0" />
+              <span>CRM Intelligence</span>
+            </h2>
+            <div className="space-y-6">
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Customer Segment</p>
+                <p className={cn("text-base sm:text-lg font-black", segmentColor.split(' ')[0])}>{segment}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Churn Risk Level</p>
+                <p className={cn("text-base sm:text-lg font-black", churnColor)}>{churnPct}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Service</p>
+                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold">
+                  <Package size={16} className="text-indigo-500" />
+                  {data.service}
+                </div>
+              </div>
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-4">
                 <div>
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Customer Segment</p>
-                   <p className={cn("text-base sm:text-lg font-black", segmentColor.split(' ')[0])}>{segment}</p>
+                  <p className="text-[10px] font-bold text-slate-400">Phone</p>
+                  <p className="text-sm font-black dark:text-white flex items-center gap-1.5 mt-0.5"><Phone size={12} className="text-slate-400" /> {data.no_telp || 'N/A'}</p>
                 </div>
                 <div>
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Churn Risk Level</p>
-                   <p className={cn("text-base sm:text-lg font-black", churnColor)}>{churnPct}</p>
+                  <p className="text-[10px] font-bold text-slate-400">Region</p>
+                  <p className="text-sm font-black dark:text-white flex items-center gap-1.5 mt-0.5"><MapPin size={12} className="text-slate-400" /> {data.city}</p>
                 </div>
-                <div>
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Service</p>
-                   <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold">
-                     <Package size={16} className="text-indigo-500" />
-                     {data.service}
-                   </div>
-                </div>
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400">Phone</p>
-                      <p className="text-sm font-black dark:text-white flex items-center gap-1.5 mt-0.5"><Phone size={12} className="text-slate-400" /> {data.no_telp || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400">Region</p>
-                      <p className="text-sm font-black dark:text-white flex items-center gap-1.5 mt-0.5"><MapPin size={12} className="text-slate-400" /> {data.city}</p>
-                    </div>
-                </div>
-             </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Right Column: Charts & Tables */}
         <div className="lg:col-span-2 flex flex-col gap-8 h-full">
-          
+
           {/* Payment Timeline */}
           <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -285,21 +285,21 @@ export default function CustomerDetailView({ data }: { data: any }) {
                 </div>
               </div>
             </div>
-            
+
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={data.payment_history} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
-                  <XAxis 
-                    dataKey="month" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }} 
+                  <XAxis
+                    dataKey="month"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }}
                     dy={15}
                   />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={(val) => `Rp${val/1000}k`} />
-                  <Tooltip 
-                    cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={(val) => `Rp${val / 1000}k`} />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(255,255,255,0.03)' }}
                     content={({ active, payload }) => active && payload && payload.length && (
                       <div className="bg-slate-900/95 backdrop-blur-xl text-white px-3 md:px-6 py-2 md:py-4 rounded-2xl shadow-2xl border border-white/10 ring-1 ring-white/5 min-w-[140px] md:min-w-[240px]">
                         <p className="opacity-50 mb-2 md:mb-3 uppercase tracking-widest text-[8px] md:text-[10px] font-black">{payload[0].payload.month}</p>
@@ -310,16 +310,18 @@ export default function CustomerDetailView({ data }: { data: any }) {
                                 <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full shadow-lg" style={{ backgroundColor: entry.color }} />
                                 <span className="text-[10px] md:text-sm font-bold opacity-90">{entry.name === 'ontime' ? 'Tepat Waktu' : 'Terlambat'}</span>
                               </span>
-                              <span className="text-[10px] md:text-sm font-black font-mono text-indigo-400">{formatCurrency(entry.value)}</span>
+                              <span className="text-[10px] md:text-sm font-black font-mono text-indigo-400">
+                                {entry.payload.isUnpaid && entry.name === 'late' ? 'UNPAID' : formatCurrency(entry.value)}
+                              </span>
                             </div>
                           ))}
                           <div className="pt-2 md:pt-3 border-t border-white/10 flex justify-between items-center gap-4 md:gap-12">
-                             <span className="text-[8px] md:text-[10px] font-black opacity-40 uppercase">Total Revenue</span>
-                             <span className="text-[10px] md:text-sm font-black font-mono text-emerald-400">{formatCurrency(payload.reduce((acc, curr) => acc + Number(curr.value), 0))}</span>
+                            <span className="text-[8px] md:text-[10px] font-black opacity-40 uppercase">Total Revenue</span>
+                            <span className="text-[10px] md:text-sm font-black font-mono text-emerald-400">{formatCurrency(payload.reduce((acc, curr) => acc + Number(curr.value), 0))}</span>
                           </div>
                         </div>
                       </div>
-                    )} 
+                    )}
                   />
                   <defs>
                     <linearGradient id="ontimeGradient" x1="0" y1="0" x2="0" y2="1">
@@ -340,44 +342,57 @@ export default function CustomerDetailView({ data }: { data: any }) {
 
           {/* Late Payments Detailed Table */}
           <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-             <h2 className="text-xl font-black mb-8 flex items-center gap-2"><Clock size={24} className="text-rose-500" /> Late Payment Breakdown</h2>
-             <div className="overflow-x-auto no-scrollbar rounded-2xl border border-slate-100 dark:border-slate-800">
-               <table className="w-full text-left min-w-[500px]">
-                  <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                    <tr>
-                      <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Billing Month</th>
-                      <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Days Delayed</th>
-                      <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Reference Date</th>
-                      <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Penalty Amount</th>
+            <h2 className="text-xl font-black mb-8 flex items-center gap-2"><Clock size={24} className="text-rose-500" /> Late Payment Breakdown</h2>
+            <div className="overflow-x-auto no-scrollbar rounded-2xl border border-slate-100 dark:border-slate-800">
+              <table className="w-full text-left min-w-[500px]">
+                <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                  <tr>
+                    <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Billing Month</th>
+                    <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Days Delayed</th>
+                    <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Reference Date</th>
+                    <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest text-right">Payment Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {data.late_payments?.map((lp: any, i: number) => (
+                    <tr key={i} className={cn(
+                      "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors",
+                      lp.isUnpaid && "bg-rose-500/5 dark:bg-rose-500/10"
+                    )}>
+                      <td className="px-6 py-4 font-black text-slate-900 dark:text-white">
+                        <div className="flex flex-col">
+                          {lp.month}
+                          {lp.isUnpaid && <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest mt-0.5">Current Overdue</span>}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={cn(
+                          "px-3 py-1 rounded-lg text-sm font-black",
+                          lp.isUnpaid ? "bg-rose-500 text-white animate-pulse" : "bg-rose-500/10 text-rose-500"
+                        )}>
+                          {lp.daysLate} days
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-500">
+                        {lp.isUnpaid ? "Belum Terdeteksi" : new Date(lp.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </td>
+                      <td className="px-6 py-4 text-right font-black text-slate-900 dark:text-white">
+                        {lp.isUnpaid ? (
+                          <span className="text-xs font-black text-rose-500 bg-rose-500/10 px-2 py-1 rounded-md border border-rose-500/20">UNPAID</span>
+                        ) : formatCompactNumber(lp.amount)}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {data.late_payments?.map((lp: any, i: number) => (
-                      <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                        <td className="px-6 py-4 font-black text-slate-900 dark:text-white">{lp.month}</td>
-                        <td className="px-6 py-4">
-                           <span className="px-3 py-1 bg-rose-500/10 text-rose-500 rounded-lg text-sm font-black">
-                             {lp.daysLate} days
-                           </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm font-medium text-slate-500">
-                          {new Date(lp.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                        </td>
-                        <td className="px-6 py-4 text-right font-black text-slate-900 dark:text-white">
-                          {formatCompactNumber(lp.amount)}
-                        </td>
-                      </tr>
-                    ))}
-                    {(!data.late_payments || data.late_payments.length === 0) && (
-                      <tr>
-                        <td colSpan={4} className="px-6 py-12 text-center text-slate-400 font-medium italic">
-                          This customer has no history of late payments. (Perfect Score)
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-               </table>
-             </div>
+                  ))}
+                  {(!data.late_payments || data.late_payments.length === 0) && (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-12 text-center text-slate-400 font-medium italic">
+                        This customer has no history of late payments. (Perfect Score)
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Retention Strategy Recommendation (Back to Right Column) */}
@@ -394,9 +409,9 @@ export default function CustomerDetailView({ data }: { data: any }) {
                 {isAtRisk ? "Retention Alert" : isExcellent ? "Upsell Opportunity" : "Growth Maintenance"}
               </h3>
               <p className="text-slate-500 font-medium text-sm leading-relaxed">
-                {isAtRisk 
-                  ? "Pelanggan berada di zona risiko churn tinggi. Rekomendasi: diskon loyalitas segera." 
-                  : isExcellent 
+                {isAtRisk
+                  ? "Pelanggan berada di zona risiko churn tinggi. Rekomendasi: diskon loyalitas segera."
+                  : isExcellent
                     ? "Loyalitas sangat tinggi. Tawarkan paket Gamers/Premium dengan kontrak tahunan."
                     : "Stabilitas pembayaran terjaga. Terus pantau kontribusi MRR yang stabil."}
               </p>
