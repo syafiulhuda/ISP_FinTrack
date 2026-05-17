@@ -202,7 +202,7 @@ export default function ServiceTiersPage() {
 
 
   return (
-    <div className="space-y-10">
+    <div className="pt-4 space-y-10">
       {/* Hero Section */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6">
         <div>
@@ -410,15 +410,15 @@ export default function ServiceTiersPage() {
           (isRefetching) ? "opacity-50 pointer-events-none" : "opacity-100"
         )}>
           <div className="min-h-[650px]" style={{ overflowAnchor: 'none' }}>
-            <table className="w-full text-left border-collapse">
+            <table className="w-full min-w-[800px] text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50">
                   <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Status</th>
                   <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Subscriber</th>
                   <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Full Name</th>
-                  <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] hidden sm:table-cell">Service Address</th>
-                  <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] hidden md:table-cell">Region</th>
-                  <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] hidden md:table-cell">City/Regency</th>
+                  <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Service Address</th>
+                  <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Region</th>
+                  <th className="px-3 md:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">City/Regency</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -480,16 +480,16 @@ export default function ServiceTiersPage() {
                     <td className="px-3 md:px-6 py-5 max-w-[120px] md:max-w-[180px]">
                       <span className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors block truncate" title={cust.name}>{cust.name}</span>
                     </td>
-                    <td className="px-3 md:px-6 py-5 max-w-[150px] md:max-w-[240px] hidden sm:table-cell">
+                    <td className="px-3 md:px-6 py-5 max-w-[150px] md:max-w-[240px]">
                       <div className="flex flex-col">
                         <span className="text-xs text-slate-600 dark:text-slate-400 font-medium truncate" title={cust.address}>{cust.address}</span>
                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wide mt-0.5 truncate" title={cust.village}>{cust.village}</span>
                       </div>
                     </td>
-                    <td className="px-3 md:px-6 py-5 hidden md:table-cell max-w-[150px]">
+                    <td className="px-3 md:px-6 py-5 max-w-[150px]">
                       <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold truncate block" title={cust.district}>{cust.district}</span>
                     </td>
-                    <td className="px-3 md:px-6 py-5 hidden md:table-cell">
+                    <td className="px-3 md:px-6 py-5">
                       <div className="flex flex-col whitespace-nowrap">
                         <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate" title={cust.city}>{cust.city}</span>
                         <span className="text-[10px] text-slate-400 font-bold uppercase truncate" title={cust.province}>{cust.province}</span>

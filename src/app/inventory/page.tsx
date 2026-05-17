@@ -386,7 +386,7 @@ export default function InventoryPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {isLoadingAll ? (
           Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="min-h-[140px] tablet:h-48 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem]" />
@@ -911,19 +911,19 @@ export default function InventoryPage() {
 
         {/* Pagination Controls */}
         {filteredAssets.length > 0 && (
-          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/30 dark:bg-white/5">
+          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-50/30 dark:bg-white/5">
             <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
               Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, filteredAssets.length)}</span> of <span className="text-slate-900 dark:text-white">{filteredAssets.length}</span> assets
             </p>
-            <div className="flex flex-wrap justify-center items-center gap-2">
+            <div className="flex flex-row items-center justify-center gap-1 sm:gap-2 w-full sm:w-auto">
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
                 Previous
               </button>
-              <div className="flex flex-wrap justify-center items-center gap-1">
+              <div className="flex items-center gap-1">
                 {[...Array(Math.min(5, totalPages))].map((_, i) => {
                   let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
                   if (pageNum <= 0 || pageNum > totalPages) return null;
@@ -933,7 +933,7 @@ export default function InventoryPage() {
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
                       className={cn(
-                        "w-8 h-8 rounded-lg text-xs font-bold transition-all",
+                        "w-8 h-8 rounded-lg text-[10px] sm:text-xs font-bold transition-all",
                         currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
                       )}
                     >
@@ -945,7 +945,7 @@ export default function InventoryPage() {
               <button 
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
                 Next
               </button>

@@ -94,7 +94,7 @@ export default function CustomerAnalysisPage() {
   };
 
   return (
-    <div className="space-y-8 p-2">
+    <div className="pt-4 space-y-8 p-2">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -102,8 +102,8 @@ export default function CustomerAnalysisPage() {
           <p className="text-slate-500 font-medium mt-1">Advanced CRM & Lifetime Value Tracking</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative group">
+        <div className="flex flex-col lg-phone:flex-row items-stretch lg-phone:items-center justify-between gap-2.5 w-full tablet:w-auto">
+          <div className="relative group w-full lg-phone:flex-1 tablet:flex-none">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
             <input
               type="text"
@@ -113,38 +113,40 @@ export default function CustomerAnalysisPage() {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full md:w-80 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-sm font-bold shadow-sm"
+              className="pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full lg-phone:w-full tablet:w-80 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-sm font-bold shadow-sm"
               aria-label="Search customers by name or ID"
             />
           </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 outline-none cursor-pointer"
-            aria-label="Filter by customer status"
-          >
-            <option value="All">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
+          <div className="flex items-center justify-between lg-phone:justify-end gap-2 w-full lg-phone:w-auto">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="flex-1 lg-phone:flex-none px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 outline-none cursor-pointer lg-phone:min-w-[120px]"
+              aria-label="Filter by customer status"
+            >
+              <option value="All">All Status</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
 
-          <button
-            onClick={resetFilters}
-            className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-indigo-500 rounded-2xl transition-all"
-            title="Reset Filters"
-            aria-label="Reset all search and status filters"
-          >
-            <Clock size={20} className="rotate-180" />
-          </button>
+            <button
+              onClick={resetFilters}
+              className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-indigo-500 rounded-2xl transition-all shrink-0 animate-pulse-subtle"
+              title="Reset Filters"
+              aria-label="Reset all search and status filters"
+            >
+              <Clock size={20} className="rotate-180" />
+            </button>
+          </div>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="h-[200px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem] border border-slate-200 dark:border-slate-800" />
@@ -323,19 +325,19 @@ export default function CustomerAnalysisPage() {
 
         {/* Pagination Controls */}
         {sortedAndFilteredData.length > 0 && (
-          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/30 dark:bg-white/5">
+          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-50/30 dark:bg-white/5">
             <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
               Showing <span className="text-slate-900 dark:text-white">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage * itemsPerPage, sortedAndFilteredData.length)}</span> of <span className="text-slate-900 dark:text-white">{sortedAndFilteredData.length}</span> customers
             </p>
-            <div className="flex flex-wrap justify-center items-center gap-2">
+            <div className="flex flex-row items-center justify-center gap-1 sm:gap-2 w-full sm:w-auto">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
                 Previous
               </button>
-              <div className="flex flex-wrap justify-center items-center gap-1">
+              <div className="flex items-center gap-1">
                 {[...Array(Math.min(5, totalPages))].map((_, i) => {
                   let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
                   if (pageNum <= 0 || pageNum > totalPages) return null;
@@ -345,7 +347,7 @@ export default function CustomerAnalysisPage() {
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
                       className={cn(
-                        "w-8 h-8 rounded-lg text-xs font-bold transition-all",
+                        "w-8 h-8 rounded-lg text-[10px] sm:text-xs font-bold transition-all",
                         currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
                       )}
                     >
@@ -357,7 +359,7 @@ export default function CustomerAnalysisPage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
                 Next
               </button>

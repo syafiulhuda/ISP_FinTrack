@@ -445,7 +445,7 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      <div ref={dashboardRef} className="space-y-8 pb-10">
+      <div ref={dashboardRef} className="pt-4 space-y-8 pb-10">
         <div className="space-y-8">
           {/* Header */}
           <div

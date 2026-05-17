@@ -155,6 +155,31 @@
   html {
     @apply font-sans scroll-smooth;
   }
+
+  /* Premium Native Date Input Overrides */
+  input[type="date"] {
+    position: relative;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    background: transparent;
+    color: transparent;
+    cursor: pointer;
+    height: 100%;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 100%;
+    opacity: 0;
+    z-index: 10;
+  }
+  input[type="date"]::-webkit-inner-spin-button,
+  input[type="date"]::-webkit-clear-button {
+    display: none;
+    -webkit-appearance: none;
+  }
 }
 
 @layer utilities {

@@ -264,7 +264,7 @@ export default function RegionalAnalysisPage() {
   const isLoadingAll = loadingCustomers || loadingTiers || loadingAssets || loadingInvoices || loadingMV;
 
   return (
-    <div className="space-y-10">
+    <div className="pt-4 space-y-10">
       {/* Header Row */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
@@ -429,19 +429,19 @@ export default function RegionalAnalysisPage() {
         
         {/* Pagination Profit */}
         {dynamicData.length > 0 && (
-          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/30 dark:bg-white/5">
+          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-50/30 dark:bg-white/5">
             <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
               Showing <span className="text-slate-900 dark:text-white">{(profitPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(profitPage*itemsPerPage, dynamicData.length)}</span> of <span className="text-slate-900 dark:text-white">{dynamicData.length}</span> nodes
             </p>
-            <div className="flex flex-wrap justify-center items-center gap-2">
+            <div className="flex flex-row items-center justify-center gap-1 sm:gap-2 w-full sm:w-auto">
               <button 
                 onClick={() => setProfitPage(prev => Math.max(1, prev - 1))}
                 disabled={profitPage === 1}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
                 Previous
               </button>
-              <div className="flex flex-wrap justify-center items-center gap-1">
+              <div className="flex items-center gap-1">
                 {[...Array(Math.min(5, totalProfitPages))].map((_, i) => {
                   let pageNum = profitPage <= 3 ? i + 1 : (profitPage >= totalProfitPages - 2 ? totalProfitPages - 4 + i : profitPage - 2 + i);
                   if (pageNum <= 0 || pageNum > totalProfitPages) return null;
@@ -451,7 +451,7 @@ export default function RegionalAnalysisPage() {
                       key={pageNum}
                       onClick={() => setProfitPage(pageNum)}
                       className={cn(
-                        "w-8 h-8 rounded-lg text-xs font-bold transition-all",
+                        "w-8 h-8 rounded-lg text-[10px] sm:text-xs font-bold transition-all",
                         profitPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
                       )}
                     >
@@ -463,7 +463,7 @@ export default function RegionalAnalysisPage() {
               <button 
                 onClick={() => setProfitPage(prev => Math.min(totalProfitPages, prev + 1))}
                 disabled={profitPage === totalProfitPages}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
                 Next
               </button>
@@ -523,19 +523,19 @@ export default function RegionalAnalysisPage() {
         
         {/* Pagination Aging */}
         {dynamicData.length > 0 && (
-          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/30 dark:bg-white/5">
+          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-50/30 dark:bg-white/5">
             <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
               Showing <span className="text-slate-900 dark:text-white">{(agingPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(agingPage*itemsPerPage, dynamicData.length)}</span> of <span className="text-slate-900 dark:text-white">{dynamicData.length}</span> nodes
             </p>
-            <div className="flex flex-wrap justify-center items-center gap-2">
+            <div className="flex flex-row items-center justify-center gap-1 sm:gap-2 w-full sm:w-auto">
               <button 
                 onClick={() => setAgingPage(prev => Math.max(1, prev - 1))}
                 disabled={agingPage === 1}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
                 Previous
               </button>
-              <div className="flex flex-wrap justify-center items-center gap-1">
+              <div className="flex items-center gap-1">
                 {[...Array(Math.min(5, totalAgingPages))].map((_, i) => {
                   let pageNum = agingPage <= 3 ? i + 1 : (agingPage >= totalAgingPages - 2 ? totalAgingPages - 4 + i : agingPage - 2 + i);
                   if (pageNum <= 0 || pageNum > totalAgingPages) return null;
@@ -545,7 +545,7 @@ export default function RegionalAnalysisPage() {
                       key={pageNum}
                       onClick={() => setAgingPage(pageNum)}
                       className={cn(
-                        "w-8 h-8 rounded-lg text-xs font-bold transition-all",
+                        "w-8 h-8 rounded-lg text-[10px] sm:text-xs font-bold transition-all",
                         agingPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
                       )}
                     >
@@ -557,7 +557,7 @@ export default function RegionalAnalysisPage() {
               <button 
                 onClick={() => setAgingPage(prev => Math.min(totalAgingPages, prev + 1))}
                 disabled={agingPage === totalAgingPages}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
                 Next
               </button>

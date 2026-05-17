@@ -194,7 +194,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 tablet:gap-4">
+      <div className="grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-4 gap-3 tablet:gap-4">
         {[
           { label: "Lifetime Value (LTV)", value: formatCompactNumber(data.ltv), icon: TrendingUp, color: "text-indigo-500", bg: "bg-indigo-500/10" },
           { label: "Payment Frequency", value: `${data.txCount}x`, icon: CreditCard, color: "text-emerald-500", bg: "bg-emerald-500/10" },
