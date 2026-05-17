@@ -4,8 +4,9 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/DataTable";
 import { getAuditLogs } from "@/actions/audit";
-import { Search, Calendar, FilterX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Search, Calendar, FilterX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { m, AnimatePresence } from "framer-motion";
 
 export default function AuditTrailPage() {
   const { data: logs = [], isLoading } = useQuery({
@@ -18,6 +19,12 @@ export default function AuditTrailPage() {
   const [adminSearch, setAdminSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+
+  const toggleLog = (id: string) => {
+    setExpandedLogId(expandedLogId === id ? null : id);
+  };
 
   useEffect(() => {
     setCurrentPage(1);
@@ -99,7 +106,7 @@ export default function AuditTrailPage() {
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="pt-6 md:pt-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
         <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Security & Audit Trail</h2>
         <p className="text-sm font-medium text-slate-500 mt-1">Pusat pemantauan aktivitas admin. Melacak seluruh kejadian login dan perubahan data kritis.</p>
@@ -142,14 +149,94 @@ export default function AuditTrailPage() {
         </div>
 
         {/* Data Table */}
-        <DataTable 
-          data={displayLogs} 
-          columns={columns} 
-          keyExtractor={(row) => row.id}
-          isLoading={isLoading}
-          emptyMessage="Tidak ada aktivitas yang sesuai."
-          className="no-scrollbar"
-        />
+        <div className="hidden lg:block">
+          <DataTable 
+            data={displayLogs} 
+            columns={columns} 
+            keyExtractor={(row) => row.id}
+            isLoading={isLoading}
+            emptyMessage="Tidak ada aktivitas yang sesuai."
+            className="no-scrollbar"
+          />
+        </div>
+
+        {/* Mobile/Tablet Portrait Accordion Cards */}
+        {!isLoading && (
+          <div className="block lg:hidden space-y-3">
+            {displayLogs.length === 0 ? (
+              <div className="text-center py-10 text-slate-500 dark:text-slate-400 text-sm font-medium">
+                Tidak ada aktivitas yang sesuai.
+              </div>
+            ) : (
+              displayLogs.map((log: any) => {
+                const isExpanded = expandedLogId === log.id;
+                const d = new Date(log.timestamp);
+                
+                let actionColor = "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
+                if (log.action === 'System Login') actionColor = "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
+                if (log.action === 'Data Insert/Update') actionColor = "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+                if (log.action === 'Hardware Deployed') actionColor = "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+                
+                return (
+                  <div 
+                    key={log.id} 
+                    className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 transition-all"
+                  >
+                    <div 
+                      onClick={() => toggleLog(log.id)}
+                      className="flex items-start justify-between gap-3 cursor-pointer"
+                    >
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate">{log.user}</span>
+                          <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap shrink-0", actionColor)}>
+                            {log.action}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-400 font-mono tabular-nums">
+                          {d.toLocaleString('id-ID')}
+                        </div>
+                      </div>
+                      <div className="shrink-0 pt-0.5">
+                        <m.div
+                          animate={{ rotate: isExpanded ? 180 : 0 }}
+                          transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                          className="p-1 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"
+                        >
+                          <ChevronDown size={16} />
+                        </m.div>
+                      </div>
+                    </div>
+                    
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <m.div
+                          initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                          animate={{ height: "auto", opacity: 1, marginTop: 12 }}
+                          exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                          transition={{ duration: 0.2, ease: "easeInOut" }}
+                          className="overflow-hidden"
+                        >
+                          <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 break-words font-medium">
+                            <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Details / Record ID</div>
+                            {log.details}
+                          </div>
+                        </m.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {/* Loading Spinner for Mobile */}
+        {isLoading && (
+          <div className="block lg:hidden text-center py-10">
+            <span className="text-sm font-medium text-slate-500">Loading audit trail...</span>
+          </div>
+        )}
 
         {/* Pagination */}
         {!isLoading && sortedAndFilteredLogs.length > 0 && (

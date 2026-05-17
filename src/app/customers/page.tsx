@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { m } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   Search,
   Clock,
   ShieldAlert,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   TrendingUp,
   CreditCard,
   Calendar,
@@ -17,6 +19,133 @@ import Link from "next/link";
 import { getCustomerAnalysis } from "@/actions/customers";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+
+function MobileCustomerCard({
+  customer,
+  idx,
+  formatCurrency,
+  getHealthColor,
+  getHealthLabel,
+  cn
+}: {
+  customer: any;
+  idx: number;
+  formatCurrency: any;
+  getHealthColor: any;
+  getHealthLabel: any;
+  cn: any;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div
+      onClick={() => setIsOpen(!isOpen)}
+      className={cn(
+        "px-3 py-4 md-phone:p-5 transition-all cursor-pointer relative overflow-hidden select-none",
+        isOpen ? "bg-slate-50/50 dark:bg-white/5" : "hover:bg-slate-50/30 dark:hover:bg-white/5"
+      )}
+    >
+      <div className="flex items-center justify-between gap-2.5 md-phone:gap-3">
+        {/* Left Side: Avatar & Name Info */}
+        <div className="flex items-center gap-2 md-phone:gap-3 min-w-0 flex-1">
+          <div className="w-8 h-8 md-phone:w-10 md-phone:h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500 font-black text-[10px] md-phone:text-xs shrink-0">
+            {customer.id.substring(0, 2)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1 min-w-0 w-full">
+              <p className="font-black text-slate-900 dark:text-white text-xs md-phone:text-sm truncate">{customer.name}</p>
+              {customer.is_vip && <Crown size={11} className="text-amber-550 dark:text-amber-500 fill-amber-500/20 shrink-0" />}
+            </div>
+            <p className="text-[9px] md-phone:text-xs font-bold text-slate-500 mt-0.5">{customer.id} • {customer.service}</p>
+          </div>
+        </div>
+
+        {/* Right Side: Status Badge & Chevron */}
+        <div className="flex items-center gap-1.5 md-phone:gap-2 shrink-0">
+          <span className={cn(
+            "text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 md-phone:px-2 rounded-md border whitespace-nowrap",
+            getHealthColor(customer.healthScore)
+          )}>
+            {customer.healthScore}%<span className="hidden min-[450px]:inline"> • {getHealthLabel(customer.healthScore)}</span>
+          </span>
+          <div className="p-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-slate-500 hover:text-indigo-500 dark:hover:text-indigo-400 transition-all">
+            {isOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          </div>
+        </div>
+      </div>
+
+      {/* Accordion Detail Content */}
+      <AnimatePresence>
+        {isOpen && (
+          <m.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden mt-4 space-y-3.5 text-xs font-medium"
+          >
+            {/* LTV & Payments */}
+            <div className="grid grid-cols-2 gap-4 pb-3 border-b border-slate-100 dark:border-slate-800/50 pt-2">
+              <div>
+                <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px] mb-1">Financial LTV</span>
+                <span className="font-black text-slate-850 dark:text-slate-200 tabular-nums">{formatCurrency(customer.ltv)}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px] mb-1">Payments Count</span>
+                <span className="font-bold text-slate-700 dark:text-slate-350">{customer.txCount} Payments</span>
+              </div>
+            </div>
+
+            {/* Payment Ratio & Last Payment */}
+            <div className="grid grid-cols-2 gap-4 pb-3 border-b border-slate-100 dark:border-slate-800/50">
+              <div>
+                <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px] mb-1">Late Payment Ratio</span>
+                <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-650 dark:text-slate-300">
+                  {Number(customer.paymentRatio || 0) === 0 ? "Perfect" : `${Number(customer.paymentRatio || 0).toFixed(0)}% Late`}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px] mb-1">Last Payment</span>
+                <span className="text-slate-700 dark:text-slate-355">{customer.lastPayment ? new Date(customer.lastPayment).toLocaleDateString() : 'N/A'}</span>
+              </div>
+            </div>
+
+            {/* Location Details (Province, City, District) */}
+            <div className="space-y-2">
+              <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px]">Location Detail</span>
+              <div className="space-y-1.5 pl-2 border-l border-slate-200 dark:border-slate-700">
+                <div>
+                  <span className="text-slate-450 dark:text-slate-400 font-bold">Province: </span>
+                  <span className="text-slate-800 dark:text-slate-200">{customer.province || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-450 dark:text-slate-400 font-bold">City: </span>
+                  <span className="text-slate-800 dark:text-slate-200">{customer.city || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-450 dark:text-slate-400 font-bold">District: </span>
+                  <span className="text-slate-800 dark:text-slate-200">{customer.district || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* View Details Link */}
+            <div className="pt-2 text-right">
+              <Link
+                href={`/customers/${customer.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-100 transition-all font-black text-[11px]"
+              >
+                <span>GO TO CUSTOMER 360</span>
+                <ChevronRight size={14} />
+              </Link>
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function CustomerAnalysisPage() {
   const router = useRouter();
@@ -96,14 +225,14 @@ export default function CustomerAnalysisPage() {
   return (
     <div className="pt-4 space-y-8 p-2">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:flex-wrap lg:flex-wrap md:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Customer Analysis</h1>
           <p className="text-slate-500 font-medium mt-1">Advanced CRM & Lifetime Value Tracking</p>
         </div>
 
         <div className="flex flex-col lg-phone:flex-row items-stretch lg-phone:items-center justify-between gap-2.5 w-full tablet:w-auto">
-          <div className="relative group w-full lg-phone:flex-1 tablet:flex-none">
+          <div className="relative group w-full lg-phone:flex-1 tablet:w-64 laptop:w-80 tablet:flex-none">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
             <input
               type="text"
@@ -113,7 +242,7 @@ export default function CustomerAnalysisPage() {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full lg-phone:w-full tablet:w-80 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-sm font-bold shadow-sm"
+              className="pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-sm font-bold shadow-sm"
               aria-label="Search customers by name or ID"
             />
           </div>
@@ -214,117 +343,158 @@ export default function CustomerAnalysisPage() {
         )}
       </div>
 
-      {/* Table */}
+      {/* Table Section */}
       <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative min-h-[400px]"
+        className="w-full max-w-full bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative min-h-[400px] flex flex-col justify-between"
       >
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-slate-100 dark:border-slate-800">
-                <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Customer Info</th>
-                <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Financial LTV</th>
-                <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Payment Perf.</th>
-                <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Health Score</th>
-                <th className="p-6 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i}>
-                    <td colSpan={5} className="p-6">
-                      <div className="h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl w-full" />
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                paginatedData.map((customer, idx) => (
-                  <m.tr
-                    key={customer.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors group"
-                  >
-                    <td className="p-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500 font-black text-sm">
-                          {customer.id.substring(0, 2)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-black text-slate-900 dark:text-white text-sm">{customer.name}</p>
-                            {customer.is_vip && <Crown size={14} className="text-amber-500 fill-amber-500/20" />}
-                          </div>
-                          <p className="text-xs font-bold text-slate-500 mt-0.5">{customer.id} • {customer.service}</p>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="p-6">
-                      <div className="space-y-1">
-                        <p className="font-black text-slate-900 dark:text-white text-sm whitespace-nowrap tabular-nums">{formatCurrency(customer.ltv)}</p>
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
-                          <CreditCard size={10} />
-                          <span>{customer.txCount} Payments</span>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="p-6">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <div className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-500">
-                            {Number(customer.paymentRatio || 0) === 0 ? "Perfect" : `${Number(customer.paymentRatio || 0).toFixed(0)}% Late`}
-                          </div>
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                          <Calendar size={10} />
-                          Last: {customer.lastPayment ? new Date(customer.lastPayment).toLocaleDateString() : 'N/A'}
-                        </p>
-                      </div>
-                    </td>
-
-                    <td className="p-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                          <m.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${customer.healthScore}%` }}
-                            className={cn("h-full",
-                              customer.healthScore >= 80 ? "bg-emerald-500" :
-                                customer.healthScore >= 50 ? "bg-amber-500" : "bg-rose-500"
-                            )}
-                          />
-                        </div>
-                        <span className={cn(
-                          "text-[10px] font-black px-2 py-0.5 rounded-md border whitespace-nowrap",
-                          getHealthColor(customer.healthScore)
-                        )}>
-                          {customer.healthScore}% • {getHealthLabel(customer.healthScore)}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="p-6 text-right">
-                      <Link
-                        href={`/customers/${customer.id}`}
-                        className="inline-block p-3 bg-slate-50 dark:bg-slate-800/50 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-600 rounded-2xl transition-all text-slate-400 group-hover:scale-110 shadow-sm"
-                        aria-label={`View details for customer ${customer.name}`}
+        <div>
+          {loading ? (
+            <div className="p-6 space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl w-full" />
+              ))}
+            </div>
+          ) : sortedAndFilteredData.length === 0 ? (
+            <div className="p-20 text-center">
+              <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-slate-400">
+                <Search size={32} />
+              </div>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white">No results found</h2>
+              <p className="text-slate-500 font-medium mt-1">Try adjusting your search or filters.</p>
+            </div>
+          ) : (
+            <>
+              {/* DESKTOP TABLE VIEW (hidden on mobile, block on md and up) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 dark:border-slate-800">
+                      <th className="px-4 py-5.5 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Customer Info</th>
+                      <th className="px-4 py-5.5 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Financial LTV</th>
+                      <th className="px-4 py-5.5 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Payment Perf.</th>
+                      <th className="px-4 py-5.5 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Health Score</th>
+                      <th className="hidden laptop:table-cell px-4 py-5.5 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Province</th>
+                      <th className="hidden laptop:table-cell px-4 py-5.5 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">City</th>
+                      <th className="hidden desktop:table-cell px-4 py-5.5 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">District</th>
+                      <th className="px-4 py-5.5 text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                    {paginatedData.map((customer, idx) => (
+                      <m.tr
+                        key={customer.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors group"
                       >
-                        <ChevronRight size={18} className="transition-transform group-hover:translate-x-0.5" />
-                      </Link>
-                    </td>
-                  </m.tr>
-                )))}
-            </tbody>
-          </table>
+                        <td className="px-4 py-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500 font-black text-sm">
+                              {customer.id.substring(0, 2)}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="font-black text-slate-900 dark:text-white text-sm">{customer.name}</p>
+                                {customer.is_vip && <Crown size={14} className="text-amber-500 fill-amber-500/20" />}
+                              </div>
+                              <p className="text-xs font-bold text-slate-500 mt-0.5">{customer.id} • {customer.service}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-5">
+                          <div className="space-y-1">
+                            <p className="font-black text-slate-900 dark:text-white text-sm whitespace-nowrap tabular-nums">{formatCurrency(customer.ltv)}</p>
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
+                              <CreditCard size={10} />
+                              <span>{customer.txCount} Payments</span>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-5">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <div className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-500">
+                                {Number(customer.paymentRatio || 0) === 0 ? "Perfect" : `${Number(customer.paymentRatio || 0).toFixed(0)}% Late`}
+                              </div>
+                            </div>
+                            <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                              <Calendar size={10} />
+                              Last: {customer.lastPayment ? new Date(customer.lastPayment).toLocaleDateString() : 'N/A'}
+                            </p>
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                              <m.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${customer.healthScore}%` }}
+                                className={cn("h-full",
+                                  customer.healthScore >= 80 ? "bg-emerald-500" :
+                                    customer.healthScore >= 50 ? "bg-amber-500" : "bg-rose-500"
+                                )}
+                              />
+                            </div>
+                            <span className={cn(
+                              "text-[10px] font-black px-2 py-0.5 rounded-md border whitespace-nowrap",
+                              getHealthColor(customer.healthScore)
+                            )}>
+                              {customer.healthScore}% • {getHealthLabel(customer.healthScore)}
+                            </span>
+                          </div>
+                        </td>
+
+                        <td className="hidden laptop:table-cell px-4 py-5 font-bold text-slate-650 dark:text-slate-400 text-xs whitespace-nowrap">{customer.province || 'N/A'}</td>
+                        <td className="hidden laptop:table-cell px-4 py-5 font-bold text-slate-650 dark:text-slate-400 text-xs whitespace-nowrap">{customer.city || 'N/A'}</td>
+                        <td className="hidden desktop:table-cell px-4 py-5 font-bold text-slate-650 dark:text-slate-400 text-xs whitespace-nowrap">{customer.district || 'N/A'}</td>
+
+                        <td className="px-4 py-5 text-right">
+                          <Link
+                            href={`/customers/${customer.id}`}
+                            className="inline-block p-3 bg-slate-50 dark:bg-slate-800/50 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-600 rounded-2xl transition-all text-slate-400 group-hover:scale-110 shadow-sm"
+                            aria-label={`View details for customer ${customer.name}`}
+                          >
+                            <ChevronRight size={18} className="transition-transform group-hover:translate-x-0.5" />
+                          </Link>
+                        </td>
+                      </m.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* MOBILE COLLAPSIBLE CARDS VIEW (hidden on desktop, block on mobile) */}
+              <div className="md:hidden">
+                {/* Mobile list header */}
+                <div className="px-4 sm-phone:px-5 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800/50 text-[10px] sm-phone:text-[11px] font-black uppercase tracking-widest text-slate-450 dark:text-slate-400 bg-slate-50/20 dark:bg-white/5">
+                  Customer Information
+                </div>
+                <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                  {paginatedData.map((customer, idx) => (
+                    <MobileCustomerCard
+                      key={customer.id}
+                      customer={customer}
+                      idx={idx}
+                      formatCurrency={formatCurrency}
+                      getHealthColor={getHealthColor}
+                      getHealthLabel={getHealthLabel}
+                      cn={cn}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Pagination Controls */}
-        {sortedAndFilteredData.length > 0 && (
+        {!loading && sortedAndFilteredData.length > 0 && (
           <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-50/30 dark:bg-white/5">
             <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
               Showing <span className="text-slate-900 dark:text-white">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage * itemsPerPage, sortedAndFilteredData.length)}</span> of <span className="text-slate-900 dark:text-white">{sortedAndFilteredData.length}</span> customers
@@ -364,16 +534,6 @@ export default function CustomerAnalysisPage() {
                 Next
               </button>
             </div>
-          </div>
-        )}
-
-        {(!loading && sortedAndFilteredData.length === 0) && (
-          <div className="p-20 text-center">
-            <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-slate-400">
-              <Search size={32} />
-            </div>
-            <h2 className="text-xl font-black text-slate-900 dark:text-white">No results found</h2>
-            <p className="text-slate-500 font-medium mt-1">Try adjusting your search or filters.</p>
           </div>
         )}
       </m.div>

@@ -24,7 +24,7 @@ import { getCustomers, createCustomer, auditCustomerGracePeriod } from "@/action
 import { getServiceTiers, createServiceTier } from "@/actions/tiers";
 import { Customer, ServiceTier } from "@/types";
 import { cn, formatCurrency } from "@/lib/utils";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 
 const IconMap = {
@@ -40,6 +40,14 @@ export default function ServiceTiersPage() {
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
+  const [expandedCustomers, setExpandedCustomers] = useState<Record<string, boolean>>({});
+
+  const toggleCustomerExpand = (customerId: string) => {
+    setExpandedCustomers(prev => ({
+      ...prev,
+      [customerId]: !prev[customerId]
+    }));
+  };
 
   const { data: customerData, isLoading: loadingCustomers, refetch: refetchCustomers, isRefetching } = useQuery({ 
     queryKey: ['customers', currentPage, itemsPerPage], 
@@ -109,6 +117,18 @@ export default function ServiceTiersPage() {
 
   const [isAuditing, setIsAuditing] = useState(false);
   const [showAuditConfirm, setShowAuditConfirm] = useState(false);
+
+  // Lock body scroll when modals are open kawan
+  useEffect(() => {
+    if (isAddModalOpen || isAddTierModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAddModalOpen, isAddTierModalOpen]);
 
   const handleRunAudit = async () => {
     setShowAuditConfirm(false);
@@ -406,10 +426,11 @@ export default function ServiceTiersPage() {
         </div>
 
         <div className={cn(
-          "w-full overflow-x-auto no-scrollbar relative z-0 transition-opacity duration-200",
+          "w-full relative z-0 transition-opacity duration-200",
           (isRefetching) ? "opacity-50 pointer-events-none" : "opacity-100"
         )}>
-          <div className="min-h-[650px]" style={{ overflowAnchor: 'none' }}>
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto no-scrollbar min-h-[650px]" style={{ overflowAnchor: 'none' }}>
             <table className="w-full min-w-[800px] text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50">
@@ -499,13 +520,156 @@ export default function ServiceTiersPage() {
                 ))}
                 {(!isLoading && displayCustomers.length === 0) && (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 font-medium">
+                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-medium">
                       No customers found matching your search criteria.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Accordion Card View */}
+          <div className="block md:hidden space-y-3 p-3 bg-slate-50 dark:bg-slate-950/20 rounded-2xl min-h-[500px]">
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-[80px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl w-full" />
+              ))
+            ) : displayCustomers.length === 0 ? (
+              <div className="text-center text-slate-400 font-medium py-12 text-xs">
+                No customers found matching your search criteria.
+              </div>
+            ) : (
+              displayCustomers.map((cust: any, idx: number) => {
+                const isExpanded = !!expandedCustomers[cust.id];
+                return (
+                  <m.div
+                    key={cust.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800 transition-all duration-300"
+                  >
+                    {/* Collapsed view row click container */}
+                    <div 
+                      onClick={() => toggleCustomerExpand(cust.id)}
+                      className="flex items-center justify-between cursor-pointer gap-2"
+                    >
+                      {/* Left: ID, Name, Plan */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">{cust.id}</span>
+                          <span className="text-[9px] font-black px-2 py-0.5 rounded bg-blue-50 text-primary dark:bg-primary/10 dark:text-blue-400 uppercase tracking-wide">
+                            {cust.service || 'Standard'}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-950 dark:text-white truncate mt-1">
+                          {cust.name}
+                        </h4>
+                      </div>
+
+                      {/* Right: Status badge & Chevron Trigger */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex flex-col items-end gap-1">
+                          <div className={cn(
+                            "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider",
+                            cust.status?.toLowerCase() === 'active' 
+                              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 ring-1 ring-emerald-500/20" 
+                              : "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 ring-1 ring-rose-500/20"
+                          )}>
+                            <div className={cn(
+                              "w-1 h-1 rounded-full",
+                              cust.status?.toLowerCase() === 'active' ? "bg-emerald-500" : "bg-rose-500"
+                            )} />
+                            {cust.status || 'Active'}
+                          </div>
+                          
+                          {cust.grace_days !== null && cust.grace_days <= 3 && (
+                            <div className={cn(
+                              "flex items-center gap-0.5 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tight leading-tight",
+                              cust.grace_days === 1 ? "text-orange-600 bg-orange-100" :
+                              cust.grace_days === 0 ? "text-amber-600 bg-amber-100" :
+                              cust.grace_days < 0 ? "text-rose-600 bg-rose-100" :
+                              "text-slate-500 bg-slate-100"
+                            )}>
+                              <AlertTriangle size={8} className="shrink-0" />
+                              <span className="max-w-[70px] truncate">
+                                {cust.grace_days === 1 ? "Tomorrow" : 
+                                 cust.grace_days === 0 ? "Today" : 
+                                 cust.grace_days < 0 ? `${Math.abs(cust.grace_days)}d Over` : 
+                                 `${cust.grace_days}d Left`}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Chevron Icon Container */}
+                        <div
+                          className={cn(
+                            "w-7 h-7 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-all duration-300",
+                            isExpanded && "bg-primary/10 text-primary dark:text-blue-400 rotate-180"
+                          )}
+                        >
+                          <ChevronDown size={14} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expandable Accordion Block */}
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <m.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-4 mt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                            <div className="grid grid-cols-2 gap-3 text-[11px]">
+                              <div className="space-y-1">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Region</span>
+                                <span className="font-semibold text-slate-800 dark:text-slate-200 block truncate" title={cust.district}>
+                                  {cust.district || '-'}
+                                </span>
+                              </div>
+                              <div className="space-y-1 text-right">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">City / Regency</span>
+                                <span className="font-bold text-slate-950 dark:text-slate-100 block truncate" title={cust.city}>
+                                  {cust.city || '-'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 text-[11px]">
+                              <div className="space-y-1">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Province</span>
+                                <span className="font-semibold text-slate-800 dark:text-slate-200 block truncate" title={cust.province}>
+                                  {cust.province || '-'}
+                                </span>
+                              </div>
+                              <div className="space-y-1 text-right">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Phone Number</span>
+                                <span className="font-bold text-primary dark:text-blue-400 block truncate" title={cust.no_telp}>
+                                  {cust.no_telp || '-'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1 text-[11px] pt-1">
+                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Complete Address</span>
+                              <p className="text-slate-600 dark:text-slate-350 font-medium leading-relaxed bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200/40 dark:border-slate-800/50">
+                                {cust.address}{cust.village ? `, ${cust.village}` : ''}
+                              </p>
+                            </div>
+                          </div>
+                        </m.div>
+                      )}
+                    </AnimatePresence>
+                  </m.div>
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -565,12 +729,20 @@ export default function ServiceTiersPage() {
       <AnimatePresence>
         {isAddModalOpen && (
           <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
+            {/* Backdrop Overlay with premium frosted glass effect kawan */}
+            <m.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAddModalOpen(false)}
+              className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm pointer-events-auto cursor-pointer"
+            />
             <m.div 
               initial={{ x: "100%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="absolute top-0 right-0 w-full max-w-md bg-white dark:bg-slate-900 h-fit max-h-screen shadow-[-20px_20px_60px_rgba(0,0,0,0.15)] rounded-bl-[3.5rem] border-l border-b border-slate-200 dark:border-slate-800 p-8 md:p-10 pointer-events-auto flex flex-col"
+              className="absolute top-0 right-0 w-full h-[100dvh] md:h-fit md:max-h-screen max-w-none md:max-w-md bg-white dark:bg-slate-900 shadow-[-20px_20px_60px_rgba(0,0,0,0.15)] rounded-none md:rounded-bl-[3.5rem] border-none md:border-l md:border-b border-slate-200 dark:border-slate-800 p-6 sm:p-8 md:p-10 pointer-events-auto flex flex-col"
             >
               <div className="flex items-center justify-between mb-8">
                 <div>
@@ -588,7 +760,7 @@ export default function ServiceTiersPage() {
                 </m.button>
               </div>
               
-              <form onSubmit={handleAddCustomer} className="space-y-6 overflow-y-auto px-1 pr-3 custom-scrollbar">
+              <form onSubmit={handleAddCustomer} className="space-y-6 overflow-y-auto px-1 pr-3 custom-scrollbar flex-1">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Full Name</label>
@@ -724,12 +896,20 @@ export default function ServiceTiersPage() {
       <AnimatePresence>
         {isAddTierModalOpen && (
           <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
+            {/* Backdrop Overlay with premium frosted glass effect kawan */}
+            <m.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAddTierModalOpen(false)}
+              className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm pointer-events-auto cursor-pointer"
+            />
             <m.div 
               initial={{ x: "100%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="absolute top-0 right-0 w-full max-w-md bg-white dark:bg-slate-900 h-fit max-h-screen shadow-[-20px_20px_60px_rgba(0,0,0,0.15)] rounded-bl-[3.5rem] border-l border-b border-slate-200 dark:border-slate-800 p-8 md:p-10 pointer-events-auto flex flex-col"
+              className="absolute top-0 right-0 w-full h-[100dvh] md:h-fit md:max-h-screen max-w-none md:max-w-md bg-white dark:bg-slate-900 shadow-[-20px_20px_60px_rgba(0,0,0,0.15)] rounded-none md:rounded-bl-[3.5rem] border-none md:border-l md:border-b border-slate-200 dark:border-slate-800 p-6 sm:p-8 md:p-10 pointer-events-auto flex flex-col"
             >
               <div className="flex items-center justify-between mb-8">
                 <div>
@@ -747,7 +927,7 @@ export default function ServiceTiersPage() {
                 </m.button>
               </div>
 
-              <form onSubmit={handleAddTier} className="space-y-6 overflow-y-auto px-1 pr-3 custom-scrollbar">
+              <form onSubmit={handleAddTier} className="space-y-6 overflow-y-auto px-1 pr-3 custom-scrollbar flex-1">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Plan Name</label>

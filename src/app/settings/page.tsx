@@ -279,7 +279,7 @@ export default function SettingsPage() {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="space-y-8 pb-10"
+      className="pt-6 md:pt-10 space-y-8 pb-10"
     >
       <m.div variants={itemVariants} className="mb-10">
         <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">

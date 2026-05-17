@@ -1,11 +1,11 @@
 "use client";
 
-import { m } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   TrendingUp, CreditCard, Activity,
   Star, Bell, ArrowUpRight,
   Zap, Clock, Package, Users, Milestone,
-  ChevronLeft, MapPin, Phone, ShieldCheck, Crown
+  ChevronLeft, ChevronRight, MapPin, Phone, ShieldCheck, Crown
 } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -73,6 +73,14 @@ export default function CustomerDetailView({ data }: { data: any }) {
   const [isVip, setIsVip] = useState(data.is_vip || false);
   const [isSending, setIsSending] = useState(false);
   const [isTogglingVip, setIsTogglingVip] = useState(false);
+  const [expandedLatePayments, setExpandedLatePayments] = useState<Record<number, boolean>>({});
+
+  const toggleLatePayment = (index: number) => {
+    setExpandedLatePayments(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
 
   const handleToggleVip = async () => {
     setIsTogglingVip(true);
@@ -288,7 +296,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
 
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <BarChart data={data.payment_history} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <BarChart data={data.payment_history} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
                   <XAxis
                     dataKey="month"
@@ -340,10 +348,13 @@ export default function CustomerDetailView({ data }: { data: any }) {
             </div>
           </div>
 
-          {/* Late Payments Detailed Table */}
-          <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <h2 className="text-xl font-black mb-8 flex items-center gap-2"><Clock size={24} className="text-rose-500" /> Late Payment Breakdown</h2>
-            <div className="overflow-x-auto no-scrollbar rounded-2xl border border-slate-100 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 p-4 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <h2 className="text-base sm:text-xl font-black mb-8 flex items-center gap-2">
+              <Clock className="text-rose-500 w-5 h-5 sm:w-6 sm:h-6" /> Late Payment Breakdown
+            </h2>
+            
+            {/* Desktop Table View (Hidden on Mobile) */}
+            <div className="hidden sm:block overflow-x-auto no-scrollbar rounded-2xl border border-slate-100 dark:border-slate-800">
               <table className="w-full text-left min-w-[500px]">
                 <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                   <tr>
@@ -392,6 +403,91 @@ export default function CustomerDetailView({ data }: { data: any }) {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Accordion/Dropdown View (Hidden on Desktop) */}
+            <div className="block sm:hidden divide-y divide-slate-100 dark:divide-slate-800 border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden">
+              {data.late_payments && data.late_payments.length > 0 ? (
+                data.late_payments.map((lp: any, i: number) => {
+                  const isExpanded = !!expandedLatePayments[i];
+                  return (
+                    <div 
+                      key={i} 
+                      className={cn(
+                        "p-4 space-y-4 transition-colors",
+                        lp.isUnpaid ? "bg-rose-500/5 dark:bg-rose-500/10" : "bg-white dark:bg-slate-900"
+                      )}
+                    >
+                      {/* Accordion Trigger Row */}
+                      <div 
+                        onClick={() => toggleLatePayment(i)}
+                        className="flex items-center justify-between cursor-pointer group"
+                      >
+                        <div className="flex flex-col text-left">
+                          <span className="font-black text-slate-900 dark:text-slate-100 text-sm group-hover:text-rose-500 transition-colors">
+                            {lp.month}
+                          </span>
+                          {lp.isUnpaid && (
+                            <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest mt-0.5 animate-pulse">
+                              Current Overdue
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <span className={cn(
+                            "px-2.5 py-0.5 rounded-lg text-[10px] font-black shrink-0",
+                            lp.isUnpaid ? "bg-rose-500 text-white animate-pulse" : "bg-rose-500/10 text-rose-500"
+                          )}>
+                            {lp.daysLate} days
+                          </span>
+                          <m.div
+                            animate={{ rotate: isExpanded ? 90 : 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="text-slate-400"
+                          >
+                            <ChevronRight size={16} />
+                          </m.div>
+                        </div>
+                      </div>
+
+                      {/* Dropdown Collapsible Content */}
+                      <AnimatePresence initial={false}>
+                        {isExpanded && (
+                          <m.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="pt-2 pb-1 grid grid-cols-2 gap-3 text-xs border-t border-slate-100 dark:border-slate-800/60 mt-3">
+                              <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800/60 text-left">
+                                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Reference Date</span>
+                                <span className="font-bold text-slate-600 dark:text-slate-300">
+                                  {lp.isUnpaid ? "Belum Terdeteksi" : new Date(lp.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                </span>
+                              </div>
+                              <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800/60 text-left">
+                                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Payment Amount</span>
+                                {lp.isUnpaid ? (
+                                  <span className="text-[10px] font-black text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 inline-block">UNPAID</span>
+                                ) : (
+                                  <span className="font-black text-slate-900 dark:text-white">{formatCompactNumber(lp.amount)}</span>
+                                )}
+                              </div>
+                            </div>
+                          </m.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="px-6 py-12 text-center text-slate-400 font-medium italic text-sm">
+                  This customer has no history of late payments. (Perfect Score)
+                </div>
+              )}
             </div>
           </div>
 

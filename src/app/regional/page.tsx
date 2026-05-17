@@ -27,6 +27,17 @@ export default function RegionalAnalysisPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
 
+  const [expandedProfitNodes, setExpandedProfitNodes] = useState<Record<string, boolean>>({});
+  const [expandedAgingNodes, setExpandedAgingNodes] = useState<Record<string, boolean>>({});
+
+  const toggleProfitNode = (node: string) => {
+    setExpandedProfitNodes(prev => ({ ...prev, [node]: !prev[node] }));
+  };
+
+  const toggleAgingNode = (node: string) => {
+    setExpandedAgingNodes(prev => ({ ...prev, [node]: !prev[node] }));
+  };
+
   const { data: pageData, isLoading: isPageLoading } = useQuery({
     queryKey: ['regionalData'],
     queryFn: getRegionalData,
@@ -373,59 +384,142 @@ export default function RegionalAnalysisPage() {
         transition={{ delay: 0.2 }}
         className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
       >
-        <div className="p-10 border-b border-slate-200 dark:border-slate-800">
-          <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-3">
-            <MapPin size={24} className="text-primary" />
+        <div className="p-5 sm:p-10 border-b border-slate-200 dark:border-slate-800">
+          <h3 className="text-base sm:text-2xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2 sm:gap-3">
+            <MapPin className="text-primary w-5 h-5 sm:w-6 sm:h-6" />
             Profitability by Kelurahan
           </h3>
         </div>
         <div className="min-h-[400px]">
           <DataTable
+            className="hidden lg:block"
             data={paginatedProfit}
             isLoading={isLoadingAll}
-          keyExtractor={(row: any) => row.node}
-          columns={[
-            { 
-              header: "Node Name", 
-              accessor: "node", 
-              className: "px-10 py-6",
-              render: (row: any) => (
-                <div className="flex items-center gap-4">
-                  <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,74,198,0.5)]" />
-                  <span className="font-black text-slate-900 dark:text-slate-100 text-lg">{row.node}</span>
+            keyExtractor={(row: any) => row.node}
+            columns={[
+              { 
+                header: "Node Name", 
+                accessor: "node", 
+                className: "px-10 py-6",
+                render: (row: any) => (
+                  <div className="flex items-center gap-4">
+                    <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,74,198,0.5)]" />
+                    <span className="font-black text-slate-900 dark:text-slate-100 text-lg">{row.node}</span>
+                  </div>
+                )
+              },
+              { 
+                header: "Customer Count", 
+                accessor: "customerCount" as any, 
+                className: "px-10 py-6 font-bold",
+                render: (row: any) => `${row.customerCount} Active`
+              },
+              { 
+                header: "Monthly Revenue", 
+                accessor: "revenue", 
+                className: "px-10 py-6 font-black text-slate-900 dark:text-slate-100 whitespace-nowrap",
+                render: (row: any) => <span className="tabular-nums">Rp {row.revenue}</span>
+              },
+              { 
+                header: "ARPU", 
+                accessor: "arpu", 
+                className: "px-10 py-6 font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap",
+                render: (row: any) => <span className="tabular-nums">Rp {row.arpu}</span>
+              },
+              { 
+                header: "Node Status", 
+                accessor: "status", 
+                className: "px-10 py-6",
+                render: (row: any) => (
+                  <span className={cn("text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-wider", row.color)}>
+                    {row.status}
+                  </span>
+                )
+              },
+            ]}
+          />
+
+          {/* Mobile Profitability List (Collapsible Accordion/Dropdown) */}
+          <div className="block lg:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            {isLoadingAll ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-5 space-y-3 animate-pulse">
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3" />
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/4" />
+                  </div>
                 </div>
-              )
-            },
-            { 
-              header: "Customer Count", 
-              accessor: "customerCount" as any, 
-              className: "px-10 py-6 font-bold",
-              render: (row: any) => `${row.customerCount} Active`
-            },
-            { 
-              header: "Monthly Revenue", 
-              accessor: "revenue", 
-              className: "px-10 py-6 font-black text-slate-900 dark:text-slate-100 whitespace-nowrap",
-              render: (row: any) => <span className="tabular-nums">Rp {row.revenue}</span>
-            },
-            { 
-              header: "ARPU", 
-              accessor: "arpu", 
-              className: "px-10 py-6 font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap",
-              render: (row: any) => <span className="tabular-nums">Rp {row.arpu}</span>
-            },
-            { 
-              header: "Node Status", 
-              accessor: "status", 
-              className: "px-10 py-6",
-              render: (row: any) => (
-                <span className={cn("text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-wider", row.color)}>
-                  {row.status}
-                </span>
-              )
-            },
-          ]}
-        />
+              ))
+            ) : paginatedProfit.length === 0 ? (
+              <div className="p-10 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">
+                No data found
+              </div>
+            ) : (
+              paginatedProfit.map((row) => {
+                const isExpanded = !!expandedProfitNodes[row.node];
+                return (
+                  <div key={row.node} className="p-5 space-y-4">
+                    {/* Header click row */}
+                    <div 
+                      onClick={() => toggleProfitNode(row.node)}
+                      className="flex items-center justify-between cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,74,198,0.5)]" />
+                        <span className="font-black text-slate-900 dark:text-slate-100 text-sm group-hover:text-primary transition-colors">{row.node}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Revenue</div>
+                          <div className="text-xs font-black text-slate-900 dark:text-slate-100">Rp {row.revenue}</div>
+                        </div>
+                        <m.div
+                          animate={{ rotate: isExpanded ? 90 : 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="text-slate-400"
+                        >
+                          <ChevronRight size={18} />
+                        </m.div>
+                      </div>
+                    </div>
+
+                    {/* Collapsible Details */}
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <m.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-2 pb-1 grid grid-cols-2 gap-4 text-xs">
+                            <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800/60">
+                              <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Customers</span>
+                              <span className="font-bold text-slate-700 dark:text-slate-300">{row.customerCount} Active</span>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800/60">
+                              <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">ARPU</span>
+                              <span className="font-black text-blue-600 dark:text-blue-400">Rp {row.arpu}</span>
+                            </div>
+                            <div className="col-span-2 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+                              <div>
+                                <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Node Status</span>
+                              </div>
+                              <span className={cn("text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wider", row.color)}>
+                                {row.status}
+                              </span>
+                            </div>
+                          </div>
+                        </m.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })
+            )}
+          </div>
         
         {/* Pagination Profit */}
         {dynamicData.length > 0 && (
@@ -480,46 +574,129 @@ export default function RegionalAnalysisPage() {
         transition={{ delay: 0.3 }}
         className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
       >
-        <div className="p-10 border-b border-slate-200 dark:border-slate-800">
-          <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-3">
-            <MessageSquare size={24} className="text-primary" />
+        <div className="p-5 sm:p-10 border-b border-slate-200 dark:border-slate-800">
+          <h3 className="text-base sm:text-2xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2 sm:gap-3">
+            <MessageSquare className="text-primary w-5 h-5 sm:w-6 sm:h-6" />
             AR Aging Analysis
           </h3>
         </div>
         <div className="min-h-[400px]">
           <DataTable
+            className="hidden lg:block"
             data={paginatedAging}
             isLoading={isLoadingAll}
-          keyExtractor={(row: any) => `aging-${row.node}`}
-          rowClassName={(row: any) => row.aging.critical ? "bg-red-50/30 dark:bg-red-900/5" : ""}
-          columns={[
-            { header: "Node", accessor: "node", className: "px-10 py-6 text-lg font-black" },
-            { 
-              header: "0-30 Days", 
-              accessor: "aging", 
-              className: "px-10 py-6 font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap",
-              render: (row: any) => <span className="tabular-nums">Rp {row.aging["0-30"]}</span>
-            },
-            { 
-              header: "31-60 Days", 
-              accessor: "aging", 
-              className: "px-10 py-6 font-bold text-orange-600 whitespace-nowrap",
-              render: (row: any) => <span className="tabular-nums">Rp {row.aging["31-60"]}</span>
-            },
-            { 
-              header: "61-90 Days", 
-              accessor: "aging", 
-              className: "px-10 py-6 font-bold text-red-600 whitespace-nowrap",
-              render: (row: any) => <span className="tabular-nums">Rp {row.aging["61-90"]}</span>
-            },
-            { 
-              header: "90+ Days", 
-              accessor: "aging", 
-              className: "px-10 py-6 font-black text-red-800 whitespace-nowrap",
-              render: (row: any) => <span className="tabular-nums">Rp {row.aging["90Plus"]}</span>
-            },
-          ]}
-        />
+            keyExtractor={(row: any) => `aging-${row.node}`}
+            rowClassName={(row: any) => row.aging.critical ? "bg-red-50/30 dark:bg-red-900/5" : ""}
+            columns={[
+              { header: "Node", accessor: "node", className: "px-10 py-6 text-lg font-black" },
+              { 
+                header: "0-30 Days", 
+                accessor: "aging", 
+                className: "px-10 py-6 font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap",
+                render: (row: any) => <span className="tabular-nums">Rp {row.aging["0-30"]}</span>
+              },
+              { 
+                header: "31-60 Days", 
+                accessor: "aging", 
+                className: "px-10 py-6 font-bold text-orange-600 whitespace-nowrap",
+                render: (row: any) => <span className="tabular-nums">Rp {row.aging["31-60"]}</span>
+              },
+              { 
+                header: "61-90 Days", 
+                accessor: "aging", 
+                className: "px-10 py-6 font-bold text-red-600 whitespace-nowrap",
+                render: (row: any) => <span className="tabular-nums">Rp {row.aging["61-90"]}</span>
+              },
+              { 
+                header: "90+ Days", 
+                accessor: "aging", 
+                className: "px-10 py-6 font-black text-red-800 whitespace-nowrap",
+                render: (row: any) => <span className="tabular-nums">Rp {row.aging["90Plus"]}</span>
+              },
+            ]}
+          />
+
+          {/* Mobile AR Aging List (Collapsible Accordion/Dropdown) */}
+          <div className="block lg:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            {isLoadingAll ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-5 space-y-3 animate-pulse">
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3" />
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/4" />
+                  </div>
+                </div>
+              ))
+            ) : paginatedAging.length === 0 ? (
+              <div className="p-10 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">
+                No data found
+              </div>
+            ) : (
+              paginatedAging.map((row) => {
+                const isExpanded = !!expandedAgingNodes[row.node];
+                return (
+                  <div key={`aging-${row.node}`} className={cn("p-5 space-y-4 transition-colors", row.aging.critical ? "bg-red-50/20 dark:bg-red-950/20" : "")}>
+                    {/* Header click row */}
+                    <div 
+                      onClick={() => toggleAgingNode(row.node)}
+                      className="flex items-center justify-between cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-black text-slate-900 dark:text-slate-100 text-sm group-hover:text-primary transition-colors">{row.node}</span>
+                        {row.aging.critical && (
+                          <span className="text-[8px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 animate-pulse border border-red-200 dark:border-red-800/50">
+                            CRITICAL
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider">0-30 Days</div>
+                          <div className="text-xs font-black text-slate-600 dark:text-slate-400">Rp {row.aging["0-30"]}</div>
+                        </div>
+                        <m.div
+                          animate={{ rotate: isExpanded ? 90 : 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="text-slate-400"
+                        >
+                          <ChevronRight size={18} />
+                        </m.div>
+                      </div>
+                    </div>
+
+                    {/* Collapsible Details */}
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <m.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-2 pb-1 grid grid-cols-2 gap-4 text-xs">
+                            <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800/60">
+                              <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">31-60 Days</span>
+                              <span className="font-bold text-orange-600">Rp {row.aging["31-60"]}</span>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800/60">
+                              <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">61-90 Days</span>
+                              <span className="font-bold text-red-600">Rp {row.aging["61-90"]}</span>
+                            </div>
+                            <div className="col-span-2 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">90+ Days</span>
+                              <span className="font-black text-red-850 dark:text-red-400">Rp {row.aging["90Plus"]}</span>
+                            </div>
+                          </div>
+                        </m.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })
+            )}
+          </div>
         
         {/* Pagination Aging */}
         {dynamicData.length > 0 && (

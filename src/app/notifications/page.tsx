@@ -162,7 +162,7 @@ export default function NotificationsPage() {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="space-y-8 pb-10"
+      className="space-y-8 pt-6 md:pt-8 pb-10"
     >
       <m.div variants={itemVariants} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>

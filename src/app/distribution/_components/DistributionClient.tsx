@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 
-import { 
-  Map as LucideMap, 
-  Activity, 
-  AlertTriangle, 
-  Search as SearchIcon, 
+import {
+  Map as LucideMap,
+  Activity,
+  AlertTriangle,
+  Search as SearchIcon,
   Settings as SettingsIcon,
   X as XIcon,
   Filter,
@@ -23,21 +23,22 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize,
+  Minimize,
   Navigation,
   Check,
   Server as ServerIcon
 } from "lucide-react";
 import dynamic from 'next/dynamic';
-import { 
-  getMapAssets, 
-  addMapNode, 
-  dispatchTechnician, 
-  getMaintenanceHistory 
+import {
+  getMapAssets,
+  addMapNode,
+  dispatchTechnician,
+  getMaintenanceHistory
 } from "@/actions/map";
 import { cn } from "@/lib/utils";
 import { LoadingState } from "@/components/LoadingState";
 
-const IndonesiaMap = dynamic(() => import('@/components/map/IndonesiaMap'), { 
+const IndonesiaMap = dynamic(() => import('@/components/map/IndonesiaMap'), {
   ssr: false,
   loading: () => <div className="w-full h-full bg-slate-900 animate-pulse flex items-center justify-center text-slate-500 font-black">INITIALIZING GEOGRAPHIC ENGINE...</div>
 });
@@ -92,9 +93,9 @@ function LegendContent({ nodeStats }: { nodeStats: any }) {
           </div>
           <span className="text-[10px] font-bold text-slate-400">{String(nodeStats.server).padStart(2, '0')} units</span>
         </div>
-        
-        <hr className="border-slate-200 dark:border-slate-800 my-4"/>
-        
+
+        <hr className="border-slate-200 dark:border-slate-800 my-4" />
+
         <div className="grid grid-cols-2 gap-2">
           <div className="flex flex-col items-center gap-1">
             <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
@@ -130,6 +131,37 @@ export function DistributionClient() {
   const [maintenanceHistory, setMaintenanceHistory] = useState<any[]>([]);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
+  const [mapTheme, setMapTheme] = useState("dark");
+  const [isMapSettingsOpen, setIsMapSettingsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    const element = mapContainerRef.current;
+    if (!element) return;
+
+    if (!document.fullscreenElement) {
+      element.requestFullscreen()
+        .then(() => {
+          toast.success("Entered Full Screen mode kawan! 🖥️");
+        })
+        .catch((err) => {
+          console.warn("Fullscreen error:", err);
+          toast.error("Browser block fullscreen request kawan.");
+        });
+    } else {
+      document.exitFullscreen();
+    }
+  };
 
   const queryClient = useQueryClient();
 
@@ -160,8 +192,9 @@ export function DistributionClient() {
 
 
     return assets.filter(a => {
-      const matchesSearch = a.sn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            a.location.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = (a.sn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (a.location || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(a.id || '').toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesType = activeTypeFilters.length === 0 || activeTypeFilters.includes(a.type);
 
@@ -198,92 +231,88 @@ export function DistributionClient() {
   if (!mounted) return null;
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen relative overflow-hidden bg-slate-50 dark:bg-slate-950">
+    <div ref={mapContainerRef} className="flex-1 flex flex-col min-h-screen relative overflow-hidden bg-slate-50 dark:bg-slate-950 pt-4 md:pt-6">
       {/* Header Overlay */}
-      <header className="absolute top-0 left-0 w-full z-40 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md flex justify-start tablet:justify-between items-center h-16 px-2 sm-phone:px-4 md:px-8 border-b border-slate-200/50 dark:border-slate-800/50">
+      <header className="absolute top-4 md:top-6 left-0 w-full z-40 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md flex justify-start tablet:justify-between items-center h-16 px-2 sm-phone:px-4 md:px-8 border-b border-slate-200/50 dark:border-slate-800/50">
         <div className="flex items-center gap-4">
           <div className="relative flex items-center">
             <SearchIcon className="absolute left-3 text-slate-400" size={18} />
-            <input 
+            <input
               className="bg-white/80 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-full pl-10 pr-4 py-1.5 text-sm w-full max-w-[180px] sm-phone:max-w-[220px] md:max-w-80 focus:ring-2 focus:ring-blue-500/20 placeholder:text-slate-400 shadow-sm"
-              placeholder="Search Node ID, SN, or Location..."
+              placeholder="Search Node ID or Location"
               type="text"
-              aria-label="Search nodes by ID, serial number, or location"
+              aria-label="Search nodes by ID or location"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-4 text-slate-500">
-            <button className="hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-2 rounded-full transition-colors" aria-label="View map"><LucideMap size={18} /></button>
-            <button className="hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-2 rounded-full transition-colors" aria-label="Map settings"><SettingsIcon size={18} /></button>
-          </div>
-          <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs">
-            AD
-          </div>
-        </div>
-      </header>
+          <div className="flex items-center gap-4 text-slate-500 relative">
+            {/* Map Reset Zoom Button */}
+            <button
+              onClick={() => {
+                handleReset();
+                toast.success("Map viewport reset to Center kawan! 🗺️");
+              }}
+              className="hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-2 rounded-full transition-colors"
+              aria-label="Reset map view"
+            >
+              <LucideMap size={18} />
+            </button>
 
-        {/* Main Map Content */}
-        <div className="flex-1 mt-16 relative bg-slate-50 dark:bg-slate-950">
-          <div className="absolute inset-0 z-0 mx-2 sm-phone:mx-4 my-4 md:m-0 rounded-[2rem] md:rounded-none overflow-hidden border border-slate-200 dark:border-slate-800 md:border-none shadow-2xl md:shadow-none">
-            <IndonesiaMap 
-              assets={filteredAssets} 
-              onSelectNode={setSelectedNode} 
-              selectedNode={selectedNode}
-              zoom={zoom}
-              center={center}
-            />
-          </div>
-
-          {/* Top Right Control - Layers */}
-          <div className="absolute top-6 right-6 z-10 pointer-events-auto">
+            {/* Map Settings Button */}
             <div className="relative">
-              <button 
-                onClick={() => setIsLayersOpen(!isLayersOpen)}
-                className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-900 dark:text-slate-100 px-6 py-3 rounded-2xl text-xs font-black shadow-xl border border-slate-200/50 dark:border-slate-800/50 flex items-center gap-3 hover:bg-white dark:hover:bg-slate-900 transition-all"
+              <button
+                onClick={() => {
+                  setIsMapSettingsOpen(!isMapSettingsOpen);
+                  setIsProfileOpen(false);
+                }}
+                className={cn(
+                  "hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-2 rounded-full transition-colors",
+                  isMapSettingsOpen && "bg-slate-100 dark:bg-slate-800"
+                )}
+                aria-label="Map settings"
               >
-                <Filter size={18} className="text-primary" />
-                Layers
+                <SettingsIcon size={18} />
               </button>
-              
               <AnimatePresence>
-                {isLayersOpen && (
-                  <m.div 
+                {isMapSettingsOpen && (
+                  <m.div
                     initial={{ opacity: 0, scale: 0.95, y: -10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                    className="absolute top-full mt-3 right-0 w-52 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-6 z-50"
+                    className="absolute right-0 top-full mt-3 w-52 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-6 z-50 text-left"
                   >
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Filter Viewport</p>
-                    <div className="space-y-3">
-                      {['OLT', 'ODP', 'ONT', 'Server', 'Good', 'Maintenance'].map((layer) => (
-
-                        <label key={layer} className="flex items-center gap-3 cursor-pointer group">
-                          <div className="relative flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={activeLayers[layer as keyof typeof activeLayers]}
-                              onChange={() => setActiveLayers(prev => ({ ...prev, [layer]: !prev[layer as keyof typeof activeLayers] }))}
-                              className="peer h-5 w-5 cursor-pointer appearance-none rounded-lg border-2 border-slate-300 dark:border-slate-700 transition-all checked:bg-blue-600 checked:border-blue-600"
-                            />
-                            <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100">
-                              <Check size={12} strokeWidth={4} />
-                            </div>
-                          </div>
-                          <span className={cn(
-                            "text-[13px] font-bold tracking-tight transition-colors",
-                            activeLayers[layer as keyof typeof activeLayers] 
-                              ? (layer === 'Maintenance' ? "text-amber-500" : layer === 'Good' ? "text-emerald-500" : "text-slate-900 dark:text-white")
-                              : "text-slate-400 dark:text-slate-600 group-hover:text-slate-500"
-
-                          )}>
-                            {layer}
-                          </span>
-                        </label>
+                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Map Theme</p>
+                    <div className="space-y-2">
+                      {['dark', 'light', 'voyager'].map((theme) => (
+                        <button
+                          key={theme}
+                          onClick={() => {
+                            setMapTheme(theme);
+                            setIsMapSettingsOpen(false);
+                            toast.success(`Map style changed to ${theme.toUpperCase()} kawan!`);
+                          }}
+                          className={cn(
+                            "w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
+                            mapTheme === theme
+                              ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                              : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+                          )}
+                        >
+                          {theme === 'voyager' ? (
+                            <span className="flex flex-col gap-0.5">
+                              <span className="flex items-center gap-1.5">🗺️ VOYAGER</span>
+                              <span className="text-[9px] opacity-80 tracking-widest pl-5 leading-none">STANDARD</span>
+                            </span>
+                          ) : theme === 'dark' ? (
+                            '🌌 Dark Mode'
+                          ) : (
+                            '☀️ Light Mode'
+                          )}
+                        </button>
                       ))}
-
                     </div>
                   </m.div>
                 )}
@@ -291,11 +320,133 @@ export function DistributionClient() {
             </div>
           </div>
 
+          {/* User Profile Avatar AD */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsProfileOpen(!isProfileOpen);
+                setIsMapSettingsOpen(false);
+              }}
+              className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs hover:ring-4 hover:ring-blue-500/20 active:scale-95 transition-all"
+            >
+              AD
+            </button>
+            <AnimatePresence>
+              {isProfileOpen && (
+                <m.div
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  className="absolute right-0 top-full mt-3 w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-6 z-50 text-left"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-10 w-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-sm">
+                      AD
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900 dark:text-white leading-tight">Admin FinTrack</h4>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Lead Infra Architect</p>
+                    </div>
+                  </div>
+                  <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-2">
+                    <div className="flex justify-between items-center text-[10px] font-bold">
+                      <span className="text-slate-400 uppercase">Operator Zone</span>
+                      <span className="text-blue-600 dark:text-blue-400">HQ NATIONAL</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] font-bold">
+                      <span className="text-slate-400 uppercase">Node Access</span>
+                      <span className="text-emerald-500">FULL (Level 5)</span>
+                    </div>
+                  </div>
+                </m.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Map Content */}
+      <div 
+        className={cn(
+          "flex-1 mt-16 relative bg-slate-50 dark:bg-slate-950 transition-all duration-300",
+          isFullscreen ? "w-full h-full" : ""
+        )}
+      >
+        <div className={cn(
+          "absolute inset-0 z-0 overflow-hidden transition-all duration-300",
+          isFullscreen 
+            ? "m-0 rounded-none border-none shadow-none" 
+            : "mx-2 sm-phone:mx-4 my-4 md:m-0 rounded-[2rem] md:rounded-none border border-slate-200 dark:border-slate-800 md:border-none shadow-2xl md:shadow-none"
+        )}>
+          <IndonesiaMap
+            assets={filteredAssets}
+            onSelectNode={setSelectedNode}
+            selectedNode={selectedNode}
+            zoom={zoom}
+            center={center}
+            theme={mapTheme}
+          />
+        </div>
+
+        {/* Top Right Control - Layers */}
+        <div className="absolute top-6 right-6 z-10 pointer-events-auto">
+          <div className="relative">
+            <button
+              onClick={() => setIsLayersOpen(!isLayersOpen)}
+              className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-900 dark:text-slate-100 px-6 py-3 rounded-2xl text-xs font-black shadow-xl border border-slate-200/50 dark:border-slate-800/50 flex items-center gap-3 hover:bg-white dark:hover:bg-slate-900 transition-all"
+            >
+              <Filter size={18} className="text-primary" />
+              Layers
+            </button>
+
+            <AnimatePresence>
+              {isLayersOpen && (
+                <m.div
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  className="absolute top-full mt-3 right-0 w-52 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-6 z-50"
+                >
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Filter Viewport</p>
+                  <div className="space-y-3">
+                    {['OLT', 'ODP', 'ONT', 'Server', 'Good', 'Maintenance'].map((layer) => (
+
+                      <label key={layer} className="flex items-center gap-3 cursor-pointer group">
+                        <div className="relative flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={activeLayers[layer as keyof typeof activeLayers]}
+                            onChange={() => setActiveLayers(prev => ({ ...prev, [layer]: !prev[layer as keyof typeof activeLayers] }))}
+                            className="peer h-5 w-5 cursor-pointer appearance-none rounded-lg border-2 border-slate-300 dark:border-slate-700 transition-all checked:bg-blue-600 checked:border-blue-600"
+                          />
+                          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                            <Check size={12} strokeWidth={4} />
+                          </div>
+                        </div>
+                        <span className={cn(
+                          "text-[13px] font-bold tracking-tight transition-colors",
+                          activeLayers[layer as keyof typeof activeLayers]
+                            ? (layer === 'Maintenance' ? "text-amber-500" : layer === 'Good' ? "text-emerald-500" : "text-slate-900 dark:text-white")
+                            : "text-slate-400 dark:text-slate-600 group-hover:text-slate-500"
+
+                        )}>
+                          {layer}
+                        </span>
+                      </label>
+                    ))}
+
+                  </div>
+                </m.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
         {/* Floating Legend */}
         <div className="absolute top-6 left-6 z-40 flex flex-col gap-4 pointer-events-none">
-          {/* Mobile Toggle */}
-          <div className="relative pointer-events-auto tablet:hidden">
-            <button 
+          {/* Unified Map Legend Toggle */}
+          <div className="relative pointer-events-auto block">
+            <button
               onClick={() => setIsLegendOpen(!isLegendOpen)}
               className={cn(
                 "bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-800/50 text-blue-600 dark:text-blue-400 transition-all active:scale-95",
@@ -307,35 +458,26 @@ export function DistributionClient() {
               {isLegendOpen ? <XIcon size={20} /> : <Database size={20} />}
             </button>
             <AnimatePresence>
-               {isLegendOpen && (
-                 <m.div 
-                   initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                   exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                   className="absolute top-full mt-3 left-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-6 w-64 z-50"
-                 >
-                    <LegendContent nodeStats={nodeStats} />
-                 </m.div>
-               )}
+              {isLegendOpen && (
+                <m.div
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  className="absolute top-full mt-3 left-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-6 w-64 z-50"
+                >
+                  <LegendContent nodeStats={nodeStats} />
+                </m.div>
+              )}
             </AnimatePresence>
           </div>
-
-          {/* Desktop Panel */}
-          <m.div 
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="hidden tablet:block bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-5 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-800/50 w-64 pointer-events-auto"
-          >
-            <LegendContent nodeStats={nodeStats} />
-          </m.div>
         </div>
-        
+
         {/* Selected Node Drawer & Location Card */}
         <AnimatePresence>
           {selectedNode && (
             <div className="absolute top-20 md:top-6 bottom-6 right-6 flex items-start gap-4 z-50 pointer-events-none max-w-[calc(100%-48px)] md:max-w-none">
               {/* Location Detail Card (Left Side) - Hidden on mobile to save space */}
-              <m.div 
+              <m.div
                 initial={{ x: 100, opacity: 0, scale: 0.9 }}
                 animate={{ x: 0, opacity: 1, scale: 1 }}
                 exit={{ x: 100, opacity: 0, scale: 0.9 }}
@@ -359,16 +501,16 @@ export function DistributionClient() {
                       <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
                         <p className="text-[9px] font-bold text-slate-400 uppercase">Region</p>
                         <p className="text-xs font-black truncate">
-                          {selectedNode.location.includes(',') 
-                            ? selectedNode.location.split(',')[1]?.trim() 
+                          {selectedNode.location.includes(',')
+                            ? selectedNode.location.split(',')[1]?.trim()
                             : selectedNode.location}
                         </p>
                       </div>
                       <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
                         <p className="text-[9px] font-bold text-slate-400 uppercase">Specific Area</p>
                         <p className="text-xs font-black truncate">
-                          {selectedNode.location.includes(',') 
-                            ? selectedNode.location.split(',')[0]?.trim() 
+                          {selectedNode.location.includes(',')
+                            ? selectedNode.location.split(',')[0]?.trim()
                             : 'Main Hub'}
                         </p>
                       </div>
@@ -400,7 +542,7 @@ export function DistributionClient() {
               </m.div>
 
               {/* Main Asset Drawer */}
-              <m.div 
+              <m.div
                 initial={{ x: 400, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 400, opacity: 0 }}
@@ -412,15 +554,15 @@ export function DistributionClient() {
                       <span className={cn(
                         "text-[9px] md:text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full",
                         selectedNode.status === 'Online' ? "bg-green-100 dark:bg-green-900/30 text-green-600" :
-                        selectedNode.status === 'Maintenance' ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" :
-                        selectedNode.status === 'Warning' ? "bg-red-100 dark:bg-red-900/30 text-red-600" :
-                        "bg-slate-100 dark:bg-slate-900/30 text-slate-600"
+                          selectedNode.status === 'Maintenance' ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" :
+                            selectedNode.status === 'Warning' ? "bg-red-100 dark:bg-red-900/30 text-red-600" :
+                              "bg-slate-100 dark:bg-slate-900/30 text-slate-600"
                       )}>
                         {selectedNode.status} Node
                       </span>
                       <h2 className="text-xl md:text-2xl font-black mt-2 md:mt-3 tracking-tight truncate">{selectedNode.sn}</h2>
                     </div>
-                    <button 
+                    <button
                       onClick={() => setSelectedNode(null)}
                       className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                       aria-label="Close node details"
@@ -428,7 +570,7 @@ export function DistributionClient() {
                       <XIcon size={20} />
                     </button>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-3 md:gap-4">
                     <div className="bg-slate-50 dark:bg-slate-800/50 p-3 md:p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
                       <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase mb-1">Capacity</p>
@@ -486,7 +628,7 @@ export function DistributionClient() {
                         <span className="text-[8px] md:text-[9px] bg-red-100 dark:bg-red-900/30 text-red-600 px-2 py-0.5 rounded-full font-black">1 Critical</span>
                       )}
                     </div>
-                    
+
                     {selectedNode.status === 'Online' ? (
                       <div className="flex flex-col items-center justify-center py-6 md:py-8 bg-slate-50 dark:bg-slate-800/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center text-green-500 mb-2 md:mb-3">
@@ -508,8 +650,8 @@ export function DistributionClient() {
                         </p>
                         <div className="flex items-center gap-2 md:gap-3">
                           <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-slate-200 overflow-hidden ring-2 ring-white dark:ring-slate-800">
-                            <img 
-                              src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=100" 
+                            <img
+                              src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=100"
                               className="w-full h-full object-cover"
                               alt="Technician"
                             />
@@ -525,7 +667,7 @@ export function DistributionClient() {
                 </div>
 
                 <div className="p-6 md:p-8 bg-slate-50/50 dark:bg-slate-800/30 space-y-3">
-                  <button 
+                  <button
                     onClick={async () => {
                       const res = await dispatchTechnician(selectedNode.id, selectedNode.sn);
                       if (res.success) {
@@ -548,7 +690,7 @@ export function DistributionClient() {
 
         {/* Bottom Floating Stats */}
         <div className="absolute bottom-6 left-6 z-40 flex gap-2 md:gap-4 pointer-events-none">
-          <m.div 
+          <m.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 md:px-6 py-2 md:py-4 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-slate-200/50 dark:border-slate-800/50 flex items-center gap-2 md:gap-4 group hover:bg-white dark:hover:bg-slate-900 transition-all cursor-default pointer-events-auto"
@@ -563,7 +705,7 @@ export function DistributionClient() {
               <p className="text-[8px] md:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5 md:mt-1">Health</p>
             </div>
           </m.div>
-          <m.div 
+          <m.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
@@ -584,7 +726,7 @@ export function DistributionClient() {
         {/* Zoom Controls (Bottom Right) */}
         <div className="absolute bottom-8 right-8 z-50 flex flex-col gap-2">
           <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl border border-slate-200/50 dark:border-slate-800/50 flex flex-col p-0.5 pointer-events-auto">
-            <button 
+            <button
               onClick={() => setZoom(prev => Math.min(prev + 1, 18))}
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-600 dark:text-slate-300"
               title="Zoom In"
@@ -593,7 +735,7 @@ export function DistributionClient() {
               <ZoomIn size={14} />
             </button>
             <div className="h-[1px] bg-slate-200/50 dark:bg-slate-800/50 mx-1.5" />
-            <button 
+            <button
               onClick={() => setZoom(prev => Math.max(prev - 1, 3))}
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-600 dark:text-slate-300"
               title="Zoom Out"
@@ -602,13 +744,13 @@ export function DistributionClient() {
               <ZoomOut size={14} />
             </button>
             <div className="h-[1px] bg-slate-200/50 dark:bg-slate-800/50 mx-1.5" />
-            <button 
-              onClick={handleReset}
+            <button
+              onClick={toggleFullscreen}
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-600 dark:text-slate-300"
-              title="Reset View"
-              aria-label="Reset map to default view"
+              title="Toggle Fullscreen"
+              aria-label="Toggle full screen view"
             >
-              <Maximize size={14} />
+              {isFullscreen ? <Minimize size={14} /> : <Maximize size={14} />}
             </button>
           </div>
         </div>
@@ -619,14 +761,14 @@ export function DistributionClient() {
       <AnimatePresence>
         {isHistoryModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <m.div 
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsHistoryModalOpen(false)}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
-            <m.div 
+            <m.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}

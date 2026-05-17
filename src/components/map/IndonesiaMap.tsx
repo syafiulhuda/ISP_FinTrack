@@ -82,6 +82,7 @@ interface IndonesiaMapProps {
   selectedNode: AssetMapItem | null;
   zoom?: number;
   center?: [number, number] | null;
+  theme?: string;
 }
 
 // ─── ChangeView helper ──────────────────────────────────────────────────────────
@@ -145,6 +146,7 @@ export default function IndonesiaMap({
   selectedNode,
   zoom = 5,
   center: propsCenter,
+  theme = 'dark',
 }: IndonesiaMapProps) {
   const [isReady, setIsReady] = useState(false);
 
@@ -179,7 +181,13 @@ export default function IndonesiaMap({
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url={
+            theme === 'light'
+              ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+              : theme === 'voyager'
+              ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+              : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+          }
         />
 
         {/* Task 2: Marker Clustering */}

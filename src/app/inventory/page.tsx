@@ -52,6 +52,430 @@ const ConditionIcon = {
   "Warning": AlertCircle
 };
 
+const ConditionLabelMap: Record<string, string> = {
+  "Good": "Healthy",
+  "Maintenance": "Maintenance",
+  "Broken": "Broken",
+  "Warning": "Warning"
+};
+
+function MobileAssetCard({
+  asset,
+  refetchAssets,
+  refetchStock,
+  cn
+}: {
+  asset: any;
+  refetchAssets: () => void;
+  refetchStock: () => void;
+  cn: any;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isResolvingThis, setIsResolvingThis] = useState(false);
+  const [isStartingMaintenanceThis, setIsStartingMaintenanceThis] = useState(false);
+  const [isDeployingThis, setIsDeployingThis] = useState(false);
+  const [isDeletingThis, setIsDeletingThis] = useState(false);
+
+  const [deployData, setDeployData] = useState({ warehouse: '', city: '', province: '', latitude: -6.2088, longitude: 106.8456 });
+  const [techName, setTechName] = useState("");
+  const [techDesc, setTechDesc] = useState("");
+  const [techNameStart, setTechNameStart] = useState("");
+  const [maintenanceReason, setMaintenanceReason] = useState("");
+
+  return (
+    <div
+      onClick={() => setIsOpen(!isOpen)}
+      className={cn(
+        "px-4 py-5 transition-all cursor-pointer relative overflow-hidden select-none border-b border-slate-100 dark:border-slate-800/50",
+        isOpen ? "bg-slate-50/50 dark:bg-white/5" : "hover:bg-slate-50/30 dark:hover:bg-white/5"
+      )}
+    >
+      <div className="flex items-center justify-between gap-3">
+        {/* Left Side: Avatar Icon */}
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 shrink-0">
+            {asset.type === "Router" && <Router size={18} />}
+            {asset.type === "Switch" && <Box size={18} />}
+            {asset.type === "Server" && <Cpu size={18} />}
+            {asset.type === "Access Point" && <Wifi size={18} />}
+            {asset.type === "OLT" && <Cpu size={18} />}
+            {asset.type === "ONT" && <Smartphone size={18} />}
+            {asset.type === "ODP" && <Box size={18} />}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 min-w-0 w-full flex-wrap">
+              <p className="font-black text-slate-900 dark:text-slate-100 text-xs md-phone:text-sm truncate">{asset.sn}</p>
+              {!asset.isStock && asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual" && (
+                <span className="bg-blue-100 text-blue-750 dark:bg-blue-900/30 dark:text-blue-400 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tight whitespace-nowrap">
+                  Deployed
+                </span>
+              )}
+              {asset.isStock && (
+                <span className="bg-amber-100 text-amber-750 dark:bg-amber-900/30 dark:text-amber-400 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tight whitespace-nowrap">
+                  Stock
+                </span>
+              )}
+            </div>
+            <p className="text-[9px] md-phone:text-xs font-bold text-slate-500 mt-0.5 uppercase tracking-tighter truncate">{asset.type} • {asset.mac}</p>
+          </div>
+        </div>
+
+        {/* Right Side: Status Badge & Chevron */}
+        <div className="flex items-center gap-2 shrink-0">
+          {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") ? (
+            <span className={cn(
+              "text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md border whitespace-nowrap uppercase",
+              asset.condition === "Good" ? "bg-green-100 text-green-700 border-green-200/50" :
+              asset.condition === "Maintenance" ? "bg-blue-100 text-blue-700 border-blue-200/50" :
+              asset.condition === "Warning" ? "bg-orange-100 text-orange-700 border-orange-200/50" :
+              "bg-red-105 text-red-705 border-red-200/50"
+            )}>
+              {asset.condition}
+            </span>
+          ) : (
+            <span className="text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-400 bg-slate-50 dark:bg-slate-900 whitespace-nowrap">
+              SOLD
+            </span>
+          )}
+          <div className="p-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-slate-550 dark:text-slate-400">
+            <ChevronDown size={13} className={cn("transition-transform duration-200", isOpen && "rotate-180")} />
+          </div>
+        </div>
+      </div>
+
+      {/* Accordion Detail Content */}
+      <AnimatePresence>
+        {isOpen && (
+          <m.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden mt-4 space-y-3.5 text-xs font-medium"
+          >
+            {/* Category & Ownership */}
+            <div className="grid grid-cols-2 gap-4 pb-3 border-b border-slate-100 dark:border-slate-800/50 pt-2" onClick={e => e.stopPropagation()}>
+              <div>
+                <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px] mb-1.5">Category</span>
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full uppercase tracking-wider h-7">
+                  {asset.type}
+                </span>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px] mb-1.5 text-right">Kepemilikan</span>
+                {(asset.kepemilikan === "Dimiliki" || !asset.kepemilikan) ? (
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 h-7">
+                    <ShieldCheck size={12} />
+                    Dimiliki
+                  </span>
+                ) : asset.kepemilikan === "Sewa" ? (
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-955/30 dark:text-blue-400 h-7">
+                    <ShieldCheck size={12} />
+                    Sewa
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-955/30 dark:text-red-400 h-7">
+                    <ShieldX size={12} />
+                    Sold
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Location Details */}
+            <div className="space-y-2 pb-3 border-b border-slate-100 dark:border-slate-800/50" onClick={e => e.stopPropagation()}>
+              <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px]">Location Detail</span>
+              <div className="space-y-1 pl-2 border-l border-slate-200 dark:border-slate-700">
+                <span className="text-[13px] font-black text-slate-900 dark:text-slate-100 block">
+                  {asset.location || "Warehouse Stock"}
+                </span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1 block">
+                  ZONE 4 / {asset.type === 'OLT' ? 'CORE' : 'DIST'}
+                </span>
+              </div>
+            </div>
+
+            {/* Action Buttons Block */}
+            {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") && (
+              <div className="pt-3 mt-3 space-y-3">
+                <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px]">Actions</span>
+                
+                {/* Normal Action Buttons */}
+                {!isResolvingThis && !isStartingMaintenanceThis && !isDeployingThis && !isDeletingThis ? (
+                  <div className="flex flex-wrap gap-2" onClick={e => e.stopPropagation()}>
+                    {asset.isStock ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsDeployingThis(true);
+                          setDeployData({ 
+                            warehouse: asset.location || '', 
+                            city: '', 
+                            province: '', 
+                            latitude: asset.latitude || -6.2088, 
+                            longitude: asset.longitude || 106.8456 
+                          });
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-primary text-white rounded-xl hover:opacity-90 transition-all font-black text-[10px] uppercase shadow-sm"
+                      >
+                        <Wifi size={12} />
+                        <span>Use Asset</span>
+                      </button>
+                    ) : (
+                      <>
+                        {asset.condition === 'Maintenance' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsResolvingThis(true);
+                              setTechName("");
+                              setTechDesc("");
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-xl hover:opacity-90 transition-all font-black text-[10px] uppercase shadow-sm"
+                          >
+                            <CheckCircle2 size={12} />
+                            <span>Mark Healthy</span>
+                          </button>
+                        )}
+                        {asset.condition === 'Good' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsStartingMaintenanceThis(true);
+                              setTechNameStart("");
+                              setMaintenanceReason("");
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-xl hover:opacity-90 transition-all font-black text-[10px] uppercase shadow-sm"
+                          >
+                            <Wrench size={12} />
+                            <span>Maintenance</span>
+                          </button>
+                        )}
+                      </>
+                    )}
+                    {asset.condition === 'Broken' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsDeletingThis(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-600 text-white rounded-xl hover:opacity-90 transition-all font-black text-[10px] uppercase shadow-sm"
+                      >
+                        <X size={12} />
+                        <span>Delete</span>
+                      </button>
+                    )}
+                  </div>
+                ) : null}
+
+                {/* Inline Deploy Form */}
+                {isDeployingThis && (
+                  <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800" onClick={e => e.stopPropagation()}>
+                    <p className="text-[10px] font-black text-slate-450 uppercase">Deploy Asset Details</p>
+                    <div className="space-y-2">
+                      <input 
+                        type="text" 
+                        placeholder="Warehouse Name" 
+                        className="w-full px-3 py-2 text-xs border rounded-xl dark:bg-slate-850 dark:border-slate-700 bg-white dark:bg-slate-800"
+                        value={deployData.warehouse}
+                        onChange={(e) => setDeployData({...deployData, warehouse: e.target.value})}
+                      />
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          placeholder="City" 
+                          className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-850 dark:border-slate-700 bg-white dark:bg-slate-800"
+                          value={deployData.city}
+                          onChange={(e) => setDeployData({...deployData, city: e.target.value})}
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="Province" 
+                          className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-855 dark:border-slate-700 bg-white dark:bg-slate-800"
+                          value={deployData.province}
+                          onChange={(e) => setDeployData({...deployData, province: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button 
+                        onClick={() => setIsDeployingThis(false)}
+                        className="flex-1 py-2 text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-lg hover:opacity-90 transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={async () => {
+                          const fullLocation = `${deployData.warehouse}, ${deployData.city}, ${deployData.province}`;
+                          const res = await deployAsset(asset.sn, { 
+                            location: fullLocation, 
+                            latitude: deployData.latitude || 0, 
+                            longitude: deployData.longitude || 0 
+                          });
+                          if (res.success) {
+                            toast.success("Asset deployed and moved to roster!");
+                            setIsDeployingThis(false);
+                            refetchAssets();
+                            refetchStock();
+                          } else {
+                            toast.error("Failed to deploy asset.");
+                          }
+                        }}
+                        className="flex-1 py-2 text-[10px] font-bold bg-primary text-white rounded-lg hover:opacity-90 shadow-lg shadow-primary/20 transition-all"
+                      >
+                        Confirm
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Inline Resolve Maintenance Form */}
+                {isResolvingThis && (
+                  <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800" onClick={e => e.stopPropagation()}>
+                    <p className="text-[10px] font-black text-slate-450 uppercase">Audit Resolution</p>
+                    <div className="space-y-2">
+                      <input 
+                        type="text" 
+                        placeholder="Technician Name"
+                        value={techName}
+                        onChange={(e) => setTechName(e.target.value)}
+                        className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                      />
+                      <textarea 
+                        placeholder="Resolution details..."
+                        rows={2}
+                        value={techDesc}
+                        onChange={(e) => setTechDesc(e.target.value)}
+                        className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button 
+                        onClick={() => setIsResolvingThis(false)}
+                        className="flex-1 py-2 text-[10px] font-bold text-slate-550 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg hover:opacity-90 transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={async () => {
+                          if (!techName || !techDesc) {
+                            toast.error("Please fill in technician details.");
+                            return;
+                          }
+                          if (!window.confirm(`Are you sure you want to mark asset ${asset.sn} as Healthy?`)) return;
+                          const res = await resolveMaintenance(asset.sn, techName, techDesc);
+                          if (res.success) {
+                            toast.success("Maintenance resolved!");
+                            setIsResolvingThis(false);
+                            refetchAssets();
+                            refetchStock();
+                          } else {
+                            toast.error("Failed to resolve.");
+                          }
+                        }}
+                        className="flex-1 py-2 text-[10px] font-bold bg-emerald-600 text-white rounded-lg hover:opacity-90 shadow-lg shadow-emerald-500/20 transition-all"
+                      >
+                        Mark Healthy
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Inline Initiate Maintenance Form */}
+                {isStartingMaintenanceThis && (
+                  <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800" onClick={e => e.stopPropagation()}>
+                    <p className="text-[10px] font-black text-slate-450 uppercase">Initiate Maintenance</p>
+                    <div className="space-y-2">
+                      <input 
+                        type="text" 
+                        placeholder="Technician Name"
+                        value={techNameStart}
+                        onChange={(e) => setTechNameStart(e.target.value)}
+                        className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                      />
+                      <textarea 
+                        placeholder="Describe the issue..."
+                        rows={2}
+                        value={maintenanceReason}
+                        onChange={(e) => setMaintenanceReason(e.target.value)}
+                        className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button 
+                        onClick={() => setIsStartingMaintenanceThis(false)}
+                        className="flex-1 py-2 text-[10px] font-bold text-slate-550 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg hover:opacity-90 transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={async () => {
+                          if (!techNameStart || !maintenanceReason) {
+                            toast.error("Please fill in details.");
+                            return;
+                          }
+                          if (!window.confirm(`Are you sure you want to move asset ${asset.sn} to Maintenance mode?`)) return;
+                          const res = await startMaintenance(asset.sn, techNameStart, maintenanceReason);
+                          if (res.success) {
+                            toast.success("Asset moved to Maintenance!");
+                            setIsStartingMaintenanceThis(false);
+                            refetchAssets();
+                            refetchStock();
+                          } else {
+                            toast.error("Failed to start maintenance.");
+                          }
+                        }}
+                        className="flex-1 py-2 text-[10px] font-bold bg-blue-600 text-white rounded-lg hover:opacity-90 shadow-lg shadow-blue-500/20 transition-all"
+                      >
+                        Start
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Inline Delete Form */}
+                {isDeletingThis && (
+                  <div className="p-3 bg-rose-50 dark:bg-rose-950/20 rounded-2xl border border-rose-100 dark:border-rose-900/30" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center gap-2 mb-2 text-rose-500">
+                      <AlertCircle size={14} />
+                      <span className="text-[10px] font-black uppercase tracking-tight">Confirm Delete</span>
+                    </div>
+                    <p className="text-[9px] font-medium text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+                      Permanently remove asset <span className="font-bold text-slate-900 dark:text-white">{asset.sn}</span>?
+                    </p>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => setIsDeletingThis(false)}
+                        className="flex-1 py-2 text-[10px] font-bold text-slate-450 hover:text-slate-650 dark:hover:text-slate-200 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={async () => {
+                          const res = await deleteAsset(asset.sn);
+                          if (res.success) {
+                            toast.success("Asset deleted permanently.");
+                            setIsDeletingThis(false);
+                            refetchAssets();
+                            refetchStock();
+                          }
+                        }}
+                        className="flex-1 py-2 bg-rose-600 text-white rounded-lg text-[10px] font-black shadow-lg shadow-rose-500/20 hover:opacity-90 transition-all"
+                      >
+                        Confirm Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </m.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function InventoryPage() {
   const { data: assetRoster = [], isLoading: loadingAssets, refetch: refetchAssets } = useQuery({ 
     queryKey: ['assetRoster'], 
@@ -108,6 +532,17 @@ export default function InventoryPage() {
   
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletingAssetSn, setDeletingAssetSn] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isRegisterModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isRegisterModalOpen]);
 
   useEffect(() => {
     setMounted(true);
@@ -202,6 +637,32 @@ export default function InventoryPage() {
     return [...deployed, ...stock];
   }, [assetRoster, stockAssets]);
 
+  const uniqueTypes = useMemo(() => {
+    const types = new Set<string>();
+    allAssets.forEach((a: any) => {
+      if (a.type) types.add(a.type);
+    });
+    return Array.from(types).sort();
+  }, [allAssets]);
+
+  const uniqueConditions = useMemo(() => {
+    const conditions = new Set<string>();
+    allAssets.forEach((a: any) => {
+      if (a.condition) conditions.add(a.condition);
+    });
+    return Array.from(conditions).sort();
+  }, [allAssets]);
+
+  const uniqueOwnerships = useMemo(() => {
+    const ownerships = new Set<string>();
+    allAssets.forEach((a: any) => {
+      if (a.kepemilikan) {
+        ownerships.add(a.kepemilikan);
+      }
+    });
+    return Array.from(ownerships).sort();
+  }, [allAssets]);
+
   const filteredAssets = useMemo(() => {
     return allAssets.filter(asset => {
       const typeMatch = selectedType === "All" || asset.type === selectedType;
@@ -219,7 +680,7 @@ export default function InventoryPage() {
         ownershipMatch = asset.kepemilikan === selectedOwnership || (selectedOwnership === "Dimiliki" && !asset.kepemilikan);
       }
       
-      const usageMatch = selectedUsage === "All" || (selectedUsage === "Stock" && !asset.is_used) || (selectedUsage === "In Use" && asset.is_used);
+      const usageMatch = selectedUsage === "All" || (selectedUsage === "Stock" && !asset.is_used) || (selectedUsage === "Deployed" && asset.is_used);
       
       return typeMatch && conditionMatch && ownershipMatch && usageMatch;
     });
@@ -477,13 +938,9 @@ export default function InventoryPage() {
                   className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-10 shadow-sm"
                 >
                   <option value="All">All Types</option>
-                  <option value="Router">Routers</option>
-                  <option value="Switch">Switches</option>
-                  <option value="Server">Servers</option>
-                  <option value="Access Point">Access Points</option>
-                  <option value="OLT">OLT</option>
-                  <option value="ONT">ONT</option>
-                  <option value="ODP">ODP</option>
+                  {uniqueTypes.map((type) => (
+                    <option key={type} value={type}>{type}s</option>
+                  ))}
                 </select>
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
@@ -499,8 +956,9 @@ export default function InventoryPage() {
                   className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-10 shadow-sm"
                 >
                   <option value="All">All Conditions</option>
-                  <option value="Good">Healthy</option>
-                  <option value="Maintenance">Maintenance</option>
+                  {uniqueConditions.map((cond) => (
+                    <option key={cond} value={cond}>{ConditionLabelMap[cond] || cond}</option>
+                  ))}
                 </select>
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
@@ -516,8 +974,8 @@ export default function InventoryPage() {
                   className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-10 shadow-sm"
                 >
                   <option value="All">All Status</option>
-                  <option value="Stock">Ready Stock</option>
-                  <option value="In Use">In Use</option>
+                  <option value="Stock">Stock</option>
+                  <option value="Deployed">Deployed</option>
                 </select>
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
@@ -533,9 +991,11 @@ export default function InventoryPage() {
                   className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-10 shadow-sm"
                 >
                   <option value="All">Ownership</option>
-                  <option value="Dimiliki">Dimiliki</option>
-                  <option value="Sewa">Sewa</option>
-                  <option value="Dijual">Sold</option>
+                  {uniqueOwnerships.map((owner) => (
+                    <option key={owner} value={owner}>
+                      {owner === "Dimiliki" ? "Dimiliki" : owner === "Sewa" ? "Sewa" : owner === "Dijual" || owner === "Telah Dijual" ? "Sold" : owner}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
@@ -543,7 +1003,7 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto no-scrollbar min-h-[1000px] w-full">
+        <div className="hidden md:block overflow-x-auto no-scrollbar min-h-[1000px] w-full">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-800/50">
@@ -665,7 +1125,7 @@ export default function InventoryPage() {
                       <td className="px-3 lg:px-4 xl:px-6 py-6 text-right relative">
                         {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") ? (
                           <div ref={activeActionMenu === asset.sn ? actionMenuRef : null} className="inline-block">
-                            {asset.condition !== 'Broken' && (
+                            {asset.condition !== 'Warning' && (
                               <m.button
                                 aria-label="Action Menu"
                                 whileHover={{ scale: 1.15, rotate: 90 }}
@@ -736,21 +1196,35 @@ export default function InventoryPage() {
                                                 </div>
                                               </div>
                                             ) : (
-                                              <button 
-                                                onClick={() => {
-                                                  setDeployingAssetSn(asset.sn);
-                                                  setDeployData({ 
-                                                    warehouse: asset.location || '', 
-                                                    city: '', 
-                                                    province: '', 
-                                                    latitude: asset.latitude || -6.2088, 
-                                                    longitude: asset.longitude || 106.8456 
-                                                  });
-                                                }} 
-                                                className="w-full text-left px-4 py-3 text-xs font-bold text-primary hover:bg-primary/5 rounded-xl transition-all flex items-center gap-3"
-                                              >
-                                                <Wifi size={14} /> Use Asset
-                                              </button>
+                                              <>
+                                              {asset.condition === 'Broken' ? (
+                                                <button 
+                                                  onClick={() => {
+                                                    setDeletingAssetSn(asset.sn);
+                                                    setIsDeleting(true);
+                                                  }} 
+                                                  className="w-full text-left px-4 py-3 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl transition-all flex items-center gap-3"
+                                                >
+                                                  <X size={14} className="text-rose-500" /> Delete Asset
+                                                </button>
+                                              ) : (
+                                                <button 
+                                                  onClick={() => {
+                                                    setDeployingAssetSn(asset.sn);
+                                                    setDeployData({ 
+                                                      warehouse: asset.location || '', 
+                                                      city: '', 
+                                                      province: '', 
+                                                      latitude: asset.latitude || -6.2088, 
+                                                      longitude: asset.longitude || 106.8456 
+                                                    });
+                                                  }} 
+                                                  className="w-full text-left px-4 py-3 text-xs font-bold text-primary hover:bg-primary/5 rounded-xl transition-all flex items-center gap-3"
+                                                >
+                                                  <Wifi size={14} /> Use Asset
+                                                </button>
+                                              )}
+                                              </>
                                             )}
                                           </div>
                                         ) : (
@@ -765,6 +1239,17 @@ export default function InventoryPage() {
                                                 {asset.condition === 'Good' && (
                                                   <button onClick={() => handleUpdateCondition(asset.sn, 'Maintenance')} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all flex items-center gap-3">
                                                     <Wrench size={14} className="text-blue-500" /> Maintenance
+                                                  </button>
+                                                )}
+                                                {asset.condition === 'Broken' && (
+                                                  <button 
+                                                    onClick={() => {
+                                                      setDeletingAssetSn(asset.sn);
+                                                      setIsDeleting(true);
+                                                    }} 
+                                                    className="w-full text-left px-4 py-3 text-xs font-bold text-rose-600 dark:text-rose-455 hover:bg-rose-50 dark:hover:bg-rose-955/20 rounded-xl transition-all flex items-center gap-3"
+                                                  >
+                                                    <X size={14} className="text-rose-500" /> Delete Asset
                                                   </button>
                                                 )}
                                               </>
@@ -909,6 +1394,41 @@ export default function InventoryPage() {
           </table>
         </div>
 
+        {/* MOBILE COLLAPSIBLE CARDS VIEW (hidden on desktop, block on mobile) */}
+        <div className="md:hidden">
+          {/* Mobile list header */}
+          <div className="px-4 sm-phone:px-5 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800/50 text-[10px] sm-phone:text-[11px] font-black uppercase tracking-widest text-slate-450 dark:text-slate-400 bg-slate-50/20 dark:bg-white/5">
+            Asset Information
+          </div>
+          <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
+            {isLoadingAll ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="p-5 border-b border-slate-100 dark:border-slate-800/50">
+                  <div className="h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl w-full" />
+                </div>
+              ))
+            ) : paginatedAssets.length === 0 ? (
+              <div className="p-20 text-center">
+                <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-slate-400">
+                  <Search size={32} />
+                </div>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white">No results found</h2>
+                <p className="text-slate-500 font-medium mt-1">Try adjusting your search or filters.</p>
+              </div>
+            ) : (
+              paginatedAssets.map((asset, idx) => (
+                <MobileAssetCard
+                  key={asset.sn}
+                  asset={asset}
+                  refetchAssets={refetchAssets}
+                  refetchStock={refetchStock}
+                  cn={cn}
+                />
+              ))
+            )}
+          </div>
+        </div>
+
         {/* Pagination Controls */}
         {filteredAssets.length > 0 && (
           <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-50/30 dark:bg-white/5">
@@ -957,103 +1477,114 @@ export default function InventoryPage() {
       {/* Register Sidebar (Fixed Gap & Adaptive Height) */}
       <AnimatePresence>
         {isRegisterModalOpen && (
-          <div className="fixed top-0 right-0 z-[100] p-0 pointer-events-none">
+          <>
+            {/* Backdrop Overlay */}
             <m.div
-              initial={{ x: "100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-900 h-fit max-h-screen shadow-[-20px_20px_60px_rgba(0,0,0,0.15)] rounded-bl-[3.5rem] border-l border-b border-slate-200 dark:border-slate-800 p-8 md:p-10 pointer-events-auto flex flex-col"
-            >
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Register Asset</h3>
-                  <p className="text-xs font-medium text-slate-500 mt-1">Add hardware to infrastructure.</p>
-                </div>
-                <m.button
-                  aria-label="Close Modal"
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setIsRegisterModalOpen(false)}
-                  className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
-                >
-                  <X size={24} />
-                </m.button>
-              </div>
-              
-              <form onSubmit={handleRegisterAsset} className="space-y-6 overflow-y-auto custom-scrollbar pr-2">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="sn" className="text-[10px] font-black uppercase text-slate-400 px-1">Serial Number</label>
-                    <input id="sn" required type="text" placeholder="SN-..." className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all" value={newAsset.sn} onChange={e => setNewAsset({...newAsset, sn: e.target.value})} />
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsRegisterModalOpen(false)}
+              className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[90]"
+            />
+            
+            <div className="fixed top-0 right-0 z-[100] p-0 pointer-events-none w-full h-[100dvh] md:w-auto md:h-auto flex justify-end">
+              <m.div
+                initial={{ x: "100%", opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: "100%", opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="relative w-full h-[100dvh] md:max-w-md bg-white dark:bg-slate-900 md:h-fit md:max-h-screen shadow-[-20px_20px_60px_rgba(0,0,0,0.15)] rounded-none md:rounded-bl-[3.5rem] border-none md:border-l md:border-b border-slate-200 dark:border-slate-800 p-6 md:p-10 pointer-events-auto flex flex-col"
+              >
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Register Asset</h3>
+                    <p className="text-xs font-medium text-slate-500 mt-1">Add hardware to infrastructure.</p>
                   </div>
-                  <div className="space-y-2">
-                    <label htmlFor="mac" className="text-[10px] font-black uppercase text-slate-400 px-1">MAC Address</label>
-                    <input id="mac" required type="text" placeholder="00:1A:..." className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all" value={newAsset.mac} onChange={e => setNewAsset({...newAsset, mac: e.target.value})} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="deviceType" className="text-[10px] font-black uppercase text-slate-400 px-1">Device Type</label>
-                    <div className="relative">
-                      <select id="deviceType" className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none" value={newAsset.type} onChange={e => setNewAsset({...newAsset, type: e.target.value})}>
-                        <option value="Router">Router</option>
-                        <option value="Switch">Switch</option>
-                        <option value="OLT">OLT</option>
-                        <option value="ONT">ONT</option>
-                        <option value="Server">Server</option>
-                      </select>
-                      <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="location" className="text-[10px] font-black uppercase text-slate-400 px-1">Location / Warehouse</label>
-                    <div className="relative">
-                      <select 
-                        id="location"
-                        required
-                        className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none" 
-                        value={newAsset.location} 
-                        onChange={e => {
-                          const wh = warehouses.find((w: any) => w.location === e.target.value);
-                          if (wh) {
-                            setNewAsset({
-                              ...newAsset, 
-                              location: wh.location,
-                              latitude: Number(wh.latitude),
-                              longitude: Number(wh.longitude)
-                            });
-                          }
-                        }}
-                      >
-                        <option value="" disabled>Select Warehouse</option>
-                        {warehouses.map((wh: any) => (
-                          <option key={wh.id} value={wh.location}>
-                            {wh.location} ({wh.city})
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3 pt-6 border-t border-slate-100 dark:border-slate-800 mt-6">
-                  <button type="submit" className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 transition-all hover:opacity-90 flex items-center justify-center gap-2">
-                    <Plus size={18} /> Register Asset
-                  </button>
-                  <button 
-                    type="button" 
-                    aria-label="Close Modal" 
-                    onClick={() => setIsRegisterModalOpen(false)} 
-                    className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-sm transition-all hover:bg-slate-200"
+                  <m.button
+                    aria-label="Close Modal"
+                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setIsRegisterModalOpen(false)}
+                    className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
                   >
-                    Cancel
-                  </button>
+                    <X size={24} />
+                  </m.button>
                 </div>
-              </form>
-            </m.div>
-          </div>
+                
+                <form onSubmit={handleRegisterAsset} className="space-y-6 overflow-y-auto custom-scrollbar pr-2 flex-1">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label htmlFor="sn" className="text-[10px] font-black uppercase text-slate-400 px-1">Serial Number</label>
+                      <input id="sn" required type="text" placeholder="SN-..." className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all" value={newAsset.sn} onChange={e => setNewAsset({...newAsset, sn: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="mac" className="text-[10px] font-black uppercase text-slate-400 px-1">MAC Address</label>
+                      <input id="mac" required type="text" placeholder="00:1A:..." className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all" value={newAsset.mac} onChange={e => setNewAsset({...newAsset, mac: e.target.value})} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="deviceType" className="text-[10px] font-black uppercase text-slate-400 px-1">Device Type</label>
+                      <div className="relative">
+                        <select id="deviceType" className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none" value={newAsset.type} onChange={e => setNewAsset({...newAsset, type: e.target.value})}>
+                          <option value="Router">Router</option>
+                          <option value="Switch">Switch</option>
+                          <option value="OLT">OLT</option>
+                          <option value="ONT">ONT</option>
+                          <option value="Server">Server</option>
+                        </select>
+                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="location" className="text-[10px] font-black uppercase text-slate-400 px-1">Location / Warehouse</label>
+                      <div className="relative">
+                        <select 
+                          id="location"
+                          required
+                          className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 text-sm font-bold border-none outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none" 
+                          value={newAsset.location} 
+                          onChange={e => {
+                            const wh = warehouses.find((w: any) => w.location === e.target.value);
+                            if (wh) {
+                              setNewAsset({
+                                ...newAsset, 
+                                location: wh.location,
+                                latitude: Number(wh.latitude),
+                                longitude: Number(wh.longitude)
+                              });
+                            }
+                          }}
+                        >
+                          <option value="" disabled>Select Warehouse</option>
+                          {warehouses.map((wh: any) => (
+                            <option key={wh.id} value={wh.location}>
+                              {wh.location} ({wh.city})
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 pt-6 border-t border-slate-100 dark:border-slate-800 mt-6">
+                    <button type="submit" className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 transition-all hover:opacity-90 flex items-center justify-center gap-2">
+                      <Plus size={18} /> Register Asset
+                    </button>
+                    <button 
+                      type="button" 
+                      aria-label="Close Modal" 
+                      onClick={() => setIsRegisterModalOpen(false)} 
+                      className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-sm transition-all hover:bg-slate-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </m.div>
+            </div>
+          </>
         )}
       </AnimatePresence>
     </main>
