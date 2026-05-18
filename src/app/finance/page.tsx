@@ -29,6 +29,8 @@ import { exportToExcel } from "@/lib/exportUtils";
 import Tesseract from 'tesseract.js';
 import { LoadingState } from "@/components/LoadingState";
 
+const SKELETON_ROWS = Array.from({ length: 5 });
+
 export default function FinancePage() {
   const { data: transactions = [], isLoading: loadingTx } = useQuery({ 
     queryKey: ['transactions'], 
@@ -811,7 +813,7 @@ export default function FinancePage() {
 
           {/* Transaction Rows */}
           {loadingTx ? (
-            Array.from({ length: 5 }).map((_, index) => (
+            SKELETON_ROWS.map((_, index) => (
               <div 
                 key={index}
                 className="h-20 md:h-[72px] bg-white dark:bg-slate-900 rounded-xl border border-slate-200/50 dark:border-slate-800 shadow-sm animate-pulse" 

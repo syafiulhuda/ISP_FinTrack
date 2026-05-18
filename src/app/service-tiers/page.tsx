@@ -27,6 +27,10 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 
+const TIER_SKELETON_CARDS = Array.from({ length: 4 });
+const DESKTOP_SKELETON_ROWS = Array.from({ length: 7 });
+const MOBILE_SKELETON_CARDS = Array.from({ length: 7 });
+
 const IconMap = {
   wifi: Wifi,
   speed: Zap,
@@ -243,7 +247,7 @@ export default function ServiceTiersPage() {
       {/* Horizontal Scroll: Service Tiers */}
       <div className="flex overflow-x-auto pb-6 gap-6 no-scrollbar min-h-[262px]">
         {loadingTiers ? (
-          Array.from({ length: 4 }).map((_, i) => (
+          TIER_SKELETON_CARDS.map((_, i) => (
              <div 
                key={i} 
                className="p-6 rounded-xl border border-slate-200 dark:border-slate-800 min-w-[280px] h-[238px] flex-shrink-0 bg-white dark:bg-slate-900 flex flex-col justify-between"
@@ -467,7 +471,7 @@ export default function ServiceTiersPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {loadingCustomers ? (
-                  Array.from({ length: 7 }).map((_, i) => (
+                  DESKTOP_SKELETON_ROWS.map((_, i) => (
                     <tr key={i} className="h-[92px] border-b border-slate-100 dark:border-slate-800">
                       <td className="px-3 md:px-6 py-5">
                         <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-lg" />
@@ -579,7 +583,7 @@ export default function ServiceTiersPage() {
           {/* Mobile Accordion Card View */}
           <div className="block md:hidden space-y-3 p-3 bg-slate-50 dark:bg-slate-950/20 rounded-2xl min-h-[632px]">
             {loadingCustomers ? (
-              Array.from({ length: 7 }).map((_, i) => (
+              MOBILE_SKELETON_CARDS.map((_, i) => (
                 <div 
                   key={i} 
                   className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800 h-[80px] flex items-center justify-between gap-4 w-full"

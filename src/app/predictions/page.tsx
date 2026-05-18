@@ -16,9 +16,12 @@ import {
   Users,
   Activity
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { RevenueProjectionChart, ChurnForecastChart } from "@/components/charts/PredictionCharts";
 import { ChartContainer } from "@/components/charts/ChartContainer";
+
+const RevenueProjectionChart = dynamic(() => import("@/components/charts/PredictionCharts").then(mod => mod.RevenueProjectionChart), { ssr: false });
+const ChurnForecastChart = dynamic(() => import("@/components/charts/PredictionCharts").then(mod => mod.ChurnForecastChart), { ssr: false });
 import { getPredictions, refreshPredictions, PredictionResult } from "@/actions/predictions";
 import { formatCurrency, formatCompactNumber, cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -311,6 +314,9 @@ function PredictionCardSkeleton() {
   );
 }
 
+const CHART_SKELETON_HEIGHTS = ["30%", "45%", "60%", "35%", "50%", "70%", "85%", "60%", "40%", "55%", "75%", "90%"];
+const CHART_SKELETON_BARS = Array.from({ length: 12 });
+
 function ChartSkeleton() {
   return (
     <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-[442px] animate-pulse">
@@ -322,16 +328,13 @@ function ChartSkeleton() {
         <div className="w-24 h-6 bg-slate-100 dark:bg-slate-800 rounded-xl" />
       </div>
       <div className="flex-1 w-full bg-slate-50/50 dark:bg-slate-800/30 rounded-[2rem] flex items-end justify-between p-6 gap-2">
-        {Array.from({ length: 12 }).map((_, i) => {
-          const heights = ["30%", "45%", "60%", "35%", "50%", "70%", "85%", "60%", "40%", "55%", "75%", "90%"];
-          return (
-            <div 
-              key={i} 
-              className="w-full bg-slate-100 dark:bg-slate-800/50 rounded-t-lg animate-pulse" 
-              style={{ height: heights[i] }} 
-            />
-          );
-        })}
+        {CHART_SKELETON_BARS.map((_, i) => (
+          <div 
+            key={i} 
+            className="w-full bg-slate-100 dark:bg-slate-800/50 rounded-t-lg animate-pulse" 
+            style={{ height: CHART_SKELETON_HEIGHTS[i] }} 
+          />
+        ))}
       </div>
     </div>
   );

@@ -19,6 +19,8 @@ import { Customer, ServiceTier, Asset, Invoice } from "@/types";
 import { StatCard } from "@/components/ui/StatCard";
 import DataTable from "../../components/ui/DataTable";
 
+const SKELETON_ITEMS = Array.from({ length: 3 });
+
 export default function RegionalAnalysisPage() {
   const [selectedProvince, setSelectedProvince] = useState("All Provinces");
   const [selectedCity, setSelectedCity] = useState("All Cities");
@@ -351,7 +353,7 @@ export default function RegionalAnalysisPage() {
       {/* Asset Ownership Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {isLoadingAll ? (
-          Array.from({ length: 3 }).map((_, i) => (
+          SKELETON_ITEMS.map((_, i) => (
             <div key={i} className="h-[140px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />
           ))
         ) : (
@@ -442,7 +444,7 @@ export default function RegionalAnalysisPage() {
           {/* Mobile Profitability List (Collapsible Accordion/Dropdown) */}
           <div className="block lg:hidden divide-y divide-slate-100 dark:divide-slate-800">
             {isLoadingAll ? (
-              Array.from({ length: 3 }).map((_, i) => (
+              SKELETON_ITEMS.map((_, i) => (
                 <div key={i} className="p-5 space-y-3 animate-pulse">
                   <div className="flex justify-between items-center">
                     <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3" />
@@ -619,7 +621,7 @@ export default function RegionalAnalysisPage() {
           {/* Mobile AR Aging List (Collapsible Accordion/Dropdown) */}
           <div className="block lg:hidden divide-y divide-slate-100 dark:divide-slate-800">
             {isLoadingAll ? (
-              Array.from({ length: 3 }).map((_, i) => (
+              SKELETON_ITEMS.map((_, i) => (
                 <div key={i} className="p-5 space-y-3 animate-pulse">
                   <div className="flex justify-between items-center">
                     <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3" />

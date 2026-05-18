@@ -38,6 +38,10 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { LoadingState } from "@/components/LoadingState";
 
+const STATS_SKELETON_ITEMS = Array.from({ length: 7 });
+const TABLE_SKELETON_ROWS = Array.from({ length: 10 });
+const MOBILE_SKELETON_CARDS = Array.from({ length: 10 });
+
 const IconMap = {
   "trending-up": Cpu,
   "check-circle": CheckCircle2,
@@ -849,7 +853,7 @@ export default function InventoryPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {isLoadingAll ? (
-          Array.from({ length: 7 }).map((_, i) => (
+          STATS_SKELETON_ITEMS.map((_, i) => (
             <div key={i} className="min-h-[140px] tablet:h-48 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem]" />
           ))
         ) : (
@@ -1018,7 +1022,7 @@ export default function InventoryPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               <AnimatePresence mode="popLayout">
                 {isLoadingAll ? (
-                  Array.from({ length: 10 }).map((_, i) => (
+                  TABLE_SKELETON_ROWS.map((_, i) => (
                     <tr key={i} className="h-[96px] border-b border-slate-100 dark:border-slate-800 animate-pulse">
                       {/* Asset Details */}
                       <td className="px-3 lg:px-4 xl:px-6 py-6">
@@ -1435,7 +1439,7 @@ export default function InventoryPage() {
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
             {isLoadingAll ? (
-              Array.from({ length: 10 }).map((_, i) => (
+              MOBILE_SKELETON_CARDS.map((_, i) => (
                 <div key={i} className="px-4 py-5 border-b border-slate-100 dark:border-slate-800/50 flex items-center justify-between gap-3 bg-white dark:bg-slate-900 h-[80.8px]">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse shrink-0" />
