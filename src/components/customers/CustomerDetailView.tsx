@@ -11,7 +11,7 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import Link from "next/link";
 import { toggleVipStatus, sendPaymentReminder } from "@/actions/customers";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 const formatCompactNumber = (input: number | string) => {
@@ -74,6 +74,11 @@ export default function CustomerDetailView({ data }: { data: any }) {
   const [isSending, setIsSending] = useState(false);
   const [isTogglingVip, setIsTogglingVip] = useState(false);
   const [expandedLatePayments, setExpandedLatePayments] = useState<Record<number, boolean>>({});
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleLatePayment = (index: number) => {
     setExpandedLatePayments(prev => ({
@@ -264,11 +269,15 @@ export default function CustomerDetailView({ data }: { data: any }) {
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-[10px] font-bold text-slate-400">Phone</p>
-                  <p className="text-sm font-black dark:text-white flex items-center gap-1.5 mt-0.5"><Phone size={12} className="text-slate-400" /> {data.no_telp || 'N/A'}</p>
+                  <p className="text-xs font-black dark:text-white flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
+                    <Phone size={12} className="text-slate-400 shrink-0" /> {data.no_telp || 'N/A'}
+                  </p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-slate-400">Region</p>
-                  <p className="text-sm font-black dark:text-white flex items-center gap-1.5 mt-0.5"><MapPin size={12} className="text-slate-400" /> {data.city}</p>
+                  <p className="text-xs font-black dark:text-white flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
+                    <MapPin size={12} className="text-slate-400 shrink-0" /> {data.city}
+                  </p>
                 </div>
               </div>
             </div>
@@ -295,56 +304,60 @@ export default function CustomerDetailView({ data }: { data: any }) {
             </div>
 
             <div className="h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <BarChart data={data.payment_history} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
-                  <XAxis
-                    dataKey="month"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }}
-                    dy={15}
-                  />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={(val) => `Rp${val / 1000}k`} />
-                  <Tooltip
-                    cursor={{ fill: 'rgba(255,255,255,0.03)' }}
-                    content={({ active, payload }) => active && payload && payload.length && (
-                      <div className="bg-slate-900/95 backdrop-blur-xl text-white px-3 md:px-6 py-2 md:py-4 rounded-2xl shadow-2xl border border-white/10 ring-1 ring-white/5 min-w-[140px] md:min-w-[240px]">
-                        <p className="opacity-50 mb-2 md:mb-3 uppercase tracking-widest text-[8px] md:text-[10px] font-black">{payload[0].payload.month}</p>
-                        <div className="space-y-2 md:space-y-3">
-                          {payload.map((entry: any, i: number) => (
-                            <div key={i} className="flex items-center justify-between gap-4 md:gap-12">
-                              <span className="flex items-center gap-2 md:gap-3">
-                                <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full shadow-lg" style={{ backgroundColor: entry.color }} />
-                                <span className="text-[10px] md:text-sm font-bold opacity-90">{entry.name === 'ontime' ? 'Tepat Waktu' : 'Terlambat'}</span>
-                              </span>
-                              <span className="text-[10px] md:text-sm font-black font-mono text-indigo-400">
-                                {entry.payload.isUnpaid && entry.name === 'late' ? 'UNPAID' : formatCurrency(entry.value)}
-                              </span>
+              {mounted ? (
+                <ResponsiveContainer id="paymentPerformanceTimelineChart" width="100%" height={320}>
+                  <BarChart data={data.payment_history} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
+                    <XAxis
+                      dataKey="month"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }}
+                      dy={15}
+                    />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={(val) => `Rp${val / 1000}k`} />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                      content={({ active, payload }) => active && payload && payload.length && (
+                        <div className="bg-slate-900/95 backdrop-blur-xl text-white px-3 md:px-6 py-2 md:py-4 rounded-2xl shadow-2xl border border-white/10 ring-1 ring-white/5 min-w-[140px] md:min-w-[240px]">
+                          <p className="opacity-50 mb-2 md:mb-3 uppercase tracking-widest text-[8px] md:text-[10px] font-black">{payload[0].payload.month}</p>
+                          <div className="space-y-2 md:space-y-3">
+                            {payload.map((entry: any, i: number) => (
+                              <div key={i} className="flex items-center justify-between gap-4 md:gap-12">
+                                <span className="flex items-center gap-2 md:gap-3">
+                                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full shadow-lg" style={{ backgroundColor: entry.color }} />
+                                  <span className="text-[10px] md:text-sm font-bold opacity-90">{entry.name === 'ontime' ? 'Tepat Waktu' : 'Terlambat'}</span>
+                                </span>
+                                <span className="text-[10px] md:text-sm font-black font-mono text-indigo-400">
+                                  {entry.payload.isUnpaid && entry.name === 'late' ? 'UNPAID' : formatCurrency(entry.value)}
+                                </span>
+                              </div>
+                            ))}
+                            <div className="pt-2 md:pt-3 border-t border-white/10 flex justify-between items-center gap-4 md:gap-12">
+                              <span className="text-[8px] md:text-[10px] font-black opacity-40 uppercase">Total Revenue</span>
+                              <span className="text-[10px] md:text-sm font-black font-mono text-emerald-400">{formatCurrency(payload.reduce((acc, curr) => acc + Number(curr.value), 0))}</span>
                             </div>
-                          ))}
-                          <div className="pt-2 md:pt-3 border-t border-white/10 flex justify-between items-center gap-4 md:gap-12">
-                            <span className="text-[8px] md:text-[10px] font-black opacity-40 uppercase">Total Revenue</span>
-                            <span className="text-[10px] md:text-sm font-black font-mono text-emerald-400">{formatCurrency(payload.reduce((acc, curr) => acc + Number(curr.value), 0))}</span>
                           </div>
                         </div>
-                      </div>
-                    )}
-                  />
-                  <defs>
-                    <linearGradient id="ontimeGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.4} />
-                    </linearGradient>
-                    <linearGradient id="lateGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.4} />
-                    </linearGradient>
-                  </defs>
-                  <Bar dataKey="ontime" stackId="a" fill="url(#ontimeGradient)" radius={[4, 4, 0, 0]} barSize={24} />
-                  <Bar dataKey="late" stackId="a" fill="url(#lateGradient)" radius={[4, 4, 0, 0]} barSize={24} />
-                </BarChart>
-              </ResponsiveContainer>
+                      )}
+                    />
+                    <defs>
+                      <linearGradient id="ontimeGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.4} />
+                      </linearGradient>
+                      <linearGradient id="lateGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.4} />
+                      </linearGradient>
+                    </defs>
+                    <Bar dataKey="ontime" stackId="a" fill="url(#ontimeGradient)" radius={[4, 4, 0, 0]} barSize={24} />
+                    <Bar dataKey="late" stackId="a" fill="url(#lateGradient)" radius={[4, 4, 0, 0]} barSize={24} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full bg-slate-100/5 animate-pulse rounded-2xl border border-slate-200/10 dark:border-slate-800/10" />
+              )}
             </div>
           </div>
 
