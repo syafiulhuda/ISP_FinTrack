@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Search, Bell, Settings, Sun, Moon } from "lucide-react";
+import { Menu, Bell, Settings, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -16,7 +16,9 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications'],
     queryFn: getNotifications,
-    refetchInterval: 10000
+    refetchInterval: 60000,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
   });
 
   const unreadCount = notifications.filter((n: any) => n.is_unread).length;
@@ -27,8 +29,8 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
       <div className="flex items-center space-x-2 md:space-x-4 min-w-0">
         {/* Mobile Menu & Logo */}
         <div className="flex items-center md:hidden space-x-3 shrink-0">
-          <button 
-            className="text-slate-900 dark:text-white p-1 -ml-1" 
+          <button
+            className="text-slate-900 dark:text-white p-1 -ml-1"
             onClick={onMenuClick}
             aria-label="Open mobile menu"
           >
@@ -38,7 +40,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
         </div>
 
         {/* Dark Mode Toggle (Desktop & Mobile) */}
-        <button 
+        <button
           onClick={(e) => toggleTheme(e)}
           className="p-2 rounded-xl bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary-container transition-all duration-300"
           title="Toggle theme"
@@ -55,15 +57,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
       {/* Right Actions */}
       <div className="flex items-center space-x-1 md:space-x-4">
-        <div className="relative hidden lg-phone:block">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input 
-            className="bg-slate-200/50 dark:bg-slate-800/50 text-on-surface dark:text-slate-100 pl-9 pr-4 py-1.5 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 border-none w-48 transition-all" 
-            placeholder="Search..." 
-            type="text"
-            aria-label="Search across platform"
-          />
-        </div>
+
         <Link href="/notifications" className="relative text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-2 rounded-full active:opacity-80" aria-label="View notifications">
           <Bell size={20} />
           {unreadCount > 0 && (
@@ -74,9 +68,9 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           <Settings size={20} />
         </Link>
         <Link href="/profile" className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 ml-1 tablet:ml-2 block shrink-0" aria-label="View user profile">
-          <img 
-            alt="User profile avatar" 
-            className="w-full h-full object-cover" 
+          <img
+            alt="User profile avatar"
+            className="w-full h-full object-cover"
             src={adminProfile?.image || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=256&h=256"}
           />
         </Link>

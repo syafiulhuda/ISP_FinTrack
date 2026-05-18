@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 565" width="100%" height="100%">
+  <rect width="100%" height="100%" fill="#F1F5F9" rx="16"/>
+  <path d="M 20 40 L 380 40 L 380 525 L 20 525 Z" fill="#FFFFFF" filter="drop-shadow(0px 4px 12px rgba(0,0,0,0.05))" rx="8"/>
+  <!-- Zigzag receipt bottom -->
+  <path d="M 20 525 L 35 535 L 50 525 L 65 535 L 80 525 L 95 535 L 110 525 L 125 535 L 140 525 L 155 535 L 170 525 L 185 535 L 200 525 L 215 535 L 230 525 L 245 535 L 260 525 L 275 535 L 290 525 L 305 535 L 320 525 L 335 535 L 350 525 L 365 535 L 380 525" fill="#FFFFFF"/>
+  
+  <text x="200" y="80" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="16" fill="#0F172A">ISP FinTrack</text>
+  <text x="200" y="100" text-anchor="middle" font-family="monospace" font-size="12" fill="#475569">PT Your Choices</text>
+  <line x1="40" y1="120" x2="360" y2="120" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="4"/>
+  
+  <text x="50" y="150" font-family="monospace" font-size="11" fill="#64748B">Tanggal Pengeluaran :</text>
+  <text x="200" y="150" font-family="monospace" font-size="11" font-weight="bold" fill="#0F172A">30/04/2026</text>
+  
+  <text x="50" y="180" font-family="monospace" font-size="11" fill="#64748B">Jenis Pembelian     :</text>
+  <text x="200" y="180" font-family="monospace" font-size="11" font-weight="bold" fill="#0F172A">Server</text>
+  
+  <text x="50" y="210" font-family="monospace" font-size="11" fill="#64748B">Serial Number       :</text>
+  <text x="200" y="210" font-family="monospace" font-size="11" font-weight="bold" fill="#0F172A">SRV-10</text>
+  
+  <text x="50" y="240" font-family="monospace" font-size="11" fill="#64748B">MAC Number          :</text>
+  <text x="200" y="240" font-family="monospace" font-size="11" font-weight="bold" fill="#0F172A">00:1A:2B:3C:5D:11</text>
+  
+  <text x="50" y="270" font-family="monospace" font-size="11" fill="#64748B">Location            :</text>
+  <text x="200" y="270" font-family="monospace" font-size="11" font-weight="bold" fill="#0F172A">Warehouse East</text>
+  
+  <text x="50" y="300" font-family="monospace" font-size="11" fill="#64748B">Nominal             :</text>
+  <text x="200" y="300" font-family="monospace" font-size="11" font-weight="bold" fill="#0F172A">5000000</text>
+
+  <line x1="40" y1="330" x2="360" y2="330" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="4"/>
+  
+  <text x="200" y="370" text-anchor="middle" font-family="monospace" font-size="14" font-weight="bold" fill="#3B82F6">TERIMA KASIH</text>
+</svg>

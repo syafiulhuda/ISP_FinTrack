@@ -1,10 +1,10 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
-import { useEffect, memo, useMemo, useState } from 'react';
+import { useEffect, memo, useMemo, useState, useRef } from 'react';
 
 // ─── Server-computed color logic (mirrored here for icon creation only) ────────
 const getMarkerColor = (condition: string, status: string): string => {
@@ -82,25 +82,80 @@ interface IndonesiaMapProps {
   selectedNode: AssetMapItem | null;
   zoom?: number;
   center?: [number, number] | null;
+  setZoom?: (zoom: number | ((prev: number) => number)) => void;
+  setCenter?: (center: [number, number] | null | ((prev: [number, number] | null) => [number, number] | null)) => void;
   theme?: string;
+}
+
+// ─── MapStateListener helper ───────────────────────────────────────────────────
+function MapStateListener({
+  setZoom,
+  setCenter,
+}: {
+  setZoom?: (zoom: number | ((prev: number) => number)) => void;
+  setCenter?: (center: [number, number] | null) => void;
+}) {
+  const map = useMapEvents({
+    zoomend: () => {
+      if (setZoom) {
+        setZoom(map.getZoom());
+      }
+    },
+    dragend: () => {
+      if (setCenter) {
+        const center = map.getCenter();
+        setCenter([center.lat, center.lng]);
+      }
+    },
+  });
+  return null;
 }
 
 // ─── ChangeView helper ──────────────────────────────────────────────────────────
 function ChangeView({ center, zoom }: { center: [number, number] | null | undefined; zoom: number }) {
   const map = useMap();
+  const prevCenterRef = useRef<string | null>(null);
+  const prevZoomRef = useRef<number>(zoom);
 
   useEffect(() => {
     if (!map) return;
     try {
+      const centerStr = center ? `${center[0]},${center[1]}` : null;
+      const centerChanged = centerStr !== prevCenterRef.current;
+      const zoomChanged = zoom !== prevZoomRef.current;
+
+      prevCenterRef.current = centerStr;
+      prevZoomRef.current = zoom;
+
       if (center) {
-        const id = setTimeout(() => {
-          if (map.getContainer()) {
-            map.setView(center, zoom, { animate: true });
-          }
-        }, 0);
-        return () => clearTimeout(id);
+        if (centerChanged && zoomChanged) {
+          // Both changed (e.g. Reset button clicked!)
+          const id = setTimeout(() => {
+            if (map.getContainer()) {
+              map.setView(center, zoom, { animate: true });
+            }
+          }, 0);
+          return () => clearTimeout(id);
+        } else if (centerChanged) {
+          // Only center changed (e.g. clicked a node!)
+          // Keep current map zoom level perfectly so we don't zoom in to black background tiles
+          const id = setTimeout(() => {
+            if (map.getContainer()) {
+              map.setView(center, map.getZoom(), { animate: true });
+            }
+          }, 0);
+          return () => clearTimeout(id);
+        } else if (zoomChanged) {
+          // Only zoom changed (e.g. clicked Zoom In / Zoom Out!)
+          const id = setTimeout(() => {
+            if (map.getContainer()) {
+              map.setZoom(zoom, { animate: true });
+            }
+          }, 0);
+          return () => clearTimeout(id);
+        }
       } else {
-        map.setZoom(zoom, { animate: true });
+        map.closePopup();
       }
     } catch (e) {
       console.warn("Leaflet view update failed:", e);
@@ -129,12 +184,28 @@ const MemoizedMarker = memo(function AssetMarker({
       icon={createStatusIcon(asset.condition, asset.status)}
       eventHandlers={{ click: () => onSelect(asset) }}
     >
-      <Popup>
-        <div className="p-1">
-          <p className="font-bold text-xs">{asset.sn}</p>
-          <p className="text-[10px] text-slate-500">{asset.type} — {asset.condition || asset.status}</p>
+      <Tooltip direction="top" offset={[0, -10]} opacity={1}>
+        <div className="bg-slate-900/95 dark:bg-slate-950/95 border border-white/10 dark:border-slate-800/50 rounded-2xl shadow-2xl p-3 flex flex-col gap-2.5 min-w-[200px] text-white">
+          <div className="flex justify-between items-center">
+            <span className="text-[9px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md">
+              {asset.type}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <div 
+                className="w-1.5 h-1.5 rounded-full animate-pulse" 
+                style={{ backgroundColor: getMarkerColor(asset.condition, asset.status) }} 
+              />
+              <span className="text-[9px] font-bold text-slate-300">
+                {asset.status}
+              </span>
+            </div>
+          </div>
+          <div>
+            <h4 className="text-xs font-black tracking-tight text-white mb-0.5">{asset.sn}</h4>
+            <p className="text-[9px] font-medium text-slate-400 truncate max-w-[180px]">{asset.location}</p>
+          </div>
         </div>
-      </Popup>
+      </Tooltip>
     </Marker>
   );
 });
@@ -146,6 +217,8 @@ export default function IndonesiaMap({
   selectedNode,
   zoom = 5,
   center: propsCenter,
+  setZoom,
+  setCenter,
   theme = 'dark',
 }: IndonesiaMapProps) {
   const [isReady, setIsReady] = useState(false);
@@ -164,14 +237,14 @@ export default function IndonesiaMap({
     return (isNaN(lat) || isNaN(lng)) ? propsCenter : [lat, lng] as [number, number];
   }, [selectedNode, propsCenter]);
 
-  const focusZoom = selectedNode ? 12 : zoom;
+  const focusZoom = zoom;
 
   if (!isReady) return <div className="w-full h-full bg-slate-900 animate-pulse rounded-[2rem]" />;
 
   return (
     <div className="w-full h-full relative">
       <MapContainer
-        key={`map-${assets.length > 0 ? 'active' : 'empty'}`}
+        key="fintrack-geographic-map-engine"
         center={defaultCenter}
         zoom={zoom}
         style={{ height: '100%', width: '100%', background: '#0f172a' }}
@@ -208,6 +281,10 @@ export default function IndonesiaMap({
             />
           ))}
         </MarkerClusterGroup>
+
+        {setZoom || setCenter ? (
+          <MapStateListener setZoom={setZoom} setCenter={setCenter} />
+        ) : null}
 
         <ChangeView center={focusCenter} zoom={focusZoom} />
       </MapContainer>

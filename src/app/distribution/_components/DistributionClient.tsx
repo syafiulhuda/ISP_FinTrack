@@ -115,8 +115,29 @@ export function DistributionClient() {
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [zoom, setZoom] = useState(5);
-  const [center, setCenter] = useState<[number, number] | null>(null);
+  const [center, setCenter] = useState<[number, number] | null>([-2.5489, 118.0149]);
+
+  const handleSelectNode = (node: any) => {
+    setSelectedNode(node);
+    if (node) {
+      const lat = parseFloat(String(node.latitude));
+      const lng = parseFloat(String(node.longitude));
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setCenter([lat, lng]);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   const [isLayersOpen, setIsLayersOpen] = useState(false);
   const [activeLayers, setActiveLayers] = useState({
     OLT: true,
@@ -152,11 +173,11 @@ export function DistributionClient() {
     if (!document.fullscreenElement) {
       element.requestFullscreen()
         .then(() => {
-          toast.success("Entered Full Screen mode kawan! 🖥️");
+          toast.success("Entered Full Screen mode! 🖥️");
         })
         .catch((err) => {
           console.warn("Fullscreen error:", err);
-          toast.error("Browser block fullscreen request kawan.");
+          toast.error("Browser block fullscreen request.");
         });
     } else {
       document.exitFullscreen();
@@ -179,8 +200,8 @@ export function DistributionClient() {
     queryKey: ['map-assets'],
     queryFn: () => getMapAssets(),
     refetchInterval: 30000,
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 
   const filteredAssets = useMemo(() => {
@@ -253,7 +274,7 @@ export function DistributionClient() {
             <button
               onClick={() => {
                 handleReset();
-                toast.success("Map viewport reset to Center kawan! 🗺️");
+                toast.success("Map viewport reset to Center! 🗺️");
               }}
               className="hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-2 rounded-full transition-colors"
               aria-label="Reset map view"
@@ -292,7 +313,7 @@ export function DistributionClient() {
                           onClick={() => {
                             setMapTheme(theme);
                             setIsMapSettingsOpen(false);
-                            toast.success(`Map style changed to ${theme.toUpperCase()} kawan!`);
+                            toast.success(`Map style changed to ${theme.toUpperCase()}!`);
                           }}
                           className={cn(
                             "w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
@@ -366,7 +387,7 @@ export function DistributionClient() {
       </header>
 
       {/* Main Map Content */}
-      <div 
+      <div
         className={cn(
           "flex-1 mt-16 relative bg-slate-50 dark:bg-slate-950 transition-all duration-300",
           isFullscreen ? "w-full h-full" : ""
@@ -374,16 +395,18 @@ export function DistributionClient() {
       >
         <div className={cn(
           "absolute inset-0 z-0 overflow-hidden transition-all duration-300",
-          isFullscreen 
-            ? "m-0 rounded-none border-none shadow-none" 
+          isFullscreen
+            ? "m-0 rounded-none border-none shadow-none"
             : "mx-2 sm-phone:mx-4 my-4 md:m-0 rounded-[2rem] md:rounded-none border border-slate-200 dark:border-slate-800 md:border-none shadow-2xl md:shadow-none"
         )}>
           <IndonesiaMap
             assets={filteredAssets}
-            onSelectNode={setSelectedNode}
+            onSelectNode={handleSelectNode}
             selectedNode={selectedNode}
             zoom={zoom}
             center={center}
+            setZoom={setZoom}
+            setCenter={setCenter}
             theme={mapTheme}
           />
         </div>
@@ -475,14 +498,14 @@ export function DistributionClient() {
         {/* Selected Node Drawer & Location Card */}
         <AnimatePresence>
           {selectedNode && (
-            <div className="absolute top-20 md:top-6 bottom-6 right-6 flex items-start gap-4 z-50 pointer-events-none max-w-[calc(100%-48px)] md:max-w-none">
+            <div className="absolute inset-x-0 bottom-0 top-auto lg:top-6 lg:bottom-6 lg:right-6 lg:left-auto lg:h-[calc(100%-48px)] flex flex-col lg:flex-row items-end lg:items-start justify-end gap-4 p-4 lg:p-0 z-50 pointer-events-none w-full lg:w-auto">
               {/* Location Detail Card (Left Side) - Hidden on mobile to save space */}
               <m.div
                 initial={{ x: 100, opacity: 0, scale: 0.9 }}
                 animate={{ x: 0, opacity: 1, scale: 1 }}
                 exit={{ x: 100, opacity: 0, scale: 0.9 }}
                 transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.1 }}
-                className="w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/20 dark:border-slate-800/50 p-6 flex flex-col pointer-events-auto h-full overflow-y-auto scrollbar-hide hidden xl:flex"
+                className="w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/20 dark:border-slate-800/50 p-6 flex flex-col pointer-events-auto h-full overflow-y-auto overflow-x-hidden custom-scrollbar hidden lg:flex"
               >
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -500,18 +523,28 @@ export function DistributionClient() {
                     <div className="space-y-3">
                       <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
                         <p className="text-[9px] font-bold text-slate-400 uppercase">Region</p>
-                        <p className="text-xs font-black truncate">
-                          {selectedNode.location.includes(',')
-                            ? selectedNode.location.split(',')[1]?.trim()
-                            : selectedNode.location}
+                        <p className="text-xs font-black truncate" title={selectedNode.location}>
+                          {(() => {
+                            if (selectedNode.location.includes(',')) {
+                              return selectedNode.location.split(',')[1]?.trim();
+                            } else if (selectedNode.location.includes(' - ')) {
+                              return selectedNode.location.split(' - ')[1]?.trim();
+                            }
+                            return selectedNode.location;
+                          })()}
                         </p>
                       </div>
                       <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
                         <p className="text-[9px] font-bold text-slate-400 uppercase">Specific Area</p>
-                        <p className="text-xs font-black truncate">
-                          {selectedNode.location.includes(',')
-                            ? selectedNode.location.split(',')[0]?.trim()
-                            : 'Main Hub'}
+                        <p className="text-xs font-black truncate" title={selectedNode.location}>
+                          {(() => {
+                            if (selectedNode.location.includes(',')) {
+                              return selectedNode.location.split(',')[0]?.trim();
+                            } else if (selectedNode.location.includes(' - ')) {
+                              return selectedNode.location.split(' - ')[0]?.trim();
+                            }
+                            return 'Main Hub';
+                          })()}
                         </p>
                       </div>
                     </div>
@@ -520,11 +553,23 @@ export function DistributionClient() {
                   <div className="pt-2">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Coordinates</p>
                     <div className="flex gap-2">
-                      <div className="flex-1 bg-slate-100 dark:bg-slate-800 p-2 rounded-lg text-center font-mono text-[10px] font-bold">
-                        {selectedNode.latitude}
+                      <div
+                        className="flex-1 bg-slate-100 dark:bg-slate-800 p-2 rounded-lg text-center font-mono text-[9px] lg:text-[10px] font-bold truncate overflow-hidden"
+                        title={String(selectedNode.latitude)}
+                      >
+                        {(() => {
+                          const num = Number(selectedNode.latitude);
+                          return isNaN(num) ? String(selectedNode.latitude) : num.toFixed(6);
+                        })()}
                       </div>
-                      <div className="flex-1 bg-slate-100 dark:bg-slate-800 p-2 rounded-lg text-center font-mono text-[10px] font-bold">
-                        {selectedNode.longitude}
+                      <div
+                        className="flex-1 bg-slate-100 dark:bg-slate-800 p-2 rounded-lg text-center font-mono text-[9px] lg:text-[10px] font-bold truncate overflow-hidden"
+                        title={String(selectedNode.longitude)}
+                      >
+                        {(() => {
+                          const num = Number(selectedNode.longitude);
+                          return isNaN(num) ? String(selectedNode.longitude) : num.toFixed(6);
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -543,13 +588,20 @@ export function DistributionClient() {
 
               {/* Main Asset Drawer */}
               <m.div
-                initial={{ x: 400, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: 400, opacity: 0 }}
-                className="w-full max-w-[340px] md:w-96 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-slate-800/50 flex flex-col overflow-hidden pointer-events-auto h-full"
+                initial={isMobile ? { y: "100%", opacity: 0 } : { x: 400, opacity: 0 }}
+                animate={isMobile ? { y: 0, opacity: 1 } : { x: 0, opacity: 1 }}
+                exit={isMobile ? { y: "100%", opacity: 0 } : { x: 400, opacity: 0 }}
+                transition={{ type: "spring", damping: 30, stiffness: 250 }}
+                className="w-full max-w-full md:max-w-md lg:w-96 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-t-[2.5rem] lg:rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-slate-800/50 flex flex-col overflow-hidden pointer-events-auto h-[65vh] lg:h-full"
               >
-                <div className="p-6 md:p-8 border-b border-slate-200 dark:border-slate-800">
-                  <div className="flex justify-between items-start mb-4 md:mb-6">
+                {isMobile && (
+                  <div className="w-full flex justify-center pt-3 pb-1">
+                    <div className="w-12 h-1 rounded-full bg-slate-300 dark:bg-slate-700/60" />
+                  </div>
+                )}
+
+                <div className="p-4 sm:p-5 lg:p-8 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex justify-between items-start mb-4 lg:mb-6">
                     <div>
                       <span className={cn(
                         "text-[9px] md:text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full",
@@ -560,7 +612,7 @@ export function DistributionClient() {
                       )}>
                         {selectedNode.status} Node
                       </span>
-                      <h2 className="text-xl md:text-2xl font-black mt-2 md:mt-3 tracking-tight truncate">{selectedNode.sn}</h2>
+                      <h2 className="text-xl lg:text-2xl font-black mt-2 lg:mt-3 tracking-tight truncate">{selectedNode.sn}</h2>
                     </div>
                     <button
                       onClick={() => setSelectedNode(null)}
@@ -571,47 +623,122 @@ export function DistributionClient() {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 md:gap-4">
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 md:p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                  <div className="grid grid-cols-2 gap-3 lg:gap-4">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 lg:p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
                       <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase mb-1">Capacity</p>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-base md:text-lg font-black">12</span>
+                        <span className="text-base lg:text-lg font-black">12</span>
                         <span className="text-[10px] md:text-xs text-slate-400 font-bold">/ 16 Ports</span>
                       </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 md:h-1.5 rounded-full mt-2 md:mt-3 overflow-hidden">
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 lg:h-1.5 rounded-full mt-2 lg:mt-3 overflow-hidden">
                         <div className="bg-blue-600 h-full w-[75%]" />
                       </div>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 md:p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 lg:p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
                       <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase mb-1">Health</p>
                       <div className="flex items-baseline gap-1">
-                        <span className={cn("text-base md:text-lg font-black", selectedNode.status === 'Online' ? "text-green-500" : "text-amber-500")}>
+                        <span className={cn("text-base lg:text-lg font-black", selectedNode.status === 'Online' ? "text-green-500" : "text-amber-500")}>
                           {selectedNode.status === 'Online' ? '98.4%' : '64.1%'}
                         </span>
                       </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 md:h-1.5 rounded-full mt-2 md:mt-3 overflow-hidden">
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 lg:h-1.5 rounded-full mt-2 lg:mt-3 overflow-hidden">
                         <div className={cn("h-full", selectedNode.status === 'Online' ? "bg-green-500 w-[98%]" : "bg-amber-500 w-[64%]")} />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 md:space-y-8 scrollbar-hide">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-8 space-y-5 lg:space-y-8 custom-scrollbar">
+                  {/* Mobile/Tablet Portrait Location Info */}
+                  <section className="lg:hidden">
+                    <h3 className="text-[10px] md:text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <Navigation size={14} />
+                      Location Info
+                    </h3>
+                    <div className="space-y-4">
+                      {/* Area Intelligence */}
+                      <div className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-200/30 dark:border-slate-700/30">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Area Intelligence</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-white/50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Region</p>
+                            <p className="text-xs font-black truncate" title={selectedNode.location}>
+                              {(() => {
+                                if (selectedNode.location.includes(',')) {
+                                  return selectedNode.location.split(',')[1]?.trim();
+                                } else if (selectedNode.location.includes(' - ')) {
+                                  return selectedNode.location.split(' - ')[1]?.trim();
+                                }
+                                return selectedNode.location;
+                              })()}
+                            </p>
+                          </div>
+                          <div className="bg-white/50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Specific Area</p>
+                            <p className="text-xs font-black truncate" title={selectedNode.location}>
+                              {(() => {
+                                if (selectedNode.location.includes(',')) {
+                                  return selectedNode.location.split(',')[0]?.trim();
+                                } else if (selectedNode.location.includes(' - ')) {
+                                  return selectedNode.location.split(' - ')[0]?.trim();
+                                }
+                                return 'Main Hub';
+                              })()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Coordinates & Signal Density */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-200/30 dark:border-slate-700/30 flex flex-col justify-between">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Coordinates</p>
+                          <div className="flex gap-2">
+                            <div className="flex-1 bg-white/50 dark:bg-slate-800/50 p-2 rounded-lg text-center font-mono text-[9px] font-bold truncate">
+                              {(() => {
+                                const num = Number(selectedNode.latitude);
+                                return isNaN(num) ? String(selectedNode.latitude) : num.toFixed(6);
+                              })()}
+                            </div>
+                            <div className="flex-1 bg-white/50 dark:bg-slate-800/50 p-2 rounded-lg text-center font-mono text-[9px] font-bold truncate">
+                              {(() => {
+                                const num = Number(selectedNode.longitude);
+                                return isNaN(num) ? String(selectedNode.longitude) : num.toFixed(6);
+                              })()}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-blue-600 p-4 rounded-2xl text-white flex flex-col justify-between">
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Signal Density</p>
+                            <p className="text-sm font-black tracking-tighter">High Density</p>
+                          </div>
+                          <div className="mt-2 flex gap-1">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                              <div key={i} className={cn("h-1 flex-1 rounded-full", i <= 4 ? "bg-white" : "bg-white/30")} />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
                   <section>
                     <h3 className="text-[10px] md:text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                       <InfoIcon size={14} />
                       Technical Info
                     </h3>
-                    <div className="space-y-3 md:space-y-4">
-                      <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 p-2.5 md:p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
+                    <div className="space-y-3 lg:space-y-4">
+                      <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 p-2.5 lg:p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
                         <span className="text-[10px] md:text-xs font-bold text-slate-500">Model</span>
-                        <span className="text-[10px] md:text-xs font-black truncate max-w-[150px] md:max-w-none text-right">Huawei MA5608T</span>
+                        <span className="text-[10px] md:text-xs font-black truncate max-w-[150px] lg:max-w-none text-right">Huawei MA5608T</span>
                       </div>
-                      <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 p-2.5 md:p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
+                      <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/30 p-2.5 lg:p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
                         <span className="text-[10px] md:text-xs font-bold text-slate-500">MAC</span>
                         <span className="text-[10px] md:text-xs font-mono font-black">{selectedNode.mac}</span>
                       </div>
-                      <div className="flex flex-col gap-1.5 md:gap-2 bg-slate-50 dark:bg-slate-800/30 p-2.5 md:p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
+                      <div className="flex flex-col gap-1.5 lg:gap-2 bg-slate-50 dark:bg-slate-800/30 p-2.5 lg:p-3 rounded-xl border border-slate-200/30 dark:border-slate-700/30">
                         <span className="text-[10px] md:text-xs font-bold text-slate-500">Physical Location</span>
                         <span className="text-[10px] md:text-xs font-black leading-relaxed">{selectedNode.location}</span>
                       </div>
@@ -630,14 +757,14 @@ export function DistributionClient() {
                     </div>
 
                     {selectedNode.status === 'Online' ? (
-                      <div className="flex flex-col items-center justify-center py-6 md:py-8 bg-slate-50 dark:bg-slate-800/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center text-green-500 mb-2 md:mb-3">
+                      <div className="flex flex-col items-center justify-center py-6 lg:py-8 bg-slate-50 dark:bg-slate-800/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                        <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center text-green-500 mb-2 lg:mb-3">
                           <Activity size={18} />
                         </div>
                         <p className="text-[10px] md:text-xs font-bold text-slate-500 italic">Perfect condition</p>
                       </div>
                     ) : (
-                      <div className="bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-3 md:p-4 rounded-r-2xl">
+                      <div className="bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-3 lg:p-4 rounded-r-2xl">
                         <div className="flex justify-between mb-2">
                           <p className="text-[10px] md:text-xs font-black text-amber-600">#TCK-8921-X</p>
                           <div className="flex items-center gap-1 text-[8px] md:text-[10px] text-slate-400 font-bold">
@@ -645,11 +772,11 @@ export function DistributionClient() {
                             <span>2h ago</span>
                           </div>
                         </div>
-                        <p className="text-[11px] md:text-[12px] font-bold text-slate-700 dark:text-slate-300 leading-relaxed mb-3 md:mb-4">
+                        <p className="text-[11px] md:text-[12px] font-bold text-slate-700 dark:text-slate-300 leading-relaxed mb-3 lg:mb-4">
                           Power loss detected at main supply.
                         </p>
-                        <div className="flex items-center gap-2 md:gap-3">
-                          <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-slate-200 overflow-hidden ring-2 ring-white dark:ring-slate-800">
+                        <div className="flex items-center gap-2 lg:gap-3">
+                          <div className="h-7 w-7 lg:h-8 lg:w-8 rounded-full bg-slate-200 overflow-hidden ring-2 ring-white dark:ring-slate-800">
                             <img
                               src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=100"
                               className="w-full h-full object-cover"
@@ -658,7 +785,7 @@ export function DistributionClient() {
                           </div>
                           <div>
                             <p className="text-[10px] md:text-[11px] font-black">Budi Santoso</p>
-                            <p className="text-[8px] md:text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate max-w-[100px] md:max-w-none">Field Engineer</p>
+                            <p className="text-[8px] md:text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate max-w-[100px] lg:max-w-none">Field Engineer</p>
                           </div>
                         </div>
                       </div>
@@ -666,7 +793,7 @@ export function DistributionClient() {
                   </section>
                 </div>
 
-                <div className="p-6 md:p-8 bg-slate-50/50 dark:bg-slate-800/30 space-y-3">
+                <div className="p-4 sm:p-5 lg:p-8 bg-slate-50/50 dark:bg-slate-800/30 space-y-3">
                   <button
                     onClick={async () => {
                       const res = await dispatchTechnician(selectedNode.id, selectedNode.sn);
@@ -677,7 +804,7 @@ export function DistributionClient() {
                         toast.error("Failed to dispatch technician.");
                       }
                     }}
-                    className="w-full bg-blue-600 text-white py-3 md:py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-500/20 hover:translate-y-[-2px] transition-all flex items-center justify-center gap-3"
+                    className="w-full bg-blue-600 text-white py-3 lg:py-4 rounded-2xl font-black text-sm shadow-xl shadow-blue-500/20 hover:translate-y-[-2px] transition-all flex items-center justify-center gap-3"
                   >
                     <Activity size={18} />
                     Dispatch
@@ -689,7 +816,7 @@ export function DistributionClient() {
         </AnimatePresence>
 
         {/* Bottom Floating Stats */}
-        <div className="absolute bottom-6 left-6 z-40 flex gap-2 md:gap-4 pointer-events-none">
+        <div className={cn("absolute bottom-6 left-6 z-40 flex gap-2 md:gap-4 pointer-events-none transition-all duration-300", selectedNode && "hidden lg:flex")}>
           <m.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -724,7 +851,7 @@ export function DistributionClient() {
         </div>
 
         {/* Zoom Controls (Bottom Right) */}
-        <div className="absolute bottom-8 right-8 z-50 flex flex-col gap-2">
+        <div className={cn("absolute bottom-8 right-8 z-50 flex flex-col gap-2 transition-all duration-300", selectedNode ? "hidden" : "flex")}>
           <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl border border-slate-200/50 dark:border-slate-800/50 flex flex-col p-0.5 pointer-events-auto">
             <button
               onClick={() => setZoom(prev => Math.min(prev + 1, 18))}

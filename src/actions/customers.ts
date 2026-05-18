@@ -28,8 +28,8 @@ export async function getCustomers(page: number = 1, limit: number = 10): Promis
         FROM transactions
         WHERE keterangan = 'pemasukan'
           AND status = 'Verified'
-          AND EXTRACT(MONTH FROM (timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(MONTH FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
-          AND EXTRACT(YEAR FROM (timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(YEAR FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
+          AND timestamp >= date_trunc('month', NOW() AT TIME ZONE 'Asia/Jakarta')
+          AND timestamp < date_trunc('month', NOW() AT TIME ZONE 'Asia/Jakarta') + INTERVAL '1 month'
         GROUP BY split_part(id, '-', 2)
       ) paid ON paid.customer_id = c.id
       ORDER BY c."createdAt" DESC, c.id DESC
@@ -281,8 +281,8 @@ export async function getCustomerAnalysis() {
               WHERE split_part(t3.id, '-', 2) = c2.id
                 AND t3.status = 'Verified'
                 AND t3.keterangan = 'pemasukan'
-                AND EXTRACT(MONTH FROM (t3.timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(MONTH FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
-                AND EXTRACT(YEAR FROM (t3.timestamp AT TIME ZONE 'Asia/Jakarta')) = EXTRACT(YEAR FROM (NOW() AT TIME ZONE 'Asia/Jakarta'))
+                AND t3.timestamp >= date_trunc('month', NOW() AT TIME ZONE 'Asia/Jakarta')
+                AND t3.timestamp < date_trunc('month', NOW() AT TIME ZONE 'Asia/Jakarta') + INTERVAL '1 month'
             )
             AND EXTRACT(DAY FROM (NOW() AT TIME ZONE 'Asia/Jakarta')) > EXTRACT(DAY FROM (c2."createdAt" AT TIME ZONE 'Asia/Jakarta')) + 3
             AND c2.status = 'Active'

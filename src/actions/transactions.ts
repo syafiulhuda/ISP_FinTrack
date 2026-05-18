@@ -14,11 +14,9 @@ export async function getTransactions(monthsBack?: number): Promise<(Transaction
 
     const res = await query(`
       SELECT 
-        COALESCE(c.id, e.id::text) as linked_id,
+        split_part(t.id, '-', 2) as linked_id,
         t.*
       FROM transactions t
-      LEFT JOIN customers c ON split_part(t.id, '-', 2) = c.id
-      LEFT JOIN expenses e ON split_part(t.id, '-', 2) = e.id::text
       WHERE 1=1 ${dateFilter}
       ORDER BY t.timestamp DESC
     `);

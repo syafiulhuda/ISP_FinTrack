@@ -1003,7 +1003,7 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        <div className="hidden md:block overflow-x-auto no-scrollbar min-h-[1000px] w-full">
+        <div className="hidden md:block overflow-x-auto no-scrollbar min-h-[1020px] w-full">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-slate-800/50">
@@ -1019,9 +1019,42 @@ export default function InventoryPage() {
               <AnimatePresence mode="popLayout">
                 {isLoadingAll ? (
                   Array.from({ length: 10 }).map((_, i) => (
-                    <tr key={i}>
-                      <td colSpan={6} className="px-6 py-6">
-                        <div className="h-[88px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl w-full" />
+                    <tr key={i} className="h-[96px] border-b border-slate-100 dark:border-slate-800 animate-pulse">
+                      {/* Asset Details */}
+                      <td className="px-3 lg:px-4 xl:px-6 py-6">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+                          <div className="space-y-2">
+                            <div className="w-28 h-4 bg-slate-100 dark:bg-slate-800 rounded" />
+                            <div className="w-20 h-3 bg-slate-100 dark:bg-slate-800 rounded" />
+                          </div>
+                        </div>
+                      </td>
+                      {/* Category */}
+                      <td className="px-3 lg:px-4 xl:px-6 py-6 hidden sm:table-cell">
+                        <div className="w-16 h-6 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+                      </td>
+                      {/* Condition */}
+                      <td className="px-3 lg:px-4 xl:px-6 py-6">
+                        <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                      </td>
+                      {/* Kepemilikan */}
+                      <td className="px-3 lg:px-4 xl:px-6 py-6 hidden md:table-cell">
+                        <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                      </td>
+                      {/* Location */}
+                      <td className="px-3 lg:px-4 xl:px-6 py-6 hidden md:table-cell">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-xl mt-0.5" />
+                          <div className="space-y-1.5 flex-1">
+                            <div className="w-24 h-4 bg-slate-100 dark:bg-slate-800 rounded" />
+                            <div className="w-16 h-3 bg-slate-100 dark:bg-slate-800 rounded" />
+                          </div>
+                        </div>
+                      </td>
+                      {/* Action */}
+                      <td className="px-3 lg:px-4 xl:px-6 py-6 text-right">
+                        <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full inline-block" />
                       </td>
                     </tr>
                   ))
@@ -1395,16 +1428,26 @@ export default function InventoryPage() {
         </div>
 
         {/* MOBILE COLLAPSIBLE CARDS VIEW (hidden on desktop, block on mobile) */}
-        <div className="md:hidden">
+        <div className="md:hidden min-h-[852px]">
           {/* Mobile list header */}
           <div className="px-4 sm-phone:px-5 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800/50 text-[10px] sm-phone:text-[11px] font-black uppercase tracking-widest text-slate-450 dark:text-slate-400 bg-slate-50/20 dark:bg-white/5">
             Asset Information
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
             {isLoadingAll ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="p-5 border-b border-slate-100 dark:border-slate-800/50">
-                  <div className="h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl w-full" />
+              Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="px-4 py-5 border-b border-slate-100 dark:border-slate-800/50 flex items-center justify-between gap-3 bg-white dark:bg-slate-900 h-[80.8px]">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse shrink-0" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="w-24 h-3 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                      <div className="w-32 h-2.5 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="w-14 h-5 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md" />
+                    <div className="w-7 h-7 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-lg" />
+                  </div>
                 </div>
               ))
             ) : paginatedAssets.length === 0 ? (
@@ -1430,46 +1473,59 @@ export default function InventoryPage() {
         </div>
 
         {/* Pagination Controls */}
-        {filteredAssets.length > 0 && (
-          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-50/30 dark:bg-white/5">
-            <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
-              Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, filteredAssets.length)}</span> of <span className="text-slate-900 dark:text-white">{filteredAssets.length}</span> assets
-            </p>
-            <div className="flex flex-row items-center justify-center gap-1 sm:gap-2 w-full sm:w-auto">
-              <button 
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
-              >
-                Previous
-              </button>
-              <div className="flex items-center gap-1">
-                {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                  let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
-                  if (pageNum <= 0 || pageNum > totalPages) return null;
-                  
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={cn(
-                        "w-8 h-8 rounded-lg text-[10px] sm:text-xs font-bold transition-all",
-                        currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                      )}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-              </div>
-              <button 
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
-              >
-                Next
-              </button>
-            </div>
+        {(filteredAssets.length > 0 || isLoadingAll) && (
+          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-50/30 dark:bg-white/5 min-h-[112px] sm:min-h-[96px]">
+            {isLoadingAll ? (
+              <>
+                <div className="w-56 h-4 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-8 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+                  <div className="w-24 h-8 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+                  <div className="w-12 h-8 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
+                  Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, filteredAssets.length)}</span> of <span className="text-slate-900 dark:text-white">{filteredAssets.length}</span> assets
+                </p>
+                <div className="flex flex-row items-center justify-center gap-1 sm:gap-2 w-full sm:w-auto">
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                  >
+                    Previous
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                      let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
+                      if (pageNum <= 0 || pageNum > totalPages) return null;
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={cn(
+                            "w-8 h-8 rounded-lg text-[10px] sm:text-xs font-bold transition-all",
+                            currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                          )}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </m.section>

@@ -375,7 +375,7 @@ export default function ExecutiveDashboard() {
   return (
     <div className="min-h-screen pb-20">
       {/* GLOBAL CONTROL PANEL */}
-      <div className="sticky top-[-1px] z-40 backdrop-blur-xl bg-white/98 dark:bg-slate-950/98 border-b border-slate-200 dark:border-slate-800 p-4 md:px-8 pt-8 shadow-sm">
+      <div className="lg:sticky lg:top-[-1px] relative z-40 backdrop-blur-xl bg-white/98 dark:bg-slate-950/98 border-b border-slate-200 dark:border-slate-800 p-4 md:px-8 pt-8 shadow-sm">
         <div className="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-6 w-full">
           <div>
             <h1 className="text-3xl font-black bg-gradient-to-r from-indigo-500 to-cyan-500 bg-clip-text text-transparent">Unified Executive Summary</h1>

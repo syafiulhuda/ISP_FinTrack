@@ -4,5 +4,5 @@ import { ReactNode } from 'react';
 export const maxDuration = 60;
 
 export default function FinanceLayout({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+  return children;
 }

@@ -211,8 +211,7 @@ export default function ServiceTiersPage() {
     return counts;
   }, [allCustomers, serviceTiers]);
 
-  // We handle loading states inline to prevent layout shifts and scroll jumps
-  const isLoading = (loadingCustomers || loadingTiers) && allCustomers.length === 0;
+  // We handle loading states inline to prevent layout shifts and scroll jumps by binding to loadingTiers and loadingCustomers separately.
 
   const totalPages = isSearching ? Math.ceil(filteredCustomers.length / itemsPerPage) : Math.ceil(totalCount / itemsPerPage);
   
@@ -242,10 +241,34 @@ export default function ServiceTiersPage() {
       </div>
 
       {/* Horizontal Scroll: Service Tiers */}
-      <div className="flex overflow-x-auto pb-6 gap-6 no-scrollbar">
-        {isLoading ? (
+      <div className="flex overflow-x-auto pb-6 gap-6 no-scrollbar min-h-[262px]">
+        {loadingTiers ? (
           Array.from({ length: 4 }).map((_, i) => (
-             <div key={i} className="min-w-[280px] h-[180px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl flex-shrink-0" />
+             <div 
+               key={i} 
+               className="p-6 rounded-xl border border-slate-200 dark:border-slate-800 min-w-[280px] h-[238px] flex-shrink-0 bg-white dark:bg-slate-900 flex flex-col justify-between"
+             >
+               <div>
+                 <div className="flex justify-between items-center mb-6">
+                   <div className="w-20 h-5 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full" />
+                   <div className="w-5 h-5 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full" />
+                 </div>
+                 <div className="mb-6">
+                   <div className="w-28 h-8 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-lg" />
+                   <div className="w-36 h-4 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md mt-2" />
+                 </div>
+               </div>
+               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                 <div className="flex justify-between">
+                   <div className="w-16 h-4 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                   <div className="w-12 h-4 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                 </div>
+                 <div className="flex justify-between">
+                   <div className="w-20 h-4 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                   <div className="w-8 h-4 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                 </div>
+               </div>
+             </div>
           ))
         ) : (
           serviceTiers.map((tier, index) => {
@@ -312,7 +335,7 @@ export default function ServiceTiersPage() {
         }))}
 
         {/* Add New Tier Card */}
-        {!isLoading && (
+        {!loadingTiers && (
           <m.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -430,7 +453,7 @@ export default function ServiceTiersPage() {
           (isRefetching) ? "opacity-50 pointer-events-none" : "opacity-100"
         )}>
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto no-scrollbar min-h-[650px]" style={{ overflowAnchor: 'none' }}>
+          <div className="hidden md:block overflow-x-auto no-scrollbar min-h-[704px]" style={{ overflowAnchor: 'none' }}>
             <table className="w-full min-w-[800px] text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50">
@@ -443,11 +466,35 @@ export default function ServiceTiersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i}>
-                      <td colSpan={6} className="px-6 py-6">
-                        <div className="h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl w-full" />
+                {loadingCustomers ? (
+                  Array.from({ length: 7 }).map((_, i) => (
+                    <tr key={i} className="h-[92px] border-b border-slate-100 dark:border-slate-800">
+                      <td className="px-3 md:px-6 py-5">
+                        <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-lg" />
+                      </td>
+                      <td className="px-3 md:px-6 py-5">
+                        <div className="space-y-1">
+                          <div className="w-16 h-3 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                          <div className="w-12 h-2 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                        </div>
+                      </td>
+                      <td className="px-3 md:px-6 py-5">
+                        <div className="w-24 h-4 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                      </td>
+                      <td className="px-3 md:px-6 py-5">
+                        <div className="space-y-1">
+                          <div className="w-36 h-3 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                          <div className="w-20 h-2.5 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                        </div>
+                      </td>
+                      <td className="px-3 md:px-6 py-5">
+                        <div className="w-20 h-3 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                      </td>
+                      <td className="px-3 md:px-6 py-5">
+                        <div className="space-y-1">
+                          <div className="w-24 h-4 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                          <div className="w-16 h-3 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -518,7 +565,7 @@ export default function ServiceTiersPage() {
                     </td>
                   </m.tr>
                 ))}
-                {(!isLoading && displayCustomers.length === 0) && (
+                {(!loadingCustomers && displayCustomers.length === 0) && (
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-medium">
                       No customers found matching your search criteria.
@@ -530,10 +577,22 @@ export default function ServiceTiersPage() {
           </div>
 
           {/* Mobile Accordion Card View */}
-          <div className="block md:hidden space-y-3 p-3 bg-slate-50 dark:bg-slate-950/20 rounded-2xl min-h-[500px]">
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-[80px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl w-full" />
+          <div className="block md:hidden space-y-3 p-3 bg-slate-50 dark:bg-slate-950/20 rounded-2xl min-h-[632px]">
+            {loadingCustomers ? (
+              Array.from({ length: 7 }).map((_, i) => (
+                <div 
+                  key={i} 
+                  className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800 h-[80px] flex items-center justify-between gap-4 w-full"
+                >
+                  <div className="flex-1 space-y-2">
+                    <div className="w-24 h-2.5 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                    <div className="w-32 h-4 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="w-16 h-5 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-lg" />
+                    <div className="w-7 h-7 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-lg" />
+                  </div>
+                </div>
               ))
             ) : displayCustomers.length === 0 ? (
               <div className="text-center text-slate-400 font-medium py-12 text-xs">
@@ -674,46 +733,59 @@ export default function ServiceTiersPage() {
         </div>
 
         {/* Pagination Controls */}
-        {totalPages > 0 && (
-          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center justify-between gap-6 bg-slate-50/30 dark:bg-white/5 sm:flex-row">
-            <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
-              Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, isSearching ? filteredCustomers.length : totalCount)}</span> of <span className="text-slate-900 dark:text-white">{isSearching ? filteredCustomers.length : totalCount}</span> subscribers
-            </p>
-            <div className="flex flex-row items-center justify-center gap-1 sm:gap-2 w-full sm:w-auto">
-              <button 
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
-              >
-                Previous
-              </button>
-              <div className="flex items-center gap-1">
-                {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                  let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
-                  if (pageNum <= 0 || pageNum > totalPages) return null;
-                  
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={cn(
-                        "w-8 h-8 rounded-lg text-[10px] sm:text-xs font-bold transition-all",
-                        currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                      )}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-              </div>
-              <button 
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
-              >
-                Next
-              </button>
-            </div>
+        {(totalPages > 0 || loadingCustomers) && (
+          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center justify-between gap-6 bg-slate-50/30 dark:bg-white/5 sm:flex-row min-h-[112px] sm:min-h-[96px]">
+            {loadingCustomers ? (
+              <>
+                <div className="w-56 h-4 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-8 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+                  <div className="w-24 h-8 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+                  <div className="w-12 h-8 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
+                  Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, isSearching ? filteredCustomers.length : totalCount)}</span> of <span className="text-slate-900 dark:text-white">{isSearching ? filteredCustomers.length : totalCount}</span> subscribers
+                </p>
+                <div className="flex flex-row items-center justify-center gap-1 sm:gap-2 w-full sm:w-auto">
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                  >
+                    Previous
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                      let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
+                      if (pageNum <= 0 || pageNum > totalPages) return null;
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={cn(
+                            "w-8 h-8 rounded-lg text-[10px] sm:text-xs font-bold transition-all",
+                            currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                          )}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
 

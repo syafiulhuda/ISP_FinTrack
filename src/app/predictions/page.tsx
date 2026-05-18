@@ -85,15 +85,6 @@ export default function PredictionsPage() {
     return isFinite(diff) ? diff.toFixed(1) : "0.0";
   };
 
-  if (isLoading && !predictions) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-        <p className="text-slate-500 font-bold animate-pulse">Running Predictive Models...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8 p-2">
       {/* Header */}
@@ -106,6 +97,7 @@ export default function PredictionsPage() {
         <div className="flex flex-nowrap items-center gap-1 bg-slate-100 dark:bg-slate-900/50 px-2 py-1.5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-inner w-full lg:w-fit overflow-hidden">
           <button 
             onClick={() => setModelType('lr')}
+            disabled={isLoading}
             className={`flex items-center justify-center gap-1 lg-phone:gap-2 px-2 lg-phone:px-5 py-1.5 lg-phone:py-2.5 rounded-[1.5rem] text-[9px] lg-phone:text-sm font-black transition-all duration-300 whitespace-nowrap flex-1 ${
               modelType === 'lr' 
               ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-indigo-500/50" 
@@ -117,6 +109,7 @@ export default function PredictionsPage() {
           </button>
           <button 
             onClick={() => setModelType('nn')}
+            disabled={isLoading}
             className={`flex items-center justify-center gap-1 lg-phone:gap-2 px-2 lg-phone:px-5 py-1.5 lg-phone:py-2.5 rounded-[1.5rem] text-[9px] lg-phone:text-sm font-black transition-all duration-300 whitespace-nowrap flex-1 ${
               modelType === 'nn' 
               ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-indigo-500/50" 
@@ -129,17 +122,32 @@ export default function PredictionsPage() {
           <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-2" />
           <button 
             onClick={handleRefresh}
-            disabled={isFetching}
+            disabled={isFetching || isLoading}
             aria-label="Refresh Data"
             className="p-2.5 text-slate-400 hover:text-indigo-500 transition-colors disabled:opacity-50"
             title="Refresh Data"
           >
-            <RefreshCw size={14} className={cn("lg-phone:w-[18px] lg-phone:h-[18px]", isFetching && "animate-spin")} />
+            <RefreshCw size={14} className={cn("lg-phone:w-[18px] lg-phone:h-[18px]", (isFetching || isLoading) && "animate-spin")} />
           </button>
         </div>
       </div>
 
-      {!predictions ? (
+      {isLoading && !predictions ? (
+        <div className="space-y-8 animate-pulse">
+          {/* Prediction Highlights */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <PredictionCardSkeleton />
+            <PredictionCardSkeleton />
+            <PredictionCardSkeleton />
+          </div>
+
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 gap-8">
+            <ChartSkeleton />
+            <ChartSkeleton />
+          </div>
+        </div>
+      ) : !predictions ? (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-20 text-center">
           <AlertCircle size={48} className="mx-auto text-slate-300 mb-4" />
           <h2 className="text-xl font-black text-slate-900 dark:text-white">Insufficient Data</h2>
@@ -285,4 +293,46 @@ function CustomTooltip({ active, payload, label, unit = "" }: any) {
     );
   }
   return null;
+}
+
+function PredictionCardSkeleton() {
+  return (
+    <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden h-[178px] animate-pulse">
+      <div className="flex items-center gap-4 mb-5">
+        <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 shrink-0" />
+        <div className="w-24 h-4 bg-slate-100 dark:bg-slate-800 rounded" />
+      </div>
+      <div className="w-36 h-8 bg-slate-100 dark:bg-slate-800 rounded mb-4" />
+      <div className="flex items-center gap-2">
+        <div className="w-16 h-5 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+        <div className="w-20 h-3 bg-slate-100 dark:bg-slate-800 rounded" />
+      </div>
+    </div>
+  );
+}
+
+function ChartSkeleton() {
+  return (
+    <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-[442px] animate-pulse">
+      <div className="flex items-center justify-between mb-10">
+        <div className="space-y-2">
+          <div className="w-48 h-6 bg-slate-100 dark:bg-slate-800 rounded" />
+          <div className="w-32 h-3 bg-slate-100 dark:bg-slate-800 rounded" />
+        </div>
+        <div className="w-24 h-6 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+      </div>
+      <div className="flex-1 w-full bg-slate-50/50 dark:bg-slate-800/30 rounded-[2rem] flex items-end justify-between p-6 gap-2">
+        {Array.from({ length: 12 }).map((_, i) => {
+          const heights = ["30%", "45%", "60%", "35%", "50%", "70%", "85%", "60%", "40%", "55%", "75%", "90%"];
+          return (
+            <div 
+              key={i} 
+              className="w-full bg-slate-100 dark:bg-slate-800/50 rounded-t-lg animate-pulse" 
+              style={{ height: heights[i] }} 
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
 }

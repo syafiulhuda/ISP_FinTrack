@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 
 import { m, AnimatePresence } from "framer-motion";
 import { 
@@ -410,9 +411,7 @@ export default function FinancePage() {
     (trx.status?.toLowerCase() || "").includes(modalSearch.toLowerCase())
   );
 
-  if (loadingTx || loadingOcr || !ocrData) {
-    return <LoadingState message="Menganalisis data keuangan..." />;
-  }
+
 
   return (
     <div className="pt-4 space-y-10">
@@ -478,12 +477,14 @@ export default function FinancePage() {
             </div>
             <div 
               onClick={() => setIsZoomed(true)}
-              className="min-h-[450px] flex-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl overflow-hidden relative group border border-slate-200/50 dark:border-slate-700 cursor-zoom-in flex items-center justify-center"
+              className="w-full h-[450px] bg-slate-50 dark:bg-slate-800/50 rounded-xl overflow-hidden relative group border border-slate-200/50 dark:border-slate-700 cursor-zoom-in flex items-center justify-center"
             >
               <img 
+                src={uploadedImageUrl || '/images/expense.svg'}
                 alt="Receipt Source" 
+                fetchPriority="high"
+                loading="eager"
                 className="w-full h-full object-contain opacity-90 transition-transform duration-500 group-hover:scale-105" 
-                src={uploadedImageUrl || 'https://plus.unsplash.com/premium_photo-1679923814036-8febf10a04c0?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'}
               />
               {/* Scanning overlay */}
               {isScanning && (
@@ -507,7 +508,11 @@ export default function FinancePage() {
                 <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Extracted Data</h2>
                 <div className="px-4 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-primary rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-2">
                   <Sparkles size={14} />
-                  AI Confidence: {ocrData.confidence}
+                  {loadingOcr || !ocrData ? (
+                    <span className="h-3.5 w-16 bg-blue-200 dark:bg-blue-800 animate-pulse rounded inline-block" />
+                  ) : (
+                    `AI Confidence: ${ocrData?.confidence || "66%"}`
+                  )}
                 </div>
               </div>
 
@@ -741,7 +746,7 @@ export default function FinancePage() {
               </button>
 
               <img 
-                src={uploadedImageUrl || 'https://plus.unsplash.com/premium_photo-1679923814036-8febf10a04c0?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'} 
+                src={uploadedImageUrl || '/images/expense.svg'} 
                 className="w-auto max-h-[75vh] object-contain rounded-3xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] border-4 border-white/20"
                 alt="Receipt Zoom"
               />
@@ -805,144 +810,155 @@ export default function FinancePage() {
           </div>
 
           {/* Transaction Rows */}
-          {paginatedTransactions.map((trx, index) => {
-            const isExpanded = !!expandedTransactions[trx.id];
-            return (
-              <m.div 
-                key={`${trx.id}-${index}`}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + index * 0.1 }}
-                className={cn(
-                  "flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 bg-white dark:bg-slate-900 md:items-center px-4 md:px-8 py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer border border-slate-200/50 dark:border-slate-800 relative overflow-hidden shadow-sm",
-                  trx.isWarning && "border-orange-500/20"
-                )}
-              >
-                {trx.isWarning && <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>}
-                
-                {/* --- MOBILE VIEW (Card Layout) --- */}
-                <div className="flex flex-col md:hidden w-full gap-3">
-                  {/* Collapsed Header Click Container */}
-                  <div 
-                    onClick={() => toggleTransactionExpand(trx.id)}
-                    className="flex items-center justify-between cursor-pointer gap-2"
-                  >
-                    {/* Left: ID, LNK & Amount */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-mono font-black text-slate-900 dark:text-slate-100 truncate">{trx.id}</p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <p className="text-[10px] font-mono font-bold text-slate-400">LNK: {trx.linked_id || "-"}</p>
-                        <span className="text-[10px] text-slate-200 dark:text-slate-800">|</span>
-                        <span className="text-[11px] font-black text-primary dark:text-blue-400">
-                          {String(trx.amount).startsWith('Rp') ? trx.amount : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(String(trx.amount).replace(/[^0-9]/g, '')))}
-                        </span>
+          {loadingTx ? (
+            Array.from({ length: 5 }).map((_, index) => (
+              <div 
+                key={index}
+                className="h-20 md:h-[72px] bg-white dark:bg-slate-900 rounded-xl border border-slate-200/50 dark:border-slate-800 shadow-sm animate-pulse" 
+              />
+            ))
+          ) : paginatedTransactions.length === 0 ? (
+            <div className="text-center py-10 text-slate-500 font-medium">No transactions found.</div>
+          ) : (
+            paginatedTransactions.map((trx, index) => {
+              const isExpanded = !!expandedTransactions[trx.id];
+              return (
+                <m.div 
+                  key={`${trx.id}-${index}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + index * 0.1 }}
+                  className={cn(
+                    "flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 bg-white dark:bg-slate-900 md:items-center px-4 md:px-8 py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer border border-slate-200/50 dark:border-slate-800 relative overflow-hidden shadow-sm",
+                    trx.isWarning && "border-orange-500/20"
+                  )}
+                >
+                  {trx.isWarning && <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>}
+                  
+                  {/* --- MOBILE VIEW (Card Layout) --- */}
+                  <div className="flex flex-col md:hidden w-full gap-3">
+                    {/* Collapsed Header Click Container */}
+                    <div 
+                      onClick={() => toggleTransactionExpand(trx.id)}
+                      className="flex items-center justify-between cursor-pointer gap-2"
+                    >
+                      {/* Left: ID, LNK & Amount */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-mono font-black text-slate-900 dark:text-slate-100 truncate">{trx.id}</p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <p className="text-[10px] font-mono font-bold text-slate-400">LNK: {trx.linked_id || "-"}</p>
+                          <span className="text-[10px] text-slate-200 dark:text-slate-800">|</span>
+                          <span className="text-[11px] font-black text-primary dark:text-blue-400">
+                            {String(trx.amount).startsWith('Rp') ? trx.amount : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(String(trx.amount).replace(/[^0-9]/g, '')))}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right: Status Pill & Chevron Icon */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className={cn(
+                          "px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider",
+                          trx.status === "Verified" ? "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400 ring-1 ring-green-500/20" : "bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400 ring-1 ring-orange-500/20"
+                        )}>
+                          {trx.status}
+                        </div>
+
+                        {/* Chevron Container */}
+                        <div
+                          className={cn(
+                            "w-7 h-7 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-all duration-300",
+                            isExpanded && "bg-primary/10 text-primary dark:text-blue-400 rotate-180"
+                          )}
+                        >
+                          <ChevronDown size={14} />
+                        </div>
                       </div>
                     </div>
 
-                    {/* Right: Status Pill & Chevron Icon */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className={cn(
-                        "px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider",
-                        trx.status === "Verified" ? "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400 ring-1 ring-green-500/20" : "bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400 ring-1 ring-orange-500/20"
-                      )}>
-                        {trx.status}
-                      </div>
+                    {/* Collapsible Accordion Block */}
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <m.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                            <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-800/30 p-3 rounded-xl">
+                              <div>
+                                <span className="text-[9px] font-bold text-slate-400 block uppercase mb-0.5">Method</span>
+                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{trx.method}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-[9px] font-bold text-slate-400 block uppercase mb-0.5">Type</span>
+                                <span className="inline-block text-[9px] font-black uppercase px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600">
+                                  {trx.type}
+                                </span>
+                              </div>
+                              
+                              <div>
+                                <span className="text-[9px] font-bold text-slate-400 block uppercase mb-0.5">City</span>
+                                <span className="text-[11px] font-medium text-slate-500 truncate block">{trx.city || "-"}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-[9px] font-bold text-slate-400 block uppercase mb-0.5">Amount</span>
+                                <span className="text-sm font-black text-slate-900 dark:text-slate-100">
+                                  {String(trx.amount).startsWith('Rp') ? trx.amount : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(String(trx.amount).replace(/[^0-9]/g, '')))}
+                                </span>
+                              </div>
+                            </div>
 
-                      {/* Chevron Container */}
-                      <div
-                        className={cn(
-                          "w-7 h-7 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-all duration-300",
-                          isExpanded && "bg-primary/10 text-primary dark:text-blue-400 rotate-180"
-                        )}
-                      >
-                        <ChevronDown size={14} />
-                      </div>
-                    </div>
+                            {/* Timestamp */}
+                            <div className="flex items-center justify-between text-[10px] font-medium text-slate-400 font-mono pt-1" style={{ fontFamily: 'monospace' }}>
+                              <span>Timestamp</span>
+                              <span>
+                                {formatTimestamp(trx.timestamp)}
+                              </span>
+                            </div>
+                          </div>
+                        </m.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
-                  {/* Collapsible Accordion Block */}
-                  <AnimatePresence initial={false}>
-                    {isExpanded && (
-                      <m.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
-                          <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-800/30 p-3 rounded-xl">
-                            <div>
-                              <span className="text-[9px] font-bold text-slate-400 block uppercase mb-0.5">Method</span>
-                              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{trx.method}</span>
-                            </div>
-                            <div className="text-right">
-                              <span className="text-[9px] font-bold text-slate-400 block uppercase mb-0.5">Type</span>
-                              <span className="inline-block text-[9px] font-black uppercase px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600">
-                                {trx.type}
-                              </span>
-                            </div>
-                            
-                            <div>
-                              <span className="text-[9px] font-bold text-slate-400 block uppercase mb-0.5">City</span>
-                              <span className="text-[11px] font-medium text-slate-500 truncate block">{trx.city || "-"}</span>
-                            </div>
-                            <div className="text-right">
-                              <span className="text-[9px] font-bold text-slate-400 block uppercase mb-0.5">Amount</span>
-                              <span className="text-sm font-black text-slate-900 dark:text-slate-100">
-                                {String(trx.amount).startsWith('Rp') ? trx.amount : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(String(trx.amount).replace(/[^0-9]/g, '')))}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Timestamp */}
-                          <div className="flex items-center justify-between text-[10px] font-medium text-slate-400 font-mono pt-1" style={{ fontFamily: 'monospace' }}>
-                            <span>Timestamp</span>
-                            <span>
-                              {formatTimestamp(trx.timestamp)}
-                            </span>
-                          </div>
-                        </div>
-                      </m.div>
-                    )}
-                  </AnimatePresence>
+                {/* --- DESKTOP VIEW (Grid Layout) --- */}
+                <div className="hidden md:block col-span-1 text-[10px] font-mono font-bold text-slate-400" style={{ fontFamily: 'monospace' }}>
+                  {trx.linked_id || "-"}
                 </div>
-
-              {/* --- DESKTOP VIEW (Grid Layout) --- */}
-              <div className="hidden md:block col-span-1 text-[10px] font-mono font-bold text-slate-400" style={{ fontFamily: 'monospace' }}>
-                {trx.linked_id || "-"}
-              </div>
-              <div className="hidden md:flex flex-col gap-1 items-start justify-center col-span-2">
-                <div className="text-[11px] font-mono font-bold text-slate-900 dark:text-slate-100 truncate w-full" style={{ fontFamily: 'monospace' }}>
-                  {trx.id}
+                <div className="hidden md:flex flex-col gap-1 items-start justify-center col-span-2">
+                  <div className="text-[11px] font-mono font-bold text-slate-900 dark:text-slate-100 truncate w-full" style={{ fontFamily: 'monospace' }}>
+                    {trx.id}
+                  </div>
+                  <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 leading-none">
+                    {trx.type}
+                  </span>
                 </div>
-                <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 leading-none">
-                  {trx.type}
-                </span>
-              </div>
-              <div className="hidden md:block col-span-2 text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                {trx.method}
-              </div>
-              <div className="hidden md:block col-span-2 text-center text-[10px] font-medium text-slate-500 truncate">
-                {trx.city || "-"}
-              </div>
-              <div className="hidden md:block col-span-2 text-right text-sm font-black text-slate-900 dark:text-slate-100 truncate">
-                {trx.amount}
-              </div>
-              <div className="hidden md:flex col-span-1 justify-center">
-                <div className={cn(
-                  "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider",
-                  trx.status === "Verified" ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600"
-                )}>
-                  {trx.status}
+                <div className="hidden md:block col-span-2 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                  {trx.method}
                 </div>
-              </div>
-              <div className="hidden md:block col-span-2 text-right text-[11px] font-medium text-slate-500 font-mono truncate" style={{ fontFamily: 'monospace' }}>
-                {formatTimestamp(trx.timestamp)}
-              </div>
-            </m.div>
-          );
-        })}
+                <div className="hidden md:block col-span-2 text-center text-[10px] font-medium text-slate-500 truncate">
+                  {trx.city || "-"}
+                </div>
+                <div className="hidden md:block col-span-2 text-right text-sm font-black text-slate-900 dark:text-slate-100 truncate">
+                  {trx.amount}
+                </div>
+                <div className="hidden md:flex col-span-1 justify-center">
+                  <div className={cn(
+                    "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider",
+                    trx.status === "Verified" ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600"
+                  )}>
+                    {trx.status}
+                  </div>
+                </div>
+                <div className="hidden md:block col-span-2 text-right text-[11px] font-medium text-slate-500 font-mono truncate" style={{ fontFamily: 'monospace' }}>
+                  {formatTimestamp(trx.timestamp)}
+                </div>
+              </m.div>
+            );
+          })
+        )}
         </div>
 
         {/* Pagination Controls */}
