@@ -452,7 +452,7 @@ export default function Dashboard() {
             className="flex flex-row items-start md:items-center justify-between gap-2 md:gap-4"
           >
             <div className="flex-1">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">Executive Overview</h2>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">Executive Overview</h1>
               <p className="text-[10px] md:text-sm font-medium text-slate-500 mt-1 flex items-center gap-1.5 md:gap-2">
                 <Clock size={12} className="md:w-[14px] md:h-[14px]" />
                 {minutesAgo === 0 ? "Data updated just now" : `Data updated ${minutesAgo} min ago`}

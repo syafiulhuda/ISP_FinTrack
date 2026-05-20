@@ -805,10 +805,10 @@ export default function FinancePage() {
             <div className="col-span-1">LNK-ID</div>
             <div className="col-span-2">TRX-ID</div>
             <div className="col-span-2">Method</div>
-            <div className="col-span-2 text-center">City</div>
+            <div className="col-span-1 lg:col-span-2 text-center">City</div>
             <div className="col-span-2 text-right">Amount</div>
             <div className="col-span-1 text-center">Status</div>
-            <div className="col-span-2 text-right">Timestamp</div>
+            <div className="col-span-3 lg:col-span-2 text-right">Timestamp</div>
           </div>
 
           {/* Transaction Rows */}
@@ -940,7 +940,7 @@ export default function FinancePage() {
                 <div className="hidden md:block col-span-2 text-[11px] font-bold text-slate-700 dark:text-slate-300">
                   {trx.method}
                 </div>
-                <div className="hidden md:block col-span-2 text-center text-[10px] font-medium text-slate-500 truncate">
+                <div className="hidden md:block col-span-1 lg:col-span-2 text-center text-[10px] font-medium text-slate-500 truncate">
                   {trx.city || "-"}
                 </div>
                 <div className="hidden md:block col-span-2 text-right text-sm font-black text-slate-900 dark:text-slate-100 truncate">
@@ -954,7 +954,7 @@ export default function FinancePage() {
                     {trx.status}
                   </div>
                 </div>
-                <div className="hidden md:block col-span-2 text-right text-[11px] font-medium text-slate-500 font-mono truncate" style={{ fontFamily: 'monospace' }}>
+                <div className="hidden md:block col-span-3 lg:col-span-2 text-right text-[10px] lg:text-[11px] font-medium text-slate-500 font-mono whitespace-nowrap" style={{ fontFamily: 'monospace' }}>
                   {formatTimestamp(trx.timestamp)}
                 </div>
               </m.div>

@@ -455,7 +455,7 @@ export default function ProfitabilityPage() {
       <div ref={pageRef} className="pt-4 space-y-10 pb-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 w-full">
           <div>
-            <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Profitability Analysis</h2>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Profitability Analysis</h1>
             <p className="text-xs md:text-sm font-medium text-slate-500 mt-1">Segmented performance and unit economics audit.</p>
           </div>
           <div className="flex flex-col lg-phone:flex-row items-stretch lg-phone:items-center justify-between gap-2 w-full tablet:w-auto">
@@ -502,14 +502,20 @@ export default function ProfitabilityPage() {
 
             <div className="relative w-full lg-phone:w-auto shrink-0" ref={dropdownRef}>
               <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                onClick={() => !isDataLoading && setIsDropdownOpen(!isDropdownOpen)}
                 className="flex items-center justify-between gap-1 tablet:gap-3 bg-slate-100 dark:bg-slate-900 px-3 tablet:px-4 py-2.5 tablet:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 w-full lg-phone:min-w-[125px] lg-phone:max-w-[150px] tablet:min-w-[160px] tablet:max-w-none h-[42px] tablet:h-[38px] hover:border-indigo-500/50 transition-all active:scale-95 shrink-0"
               >
-                <div className="flex items-center gap-1.5 tablet:gap-2 overflow-hidden">
+                <div className="flex items-center gap-1.5 tablet:gap-2 overflow-hidden w-full">
                   <MapPin className="w-3.5 h-3.5 tablet:w-4 tablet:h-4 text-indigo-500 shrink-0" />
-                  <span className="text-[10px] lg-phone:text-xs tablet:text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{selectedProvince}</span>
+                  {isDataLoading ? (
+                    <div className="h-3.5 w-full bg-slate-200 dark:bg-slate-800 animate-pulse rounded-md" />
+                  ) : (
+                    <span className="text-[10px] lg-phone:text-xs tablet:text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{selectedProvince}</span>
+                  )}
                 </div>
-                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                {!isDataLoading && (
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                )}
               </button>
 
               <AnimatePresence>

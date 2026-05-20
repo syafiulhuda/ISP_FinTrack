@@ -119,6 +119,29 @@ export function DistributionClient() {
   const [zoom, setZoom] = useState(5);
   const [center, setCenter] = useState<[number, number] | null>([-2.5489, 118.0149]);
 
+  const nodeStatus = useMemo(() => {
+    if (!selectedNode) return 'Online';
+    const cond = (selectedNode.condition || '').toLowerCase();
+    const stat = (selectedNode.status || '').toLowerCase();
+    if (cond === 'broken' || stat === 'offline' || stat === 'broken') return 'Broken';
+    if (cond === 'maintenance' || stat === 'maintenance') return 'Maintenance';
+    if (stat === 'warning') return 'Warning';
+    return 'Online';
+  }, [selectedNode]);
+
+  const healthInfo = useMemo(() => {
+    if (nodeStatus === 'Broken') {
+      return { label: '0.0%', value: 0, textColor: 'text-red-500', barColor: 'bg-red-500' };
+    }
+    if (nodeStatus === 'Maintenance') {
+      return { label: '64.1%', value: 64, textColor: 'text-amber-500', barColor: 'bg-amber-500' };
+    }
+    if (nodeStatus === 'Warning') {
+      return { label: '45.8%', value: 45, textColor: 'text-rose-500', barColor: 'bg-rose-500' };
+    }
+    return { label: '98.4%', value: 98, textColor: 'text-green-500', barColor: 'bg-green-500' };
+  }, [nodeStatus]);
+
   const handleSelectNode = (node: any) => {
     setSelectedNode(node);
     if (node) {
@@ -230,7 +253,7 @@ export function DistributionClient() {
         assetStatus = 'Broken'; // offline, broken, warning, unknown ΓåÆ Broken
       }
 
-      const matchesStatus = assetStatus === 'Broken' || (activeStatusFilters.length > 0 && activeStatusFilters.includes(assetStatus));
+      const matchesStatus = assetStatus !== 'Broken' && activeStatusFilters.includes(assetStatus);
 
       return matchesSearch && matchesType && matchesStatus;
     });
@@ -605,12 +628,12 @@ export function DistributionClient() {
                     <div>
                       <span className={cn(
                         "text-[9px] md:text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full",
-                        selectedNode.status === 'Online' ? "bg-green-100 dark:bg-green-900/30 text-green-600" :
-                          selectedNode.status === 'Maintenance' ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" :
-                            selectedNode.status === 'Warning' ? "bg-red-100 dark:bg-red-900/30 text-red-600" :
+                        nodeStatus === 'Online' ? "bg-green-100 dark:bg-green-900/30 text-green-600" :
+                          nodeStatus === 'Maintenance' ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" :
+                            (nodeStatus === 'Warning' || nodeStatus === 'Broken') ? "bg-red-100 dark:bg-red-900/30 text-red-600" :
                               "bg-slate-100 dark:bg-slate-900/30 text-slate-600"
                       )}>
-                        {selectedNode.status} Node
+                        {nodeStatus} Node
                       </span>
                       <h2 className="text-xl lg:text-2xl font-black mt-2 lg:mt-3 tracking-tight truncate">{selectedNode.sn}</h2>
                     </div>
@@ -637,12 +660,12 @@ export function DistributionClient() {
                     <div className="bg-slate-50 dark:bg-slate-800/50 p-3 lg:p-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
                       <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase mb-1">Health</p>
                       <div className="flex items-baseline gap-1">
-                        <span className={cn("text-base lg:text-lg font-black", selectedNode.status === 'Online' ? "text-green-500" : "text-amber-500")}>
-                          {selectedNode.status === 'Online' ? '98.4%' : '64.1%'}
+                        <span className={cn("text-base lg:text-lg font-black", healthInfo.textColor)}>
+                          {healthInfo.label}
                         </span>
                       </div>
                       <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 lg:h-1.5 rounded-full mt-2 lg:mt-3 overflow-hidden">
-                        <div className={cn("h-full", selectedNode.status === 'Online' ? "bg-green-500 w-[98%]" : "bg-amber-500 w-[64%]")} />
+                        <div className={cn("h-full", healthInfo.barColor)} style={{ width: `${healthInfo.value}%` }} />
                       </div>
                     </div>
                   </div>
@@ -751,12 +774,12 @@ export function DistributionClient() {
                         <AlertTriangle size={14} />
                         Incidents
                       </h3>
-                      {selectedNode.status !== 'Online' && (
+                      {nodeStatus !== 'Online' && (
                         <span className="text-[8px] md:text-[9px] bg-red-100 dark:bg-red-900/30 text-red-600 px-2 py-0.5 rounded-full font-black">1 Critical</span>
                       )}
                     </div>
 
-                    {selectedNode.status === 'Online' ? (
+                    {nodeStatus === 'Online' ? (
                       <div className="flex flex-col items-center justify-center py-6 lg:py-8 bg-slate-50 dark:bg-slate-800/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
                         <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center text-green-500 mb-2 lg:mb-3">
                           <Activity size={18} />

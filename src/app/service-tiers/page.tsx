@@ -229,7 +229,7 @@ export default function ServiceTiersPage() {
       {/* Hero Section */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6">
         <div>
-          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Active Packages</h2>
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Active Packages</h1>
           <p className="text-base md:text-lg font-medium text-slate-500 mt-2">Manage broadband tiers and subscriber distribution.</p>
         </div>
         <div className="flex items-center gap-4">

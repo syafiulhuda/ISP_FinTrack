@@ -426,16 +426,22 @@ export default function ExecutiveDashboard() {
 
             <div className="relative w-full lg-phone:w-auto shrink-0" ref={dropdownRef}>
               <button 
-                onClick={() => setIsRegionOpen(!isRegionOpen)}
+                onClick={() => !isDataLoading && setIsRegionOpen(!isRegionOpen)}
                 className="flex items-center justify-between gap-1 tablet:gap-3 bg-slate-100 dark:bg-slate-900 px-3 tablet:px-4 py-2.5 tablet:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 w-full lg-phone:min-w-[125px] lg-phone:max-w-[150px] tablet:min-w-[160px] tablet:max-w-none h-[42px] tablet:h-[38px] hover:border-indigo-500/50 transition-all active:scale-95 shrink-0"
                 aria-label={`Select region. Current selection: ${selectedProvince}`}
                 aria-expanded={isRegionOpen}
               >
-                <div className="flex items-center gap-1.5 tablet:gap-2 overflow-hidden">
+                <div className="flex items-center gap-1.5 tablet:gap-2 overflow-hidden w-full">
                   <MapPin className="w-3.5 h-3.5 tablet:w-4 tablet:h-4 text-indigo-500 shrink-0" />
-                  <span className="text-[10px] lg-phone:text-xs tablet:text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{selectedProvince}</span>
+                  {isDataLoading ? (
+                    <div className="h-3.5 w-full bg-slate-200 dark:bg-slate-800 animate-pulse rounded-md" />
+                  ) : (
+                    <span className="text-[10px] lg-phone:text-xs tablet:text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{selectedProvince}</span>
+                  )}
                 </div>
-                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-300 ${isRegionOpen ? 'rotate-180' : ''}`} />
+                {!isDataLoading && (
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-300 ${isRegionOpen ? 'rotate-180' : ''}`} />
+                )}
               </button>
 
               <AnimatePresence>

@@ -230,7 +230,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
       </div>
 
       {/* Main Analysis Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-2 laptop:grid-cols-3 gap-8 items-stretch">
         {/* Left Column: Health & CRM */}
         <div className="flex flex-col gap-8 h-full">
           <HealthScoreGauge score={data.healthScore} />
@@ -266,16 +266,16 @@ export default function CustomerDetailView({ data }: { data: any }) {
                   {data.service}
                 </div>
               </div>
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-4">
-                <div>
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between gap-3">
+                <div className="shrink-0">
                   <p className="text-[10px] font-bold text-slate-400">Phone</p>
                   <p className="text-xs font-black dark:text-white flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
                     <Phone size={12} className="text-slate-400 shrink-0" /> {data.no_telp || 'N/A'}
                   </p>
                 </div>
-                <div>
+                <div className="text-right shrink-0">
                   <p className="text-[10px] font-bold text-slate-400">Region</p>
-                  <p className="text-xs font-black dark:text-white flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
+                  <p className="text-xs font-black dark:text-white flex items-center justify-end gap-1.5 mt-0.5 whitespace-nowrap">
                     <MapPin size={12} className="text-slate-400 shrink-0" /> {data.city}
                   </p>
                 </div>
@@ -285,7 +285,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
         </div>
 
         {/* Right Column: Charts & Tables */}
-        <div className="lg:col-span-2 flex flex-col gap-8 h-full">
+        <div className="lg:col-span-1 laptop:col-span-2 flex flex-col gap-8 h-full">
 
           {/* Payment Timeline */}
           <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">

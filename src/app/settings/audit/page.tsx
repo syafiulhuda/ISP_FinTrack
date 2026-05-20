@@ -108,7 +108,7 @@ export default function AuditTrailPage() {
   return (
     <div className="pt-6 md:pt-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Security & Audit Trail</h2>
+        <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Security & Audit Trail</h1>
         <p className="text-sm font-medium text-slate-500 mt-1">Pusat pemantauan aktivitas admin. Melacak seluruh kejadian login dan perubahan data kritis.</p>
       </div>
 
@@ -123,6 +123,7 @@ export default function AuditTrailPage() {
               placeholder="Cari nama admin..." 
               value={adminSearch}
               onChange={(e) => setAdminSearch(e.target.value)}
+              aria-label="Cari nama admin"
               className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
             />
           </div>
@@ -133,6 +134,7 @@ export default function AuditTrailPage() {
               type="date" 
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
+              aria-label="Filter berdasarkan tanggal"
               className="w-full sm:w-auto bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-900 dark:text-slate-100"
             />
           </div>

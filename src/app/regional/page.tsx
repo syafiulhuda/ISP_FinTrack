@@ -281,7 +281,7 @@ export default function RegionalAnalysisPage() {
       {/* Header Row */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Regional Analysis</h2>
+          <h1 className="text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Regional Analysis</h1>
           <p className="text-lg font-medium text-slate-500 mt-2">Granular profitability and aging distribution per territory.</p>
         </div>
       </div>

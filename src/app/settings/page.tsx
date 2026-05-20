@@ -191,7 +191,7 @@ export default function SettingsPage() {
             >
               <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Add New Manager</h3>
-                <button onClick={() => setIsAddManagerOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
+                <button onClick={() => setIsAddManagerOpen(false)} aria-label="Close modal" className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
                   <X size={20} />
                 </button>
               </div>
@@ -282,9 +282,9 @@ export default function SettingsPage() {
       className="pt-6 md:pt-10 space-y-8 pb-10"
     >
       <m.div variants={itemVariants} className="mb-10">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
           Settings
-        </h2>
+        </h1>
         <p className="text-slate-500 mt-1 font-medium">Configure your ISP management environment</p>
       </m.div>
 
@@ -458,6 +458,7 @@ export default function SettingsPage() {
                         key={color}
                         disabled={!isEditing}
                         onClick={() => setFormData({ ...formData, accentColor: color })}
+                        aria-label={`Select ${color} accent color`}
                         className={cn(
                           "w-8 h-8 rounded-full transition-all",
                           color === 'blue' && "bg-blue-600",

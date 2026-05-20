@@ -166,9 +166,9 @@ export default function NotificationsPage() {
     >
       <m.div variants={itemVariants} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Notifications
-          </h2>
+          </h1>
           <p className="text-sm text-slate-500 mt-1">Manage system alerts and broadcasts</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto">
@@ -303,6 +303,7 @@ export default function NotificationsPage() {
                         }}
                         className="absolute right-4 bottom-4 p-2 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                         title="Delete notification"
+                        aria-label="Delete notification"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -320,6 +321,7 @@ export default function NotificationsPage() {
                       type="text"
                       key={`notif-${cat}-page-${currentPage}`}
                       defaultValue={currentPage}
+                      aria-label="Current page"
                       onBlur={(e) => {
                         const val = parseInt(e.target.value);
                         if (!isNaN(val) && val >= 1 && val <= totalPages) setPageMap(prev => ({ ...prev, [cat]: val }));
@@ -337,6 +339,7 @@ export default function NotificationsPage() {
                       onClick={() => setPageMap(prev => ({ ...prev, [cat]: Math.max(1, currentPage - 1) }))}
                       disabled={currentPage === 1}
                       className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 disabled:opacity-30 hover:bg-slate-50 transition-colors"
+                      aria-label="Previous page"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                     </button>
@@ -344,6 +347,7 @@ export default function NotificationsPage() {
                       onClick={() => setPageMap(prev => ({ ...prev, [cat]: Math.min(totalPages, currentPage + 1) }))}
                       disabled={currentPage === totalPages}
                       className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 disabled:opacity-30 hover:bg-slate-50 transition-colors"
+                      aria-label="Next page"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                     </button>

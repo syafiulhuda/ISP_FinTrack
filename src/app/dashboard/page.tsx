@@ -419,6 +419,7 @@ export default function Dashboard() {
                 <button
                   onClick={() => setIsRoadmapOpen(false)}
                   className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400"
+                  aria-label="Close roadmap modal"
                 >
                   <X size={24} />
                 </button>
@@ -472,7 +473,7 @@ export default function Dashboard() {
             className="flex flex-col md:flex-row md:items-center justify-between gap-4"
           >
             <div>
-              <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Executive Overview</h2>
+              <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Executive Overview</h1>
               <p className="text-sm font-medium text-slate-500 mt-1 flex items-center gap-2">
                 <Clock size={14} />
                 {minutesAgo === 0 ? "Data updated just now" : `Data updated ${minutesAgo} minute${minutesAgo > 1 ? 's' : ''} ago`}
@@ -489,6 +490,7 @@ export default function Dashboard() {
                 <button
                   onClick={() => router.push('/profitability')}
                   className="bg-primary text-white p-3 rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all"
+                  aria-label="View Detailed Profitability Analysis"
                 >
                   <TrendingUp size={20} />
                 </button>

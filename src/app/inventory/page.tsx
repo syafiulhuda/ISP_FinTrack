@@ -89,6 +89,16 @@ function MobileAssetCard({
   return (
     <div
       onClick={() => setIsOpen(!isOpen)}
+      role="button"
+      tabIndex={0}
+      aria-expanded={isOpen}
+      aria-label={`Asset ${asset.sn} details`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setIsOpen(!isOpen);
+        }
+      }}
       className={cn(
         "px-4 py-5 transition-all cursor-pointer relative overflow-hidden select-none border-b border-slate-100 dark:border-slate-800/50",
         isOpen ? "bg-slate-50/50 dark:bg-white/5" : "hover:bg-slate-50/30 dark:hover:bg-white/5"
@@ -280,6 +290,7 @@ function MobileAssetCard({
                       <input 
                         type="text" 
                         placeholder="Warehouse Name" 
+                        aria-label="Warehouse Name"
                         className="w-full px-3 py-2 text-xs border rounded-xl dark:bg-slate-850 dark:border-slate-700 bg-white dark:bg-slate-800"
                         value={deployData.warehouse}
                         onChange={(e) => setDeployData({...deployData, warehouse: e.target.value})}
@@ -288,6 +299,7 @@ function MobileAssetCard({
                         <input 
                           type="text" 
                           placeholder="City" 
+                          aria-label="City"
                           className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-850 dark:border-slate-700 bg-white dark:bg-slate-800"
                           value={deployData.city}
                           onChange={(e) => setDeployData({...deployData, city: e.target.value})}
@@ -295,6 +307,7 @@ function MobileAssetCard({
                         <input 
                           type="text" 
                           placeholder="Province" 
+                          aria-label="Province"
                           className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-855 dark:border-slate-700 bg-white dark:bg-slate-800"
                           value={deployData.province}
                           onChange={(e) => setDeployData({...deployData, province: e.target.value})}
@@ -341,12 +354,14 @@ function MobileAssetCard({
                       <input 
                         type="text" 
                         placeholder="Technician Name"
+                        aria-label="Technician Name"
                         value={techName}
                         onChange={(e) => setTechName(e.target.value)}
                         className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
                       />
                       <textarea 
                         placeholder="Resolution details..."
+                        aria-label="Resolution details"
                         rows={2}
                         value={techDesc}
                         onChange={(e) => setTechDesc(e.target.value)}
@@ -393,12 +408,14 @@ function MobileAssetCard({
                       <input 
                         type="text" 
                         placeholder="Technician Name"
+                        aria-label="Technician Name"
                         value={techNameStart}
                         onChange={(e) => setTechNameStart(e.target.value)}
                         className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                       />
                       <textarea 
                         placeholder="Describe the issue..."
+                        aria-label="Describe the issue"
                         rows={2}
                         value={maintenanceReason}
                         onChange={(e) => setMaintenanceReason(e.target.value)}
@@ -835,11 +852,11 @@ export default function InventoryPage() {
   const isLoadingAll = loadingAssets || loadingStock;
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-[#0f172a] p-4 md:p-6 pb-20 flex flex-col gap-10">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] p-4 md:p-6 pb-20 flex flex-col gap-10">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Asset Management</h2>
+          <h1 className="text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Asset Management</h1>
           <p className="text-lg font-medium text-slate-500 mt-2">Real-time tracking and health audit of ISP infrastructure hardware.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -856,10 +873,10 @@ export default function InventoryPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {isLoadingAll ? (
           STATS_SKELETON_ITEMS.map((_, i) => (
-            <div key={i} className="min-h-[140px] tablet:h-48 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem]" />
+            <div key={i} className="min-h-[140px] tablet:h-28 lg:h-48 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl tablet:rounded-[2.5rem]" />
           ))
         ) : (
           dynamicStats.map((stat, index) => {
@@ -869,7 +886,7 @@ export default function InventoryPage() {
                 key={stat.label}
                 whileHover={{ y: -5 }}
                 className={cn(
-                  "p-3 lg-phone:p-5 tablet:p-8 rounded-3xl tablet:rounded-[2.5rem] border shadow-sm flex flex-col justify-between h-auto min-h-[140px] tablet:h-48 relative overflow-hidden group transition-all",
+                  "p-4 lg-phone:p-5 tablet:p-6 lg:p-6 rounded-3xl tablet:rounded-[2.5rem] border shadow-sm flex flex-col tablet:flex-row lg:flex-col justify-between tablet:items-center lg:items-start lg:justify-between h-auto min-h-[140px] tablet:h-28 lg:h-48 relative overflow-hidden group transition-all",
                   stat.isAlert
                     ? "bg-white dark:bg-slate-900 border-orange-200 dark:border-orange-900/50 hover:shadow-orange-500/10"
                     : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:shadow-primary/10 hover:border-primary/50"
@@ -879,30 +896,37 @@ export default function InventoryPage() {
                   <m.div
                     animate={{ opacity: [0.3, 0.6, 0.3] }}
                     transition={{ repeat: Infinity, duration: 2 }}
-                    className="absolute top-6 right-6 w-3 h-3 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]"
+                    className="absolute top-4 right-4 w-3 h-3 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]"
                   />
                 )}
-                <div className="flex flex-col lg-phone:flex-row justify-between items-start gap-2 lg-phone:gap-4">
+                
+                {/* Left Side Group (Horizontal on Tablet, Stacked on Mobile/Desktop) */}
+                <div className="flex flex-col tablet:flex-row lg:flex-col gap-3 tablet:gap-6 lg:gap-2 items-start tablet:items-center lg:items-start w-full tablet:w-auto">
                   <div className={cn(
-                    "p-3.5 rounded-2xl shrink-0",
+                    "p-3.5 lg:p-2.5 rounded-2xl shrink-0",
                     stat.isAlert
                       ? "bg-orange-100 text-orange-600"
                       : "bg-slate-100 text-slate-600 dark:bg-slate-800/80 group-hover:bg-primary group-hover:text-white transition-all border border-slate-200/50 dark:border-slate-700/50"
                   )}>
                     <Icon size={24} />
                   </div>
+                  
+                  <div className="mt-1 tablet:mt-0">
+                    <p className="text-[8px] lg-phone:text-[10px] font-bold text-slate-400 uppercase tracking-wider lg-phone:tracking-widest truncate">{stat.label}</p>
+                    <h3 className="text-2xl lg-phone:text-3xl tablet:text-4xl font-black text-slate-900 dark:text-slate-100 mt-0.5 lg-phone:mt-1 leading-none">{stat.value}</h3>
+                  </div>
+                </div>
+
+                {/* Right Side Group / Trend (Pushed to bottom on Mobile/Desktop, Right on Tablet) */}
+                <div className="mt-3 tablet:mt-0 lg:mt-3 shrink-0">
                   <span className={cn(
-                    "text-[8px] lg-phone:text-[10px] font-black px-2 lg-phone:px-3 py-1 lg-phone:py-1.5 rounded-lg lg-phone:rounded-xl uppercase tracking-wider border transition-colors mt-1 lg-phone:mt-0 text-left lg-phone:text-right whitespace-normal leading-tight",
+                    "text-[8px] lg-phone:text-[10px] font-black px-2 lg-phone:px-3 py-1 lg-phone:py-1.5 rounded-lg lg-phone:rounded-xl uppercase tracking-wider border transition-colors whitespace-nowrap leading-tight block w-fit",
                     stat.isAlert
                       ? "bg-orange-50/50 text-orange-700 border-orange-200/50"
                       : "bg-slate-50/50 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-slate-700/50 group-hover:border-primary/20"
                   )}>
                     {stat.trend}
                   </span>
-                </div>
-                <div className="mt-2 lg-phone:mt-0">
-                  <p className="text-[8px] lg-phone:text-[10px] font-bold text-slate-400 uppercase tracking-wider lg-phone:tracking-widest truncate">{stat.label}</p>
-                  <h3 className="text-2xl lg-phone:text-3xl tablet:text-4xl font-black text-slate-900 dark:text-slate-100 mt-0.5 lg-phone:mt-1">{stat.value}</h3>
                 </div>
               </m.div>
             );
@@ -1225,139 +1249,146 @@ export default function InventoryPage() {
                                         </div>
                                       </div>
                                     ) : deployingAssetSn === asset.sn ? (
-                                      /* 2. Deploy Form (Use Asset) */
-                                      <div className="space-y-2 p-1">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase px-1">Deploy Details</p>
-                                        <input 
-                                          type="text" 
-                                          placeholder="Warehouse Name" 
-                                          className="w-full px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-150 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                                          value={deployData.warehouse}
-                                          onChange={(e) => setDeployData({...deployData, warehouse: e.target.value})}
-                                        />
-                                        <div className="flex gap-2">
-                                          <input 
-                                            type="text" 
-                                            placeholder="City" 
-                                            className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-150 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                                            value={deployData.city}
-                                            onChange={(e) => setDeployData({...deployData, city: e.target.value})}
-                                          />
-                                          <input 
-                                            type="text" 
-                                            placeholder="Province" 
-                                            className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-150 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                                            value={deployData.province}
-                                            onChange={(e) => setDeployData({...deployData, province: e.target.value})}
-                                          />
-                                        </div>
-                                        <div className="flex gap-2 pt-1">
-                                          <button 
-                                            onClick={() => setDeployingAssetSn(null)}
-                                            className="flex-1 py-2 text-[10px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
-                                          >
-                                            Cancel
-                                          </button>
-                                          <button 
-                                            onClick={() => handleDeploy(asset.sn)}
-                                            className="flex-1 py-2 text-[10px] font-bold bg-primary text-white rounded-lg hover:opacity-90 shadow-lg shadow-primary/20 transition-all"
-                                          >
-                                            Confirm
-                                          </button>
-                                        </div>
-                                      </div>
-                                    ) : isStartingMaintenance && startingAssetSn === asset.sn ? (
-                                      /* 3. Initiate Maintenance Form */
-                                      <div className="space-y-4 p-1">
-                                        <div className="flex justify-between items-center mb-2">
-                                          <h4 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter text-blue-500">Initiate Maintenance</h4>
-                                          <button aria-label="Close Maintenance Modal" onClick={() => setIsStartingMaintenance(false)} className="text-slate-400 hover:text-red-500 transition-colors">
-                                            <X size={14}/>
-                                          </button>
-                                        </div>
-                                        <div className="space-y-3">
-                                          <div className="space-y-1">
-                                            <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Assigned Tech</label>
-                                            <input 
-                                              type="text" 
-                                              placeholder="Technician Name"
-                                              value={techNameStart}
-                                              onChange={(e) => setTechNameStart(e.target.value)}
-                                              className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 dark:text-slate-150"
-                                            />
-                                          </div>
-                                          <div className="space-y-1">
-                                            <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Problem Description</label>
-                                            <textarea 
-                                              placeholder="Describe the issue..."
-                                              rows={2}
-                                              value={maintenanceReason}
-                                              onChange={(e) => setMaintenanceReason(e.target.value)}
-                                              className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-slate-900 dark:text-slate-150"
-                                            />
-                                          </div>
-                                          <div className="flex gap-2 pt-1">
-                                            <button 
-                                              onClick={() => setIsStartingMaintenance(false)}
-                                              className="flex-1 py-2 text-[10px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
-                                            >
-                                              Cancel
-                                            </button>
-                                            <button 
-                                              onClick={handleStartMaintenance}
-                                              className="flex-1 py-2 text-[10px] font-bold bg-blue-600 text-white rounded-lg hover:opacity-90 shadow-lg shadow-blue-500/20 transition-all"
-                                            >
-                                              Start
-                                            </button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    ) : isResolving && resolvingAssetSn === asset.sn ? (
-                                      /* 4. Audit Resolution Form */
-                                      <div className="space-y-4 p-1">
-                                        <div className="flex justify-between items-center mb-2">
-                                          <h4 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter text-emerald-500">Audit Resolution</h4>
-                                          <button aria-label="Close Resolve Modal" onClick={() => setIsResolving(false)} className="text-slate-400 hover:text-red-500 transition-colors">
-                                            <X size={14}/>
-                                          </button>
-                                        </div>
-                                        <div className="space-y-3">
-                                          <div className="space-y-1">
-                                            <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Technician</label>
-                                            <input 
-                                              type="text" 
-                                              placeholder="Name"
-                                              value={techName}
-                                              onChange={(e) => setTechName(e.target.value)}
-                                              className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all text-slate-900 dark:text-slate-150"
-                                            />
-                                          </div>
-                                          <div className="space-y-1">
-                                            <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Resolution Details</label>
-                                            <textarea 
-                                              placeholder="Resolution details..."
-                                              rows={2}
-                                              value={techDesc}
-                                              onChange={(e) => setTechDesc(e.target.value)}
-                                              className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none text-slate-900 dark:text-slate-150"
-                                            />
-                                          </div>
-                                          <div className="flex gap-2 pt-1">
-                                            <button 
-                                              onClick={() => setIsResolving(false)}
-                                              className="flex-1 py-2 text-[10px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
-                                            >
-                                              Cancel
-                                            </button>
-                                            <button 
-                                              onClick={handleResolveMaintenance}
-                                              className="flex-1 py-2 text-[10px] font-bold bg-emerald-600 text-white rounded-lg hover:opacity-90 shadow-lg shadow-emerald-500/20 transition-all"
-                                            >
-                                              Resolve
-                                            </button>
-                                          </div>
-                                        </div>
-                                      </div>
+                                       /* 2. Deploy Form (Use Asset) */
+                                       <div className="space-y-2 p-1">
+                                         <p className="text-[10px] font-black text-slate-400 uppercase px-1">Deploy Details</p>
+                                         <input 
+                                           type="text" 
+                                           placeholder="Warehouse Name" 
+                                           aria-label="Warehouse Name"
+                                           className="w-full px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-150 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                           value={deployData.warehouse}
+                                           onChange={(e) => setDeployData({...deployData, warehouse: e.target.value})}
+                                         />
+                                         <div className="flex gap-2">
+                                           <input 
+                                             type="text" 
+                                             placeholder="City" 
+                                             aria-label="City"
+                                             className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-150 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                             value={deployData.city}
+                                             onChange={(e) => setDeployData({...deployData, city: e.target.value})}
+                                           />
+                                           <input 
+                                             type="text" 
+                                             placeholder="Province" 
+                                             aria-label="Province"
+                                             className="w-1/2 px-3 py-2 text-xs border rounded-xl dark:bg-slate-800 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-150 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                             value={deployData.province}
+                                             onChange={(e) => setDeployData({...deployData, province: e.target.value})}
+                                           />
+                                         </div>
+                                         <div className="flex gap-2 pt-1">
+                                           <button 
+                                             onClick={() => setDeployingAssetSn(null)}
+                                             className="flex-1 py-2 text-[10px] font-bold text-slate-550 dark:text-slate-450 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+                                           >
+                                             Cancel
+                                           </button>
+                                           <button 
+                                             onClick={() => handleDeploy(asset.sn)}
+                                             className="flex-1 py-2 text-[10px] font-bold bg-primary text-white rounded-lg hover:opacity-90 shadow-lg shadow-primary/20 transition-all"
+                                           >
+                                             Confirm
+                                           </button>
+                                         </div>
+                                       </div>
+                                     ) : isStartingMaintenance && startingAssetSn === asset.sn ? (
+                                       /* 3. Initiate Maintenance Form */
+                                       <div className="space-y-4 p-1">
+                                         <div className="flex justify-between items-center mb-2">
+                                           <h4 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter text-blue-500">Initiate Maintenance</h4>
+                                           <button aria-label="Close Maintenance Modal" onClick={() => setIsStartingMaintenance(false)} className="text-slate-400 hover:text-red-500 transition-colors">
+                                             <X size={14}/>
+                                           </button>
+                                         </div>
+                                         <div className="space-y-3">
+                                           <div className="space-y-1">
+                                             <label htmlFor={`tech-start-${asset.sn}`} className="text-[9px] font-black uppercase text-slate-400 ml-1">Assigned Tech</label>
+                                             <input 
+                                               id={`tech-start-${asset.sn}`}
+                                               type="text" 
+                                               placeholder="Technician Name"
+                                               value={techNameStart}
+                                               onChange={(e) => setTechNameStart(e.target.value)}
+                                               className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 dark:text-slate-150"
+                                             />
+                                           </div>
+                                           <div className="space-y-1">
+                                             <label htmlFor={`reason-start-${asset.sn}`} className="text-[9px] font-black uppercase text-slate-400 ml-1">Problem Description</label>
+                                             <textarea 
+                                               id={`reason-start-${asset.sn}`}
+                                               placeholder="Describe the issue..."
+                                               rows={2}
+                                               value={maintenanceReason}
+                                               onChange={(e) => setMaintenanceReason(e.target.value)}
+                                               className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-slate-900 dark:text-slate-150"
+                                             />
+                                           </div>
+                                           <div className="flex gap-2 pt-1">
+                                             <button 
+                                               onClick={() => setIsStartingMaintenance(false)}
+                                               className="flex-1 py-2 text-[10px] font-bold text-slate-550 dark:text-slate-450 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+                                             >
+                                               Cancel
+                                             </button>
+                                             <button 
+                                               onClick={handleStartMaintenance}
+                                               className="flex-1 py-2 text-[10px] font-bold bg-blue-600 text-white rounded-lg hover:opacity-90 shadow-lg shadow-blue-500/20 transition-all"
+                                             >
+                                               Start
+                                             </button>
+                                           </div>
+                                         </div>
+                                       </div>
+                                     ) : isResolving && resolvingAssetSn === asset.sn ? (
+                                       /* 4. Audit Resolution Form */
+                                       <div className="space-y-4 p-1">
+                                         <div className="flex justify-between items-center mb-2">
+                                           <h4 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter text-emerald-500">Audit Resolution</h4>
+                                           <button aria-label="Close Resolve Modal" onClick={() => setIsResolving(false)} className="text-slate-400 hover:text-red-500 transition-colors">
+                                             <X size={14}/>
+                                           </button>
+                                         </div>
+                                         <div className="space-y-3">
+                                           <div className="space-y-1">
+                                             <label htmlFor={`tech-resolve-${asset.sn}`} className="text-[9px] font-black uppercase text-slate-400 ml-1">Technician</label>
+                                             <input 
+                                               id={`tech-resolve-${asset.sn}`}
+                                               type="text" 
+                                               placeholder="Name"
+                                               value={techName}
+                                               onChange={(e) => setTechName(e.target.value)}
+                                               className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all text-slate-900 dark:text-slate-150"
+                                             />
+                                           </div>
+                                           <div className="space-y-1">
+                                             <label htmlFor={`desc-resolve-${asset.sn}`} className="text-[9px] font-black uppercase text-slate-400 ml-1">Resolution Details</label>
+                                             <textarea 
+                                               id={`desc-resolve-${asset.sn}`}
+                                               placeholder="Resolution details..."
+                                               rows={2}
+                                               value={techDesc}
+                                               onChange={(e) => setTechDesc(e.target.value)}
+                                               className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none text-slate-900 dark:text-slate-150"
+                                             />
+                                           </div>
+                                           <div className="flex gap-2 pt-1">
+                                             <button 
+                                               onClick={() => setIsResolving(false)}
+                                               className="flex-1 py-2 text-[10px] font-bold text-slate-550 dark:text-slate-450 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+                                             >
+                                               Cancel
+                                             </button>
+                                             <button 
+                                               onClick={handleResolveMaintenance}
+                                               className="flex-1 py-2 text-[10px] font-bold bg-emerald-600 text-white rounded-lg hover:opacity-90 shadow-lg shadow-emerald-500/20 transition-all"
+                                             >
+                                               Resolve
+                                             </button>
+                                           </div>
+                                         </div>
+                                       </div>
                                     ) : (
                                       /* 5. Actions Buttons List (Standard Dropdown Menu) */
                                       <div className="p-2 space-y-2">
@@ -1661,6 +1692,6 @@ export default function InventoryPage() {
           </>
         )}
       </AnimatePresence>
-    </main>
+    </div>
   );
 }

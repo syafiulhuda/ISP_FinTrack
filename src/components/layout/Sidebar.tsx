@@ -86,7 +86,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
       )}
       
       <aside className={cn(
-        "sidebar-fixed fixed inset-y-0 left-0 z-[60] bg-slate-100 dark:bg-slate-950 flex flex-col h-[100dvh] border-r border-slate-200 dark:border-slate-800 md:translate-x-0 shadow-2xl md:shadow-none overflow-hidden",
+        "sidebar-fixed fixed inset-y-0 left-0 z-[60] bg-slate-100 dark:bg-slate-950 flex flex-col border-r border-slate-200 dark:border-slate-800 md:translate-x-0 shadow-2xl md:shadow-none overflow-hidden",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
       {/* Header */}
