@@ -32,6 +32,7 @@ const DashboardCustomerChart = dynamic(
 );
 import { useQuery } from "@tanstack/react-query";
 import { getDashboardData } from '@/actions/dashboard';
+import { getAdminProfile } from "@/actions/admin";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
@@ -49,6 +50,12 @@ export default function Dashboard() {
     queryKey: ['dashboardData'],
     queryFn: getDashboardData
   });
+
+  const { data: profile } = useQuery({
+    queryKey: ['adminProfile'],
+    queryFn: getAdminProfile
+  });
+  const isTimLapangan = profile?.role === 'Tim Lapangan' || profile?.role === 'Pekerja';
 
   const customerList = dashboardData?.customers || [];
   const serviceTiers = dashboardData?.tiers || [];
@@ -381,7 +388,25 @@ export default function Dashboard() {
 
   return (
     <div className="relative">
-      <AnimatePresence>
+      {isTimLapangan ? (
+        <div className="pt-4 space-y-8 pb-10">
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
+            <div className="w-24 h-24 bg-primary/10 text-primary rounded-[2rem] flex items-center justify-center shadow-inner">
+              <User size={48} />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100">Welcome back, {profile?.nama}!</h1>
+              <p className="text-slate-500 max-w-md mx-auto font-medium">You are logged in as an operational worker. Use the sidebar to access your daily tasks, view customer data, and manage inventory.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
+              <Link href="/inventory" className="px-8 py-4 bg-primary text-white font-bold rounded-2xl shadow-xl shadow-primary/20 hover:opacity-90 transition-all active:scale-95">Go to Inventory</Link>
+              <Link href="/service-tiers" className="px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all active:scale-95">View Customers</Link>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <AnimatePresence>
         {isRoadmapOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <m.div
@@ -568,6 +593,8 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

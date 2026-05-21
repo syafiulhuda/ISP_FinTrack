@@ -3,29 +3,29 @@
 import { useState, useEffect, useRef } from "react";
 import { m, Variants, AnimatePresence } from "framer-motion";
 import { useSettings } from "@/components/providers/SettingsProvider";
-import { 
+import {
   Settings,
   X,
   Mail,
   Lock,
   BadgeCheck,
-  SlidersHorizontal, 
-  Palette, 
-  Puzzle, 
-  Users as UsersIcon, 
-  Info, 
-  ImagePlus, 
-  Pipette, 
-  Landmark, 
-  MessageSquare, 
-  FileScan, 
-  ShieldCheck, 
+  SlidersHorizontal,
+  Palette,
+  Puzzle,
+  Users as UsersIcon,
+  Info,
+  ImagePlus,
+  Pipette,
+  Landmark,
+  MessageSquare,
+  FileScan,
+  ShieldCheck,
   MoreVertical,
   Loader2,
   CheckCircle2
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAdminList, createAdmin } from "@/actions/admin";
+import { getAdminList, createAdmin, getAdminProfile } from "@/actions/admin";
 import { Admin } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -64,19 +64,25 @@ export default function SettingsPage() {
   const [isDiscarding, setIsDiscarding] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isAddManagerOpen, setIsAddManagerOpen] = useState(false);
-  const [newAdmin, setNewAdmin] = useState({ nama: '', email: '', role: 'Manager', department: 'Operations', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=256&h=256' });
+  const [newAdmin, setNewAdmin] = useState({ nama: '', email: '', password: '', role: 'System Administrator', department: 'Operations', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=256&h=256' });
 
   const { data: adminList = [] } = useQuery({
     queryKey: ['adminList'],
     queryFn: getAdminList
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ['adminProfile'],
+    queryFn: getAdminProfile
+  });
+  const isTimLapangan = profile?.role === 'Tim Lapangan' || profile?.role === 'Pekerja';
+
   const createAdminMutation = useMutation({
     mutationFn: createAdmin,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminList'] });
       setIsAddManagerOpen(false);
-      setNewAdmin({ nama: '', email: '', role: 'Manager', department: 'Operations', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=256&h=256' });
+      setNewAdmin({ nama: '', email: '', password: '', role: 'System Administrator', department: 'Operations', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=256&h=256' });
     }
   });
 
@@ -129,13 +135,13 @@ export default function SettingsPage() {
     <>
       <AnimatePresence>
         {(isSaving || isDiscarding || showSuccess) && (
-          <m.div 
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
           >
-            <m.div 
+            <m.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
@@ -143,9 +149,9 @@ export default function SettingsPage() {
             >
               {showSuccess ? (
                 <>
-                  <m.div 
-                    initial={{ scale: 0 }} 
-                    animate={{ scale: 1 }} 
+                  <m.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
                     transition={{ type: "spring", bounce: 0.5 }}
                     className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-500 rounded-full flex items-center justify-center mb-4"
                   >
@@ -176,26 +182,26 @@ export default function SettingsPage() {
       <AnimatePresence>
         {isAddManagerOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <m.div 
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsAddManagerOpen(false)}
               className="absolute inset-0"
             />
-            <m.div 
+            <m.div
               initial={{ scale: 0.9, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, y: 20, opacity: 0 }}
               className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
             >
               <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Add New Manager</h3>
+                <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Add New User</h3>
                 <button onClick={() => setIsAddManagerOpen(false)} aria-label="Close modal" className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
                   <X size={20} />
                 </button>
               </div>
-              <form 
+              <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   createAdminMutation.mutate(newAdmin);
@@ -206,7 +212,7 @@ export default function SettingsPage() {
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                     <UsersIcon size={12} /> Full Name
                   </label>
-                  <input 
+                  <input
                     required
                     className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
                     value={newAdmin.nama}
@@ -218,7 +224,7 @@ export default function SettingsPage() {
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                     <Mail size={12} /> Email Address
                   </label>
-                  <input 
+                  <input
                     required
                     type="email"
                     className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
@@ -227,30 +233,42 @@ export default function SettingsPage() {
                     placeholder="john@example.com"
                   />
                 </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                    <Lock size={12} /> Password
+                  </label>
+                  <input
+                    required
+                    type="password"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                    value={newAdmin.password}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
+                    placeholder="••••••••"
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Role</label>
-                    <select 
+                    <select
                       className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none"
                       value={newAdmin.role}
                       onChange={(e) => {
                         const val = e.target.value;
-                        setNewAdmin({ 
-                          ...newAdmin, 
+                        setNewAdmin({
+                          ...newAdmin,
                           role: val,
-                          department: val === 'Owner' ? 'Owner' : newAdmin.department
+                          department: val === 'System Administrator' ? 'Operations' : newAdmin.department
                         });
                       }}
                     >
-                      <option>Manager</option>
-                      <option>Owner</option>
-                      <option>Admin</option>
-                      <option>Support</option>
+                      <option value="System Administrator">System Administrator</option>
+                      <option value="Admin Kantor">Admin Kantor</option>
+                      <option value="Tim Lapangan">Tim Lapangan</option>
                     </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Department</label>
-                    <select 
+                    <select
                       className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none"
                       value={newAdmin.department}
                       onChange={(e) => setNewAdmin({ ...newAdmin, department: e.target.value })}
@@ -258,16 +276,15 @@ export default function SettingsPage() {
                       <option>Operations</option>
                       <option>Finance</option>
                       <option>Technical</option>
-                      {newAdmin.role === 'Owner' && <option>Owner</option>}
                     </select>
                   </div>
                 </div>
-                <button 
+                <button
                   type="submit"
                   disabled={createAdminMutation.isPending}
                   className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 transition-all flex items-center justify-center gap-2"
                 >
-                  {createAdminMutation.isPending ? <Loader2 className="animate-spin" size={18} /> : "Create Manager"}
+                  {createAdminMutation.isPending ? <Loader2 className="animate-spin" size={18} /> : "Create User"}
                 </button>
               </form>
             </m.div>
@@ -275,331 +292,338 @@ export default function SettingsPage() {
         )}
       </AnimatePresence>
 
-    <m.div 
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="pt-6 md:pt-10 space-y-8 pb-10"
-    >
-      <m.div variants={itemVariants} className="mb-10">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-          Settings
-        </h1>
-        <p className="text-slate-500 mt-1 font-medium">Configure your ISP management environment</p>
-      </m.div>
+      <m.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="pt-6 md:pt-10 space-y-8 pb-10"
+      >
+        <m.div variants={itemVariants} className="mb-10">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            Settings
+          </h1>
+          <p className="text-slate-500 mt-1 font-medium">Configure your ISP management environment</p>
+        </m.div>
 
-      {/* Bento Grid Settings Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-        
-        {/* Left Nav: Category Selection */}
-        <m.nav variants={itemVariants} className="md:col-span-8 lg:col-span-5 xl:col-span-3 flex flex-col gap-2 p-1 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <button 
-            onClick={() => setActiveTab('general')}
-            className={cn(
-              "flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap",
-              activeTab === 'general' 
-                ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700" 
-                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
-            )}
-          >
-            <SlidersHorizontal size={18} className="shrink-0" />
-            <span>General</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('branding')}
-            className={cn(
-              "flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap",
-              activeTab === 'branding' 
-                ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700" 
-                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
-            )}
-          >
-            <Palette size={18} className="shrink-0" />
-            <span>Branding</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('integrations')}
-            className={cn(
-              "flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap",
-              activeTab === 'integrations' 
-                ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700" 
-                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
-            )}
-          >
-            <Puzzle size={18} className="shrink-0" />
-            <span>Integrations</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('users')}
-            className={cn(
-              "flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap",
-              activeTab === 'users' 
-                ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700" 
-                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
-            )}
-          >
-            <UsersIcon size={18} className="shrink-0" />
-            <span>User Management</span>
-          </button>
-          
-          <Link 
-            href="/settings/audit"
-            className="flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
-          >
-            <ShieldCheck size={18} className="shrink-0" />
-            <span>Security & Audit</span>
-          </Link>
-        </m.nav>
+        {/* Bento Grid Settings Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
 
-        {/* Right Content */}
-        <div className="md:col-span-4 lg:col-span-7 xl:col-span-9 space-y-6">
-          
-          {/* Section 1: General Info */}
-          {activeTab === 'general' && (
-            <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 relative overflow-hidden group shadow-sm">
-              <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
-                <Info className="text-primary" size={20} />
-                Application Configuration
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    App Name
-                  </label>
-                  <input 
-                    disabled={!isEditing}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-slate-900 dark:text-slate-100 font-medium transition-all disabled:opacity-70 disabled:cursor-not-allowed" 
-                    type="text" 
-                    value={formData.appName}
-                    onChange={(e) => setFormData({ ...formData, appName: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    App Subtitle
-                  </label>
-                  <input 
-                    disabled={!isEditing}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-slate-900 dark:text-slate-100 font-medium transition-all disabled:opacity-70 disabled:cursor-not-allowed" 
-                    type="text" 
-                    value={formData.appSubtitle}
-                    onChange={(e) => setFormData({ ...formData, appSubtitle: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Default Timezone
-                  </label>
-                  <select 
-                    disabled={!isEditing}
-                    value={formData.timezone}
-                    onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none outline-none disabled:opacity-70 disabled:cursor-not-allowed"
-                  >
-                    <option>Asia/Jakarta (UTC+07)</option>
-                    <option>Asia/Makassar (UTC+08)</option>
-                    <option>Asia/Jayapura (UTC+09)</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    System Language
-                  </label>
-                  <select 
-                    disabled={!isEditing}
-                    value={formData.language}
-                    onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none outline-none disabled:opacity-70 disabled:cursor-not-allowed"
-                  >
-                    <option>Indonesian (ID)</option>
-                    <option>English (Universal)</option>
-                    <option>Javanese (JV)</option>
-                  </select>
-                </div>
-              </div>
-            </m.div>
-          )}
-
-          {/* Section 2: Branding */}
-          {activeTab === 'branding' && (
-            <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-              <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
-                <Palette className="text-primary" size={20} />
-                Visual Identity
-              </h3>
-              <div className="space-y-6">
-                <div className="flex items-center gap-6">
-                  <div 
-                    onClick={() => isEditing && handleUpdateLogo()}
-                    className={cn(
-                      "w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center relative group overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-700 transition-colors",
-                      isEditing ? "hover:border-primary cursor-pointer" : "cursor-not-allowed opacity-70"
-                    )}
-                  >
-                    {formData.appLogo ? (
-                      <img src={formData.appLogo} alt="Preview" className="w-full h-full object-cover" />
-                    ) : (
-                      <ImagePlus className="text-slate-400 group-hover:hidden" size={24} />
-                    )}
-                    {isEditing && (
-                      <span className="text-[10px] absolute bottom-2 hidden group-hover:block font-bold text-primary bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded-full shadow-sm">CHANGE</span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm text-slate-900 dark:text-slate-100">Corporate Logo</p>
-                    <p className="text-xs text-slate-500 mt-1">Recommended: SVG or PNG (256x256)</p>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Accent Color</p>
-                  <div className="flex gap-3">
-                    {['blue', 'indigo', 'emerald', 'amber'].map((color) => (
-                      <button 
-                        key={color}
-                        disabled={!isEditing}
-                        onClick={() => setFormData({ ...formData, accentColor: color })}
-                        aria-label={`Select ${color} accent color`}
-                        className={cn(
-                          "w-8 h-8 rounded-full transition-all",
-                          color === 'blue' && "bg-blue-600",
-                          color === 'indigo' && "bg-indigo-600",
-                          color === 'emerald' && "bg-emerald-600",
-                          color === 'amber' && "bg-amber-600",
-                          formData.accentColor === color ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 opacity-100' : 'opacity-60 hover:opacity-100',
-                          !isEditing && "cursor-not-allowed opacity-40"
-                        )}
-                      />
-                    ))}
-                    <div 
-                      onClick={() => isEditing && colorPickerRef.current?.click()}
-                      className={cn(
-                        "w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center transition-colors text-slate-500 relative",
-                        formData.accentColor.startsWith('#') ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 opacity-100' : 'opacity-60',
-                        isEditing ? "cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800" : "cursor-not-allowed opacity-40"
-                      )}
-                      style={formData.accentColor.startsWith('#') ? { backgroundColor: formData.accentColor, color: 'white', borderColor: 'transparent' } : {}}
-                    >
-                      <Pipette size={14} className="relative z-10" />
-                      <input 
-                        ref={colorPickerRef}
-                        type="color" 
-                        disabled={!isEditing}
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full disabled:cursor-not-allowed"
-                        value={formData.accentColor.startsWith('#') ? formData.accentColor : '#004ac6'}
-                        onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </m.div>
-          )}
-
-          {/* Section 3: Integrations */}
-          {activeTab === 'integrations' && (
-            <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 border-l-4 border-l-primary shadow-sm">
-              <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
-                <Puzzle className="text-primary" size={20} />
-                Core Service Status
-              </h3>
-              <div className="space-y-4">
-                {[
-                  { name: "Bank API Gateway", icon: Landmark, status: "CONNECTED", color: "bg-blue-50 text-primary", dotColor: "bg-primary" },
-                  { name: "WhatsApp Gateway", icon: MessageSquare, status: "DISCONNECTED", color: "bg-red-50 text-red-600", dotColor: "bg-red-600" },
-                  { name: "OCR Processor", icon: FileScan, status: "IDLE", color: "bg-orange-50 text-orange-600", dotColor: "bg-orange-500" },
-                ].map((item) => (
-                  <div key={item.name} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <item.icon className="text-slate-400" size={18} />
-                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.name}</span>
-                    </div>
-                    <button
-                      onClick={() => toast.info("Fitur ini segera hadir 🚀")}
-                      className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest cursor-pointer hover:opacity-80 transition-opacity", item.color)}
-                    >
-                      <span className={cn("w-1.5 h-1.5 rounded-full", item.dotColor, item.status === "CONNECTED" && "animate-pulse")}></span>
-                      {item.status}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </m.div>
-          )}
-
-          {/* Section 4: User Management */}
-          {activeTab === 'users' && (
-            <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
-                  <ShieldCheck className="text-primary" size={20} />
-                  Active Administrators
-                </h3>
-                <button 
-                  onClick={() => setIsAddManagerOpen(true)}
-                  className="text-primary font-bold text-sm hover:underline"
-                >
-                  Add New Manager
-                </button>
-              </div>
-              <div className="space-y-2">
-                {adminList.map((admin: any) => (
-                  <div key={admin.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-2xl transition-all group">
-                    <div className="flex items-center gap-4">
-                      <img 
-                        alt={admin.nama} 
-                        className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" 
-                        src={admin.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.nama)}&background=random`}
-                      />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-sm text-slate-900 dark:text-slate-100">{admin.nama}</p>
-                          {admin.role === 'Owner' && <BadgeCheck size={14} className="text-primary" />}
-                        </div>
-                        <p className="text-xs text-slate-500">{admin.role} • {admin.department}</p>
-                      </div>
-                    </div>
-                    <MoreVertical 
-                      onClick={() => toast.info("Fitur ini segera hadir 🚀")}
-                      className="text-slate-400 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" size={18} 
-                    />
-                  </div>
-                ))}
-              </div>
-            </m.div>
-          )}
-
-          {/* Actions */}
-          <m.div variants={itemVariants} className="flex items-center justify-end gap-4 py-8">
-            {!isEditing ? (
-              <button 
-                onClick={() => setIsEditing(true)}
-                className="px-8 py-3 rounded-xl bg-primary text-white font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"
-              >
-                Edit Configurations
-              </button>
-            ) : (
+          {/* Left Nav: Category Selection */}
+          <m.nav variants={itemVariants} className="md:col-span-8 lg:col-span-5 xl:col-span-3 flex flex-col gap-2 p-1 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-200 dark:border-slate-800">
+            <button
+              onClick={() => setActiveTab('general')}
+              className={cn(
+                "flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap",
+                activeTab === 'general'
+                  ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700"
+                  : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+              )}
+            >
+              <SlidersHorizontal size={18} className="shrink-0" />
+              <span>General</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('branding')}
+              className={cn(
+                "flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap",
+                activeTab === 'branding'
+                  ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700"
+                  : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+              )}
+            >
+              <Palette size={18} className="shrink-0" />
+              <span>Branding</span>
+            </button>
+            {!isTimLapangan && (
               <>
-                <button 
-                  onClick={handleDiscard}
-                  disabled={isSaving || isDiscarding}
-                  className="px-6 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all disabled:opacity-50"
+                <button
+                  onClick={() => setActiveTab('integrations')}
+                  className={cn(
+                    "flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap",
+                    activeTab === 'integrations'
+                      ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700"
+                      : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                  )}
                 >
-                  Discard Changes
+                  <Puzzle size={18} className="shrink-0" />
+                  <span>Integrations</span>
                 </button>
-                <button 
-                  onClick={handleSave} 
-                  disabled={isSaving || isDiscarding}
-                  className="px-8 py-3 rounded-xl bg-gradient-to-br from-primary to-blue-600 text-white font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
+                
+                {profile?.role === 'System Administrator' && (
+                  <button
+                    onClick={() => setActiveTab('users')}
+                    className={cn(
+                      "flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap",
+                      activeTab === 'users'
+                        ? "bg-white dark:bg-slate-800 text-primary shadow-sm border border-slate-200 dark:border-slate-700"
+                        : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                    )}
+                  >
+                    <UsersIcon size={18} className="shrink-0" />
+                    <span>User Management</span>
+                  </button>
+                )}
+
+                <Link
+                  href="/settings/audit"
+                  className="flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 >
-                  Save Configurations
-                </button>
+                  <ShieldCheck size={18} className="shrink-0" />
+                  <span>Security & Audit</span>
+                </Link>
               </>
             )}
-          </m.div>
+          </m.nav>
 
+          {/* Right Content */}
+          <div className="md:col-span-4 lg:col-span-7 xl:col-span-9 space-y-6">
+
+            {/* Section 1: General Info */}
+            {activeTab === 'general' && (
+              <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 relative overflow-hidden group shadow-sm">
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <Info className="text-primary" size={20} />
+                  Application Configuration
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      App Name
+                    </label>
+                    <input
+                      disabled={!isEditing}
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-slate-900 dark:text-slate-100 font-medium transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                      type="text"
+                      value={formData.appName}
+                      onChange={(e) => setFormData({ ...formData, appName: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      App Subtitle
+                    </label>
+                    <input
+                      disabled={!isEditing}
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 text-slate-900 dark:text-slate-100 font-medium transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                      type="text"
+                      value={formData.appSubtitle}
+                      onChange={(e) => setFormData({ ...formData, appSubtitle: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Default Timezone
+                    </label>
+                    <select
+                      disabled={!isEditing}
+                      value={formData.timezone}
+                      onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none outline-none disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                      <option>Asia/Jakarta (UTC+07)</option>
+                      <option>Asia/Makassar (UTC+08)</option>
+                      <option>Asia/Jayapura (UTC+09)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      System Language
+                    </label>
+                    <select
+                      disabled={!isEditing}
+                      value={formData.language}
+                      onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-100 font-medium appearance-none outline-none disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                      <option>Indonesian (ID)</option>
+                      <option>English (Universal)</option>
+                      <option>Javanese (JV)</option>
+                    </select>
+                  </div>
+                </div>
+              </m.div>
+            )}
+
+            {/* Section 2: Branding */}
+            {activeTab === 'branding' && (
+              <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <Palette className="text-primary" size={20} />
+                  Visual Identity
+                </h3>
+                <div className="space-y-6">
+                  <div className="flex items-center gap-6">
+                    <div
+                      onClick={() => isEditing && handleUpdateLogo()}
+                      className={cn(
+                        "w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center relative group overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-700 transition-colors",
+                        isEditing ? "hover:border-primary cursor-pointer" : "cursor-not-allowed opacity-70"
+                      )}
+                    >
+                      {formData.appLogo ? (
+                        <img src={formData.appLogo} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <ImagePlus className="text-slate-400 group-hover:hidden" size={24} />
+                      )}
+                      {isEditing && (
+                        <span className="text-[10px] absolute bottom-2 hidden group-hover:block font-bold text-primary bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded-full shadow-sm">CHANGE</span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm text-slate-900 dark:text-slate-100">Corporate Logo</p>
+                      <p className="text-xs text-slate-500 mt-1">Recommended: SVG or PNG (256x256)</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Accent Color</p>
+                    <div className="flex gap-3">
+                      {['blue', 'indigo', 'emerald', 'amber'].map((color) => (
+                        <button
+                          key={color}
+                          disabled={!isEditing}
+                          onClick={() => setFormData({ ...formData, accentColor: color })}
+                          aria-label={`Select ${color} accent color`}
+                          className={cn(
+                            "w-8 h-8 rounded-full transition-all",
+                            color === 'blue' && "bg-blue-600",
+                            color === 'indigo' && "bg-indigo-600",
+                            color === 'emerald' && "bg-emerald-600",
+                            color === 'amber' && "bg-amber-600",
+                            formData.accentColor === color ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 opacity-100' : 'opacity-60 hover:opacity-100',
+                            !isEditing && "cursor-not-allowed opacity-40"
+                          )}
+                        />
+                      ))}
+                      <div
+                        onClick={() => isEditing && colorPickerRef.current?.click()}
+                        className={cn(
+                          "w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center transition-colors text-slate-500 relative",
+                          formData.accentColor.startsWith('#') ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 opacity-100' : 'opacity-60',
+                          isEditing ? "cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800" : "cursor-not-allowed opacity-40"
+                        )}
+                        style={formData.accentColor.startsWith('#') ? { backgroundColor: formData.accentColor, color: 'white', borderColor: 'transparent' } : {}}
+                      >
+                        <Pipette size={14} className="relative z-10" />
+                        <input
+                          ref={colorPickerRef}
+                          type="color"
+                          disabled={!isEditing}
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full disabled:cursor-not-allowed"
+                          value={formData.accentColor.startsWith('#') ? formData.accentColor : '#004ac6'}
+                          onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </m.div>
+            )}
+
+            {/* Section 3: Integrations */}
+            {activeTab === 'integrations' && (
+              <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 border-l-4 border-l-primary shadow-sm">
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <Puzzle className="text-primary" size={20} />
+                  Core Service Status
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    { name: "Bank API Gateway", icon: Landmark, status: "CONNECTED", color: "bg-blue-50 text-primary", dotColor: "bg-primary" },
+                    { name: "WhatsApp Gateway", icon: MessageSquare, status: "DISCONNECTED", color: "bg-red-50 text-red-600", dotColor: "bg-red-600" },
+                    { name: "OCR Processor", icon: FileScan, status: "IDLE", color: "bg-orange-50 text-orange-600", dotColor: "bg-orange-500" },
+                  ].map((item) => (
+                    <div key={item.name} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <item.icon className="text-slate-400" size={18} />
+                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.name}</span>
+                      </div>
+                      <button
+                        onClick={() => toast.info("Fitur ini segera hadir 🚀")}
+                        className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest cursor-pointer hover:opacity-80 transition-opacity", item.color)}
+                      >
+                        <span className={cn("w-1.5 h-1.5 rounded-full", item.dotColor, item.status === "CONNECTED" && "animate-pulse")}></span>
+                        {item.status}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </m.div>
+            )}
+
+            {/* Section 4: User Management */}
+            {activeTab === 'users' && (
+              <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                    <ShieldCheck className="text-primary" size={20} />
+                    Active Administrators
+                  </h3>
+                  <button
+                    onClick={() => setIsAddManagerOpen(true)}
+                    className="text-primary font-bold text-sm hover:underline"
+                  >
+                    Add New User
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {adminList.map((admin: any) => (
+                    <div key={admin.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-2xl transition-all group">
+                      <div className="flex items-center gap-4">
+                        <img
+                          alt={admin.nama}
+                          className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700"
+                          src={admin.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.nama)}&background=random`}
+                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-sm text-slate-900 dark:text-slate-100">{admin.nama}</p>
+                            {admin.role === 'Owner' && <BadgeCheck size={14} className="text-primary" />}
+                          </div>
+                          <p className="text-xs text-slate-500">{admin.role} • {admin.department}</p>
+                        </div>
+                      </div>
+                      <MoreVertical
+                        onClick={() => toast.info("Fitur ini segera hadir 🚀")}
+                        className="text-slate-400 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" size={18}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </m.div>
+            )}
+
+            {/* Actions */}
+            <m.div variants={itemVariants} className="flex items-center justify-end gap-4 py-8">
+              {!isEditing ? (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="px-8 py-3 rounded-xl bg-primary text-white font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"
+                >
+                  Edit Configurations
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleDiscard}
+                    disabled={isSaving || isDiscarding}
+                    className="px-6 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all disabled:opacity-50"
+                  >
+                    Discard Changes
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving || isDiscarding}
+                    className="px-8 py-3 rounded-xl bg-gradient-to-br from-primary to-blue-600 text-white font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    Save Configurations
+                  </button>
+                </>
+              )}
+            </m.div>
+
+          </div>
         </div>
-      </div>
-    </m.div>
+      </m.div>
     </>
   );
 }

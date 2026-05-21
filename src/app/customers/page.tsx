@@ -18,6 +18,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getCustomerAnalysis } from "@/actions/customers";
 import { formatCurrency } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { getAdminProfile } from "@/actions/admin";
 import { cn } from "@/lib/utils";
 
 function MobileCustomerCard({
@@ -149,6 +151,12 @@ function MobileCustomerCard({
 
 export default function CustomerAnalysisPage() {
   const router = useRouter();
+  const { data: profile } = useQuery({
+    queryKey: ['adminProfile'],
+    queryFn: getAdminProfile
+  });
+  const isTimLapangan = profile?.role === 'Tim Lapangan' || profile?.role === 'Pekerja';
+
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -275,7 +283,8 @@ export default function CustomerAnalysisPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 gap-6">
+      {!isTimLapangan && (
+        <div className="grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="h-[200px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem] border border-slate-200 dark:border-slate-800" />
@@ -342,6 +351,7 @@ export default function CustomerAnalysisPage() {
           </>
         )}
       </div>
+      )}
 
       {/* Table Section */}
       <m.div

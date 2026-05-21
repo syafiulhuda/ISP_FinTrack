@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getTransactions, getOcrData, updateOcrData, postOcrEntry, checkTrxExists } from "@/actions/transactions";
+import { getAdminProfile } from "@/actions/admin";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
 import { Transaction } from "@/types";
 import { toast } from "sonner";
@@ -38,6 +39,12 @@ export default function FinancePage() {
     refetchInterval: 60000 
   });
   const { data: ocrData, isLoading: loadingOcr } = useQuery({ queryKey: ['ocrData'], queryFn: getOcrData });
+
+  const { data: profile } = useQuery({
+    queryKey: ['adminProfile'],
+    queryFn: getAdminProfile
+  });
+  const isTimLapangan = profile?.role === 'Tim Lapangan' || profile?.role === 'Pekerja';
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedKeterangan, setSelectedKeterangan] = useState("All");
@@ -417,7 +424,9 @@ export default function FinancePage() {
 
   return (
     <div className="pt-4 space-y-10">
-      {/* Header & Drop Zone */}
+      {!isTimLapangan && (
+        <>
+          {/* Header & Drop Zone */}
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         <div className="flex-1">
           <h1 className="text-4xl md:text-6xl font-bold leading-tight tracking-tight text-slate-900 dark:text-slate-100 mb-2">Receipt OCR</h1>
@@ -756,6 +765,8 @@ export default function FinancePage() {
           </m.div>
         )}
       </AnimatePresence>
+        </>
+      )}
 
       {/* Recent Transactions Table List */}
       <div className="space-y-6 relative overflow-hidden">

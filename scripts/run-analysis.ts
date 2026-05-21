@@ -17,11 +17,17 @@ import { runAnalysis } from '../src/lib/analysis/index';
 const projectRoot = path.resolve(__dirname, '..');
 const outputDir = path.join(projectRoot, 'testcase');
 
-// 1. Cek apakah folder/file outputDir sudah ada
+// 1. Bersihkan report lama tapi JANGAN hapus folder keseluruhan agar scenario.md aman
 if (fs.existsSync(outputDir)) {
-  console.log(`🗑️  Menghapus data existing di: ${outputDir}`);
-  // 2. Hapus folder beserta seluruh isinya
-  fs.rmSync(outputDir, { recursive: true, force: true });
+  console.log(`🗑️  Menghapus report lama di: ${outputDir}`);
+  const files = fs.readdirSync(outputDir);
+  for (const file of files) {
+    if (file.startsWith('analysis-report-')) {
+      fs.rmSync(path.join(outputDir, file), { force: true });
+    }
+  }
+} else {
+  fs.mkdirSync(outputDir, { recursive: true });
 }
 
 console.log('🚀 Memulai proses analisis baru...');

@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { query } from '@/lib/db';
 
 const SESSION_COOKIE_NAME = 'fintrack_session';
 
@@ -75,4 +76,17 @@ export async function getSession(): Promise<number | null> {
 export async function destroySession() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
+}
+
+export async function requireRole(allowedRoles: string[]) {
+  const adminId = await getSession();
+  if (!adminId) throw new Error("Unauthorized");
+  
+  const res = await query('SELECT role FROM admin WHERE id = $1', [adminId]);
+  const userRole = res.rows[0]?.role;
+  
+  if (!allowedRoles.includes(userRole)) {
+    throw new Error("Forbidden: Insufficient Permissions");
+  }
+  return adminId;
 }

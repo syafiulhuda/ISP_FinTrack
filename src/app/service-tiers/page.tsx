@@ -22,6 +22,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { getCustomers, createCustomer, auditCustomerGracePeriod } from "@/actions/customers";
 import { getServiceTiers, createServiceTier } from "@/actions/tiers";
+import { getAdminProfile } from "@/actions/admin";
 import { Customer, ServiceTier } from "@/types";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useState, useMemo, useEffect } from "react";
@@ -45,6 +46,12 @@ export default function ServiceTiersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
   const [expandedCustomers, setExpandedCustomers] = useState<Record<string, boolean>>({});
+
+  const { data: profile } = useQuery({
+    queryKey: ['adminProfile'],
+    queryFn: getAdminProfile
+  });
+  const isTimLapangan = profile?.role === 'Tim Lapangan' || profile?.role === 'Pekerja';
 
   const toggleCustomerExpand = (customerId: string) => {
     setExpandedCustomers(prev => ({
@@ -233,14 +240,16 @@ export default function ServiceTiersPage() {
           <p className="text-base md:text-lg font-medium text-slate-500 mt-2">Manage broadband tiers and subscriber distribution.</p>
         </div>
         <div className="flex items-center gap-4">
-          <m.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-primary text-white px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-primary/20 hover:opacity-95 transition-all flex items-center gap-2"
-          >
-            <Plus size={18} /> Add New Customer
-          </m.button>
+          {!isTimLapangan && (
+            <m.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-primary text-white px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-primary/20 hover:opacity-95 transition-all flex items-center gap-2"
+            >
+              <Plus size={18} /> Add New Customer
+            </m.button>
+          )}
         </div>
       </div>
 
@@ -339,7 +348,7 @@ export default function ServiceTiersPage() {
         }))}
 
         {/* Add New Tier Card */}
-        {!loadingTiers && (
+        {(!loadingTiers && !isTimLapangan) && (
           <m.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}

@@ -3,7 +3,7 @@
 import { query } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import * as Mock from '@/lib/mockData';
-import { getSession } from "@/lib/auth";
+import { getSession, requireRole } from "@/lib/auth";
 import bcrypt from 'bcryptjs';
 import { Admin, Notification } from '@/types';
 
@@ -47,29 +47,25 @@ export async function updateAdminProfile(data: { fullName: string, email: string
 
 export async function getAdminList(): Promise<Admin[]> {
   try {
+    await requireRole(['System Administrator']);
     const res = await query('SELECT id, nama, email, role, department, image, nickname FROM admin ORDER BY id ASC');
     return res.rows as Admin[];
   } catch (e) {
     console.error("DB Error: getAdminList", e);
-    return [{
-      id: 1,
-      nama: Mock.MOCK_ADMIN.fullName,
-      email: Mock.MOCK_ADMIN.email,
-      role: Mock.MOCK_ADMIN.role,
-      department: Mock.MOCK_ADMIN.department,
-      image: Mock.MOCK_ADMIN.image
-    }];
+    return [];
   }
 }
 
-export async function createAdmin(data: { nama: string, email: string, role: string, department: string, image: string }) {
+export async function createAdmin(data: { nama: string, email: string, password?: string, role: string, department: string, image: string }) {
   try {
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const adminId = await requireRole(['System Administrator']);
+    const hashedPassword = await bcrypt.hash(data.password || 'admin123', 10);
+    const nickname = data.email.split('@')[0];
     const res = await query(`
-      INSERT INTO admin (nama, email, role, department, image, password)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO admin (nama, email, role, department, image, password, nickname, inputter, inputter_tms)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
       RETURNING id, nama, email, role, department, image
-    `, [data.nama, data.email, data.role, data.department, data.image, hashedPassword]);
+    `, [data.nama, data.email, data.role, data.department, data.image, hashedPassword, nickname, adminId.toString()]);
     return res.rows[0];
   } catch (e) {
     console.error("DB Error: createAdmin", e);

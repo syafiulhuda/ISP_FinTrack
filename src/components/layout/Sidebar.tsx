@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 import { m, AnimatePresence } from "framer-motion";
 import { useSettings } from "@/components/providers/SettingsProvider";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getAdminProfile } from "@/actions/admin";
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Service Tiers", href: "/service-tiers", icon: Layers },
@@ -36,6 +38,12 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
   const pathname = usePathname();
   const router = useRouter();
   const { settings } = useSettings();
+  
+  const { data: profile } = useQuery({
+    queryKey: ['adminProfile'],
+    queryFn: getAdminProfile
+  });
+  const isTimLapangan = profile?.role === 'Tim Lapangan' || profile?.role === 'Pekerja';
 
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -112,9 +120,10 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
       </div>
 
       <div className="px-4 w-full overflow-hidden">
-        <Link 
-          href="/executive"
-          onClick={onClose}
+        {!isTimLapangan && (
+          <Link 
+            href="/executive"
+            onClick={onClose}
           className={cn(
             "group relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 overflow-hidden w-full",
             pathname === '/executive' 
@@ -142,11 +151,18 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
             Executive Summary
           </span>
         </Link>
+        )}
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 mt-4 px-4 overflow-y-auto overflow-x-hidden no-scrollbar min-h-0 pb-4">
-        {navigation.map((item) => {
+        {navigation.filter(item => {
+          if (isTimLapangan) {
+            const hiddenItems = ['Finance', 'Regional Analysis', 'Predictive Analysis'];
+            if (hiddenItems.includes(item.name)) return false;
+          }
+          return true;
+        }).map((item) => {
           const isActive = item.href === "/" 
             ? pathname === "/" || pathname === "/profitability"
             : pathname === item.href;

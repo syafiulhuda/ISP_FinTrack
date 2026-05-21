@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getAssetRoster, getStockAssets, getWarehouses, createAsset, deleteAsset, updateAssetCondition, deployAsset, startMaintenance } from "@/actions/assets";
+import { getAdminProfile } from "@/actions/admin";
 import { Asset } from "@/types";
 import { 
   getMapAssets, 
@@ -515,6 +516,12 @@ export default function InventoryPage() {
     queryFn: getWarehouses
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ['adminProfile'],
+    queryFn: getAdminProfile
+  });
+  const isTimLapangan = profile?.role === 'Tim Lapangan' || profile?.role === 'Pekerja';
+
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedType, setSelectedType] = useState("All");
   const [selectedCondition, setSelectedCondition] = useState("All");
@@ -860,15 +867,17 @@ export default function InventoryPage() {
           <p className="text-lg font-medium text-slate-500 mt-2">Real-time tracking and health audit of ISP infrastructure hardware.</p>
         </div>
         <div className="flex items-center gap-3">
-          <m.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setIsRegisterModalOpen(true)}
-            aria-label="Register New Asset"
-            className="bg-primary text-primary-foreground px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-primary/20 hover:opacity-95 transition-all"
-          >
-            Register New Asset
-          </m.button>
+          {!isTimLapangan && (
+            <m.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setIsRegisterModalOpen(true)}
+              aria-label="Register New Asset"
+              className="bg-primary text-primary-foreground px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-primary/20 hover:opacity-95 transition-all"
+            >
+              Register New Asset
+            </m.button>
+          )}
         </div>
       </div>
 

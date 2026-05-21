@@ -40,6 +40,10 @@ export default function ProfilePage() {
   const [passData, setPassData] = useState({ old: '', new: '', confirm: '' });
   const [isPassLoading, setIsPassLoading] = useState(false);
 
+  // Avatar Modal States
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [avatarInputUrl, setAvatarInputUrl] = useState('');
+
   useEffect(() => {
     if (profileData && !editData) {
       setEditData(profileData);
@@ -101,10 +105,14 @@ export default function ProfilePage() {
 
   const handleUpdateAvatar = () => {
     if (!isEditing) return;
-    const newUrl = window.prompt("Enter new Image URL:", editData.image);
-    if (newUrl !== null) {
-      setEditData({ ...editData, image: newUrl });
-    }
+    setAvatarInputUrl(editData?.image || profileData?.image || '');
+    setIsAvatarModalOpen(true);
+  };
+
+  const handleSaveAvatar = (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditData({ ...editData, image: avatarInputUrl });
+    setIsAvatarModalOpen(false);
   };
 
   if (isLoading) {
@@ -133,6 +141,52 @@ export default function ProfilePage() {
       animate="show"
       className="space-y-8 pb-10"
     >
+      <AnimatePresence>
+        {isAvatarModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <m.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl max-w-md w-full border border-slate-200 dark:border-slate-800"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Update Avatar URL</h3>
+                <button 
+                  onClick={() => setIsAvatarModalOpen(false)}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                  aria-label="Close modal"
+                >
+                  <X size={18} className="text-slate-400" />
+                </button>
+              </div>
+              <form onSubmit={handleSaveAvatar} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="avatar-url-input" className="text-xs font-bold uppercase text-slate-500 tracking-wider">
+                    Image URL
+                  </label>
+                  <input 
+                    id="avatar-url-input"
+                    type="url"
+                    required
+                    value={avatarInputUrl}
+                    onChange={(e) => setAvatarInputUrl(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-transparent focus:border-primary/20 rounded-xl py-2.5 px-4 outline-none transition-all font-medium text-sm text-slate-900 dark:text-white"
+                    placeholder="https://example.com/avatar.jpg"
+                  />
+                </div>
+                <button 
+                  type="submit"
+                  className="w-full bg-primary text-white rounded-xl py-3 font-bold shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all text-sm"
+                >
+                  Save Avatar
+                </button>
+              </form>
+            </m.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Profile Header */}
       <m.section variants={itemVariants} className="mb-12">
         <div className="flex flex-col md:flex-row items-center md:items-end gap-6 text-center md:text-left">
