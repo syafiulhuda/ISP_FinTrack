@@ -1,8 +1,8 @@
 'use server';
+import { logger } from '@/lib/logger';
 
 import { query } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import * as Mock from '@/lib/mockData';
 import { Customer } from '@/types';
 import { getAdminProfile } from './admin';
 
@@ -37,14 +37,14 @@ export async function getCustomers(page: number = 1, limit: number = 10): Promis
     `, [limit, offset]);
 
     return {
-      customers: res.rows.length > 0 ? res.rows as Customer[] : (page === 1 ? [...Mock.MOCK_CUSTOMERS].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) as Customer[] : []),
-      total: total || (page === 1 ? Mock.MOCK_CUSTOMERS.length : 0)
+      customers: res.rows as Customer[],
+      total: total || 0
     };
   } catch (e) {
-    console.error("DB Error: getCustomers", e);
+    logger.error({ message: "DB Error: getCustomers", error: e, path: "action" });
     return {
-      customers: page === 1 ? Mock.MOCK_CUSTOMERS as Customer[] : [],
-      total: page === 1 ? Mock.MOCK_CUSTOMERS.length : 0
+      customers: [],
+      total: 0
     };
   }
 }
@@ -68,7 +68,7 @@ export async function getInactiveCust() {
       inactiveat: r.inactiveat_str
     }));
   } catch (e) {
-    console.error("DB Error: getInactiveCust", e);
+    logger.error({ message: "DB Error: getInactiveCust", error: e, path: "action" });
     return [];
   }
 }
@@ -101,7 +101,7 @@ export async function auditCustomerGracePeriod() {
     revalidatePath('/service-tiers');
     return { success: true, count: res.rows.length };
   } catch (e) {
-    console.error("DB Error: auditCustomerGracePeriod", e);
+    logger.error({ message: "DB Error: auditCustomerGracePeriod", error: e, path: "action" });
     return { success: false, error: String(e) };
   }
 }
@@ -163,7 +163,7 @@ export async function getCustomerGrowthTrend() {
 
     return finalData;
   } catch (e) {
-    console.error("DB Error: getCustomerGrowthTrend", e);
+    logger.error({ message: "DB Error: getCustomerGrowthTrend", error: e, path: "action" });
     return [];
   }
 }
@@ -205,8 +205,7 @@ export async function getServiceMix(province?: string) {
       };
     });
   } catch (e) {
-    console.error("DB Error: getServiceMix", e);
-    return Mock.MOCK_SERVICE_TIERS.map(t => ({ name: t.name, value: 0 }));
+    return [];
   }
 }
 
@@ -242,7 +241,7 @@ export async function createCustomer(data: {
     revalidatePath('/regional');
     return { success: true, id: nextId };
   } catch (e) {
-    console.error("DB Error: createCustomer", e);
+    logger.error({ message: "DB Error: createCustomer", error: e, path: "action" });
     return { success: false, error: String(e) };
   }
 }
@@ -252,7 +251,7 @@ export async function refreshAgingMV() {
     await query('REFRESH MATERIALIZED VIEW ar_aging_mv');
     return { success: true };
   } catch (e) {
-    console.error("DB Error: refreshAgingMV", e);
+    logger.error({ message: "DB Error: refreshAgingMV", error: e, path: "action" });
     return { success: false, error: String(e) };
   }
 }
@@ -262,7 +261,7 @@ export async function getAgingMVData() {
     const res = await query('SELECT * FROM ar_aging_mv');
     return res.rows;
   } catch (e) {
-    console.error("DB Error: getAgingMVData", e);
+    logger.error({ message: "DB Error: getAgingMVData", error: e, path: "action" });
     return [];
   }
 }
@@ -339,7 +338,7 @@ export async function getCustomerAnalysis() {
 
     return res.rows;
   } catch (e) {
-    console.error("DB Error: getCustomerAnalysis", e);
+    logger.error({ message: "DB Error: getCustomerAnalysis", error: e, path: "action" });
     return [];
   }
 }
@@ -451,7 +450,7 @@ export async function getCustomer360(customerId: string) {
       late_payments
     };
   } catch (e) {
-    console.error("DB Error: getCustomer360", e);
+    logger.error({ message: "DB Error: getCustomer360", error: e, path: "action" });
     return null;
   }
 }
@@ -465,7 +464,7 @@ export async function toggleVipStatus(customerId: string, status: boolean) {
     revalidatePath('/service-tiers');
     return { success: true };
   } catch (e) {
-    console.error("DB Error: toggleVipStatus", e);
+    logger.error({ message: "DB Error: toggleVipStatus", error: e, path: "action" });
     return { success: false, error: String(e) };
   }
 }
@@ -477,7 +476,7 @@ export async function sendPaymentReminder(customerId: string) {
     const customer = res.rows[0];
 
     // Mock WhatsApp/Fonnte integration logic
-    console.log(`[WA REMINDER] Sending to ${customer.name} (${customer.no_telp})...`);
+    if (process.env.NODE_ENV === 'development') console.log(`[WA REMINDER] Sending to ${customer.name} (${customer.no_telp})...`);
 
     // Record in notifications
     await query(`
@@ -488,7 +487,7 @@ export async function sendPaymentReminder(customerId: string) {
     revalidatePath(`/customers/${customerId}`);
     return { success: true };
   } catch (e) {
-    console.error("DB Error: sendPaymentReminder", e);
+    logger.error({ message: "DB Error: sendPaymentReminder", error: e, path: "action" });
     return { success: false, error: String(e) };
   }
 }

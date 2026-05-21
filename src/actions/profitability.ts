@@ -1,4 +1,5 @@
 "use server";
+import { logger } from '@/lib/logger';
 
 import { getCustomers } from '@/actions/customers';
 import { getServiceTiers } from '@/actions/tiers';
@@ -46,7 +47,7 @@ export const getProfitabilitySummary = unstable_cache(
         last_refreshed_at:   r.last_refreshed_at,
       }));
     } catch (e) {
-      console.error("DB Error: getProfitabilitySummary (MV not ready, will fallback)", e);
+      logger.error({ message: "DB Error: getProfitabilitySummary (MV not ready, will fallback)", error: e, path: "action" });
       return null;
     }
   },
@@ -100,15 +101,15 @@ export async function getProfitabilityData() {
 export async function refreshProfitabilityMV() {
   try {
     await query('REFRESH MATERIALIZED VIEW CONCURRENTLY profitability_summary_mv');
-    console.log('[MV Refresh] profitability_summary_mv refreshed successfully');
+    if (process.env.NODE_ENV === 'development') console.log('[MV Refresh] profitability_summary_mv refreshed successfully');
     return { success: true };
   } catch (e) {
     try {
       await query('REFRESH MATERIALIZED VIEW profitability_summary_mv');
-      console.log('[MV Refresh] profitability_summary_mv refreshed (non-concurrent fallback)');
+      if (process.env.NODE_ENV === 'development') console.log('[MV Refresh] profitability_summary_mv refreshed (non-concurrent fallback)');
       return { success: true };
     } catch (e2) {
-      console.error('[MV Refresh] profitability_summary_mv failed:', e2);
+      logger.error({ message: "[MV Refresh] profitability_summary_mv failed:", error: e2, path: "action" });
       return { success: false, error: String(e2) };
     }
   }

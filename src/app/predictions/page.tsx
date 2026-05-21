@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   m, 
@@ -58,10 +58,19 @@ export default function PredictionsPage() {
       type: 'Actual'
     }));
 
+    type ChartDataPoint = Partial<typeof actuals[0]> & {
+      month: string;
+      type: string;
+      revenue_forecast?: number;
+      churn_forecast?: number;
+      revenue_actual?: number;
+      churn_actual?: number;
+    };
+
     const lastActual = actuals[actuals.length - 1];
 
     // 2. Tambahkan titik prediksi (dimulai dari titik aktual terakhir agar nyambung)
-    const combined = [...actuals];
+    const combined: ChartDataPoint[] = [...actuals];
     
     // Titik prediksi bulan depan
     combined.push({
@@ -69,14 +78,14 @@ export default function PredictionsPage() {
       revenue_forecast: predictions.predicted.revenue,
       churn_forecast: predictions.predicted.churn_rate,
       type: 'Predicted'
-    } as any);
+    });
 
     // Agar garis nyambung, titik terakhir ACTUAL juga harus punya nilai FORECAST
-    actuals[actuals.length - 1] = {
+    combined[combined.length - 2] = {
       ...lastActual,
       revenue_forecast: Number(lastActual.revenue),
       churn_forecast: Number(lastActual.churn_rate)
-    } as any;
+    };
 
     return combined;
   }, [predictions]);
@@ -230,17 +239,26 @@ export default function PredictionsPage() {
   );
 }
 
-function PredictionCard({ title, value, change, icon, color, reverseColor = false }: any) {
+interface PredictionCardProps {
+  title: string;
+  value: string;
+  change: string;
+  icon: React.ReactNode;
+  color: 'indigo' | 'rose' | 'amber';
+  reverseColor?: boolean;
+}
+
+function PredictionCard({ title, value, change, icon, color, reverseColor = false }: PredictionCardProps) {
   const isPositive = parseFloat(change) > 0;
   const isGood = reverseColor ? !isPositive : isPositive;
 
-  const colorMap: any = {
+  const colorMap: Record<string, string> = {
     indigo: "text-indigo-500 bg-indigo-500/10 border-indigo-500/20",
     rose: "text-rose-500 bg-rose-500/10 border-rose-500/20",
     amber: "text-amber-500 bg-amber-500/10 border-amber-500/20"
   };
 
-  const glowMap: any = {
+  const glowMap: Record<string, string> = {
     indigo: "bg-indigo-500/10",
     rose: "bg-rose-500/10",
     amber: "bg-amber-500/10"
@@ -274,13 +292,26 @@ function PredictionCard({ title, value, change, icon, color, reverseColor = fals
   );
 }
 
-function CustomTooltip({ active, payload, label, unit = "" }: any) {
+interface TooltipPayloadEntry {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadEntry[];
+  label?: string;
+  unit?: string;
+}
+
+function CustomTooltip({ active, payload, label, unit = "" }: CustomTooltipProps) {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white dark:bg-slate-950 p-4 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl">
         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{label}</p>
         <div className="space-y-1.5">
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index: number) => (
             <div key={index} className="flex items-center justify-between gap-4">
               <span className="text-xs font-bold text-slate-500 flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />

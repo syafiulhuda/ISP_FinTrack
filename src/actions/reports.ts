@@ -1,4 +1,5 @@
 'use server';
+import { logger } from '@/lib/logger';
 
 import { query } from '@/lib/db';
 
@@ -234,7 +235,7 @@ export async function getReportData(params: {
 
     return { main: [], breakdown: [] };
   } catch (error) {
-    console.error("REPORT ERROR:", error);
+    logger.error({ message: "REPORT ERROR:", error: error, path: "action" });
     return { main: [], breakdown: [] };
   }
 }

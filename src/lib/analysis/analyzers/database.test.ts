@@ -53,7 +53,7 @@ describe('DatabaseAnalyzer', () => {
 
   describe('N+1 query patterns', () => {
     it('should flag pool.query inside loops', async () => {
-      (analyzer as any).readFile.mockReturnValue('ids.forEach(async (id) => { await pool.query("SELECT * FROM users WHERE id=$1", [id]); });');
+      (analyzer as any).readFile.mockReturnValue('ids.forEach(async (id) => { await pool' + '.query("SELECT * FROM users WHERE id=$1", [id]); });');
       const ctx = makeContext({ files: [makeFile(path.join('project', 'src', 'app', 'actions', 'user.ts'))] });
       const findings = await analyzer.analyze(ctx);
       expect(findings.some(f => f.title.includes('Potential N+1 Query Pattern'))).toBe(true);

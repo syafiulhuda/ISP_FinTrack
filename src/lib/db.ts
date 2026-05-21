@@ -17,10 +17,14 @@ if (!env.success) {
   throw new Error('Invalid environment variables. Please check your .env.local file.');
 }
 
+import { PoolConfig } from 'pg';
+
+const isServerless = process.env.VERCEL === '1';
+
 // Create a single pool instance
-const poolConfig: any = {
-  max: 10, // Maximum number of clients in the pool
-  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+const poolConfig: PoolConfig = {
+  max: isServerless ? 2 : 10, // Maximum number of clients in the pool
+  idleTimeoutMillis: isServerless ? 15000 : 30000, // Close idle clients sooner in serverless
   connectionTimeoutMillis: 5000, // Return an error if a connection takes longer than 5 seconds
 };
 

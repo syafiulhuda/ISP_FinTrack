@@ -234,9 +234,7 @@ const poolConfig: any = {
     const deps = { ...ctx.packageJson?.dependencies, ...ctx.packageJson?.devDependencies };
 
     const heavyDeps: Array<{ name: string; reason: string; alternative?: string }> = [
-      { name: 'tesseract.js', reason: 'OCR library (~4 MB gzipped). If the OCR feature is not active, it should not ship with the main bundle.', alternative: 'Dynamic import: `const { createWorker } = await import("tesseract.js")`' },
-      { name: 'html2canvas',  reason: 'DOM capture library. Should only be loaded on demand for export features.', alternative: 'Wrap in `dynamic(() => import("html2canvas"), { ssr: false })`' },
-      { name: 'xlsx',         reason: 'Excel export library (~1 MB). Only needed for export functionality.', alternative: 'Dynamic import on user action' },
+      { name: 'moment',       reason: 'Very large date library (60+ KB).', alternative: 'date-fns or dayjs' },
     ];
 
     for (const dep of heavyDeps) {

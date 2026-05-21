@@ -31,7 +31,9 @@ function timeAgo(date: string | Date) {
   return "just now";
 }
 
-const typeConfig: Record<string, { icon: any, color: string, bg: string }> = {
+import { LucideIcon } from "lucide-react";
+
+const typeConfig: Record<string, { icon: LucideIcon, color: string, bg: string }> = {
   transaction: { icon: Banknote, color: 'text-primary', bg: 'bg-blue-50 dark:bg-blue-900/20' },
   ocr: { icon: FileScan, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
   hardware: { icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
@@ -78,14 +80,16 @@ export default function NotificationsPage() {
     mutationFn: markNotificationAsRead,
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['notifications'] });
-      const prev = queryClient.getQueryData(['notifications']);
-      queryClient.setQueryData(['notifications'], (old: any) => 
-        old?.map((n: any) => n.id === id ? { ...n, is_unread: false } : n)
+      const prev = queryClient.getQueryData<Notification[]>(['notifications']);
+      queryClient.setQueryData<Notification[]>(['notifications'], (old) => 
+        old?.map((n) => n.id === id ? { ...n, is_unread: false } : n)
       );
       return { prev };
     },
-    onError: (_err, _id, context: any) => {
-      queryClient.setQueryData(['notifications'], context.prev);
+    onError: (_err, _id, context: { prev?: Notification[] } | undefined) => {
+      if (context?.prev) {
+        queryClient.setQueryData(['notifications'], context.prev);
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -96,14 +100,16 @@ export default function NotificationsPage() {
     mutationFn: markAllNotificationsAsRead,
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ['notifications'] });
-      const prev = queryClient.getQueryData(['notifications']);
-      queryClient.setQueryData(['notifications'], (old: any) => 
-        old?.map((n: any) => ({ ...n, is_unread: false }))
+      const prev = queryClient.getQueryData<Notification[]>(['notifications']);
+      queryClient.setQueryData<Notification[]>(['notifications'], (old) => 
+        old?.map((n) => ({ ...n, is_unread: false }))
       );
       return { prev };
     },
-    onError: (_err, _vars, context: any) => {
-      queryClient.setQueryData(['notifications'], context.prev);
+    onError: (_err, _vars, context: { prev?: Notification[] } | undefined) => {
+      if (context?.prev) {
+        queryClient.setQueryData(['notifications'], context.prev);
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -114,13 +120,15 @@ export default function NotificationsPage() {
     mutationFn: hideAllNotifications,
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ['notifications'] });
-      const prev = queryClient.getQueryData(['notifications']);
+      const prev = queryClient.getQueryData<Notification[]>(['notifications']);
       // Optimistic: clear all from UI immediately
       queryClient.setQueryData(['notifications'], []);
       return { prev };
     },
-    onError: (_err, _vars, context: any) => {
-      queryClient.setQueryData(['notifications'], context.prev);
+    onError: (_err, _vars, context: { prev?: Notification[] } | undefined) => {
+      if (context?.prev) {
+        queryClient.setQueryData(['notifications'], context.prev);
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -131,14 +139,16 @@ export default function NotificationsPage() {
     mutationFn: deleteNotification,
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['notifications'] });
-      const prev = queryClient.getQueryData(['notifications']);
-      queryClient.setQueryData(['notifications'], (old: any) => 
-        old?.filter((n: any) => n.id !== id)
+      const prev = queryClient.getQueryData<Notification[]>(['notifications']);
+      queryClient.setQueryData<Notification[]>(['notifications'], (old) => 
+        old?.filter((n) => n.id !== id)
       );
       return { prev };
     },
-    onError: (_err, _id, context: any) => {
-      queryClient.setQueryData(['notifications'], context.prev);
+    onError: (_err, _id, context: { prev?: Notification[] } | undefined) => {
+      if (context?.prev) {
+        queryClient.setQueryData(['notifications'], context.prev);
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -151,9 +161,9 @@ export default function NotificationsPage() {
     return <LoadingState message="Mengambil pemberitahuan..." />;
   }
 
-  const unreadAlerts = notifications.filter((n: any) => n.is_unread).length;
-  const inventoryFlagged = notifications.filter((n: any) => n.category === 'Inventory' && n.is_unread).length;
-  const financialPending = notifications.filter((n: any) => (n.category === 'Finance' || n.category === 'Billing') && n.is_unread).length;
+  const unreadAlerts = notifications.filter((n: Notification) => n.is_unread).length;
+  const inventoryFlagged = notifications.filter((n: Notification) => n.category === 'Inventory' && n.is_unread).length;
+  const financialPending = notifications.filter((n: Notification) => (n.category === 'Finance' || n.category === 'Billing') && n.is_unread).length;
 
   const categories = ['Finance', 'Billing', 'Inventory', 'System'];
 
@@ -219,7 +229,7 @@ export default function NotificationsPage() {
       {/* Notifications Content */}
       <div className="flex flex-col gap-8">
         {categories.map((cat) => {
-          const catNotifications = notifications.filter((n: any) => n.category === cat);
+          const catNotifications = notifications.filter((n: Notification) => n.category === cat);
           if (catNotifications.length === 0) return null;
 
           const currentPage = pageMap[cat] || 1;
@@ -236,7 +246,7 @@ export default function NotificationsPage() {
               </div>
               
               <div className="space-y-3">
-                {paginatedNotifications.map((notif: any) => {
+                {paginatedNotifications.map((notif: Notification) => {
                   const config = typeConfig[notif.type] || typeConfig.backup;
                   const Icon = config.icon;
 
@@ -260,7 +270,7 @@ export default function NotificationsPage() {
                           <h4 className={`text-sm font-bold ${notif.is_unread ? 'text-slate-900 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'}`}>
                             {notif.title}
                           </h4>
-                          <span className="text-[0.6875rem] font-medium text-slate-500">{timeAgo(notif.created_at)}</span>
+                          <span className="text-[0.6875rem] font-medium text-slate-500">{timeAgo(notif.created_at || new Date().toISOString())}</span>
                         </div>
                         <p className={`text-sm leading-relaxed mt-1 ${notif.is_unread ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500 dark:text-slate-500'}`}>
                           {notif.message}

@@ -43,7 +43,7 @@ import { Transaction, ServiceTier, Customer } from "@/types";
 
 interface TooltipProps {
   active?: boolean;
-  payload?: any[];
+  payload?: Array<{ name: string; value: number; color?: string; payload: { color?: string; month?: string } }>;
   label?: string;
 }
 
@@ -67,7 +67,7 @@ const RevenueTooltip = ({ active, payload, label }: TooltipProps) => {
       <div className="bg-white dark:bg-slate-800 px-4 py-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700">
         <p className="text-xs font-bold text-slate-400 uppercase mb-2">{label}</p>
         <div className="space-y-1">
-          {payload.map((item: any, index: number) => (
+          {payload.map((item: { name: string; value: number; color?: string }, index: number) => (
             <div key={index} className="text-sm font-black flex items-center justify-between gap-4">
               <span className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
@@ -118,9 +118,9 @@ export default function Dashboard() {
   useEffect(() => {
     if (isLoading || !customerList.length || !transactions.length) return;
 
-    const active = customerList.filter((c: any) => c.status === "Active");
-    const estimatedRevenue = active.reduce((sum: number, customer: any) => {
-      const tier = serviceTiers.find((t: any) => {
+    const active = customerList.filter((c: Customer) => c.status === "Active");
+    const estimatedRevenue = active.reduce((sum: number, customer: Customer) => {
+      const tier = serviceTiers.find((t: ServiceTier) => {
         const sName = customer.service?.toLowerCase();
         const tName = t.name?.toLowerCase();
         if (tName === "gamers node") return sName === "gamers";
@@ -131,8 +131,8 @@ export default function Dashboard() {
     }, 0);
 
     const verifiedTxTotal = transactions
-      .filter((t: any) => t.status === "Verified")
-      .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
+      .filter((t: Transaction) => t.status === "Verified")
+      .reduce((sum: number, t: Transaction) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
     // Disable the automated flood of notifications
     /*
@@ -163,9 +163,9 @@ export default function Dashboard() {
   }, [lastUpdated]);
 
   const dynamicData = useMemo(() => {
-    const activeCustomers = customerList.filter((c: any) => c.status === "Active");
+    const activeCustomers = customerList.filter((c: Customer) => c.status === "Active");
 
-    const extractMonth = (dateVal: any) => {
+    const extractMonth = (dateVal: string | Date | null | undefined) => {
       if (!dateVal) return "";
       try {
         const d = new Date(dateVal);
@@ -184,15 +184,15 @@ export default function Dashboard() {
 
     const getMonthStats = (monthStr: string) => {
       // 1. Revenue: Verified pemasukan in month
-      const txs = transactions.filter((t: any) =>
+      const txs = transactions.filter((t: Transaction) =>
         t.status === "Verified" &&
         t.keterangan === "pemasukan" &&
         extractMonth(t.timestamp) === monthStr
       );
-      const rev = txs.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
+      const rev = txs.reduce((sum: number, t: Transaction) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
       // 2. Active Count (for ARPU denominator): status='Active' AND createdAt <= month
-      const activeCount = customerList.filter((c: any) =>
+      const activeCount = customerList.filter((c: Customer) =>
         c.status === "Active" &&
         extractMonth(c.createdAt) <= monthStr
       ).length;
@@ -200,22 +200,22 @@ export default function Dashboard() {
       const arpu = activeCount > 0 ? rev / activeCount : 0;
 
       // 3. Expense: Verified pengeluaran in month
-      const txExps = transactions.filter((t: any) =>
+      const txExps = transactions.filter((t: Transaction) =>
         t.status === "Verified" &&
         t.keterangan === "pengeluaran" &&
         extractMonth(t.timestamp) === monthStr
       );
-      const totalExp = txExps.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
+      const totalExp = txExps.reduce((sum: number, t: Transaction) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
       // 4. New Customers: createdAt in month
-      const newCustsInMonth = customerList.filter((c: any) =>
+      const newCustsInMonth = customerList.filter((c: Customer) =>
         extractMonth(c.createdAt) === monthStr
       ).length;
 
       const cac = newCustsInMonth > 0 ? totalExp / newCustsInMonth : 0;
 
       // 5. Inactive this month: From inactive_cust table
-      const inactiveInMonth = (inactiveCust as any[]).filter((ic: any) =>
+      const inactiveInMonth = (inactiveCust as { inactive_month?: string; inactiveat?: string }[]).filter((ic) =>
         (ic.inactive_month && ic.inactive_month === monthStr) || extractMonth(ic.inactiveat) === monthStr
       ).length;
 
@@ -229,8 +229,8 @@ export default function Dashboard() {
     };
 
 
-    const distribution = serviceTiers.map((tier: any) => {
-      const count = activeCustomers.filter((c: any) => {
+    const distribution = serviceTiers.map((tier: ServiceTier) => {
+      const count = activeCustomers.filter((c: Customer) => {
         const service = c.service?.toLowerCase();
         const tierName = tier.name.toLowerCase();
         if (tierName === "gamers node") return service === "gamers";
@@ -260,8 +260,8 @@ export default function Dashboard() {
 
     // --- CALCULATE TRENDS ---
     const monthsWithData = transactions
-      .filter((t: any) => t.status === "Verified" && t.keterangan === "pemasukan")
-      .map((t: any) => extractMonth(t.timestamp))
+      .filter((t: Transaction) => t.status === "Verified" && t.keterangan === "pemasukan")
+      .map((t: Transaction) => extractMonth(t.timestamp))
       .filter((m: string) => m.match(/^\d{4}-\d{2}$/))
       .sort();
 
@@ -338,9 +338,9 @@ export default function Dashboard() {
       },
       currentPeriod: (() => {
         const trxDates = transactions
-          .map((t: any) => new Date(t.timestamp || ""))
-          .filter((d: any) => !isNaN(d.getTime()))
-          .sort((a: any, b: any) => b.getTime() - a.getTime());
+          .map((t: Transaction) => new Date(t.timestamp || ""))
+          .filter((d: Date) => !isNaN(d.getTime()))
+          .sort((a: Date, b: Date) => b.getTime() - a.getTime());
 
         const latestDate = trxDates.length > 0 ? trxDates[0] : new Date();
         const monthName = latestDate.toLocaleString("en-US", { month: "short" });
@@ -355,28 +355,28 @@ export default function Dashboard() {
       name: "ARPU",
       value: dynamicData.arpu,
       trend: dynamicData.trends.arpu,
-      trendType: (dynamicData.trends.arpu === "0%" || dynamicData.trends.arpu.includes('0.0%')) ? "neutral" : (dynamicData.trends.arpu.startsWith('+') ? "up" : "down") as any,
+      trendType: (dynamicData.trends.arpu === "0%" || dynamicData.trends.arpu.includes('0.0%')) ? "neutral" : (dynamicData.trends.arpu.startsWith('+') ? "up" : "down") as "up" | "down" | "neutral",
       icon: User
     },
     {
       name: "CAC",
       value: dynamicData.cac,
       trend: dynamicData.trends.cac,
-      trendType: (dynamicData.trends.cac === "-" || dynamicData.trends.cac === "0%" || dynamicData.trends.cac.includes('0.0%')) ? "neutral" : (dynamicData.trends.cac.startsWith('+') ? "down" : "up") as any, // CAC up is bad
+      trendType: (dynamicData.trends.cac === "-" || dynamicData.trends.cac === "0%" || dynamicData.trends.cac.includes('0.0%')) ? "neutral" : (dynamicData.trends.cac.startsWith('+') ? "down" : "up") as "up" | "down" | "neutral", // CAC up is bad
       icon: DollarSign
     },
     {
       name: "Churn Rate",
       value: dynamicData.churnRate,
       trend: dynamicData.trends.churn,
-      trendType: (dynamicData.trends.churn === "0%" || dynamicData.trends.churn.includes('0.0%') || dynamicData.trends.churn === "-") ? "neutral" : (dynamicData.trends.churn.startsWith('+') ? "down" : "up") as any, // Churn up is bad
+      trendType: (dynamicData.trends.churn === "0%" || dynamicData.trends.churn.includes('0.0%') || dynamicData.trends.churn === "-") ? "neutral" : (dynamicData.trends.churn.startsWith('+') ? "down" : "up") as "up" | "down" | "neutral", // Churn up is bad
       icon: UserMinus
     },
     {
       name: "Total Revenue",
       value: dynamicData.totalRevenue,
       trend: dynamicData.trends.revenue,
-      trendType: (dynamicData.trends.revenue === "0%" || dynamicData.trends.revenue.includes('0.0%')) ? "neutral" : (dynamicData.trends.revenue.startsWith('+') ? "up" : "down") as any,
+      trendType: (dynamicData.trends.revenue === "0%" || dynamicData.trends.revenue.includes('0.0%')) ? "neutral" : (dynamicData.trends.revenue.startsWith('+') ? "up" : "down") as "up" | "down" | "neutral",
       icon: Wallet
     },
   ];
@@ -545,7 +545,7 @@ export default function Dashboard() {
                 {mounted && (
                   <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <LineChart
-                      data={dynamicData.trendData.filter((d: any) => d.growth !== null)}
+                      data={dynamicData.trendData}
                       margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
@@ -596,7 +596,7 @@ export default function Dashboard() {
                   {mounted && (
                     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <AreaChart
-                        data={(dynamicData.growthTrend as any[]).filter((d: any) => d.growth !== null)}
+                        data={(dynamicData.growthTrend as { growth?: number | null }[]).filter((d) => d.growth !== null)}
                         margin={{ top: 10, right: 20, left: 20, bottom: 0 }}
                       >
                         <defs>

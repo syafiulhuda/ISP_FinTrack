@@ -19,6 +19,32 @@ import { Customer, ServiceTier, Asset, Invoice } from "@/types";
 import { StatCard } from "@/components/ui/StatCard";
 import DataTable from "../../components/ui/DataTable";
 
+interface AgingMVRow {
+  NODE: string;
+  'REAL 0-30 DAYS': number;
+  'REAL 31-60 DAYS': number;
+  'REAL 61-90 DAYS': number;
+  'REAL 90+ DAYS': number;
+}
+
+interface NodeRow {
+  node: string;
+  customerCount: number;
+  revenue: string;
+  arpu: string;
+  status: string;
+  color: string;
+  activeCount: number;
+  inactiveCount: number;
+  aging: {
+    '0-30': string;
+    '31-60': string;
+    '61-90': string;
+    '90Plus': string;
+    critical: boolean;
+  };
+}
+
 const SKELETON_ITEMS = Array.from({ length: 3 });
 
 export default function RegionalAnalysisPage() {
@@ -50,7 +76,7 @@ export default function RegionalAnalysisPage() {
   const serviceTiers: ServiceTier[] = pageData?.serviceTiers || [];
   const assetRoster: Asset[] = pageData?.assetRoster || [];
   const invoicesList: Invoice[] = pageData?.invoicesList || [];
-  const agingMVData: any[] = pageData?.agingMVData || [];
+  const agingMVData: AgingMVRow[] = pageData?.agingMVData || [];
 
   const loadingCustomers = isPageLoading;
   const loadingTiers = isPageLoading;
@@ -162,7 +188,7 @@ export default function RegionalAnalysisPage() {
       return pMatch && cMatch && dMatch && sMatch;
     });
 
-    const grouped: Record<string, any> = {};
+    const grouped: Record<string, { node: string; customerCount: number; revenue: number; activeCount: number; inactiveCount: number }> = {};
     filtered.forEach(c => {
       const village = c.village || "Other";
       if (!grouped[village]) {
@@ -202,7 +228,7 @@ export default function RegionalAnalysisPage() {
       let aging90Plus = 0;
 
       // 3. Integrate Materialized View Data (Prioritize MV over simulation)
-      const mvNode = agingMVData.find((m: any) => m.NODE === v.node);
+      const mvNode = agingMVData.find((m: AgingMVRow) => m.NODE === v.node);
       
       if (mvNode) {
         // Data ditemukan di MV (Data Riil)
@@ -397,13 +423,13 @@ export default function RegionalAnalysisPage() {
             className="hidden lg:block"
             data={paginatedProfit}
             isLoading={isLoadingAll}
-            keyExtractor={(row: any) => row.node}
+            keyExtractor={(row: NodeRow) => row.node}
             columns={[
               { 
                 header: "Node Name", 
                 accessor: "node", 
                 className: "px-10 py-6",
-                render: (row: any) => (
+                render: (row: NodeRow) => (
                   <div className="flex items-center gap-4">
                     <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,74,198,0.5)]" />
                     <span className="font-black text-slate-900 dark:text-slate-100 text-lg">{row.node}</span>
@@ -414,25 +440,25 @@ export default function RegionalAnalysisPage() {
                 header: "Customer Count", 
                 accessor: "customerCount" as any, 
                 className: "px-10 py-6 font-bold",
-                render: (row: any) => `${row.customerCount} Active`
+                render: (row: NodeRow) => `${row.customerCount} Active`
               },
               { 
                 header: "Monthly Revenue", 
                 accessor: "revenue", 
                 className: "px-10 py-6 font-black text-slate-900 dark:text-slate-100 whitespace-nowrap",
-                render: (row: any) => <span className="tabular-nums">Rp {row.revenue}</span>
+                render: (row: NodeRow) => <span className="tabular-nums">Rp {row.revenue}</span>
               },
               { 
                 header: "ARPU", 
                 accessor: "arpu", 
                 className: "px-10 py-6 font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap",
-                render: (row: any) => <span className="tabular-nums">Rp {row.arpu}</span>
+                render: (row: NodeRow) => <span className="tabular-nums">Rp {row.arpu}</span>
               },
               { 
                 header: "Node Status", 
                 accessor: "status", 
                 className: "px-10 py-6",
-                render: (row: any) => (
+                render: (row: NodeRow) => (
                   <span className={cn("text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-wider", row.color)}>
                     {row.status}
                   </span>
@@ -587,33 +613,33 @@ export default function RegionalAnalysisPage() {
             className="hidden lg:block"
             data={paginatedAging}
             isLoading={isLoadingAll}
-            keyExtractor={(row: any) => `aging-${row.node}`}
-            rowClassName={(row: any) => row.aging.critical ? "bg-red-50/30 dark:bg-red-900/5" : ""}
+            keyExtractor={(row: NodeRow) => `aging-${row.node}`}
+            rowClassName={(row: NodeRow) => row.aging.critical ? "bg-red-50/30 dark:bg-red-900/5" : ""}
             columns={[
               { header: "Node", accessor: "node", className: "px-10 py-6 text-lg font-black" },
               { 
                 header: "0-30 Days", 
                 accessor: "aging", 
                 className: "px-10 py-6 font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap",
-                render: (row: any) => <span className="tabular-nums">Rp {row.aging["0-30"]}</span>
+                render: (row: NodeRow) => <span className="tabular-nums">Rp {row.aging["0-30"]}</span>
               },
               { 
                 header: "31-60 Days", 
                 accessor: "aging", 
                 className: "px-10 py-6 font-bold text-orange-600 whitespace-nowrap",
-                render: (row: any) => <span className="tabular-nums">Rp {row.aging["31-60"]}</span>
+                render: (row: NodeRow) => <span className="tabular-nums">Rp {row.aging["31-60"]}</span>
               },
               { 
                 header: "61-90 Days", 
                 accessor: "aging", 
                 className: "px-10 py-6 font-bold text-red-600 whitespace-nowrap",
-                render: (row: any) => <span className="tabular-nums">Rp {row.aging["61-90"]}</span>
+                render: (row: NodeRow) => <span className="tabular-nums">Rp {row.aging["61-90"]}</span>
               },
               { 
                 header: "90+ Days", 
                 accessor: "aging", 
                 className: "px-10 py-6 font-black text-red-800 whitespace-nowrap",
-                render: (row: any) => <span className="tabular-nums">Rp {row.aging["90Plus"]}</span>
+                render: (row: NodeRow) => <span className="tabular-nums">Rp {row.aging["90Plus"]}</span>
               },
             ]}
           />

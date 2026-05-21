@@ -1,4 +1,5 @@
 "use server";
+import { logger } from '@/lib/logger';
 
 import { getCustomers, getInactiveCust } from '@/actions/customers';
 import { getServiceTiers } from '@/actions/tiers';
@@ -72,7 +73,7 @@ export const getExecutiveSummaryMV = unstable_cache(
         kpi_totals:          rows.find(r => r.section === '5_kpi_totals') ?? null,
       };
     } catch (e) {
-      console.error("DB Error: getExecutiveSummaryMV (MV not ready, will fallback)", e);
+      logger.error({ message: "DB Error: getExecutiveSummaryMV (MV not ready, will fallback)", error: e, path: "action" });
       return null;
     }
   },
@@ -131,10 +132,10 @@ export async function refreshExecutiveMV() {
     // executive_summary_mv tidak pakai CONCURRENTLY karena tidak ada unique index
     // (multi-section UNION ALL tidak bisa diberi unique index sederhana)
     await query('REFRESH MATERIALIZED VIEW executive_summary_mv');
-    console.log('[MV Refresh] executive_summary_mv refreshed successfully');
+    if (process.env.NODE_ENV === 'development') console.log('[MV Refresh] executive_summary_mv refreshed successfully');
     return { success: true };
   } catch (e) {
-    console.error('[MV Refresh] executive_summary_mv failed:', e);
+    logger.error({ message: "[MV Refresh] executive_summary_mv failed:", error: e, path: "action" });
     return { success: false, error: String(e) };
   }
 }

@@ -17,6 +17,11 @@ export interface Customer {
   no_telp?: string;
   grace_days?: number;
   due_day?: number;
+  healthScore?: number;
+  ltv?: number;
+  txCount?: number;
+  paymentRatio?: number | string;
+  lastPayment?: string | Date;
 }
 
 export interface Asset {
@@ -25,6 +30,7 @@ export interface Asset {
   sn: string;
   status: string;
   location: string;
+  province?: string;
   kepemilikan?: string | null;
   tanggal_perubahan?: string | null;
   mac?: string | null;
@@ -88,7 +94,8 @@ export interface Notification {
 
 export interface Admin {
   id: number;
-  nama: string;
+  nama?: string;
+  fullName?: string;
   email: string;
   role: string;
   department: string;

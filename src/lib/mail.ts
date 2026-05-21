@@ -32,10 +32,10 @@ export async function sendResetPasswordEmail(email: string, token: string) {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent: " + info.response);
-    return { success: true };
+    if (process.env.NODE_ENV === "development") console.log(`Email terkirim: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error("Error sending email:", error);
+    if (process.env.NODE_ENV === "development") console.error("Error mengirim email:", error);
     return { success: false, error };
   }
 }

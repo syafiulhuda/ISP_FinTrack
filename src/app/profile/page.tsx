@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { m, Variants, AnimatePresence } from "framer-motion";
 import { Edit2, Laptop, Smartphone, Verified, ChevronRight, Info, Loader2, Camera, Lock, ArrowRight, X } from "lucide-react";
 import { getAdminProfile, updateAdminProfile } from "@/actions/admin";
@@ -32,7 +33,7 @@ export default function ProfilePage() {
   });
   
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState<any>(null);
+  const [editData, setEditData] = useState<Admin | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   
   // Password Change States
@@ -46,12 +47,12 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (profileData && !editData) {
-      setEditData(profileData);
+      setEditData(profileData as unknown as Admin);
     }
   }, [profileData, editData]);
 
   const handleEdit = () => {
-    setEditData(profileData);
+    setEditData((profileData as unknown as Admin) || null);
     setIsEditing(true);
   };
 
@@ -63,7 +64,13 @@ export default function ProfilePage() {
     if (!editData) return;
     setIsSaving(true);
     try {
-      await updateAdminProfile(editData);
+      await updateAdminProfile({
+        fullName: editData.fullName || editData.nama || "",
+        email: editData.email,
+        role: editData.role,
+        department: editData.department,
+        image: editData.image
+      });
       queryClient.invalidateQueries({ queryKey: ['adminProfile'] });
       setIsEditing(false);
       toast.success("Profile updated successfully");
@@ -111,7 +118,7 @@ export default function ProfilePage() {
 
   const handleSaveAvatar = (e: React.FormEvent) => {
     e.preventDefault();
-    setEditData({ ...editData, image: avatarInputUrl });
+    if (editData) setEditData({ ...editData, image: avatarInputUrl });
     setIsAvatarModalOpen(false);
   };
 
@@ -192,10 +199,13 @@ export default function ProfilePage() {
         <div className="flex flex-col md:flex-row items-center md:items-end gap-6 text-center md:text-left">
           <div className="relative group">
             <div className="w-32 h-32 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 border-4 border-white dark:border-slate-950 shadow-xl relative">
-              <img
+              <Image
+                unoptimized
+                width={128}
+                height={128}
                 alt="Profile"
                 className="w-full h-full object-cover"
-                src={editData?.image || profileData?.image || "https://lh3.googleusercontent.com/aida-public/AB6AXuAy5r20WVyuBCP6PIyl_WPdUNTOTLej17KRtvHSMhKkmw3XuvRxGquW9NQ7nL1YHK2ckLqfapVp4_3uLUkVNw5iP6LhThAAxHVLg2XMTKCoV5L9JsS-amXXtKCOWVLzMs29k1mHmq6SVCLVAQXzCifNQ93nAZ9Kla__kM7nbiY4R_vtpyT6r9en0Wa_A69W0YZxjzxE7p_x7B-sJfVfarpqrFbo2qgXbuK3unH5TREs7WhJEgFjRsvLWk-ZSbJb_MQwrA9_bw4lNaw"}
+                src={editData?.image || profileData?.image || "https://ui-avatars.com/api/?name=New+Admin&background=random&size=256"}
               />
               {isEditing && (
                 <div 
@@ -209,6 +219,7 @@ export default function ProfilePage() {
             <button 
               onClick={isEditing ? handleUpdateAvatar : handleEdit}
               className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full shadow-lg active:scale-90 transition-transform hover:bg-blue-600 z-10"
+              aria-label="Edit Profile"
             >
               <Edit2 size={14} />
             </button>
@@ -261,8 +272,8 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <input 
                     type="text" 
-                    value={editData.fullName} 
-                    onChange={e => setEditData({...editData, fullName: e.target.value})}
+                    value={editData?.fullName || ""} 
+                    onChange={e => setEditData(prev => prev ? {...prev, fullName: e.target.value} : null)}
                     className="w-full bg-white dark:bg-slate-900 px-4 py-3 rounded-xl border border-blue-500 ring-2 ring-blue-500/20 text-slate-900 dark:text-slate-100 font-medium focus:outline-none transition-all"
                   />
                 ) : (
@@ -278,8 +289,8 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <input 
                     type="email" 
-                    value={editData.email} 
-                    onChange={e => setEditData({...editData, email: e.target.value})}
+                    value={editData?.email || ""} 
+                    onChange={e => setEditData(prev => prev ? {...prev, email: e.target.value} : null)}
                     className="w-full bg-white dark:bg-slate-900 px-4 py-3 rounded-xl border border-blue-500 ring-2 ring-blue-500/20 text-slate-900 dark:text-slate-100 font-medium focus:outline-none transition-all"
                   />
                 ) : (
@@ -295,8 +306,8 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <input 
                     type="text" 
-                    value={editData.role} 
-                    onChange={e => setEditData({...editData, role: e.target.value})}
+                    value={editData?.role || ""} 
+                    onChange={e => setEditData(prev => prev ? {...prev, role: e.target.value} : null)}
                     className="w-full bg-white dark:bg-slate-900 px-4 py-3 rounded-xl border border-blue-500 ring-2 ring-blue-500/20 text-slate-900 dark:text-slate-100 font-medium focus:outline-none transition-all"
                   />
                 ) : (
@@ -312,8 +323,8 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <input 
                     type="text" 
-                    value={editData.department} 
-                    onChange={e => setEditData({...editData, department: e.target.value})}
+                    value={editData?.department || ""} 
+                    onChange={e => setEditData(prev => prev ? {...prev, department: e.target.value} : null)}
                     className="w-full bg-white dark:bg-slate-900 px-4 py-3 rounded-xl border border-blue-500 ring-2 ring-blue-500/20 text-slate-900 dark:text-slate-100 font-medium focus:outline-none transition-all"
                   />
                 ) : (

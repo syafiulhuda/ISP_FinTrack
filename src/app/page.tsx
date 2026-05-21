@@ -79,9 +79,9 @@ export default function Dashboard() {
   useEffect(() => {
     if (isLoading || !customerList.length || !transactions.length) return;
 
-    const active = customerList.filter((c: any) => c.status === "Active");
-    const estimatedRevenue = active.reduce((sum: number, customer: any) => {
-      const tier = serviceTiers.find((t: any) => {
+    const active = customerList.filter((c: Customer) => c.status === "Active");
+    const estimatedRevenue = active.reduce((sum: number, customer: Customer) => {
+      const tier = serviceTiers.find((t: ServiceTier) => {
         const sName = customer.service?.toLowerCase();
         const tName = t.name?.toLowerCase();
         if (tName === "gamers node") return sName === "gamers";
@@ -92,8 +92,8 @@ export default function Dashboard() {
     }, 0);
 
     const verifiedTxTotal = transactions
-      .filter((t: any) => t.status === "Verified")
-      .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
+      .filter((t: Transaction) => t.status === "Verified")
+      .reduce((sum: number, t: Transaction) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
     // Disable the automated flood of notifications
     /*
@@ -124,9 +124,9 @@ export default function Dashboard() {
   }, [lastUpdated]);
 
   const dynamicData = useMemo(() => {
-    const activeCustomers = customerList.filter((c: any) => c.status === "Active");
+    const activeCustomers = customerList.filter((c: Customer) => c.status === "Active");
 
-    const extractMonth = (dateVal: any) => {
+    const extractMonth = (dateVal: string | Date | null | undefined) => {
       if (!dateVal) return "";
       try {
         const d = new Date(dateVal);
@@ -145,15 +145,15 @@ export default function Dashboard() {
 
     const getMonthStats = (monthStr: string) => {
       // 1. Revenue: Verified pemasukan in month
-      const txs = transactions.filter((t: any) =>
+      const txs = transactions.filter((t: Transaction) =>
         t.status === "Verified" &&
         t.keterangan === "pemasukan" &&
         extractMonth(t.timestamp) === monthStr
       );
-      const rev = txs.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
+      const rev = txs.reduce((sum: number, t: Transaction) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
       // 2. Active Count (for ARPU denominator): status='Active' AND createdAt <= month
-      const activeCount = customerList.filter((c: any) =>
+      const activeCount = customerList.filter((c: Customer) =>
         c.status === "Active" &&
         extractMonth(c.createdAt) <= monthStr
       ).length;
@@ -161,22 +161,22 @@ export default function Dashboard() {
       const arpu = activeCount > 0 ? rev / activeCount : 0;
 
       // 3. Expense: Verified pengeluaran in month
-      const txExps = transactions.filter((t: any) =>
+      const txExps = transactions.filter((t: Transaction) =>
         t.status === "Verified" &&
         t.keterangan === "pengeluaran" &&
         extractMonth(t.timestamp) === monthStr
       );
-      const totalExp = txExps.reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
+      const totalExp = txExps.reduce((sum: number, t: Transaction) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
       // 4. New Customers: createdAt in month
-      const newCustsInMonth = customerList.filter((c: any) =>
+      const newCustsInMonth = customerList.filter((c: Customer) =>
         extractMonth(c.createdAt) === monthStr
       ).length;
 
       const cac = newCustsInMonth > 0 ? totalExp / newCustsInMonth : 0;
 
       // 5. Inactive this month: From inactive_cust table
-      const inactiveInMonth = (inactiveCust as any[]).filter((ic: any) =>
+      const inactiveInMonth = (inactiveCust as { inactive_month?: string; inactiveat?: string }[]).filter((ic) =>
         (ic.inactive_month && ic.inactive_month === monthStr) || extractMonth(ic.inactiveat) === monthStr
       ).length;
 
@@ -190,8 +190,8 @@ export default function Dashboard() {
     };
 
 
-    const distribution = serviceTiers.map((tier: any) => {
-      const count = activeCustomers.filter((c: any) => {
+    const distribution = serviceTiers.map((tier: ServiceTier) => {
+      const count = activeCustomers.filter((c: Customer) => {
         const service = c.service?.toLowerCase();
         const tierName = tier.name.toLowerCase();
         if (tierName === "gamers node") return service === "gamers";
@@ -221,8 +221,8 @@ export default function Dashboard() {
 
     // --- CALCULATE TRENDS ---
     const monthsWithData = transactions
-      .filter((t: any) => t.status === "Verified" && t.keterangan === "pemasukan")
-      .map((t: any) => extractMonth(t.timestamp))
+      .filter((t: Transaction) => t.status === "Verified" && t.keterangan === "pemasukan")
+      .map((t: Transaction) => extractMonth(t.timestamp))
       .filter((m: string) => m.match(/^\d{4}-\d{2}$/))
       .sort();
 
@@ -264,8 +264,8 @@ export default function Dashboard() {
 
     // --- DAILY TREND FOR LATEST ACTIVE MONTH ---
     const sortedTxs = [...transactions]
-      .filter((t: any) => t.status === "Verified")
-      .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      .filter((t: Transaction) => t.status === "Verified")
+      .sort((a: Transaction, b: Transaction) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
 
     const latestTx = sortedTxs[0];
     const latestTxDate = (latestTx && latestTx.timestamp) ? new Date(latestTx.timestamp) : new Date();
@@ -277,7 +277,7 @@ export default function Dashboard() {
     for (let day = 1; day <= latestDay; day++) {
       const dayStr = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-      const dayTxs = transactions.filter((t: any) => {
+      const dayTxs = transactions.filter((t: Transaction) => {
         if (!t.timestamp) return false;
         const d = new Date(t.timestamp);
         return d.getFullYear() === targetYear &&
@@ -287,12 +287,12 @@ export default function Dashboard() {
       });
 
       const rev = dayTxs
-        .filter((t: any) => t.keterangan === 'pemasukan')
-        .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
+        .filter((t: Transaction) => t.keterangan === 'pemasukan')
+        .reduce((sum: number, t: Transaction) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
       const exp = dayTxs
-        .filter((t: any) => t.keterangan === 'pengeluaran')
-        .reduce((sum: number, t: any) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
+        .filter((t: Transaction) => t.keterangan === 'pengeluaran')
+        .reduce((sum: number, t: Transaction) => sum + (parseInt(String(t.amount || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
       dailyTrendData.push({
         month: `${day} ${latestTxDate.toLocaleString('default', { month: 'short' })}`,
@@ -303,16 +303,16 @@ export default function Dashboard() {
 
     // --- DAILY CUSTOMER GROWTH FOR LATEST ACTIVE MONTH ---
     const dailyGrowthData = [];
-    let cumulativeBeforeMonth = customerList.filter((c: any) => {
+    let cumulativeBeforeMonth = customerList.filter((c: Customer) => {
       if (c.status !== "Active") return false;
-      const d = new Date(c.createdAt || c.registration_date);
+      const d = new Date(c.createdAt || c.tanggal_daftar || 0);
       return d.getFullYear() < targetYear || (d.getFullYear() === targetYear && d.getMonth() < targetMonth);
     }).length;
 
     for (let day = 1; day <= latestDay; day++) {
-      const newThisDay = customerList.filter((c: any) => {
+      const newThisDay = customerList.filter((c: Customer) => {
         if (c.status !== "Active") return false;
-        const d = new Date(c.createdAt || c.registration_date);
+        const d = new Date(c.createdAt || c.tanggal_daftar || 0);
         return d.getFullYear() === targetYear && d.getMonth() === targetMonth && d.getDate() === day;
       }).length;
 
@@ -340,9 +340,9 @@ export default function Dashboard() {
       dateRangeLabel: latestTxDate ? `Showing data from 1 ${latestTxDate.toLocaleString('default', { month: 'short' })} to ${latestTxDate.getDate()} ${latestTxDate.toLocaleString('default', { month: 'short' })} ${latestTxDate.getFullYear()}` : "",
       currentPeriod: (() => {
         const trxDates = transactions
-          .map((t: any) => new Date(t.timestamp || ""))
-          .filter((d: any) => !isNaN(d.getTime()))
-          .sort((a: any, b: any) => b.getTime() - a.getTime());
+          .map((t: Transaction) => new Date(t.timestamp || ""))
+          .filter((d: Date) => !isNaN(d.getTime()))
+          .sort((a: Date, b: Date) => b.getTime() - a.getTime());
 
         const latestDate = trxDates.length > 0 ? trxDates[0] : new Date();
         const monthName = latestDate.toLocaleString("en-US", { month: "short" });
@@ -357,28 +357,28 @@ export default function Dashboard() {
       name: "ARPU",
       value: dynamicData.arpu,
       trend: dynamicData.trends.arpu,
-      trendType: (dynamicData.trends.arpu === "0%" || dynamicData.trends.arpu.includes('0.0%')) ? "neutral" : (dynamicData.trends.arpu.startsWith('+') ? "up" : "down") as any,
+      trendType: (dynamicData.trends.arpu === "0%" || dynamicData.trends.arpu.includes('0.0%')) ? "neutral" : (dynamicData.trends.arpu.startsWith('+') ? "up" : "down") as "up" | "down" | "neutral",
       icon: User
     },
     {
       name: "CAC",
       value: dynamicData.cac,
       trend: dynamicData.trends.cac,
-      trendType: (dynamicData.trends.cac === "-" || dynamicData.trends.cac === "0%" || dynamicData.trends.cac.includes('0.0%')) ? "neutral" : (dynamicData.trends.cac.startsWith('+') ? "down" : "up") as any, // CAC up is bad
+      trendType: (dynamicData.trends.cac === "-" || dynamicData.trends.cac === "0%" || dynamicData.trends.cac.includes('0.0%')) ? "neutral" : (dynamicData.trends.cac.startsWith('+') ? "down" : "up") as "up" | "down" | "neutral", // CAC up is bad
       icon: DollarSign
     },
     {
       name: "Churn Rate",
       value: dynamicData.churnRate,
       trend: dynamicData.trends.churn,
-      trendType: (dynamicData.trends.churn === "0%" || dynamicData.trends.churn.includes('0.0%') || dynamicData.trends.churn === "-") ? "neutral" : (dynamicData.trends.churn.startsWith('+') ? "down" : "up") as any, // Churn up is bad
+      trendType: (dynamicData.trends.churn === "0%" || dynamicData.trends.churn.includes('0.0%') || dynamicData.trends.churn === "-") ? "neutral" : (dynamicData.trends.churn.startsWith('+') ? "down" : "up") as "up" | "down" | "neutral", // Churn up is bad
       icon: UserMinus
     },
     {
       name: "Total Revenue",
       value: dynamicData.totalRevenue,
       trend: dynamicData.trends.revenue,
-      trendType: (dynamicData.trends.revenue === "0%" || dynamicData.trends.revenue.includes('0.0%')) ? "neutral" : (dynamicData.trends.revenue.startsWith('+') ? "up" : "down") as any,
+      trendType: (dynamicData.trends.revenue === "0%" || dynamicData.trends.revenue.includes('0.0%')) ? "neutral" : (dynamicData.trends.revenue.startsWith('+') ? "up" : "down") as "up" | "down" | "neutral",
       icon: Wallet
     },
   ];
@@ -407,131 +407,131 @@ export default function Dashboard() {
       ) : (
         <>
           <AnimatePresence>
-        {isRoadmapOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <m.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsRoadmapOpen(false)}
-              className="absolute inset-0"
-            />
-            <m.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
-            >
-              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Infrastructure Roadmap 2026</h3>
-                  <p className="text-sm font-medium text-slate-500 mt-1">Expansion and upgrade schedule for West Java regions.</p>
-                </div>
-                <button
+            {isRoadmapOpen && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <m.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   onClick={() => setIsRoadmapOpen(false)}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400"
-                  aria-label="Close roadmap"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="p-8 space-y-6">
-                {[
-                  { phase: "Phase 1: Bandung Central", status: "In Progress", date: "Q1 2026", icon: Zap, color: "text-blue-500 bg-blue-50" },
-                  { phase: "Phase 2: Cimahi & Padalarang", status: "Planning", date: "Q2 2026", icon: Target, color: "text-orange-500 bg-orange-50" },
-                  { phase: "Phase 3: Garut & Tasikmalaya", status: "Upcoming", date: "Q3 2026", icon: Globe, color: "text-green-500 bg-green-50" },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <div className={cn("p-3 rounded-xl", item.color)}>
-                      <item.icon size={20} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-bold text-slate-900 dark:text-slate-100">{item.phase}</h4>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{item.date}</span>
-                      </div>
-                      <p className="text-xs font-medium text-slate-500 mt-1">Status: {item.status}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex justify-end">
-                <button
-                  onClick={() => setIsRoadmapOpen(false)}
-                  className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20"
-                >
-                  Acknowledge
-                </button>
-              </div>
-            </m.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <div ref={dashboardRef} className="pt-4 space-y-8 pb-10">
-        <div className="space-y-8">
-          {/* Header */}
-          <div
-            className="flex flex-row items-start md:items-center justify-between gap-2 md:gap-4"
-          >
-            <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">Executive Overview</h1>
-              <p className="text-[10px] md:text-sm font-medium text-slate-500 mt-1 flex items-center gap-1.5 md:gap-2">
-                <Clock size={12} className="md:w-[14px] md:h-[14px]" />
-                {minutesAgo === 0 ? "Data updated just now" : `Data updated ${minutesAgo} min ago`}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 md:gap-4 shrink-0">
-              <div className="text-right">
-                <p className="text-[8px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Current Period</p>
-                <p className="text-[10px] sm:text-xs md:text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {dynamicData.currentPeriod}
-                </p>
-              </div>
-              <button
-                onClick={() => router.push('/profitability')}
-                className="bg-primary text-white p-2 md:p-3 rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all shrink-0"
-                aria-label="View Detailed Profitability Analysis"
-              >
-                <TrendingUp size={16} className="md:w-[20px] md:h-[20px]" />
-              </button>
-            </div>
-          </div>
-
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-[140px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />
-              ))
-            ) : (
-              kpis.map((kpi, index) => (
-                <StatCard
-                  key={kpi.name}
-                  name={kpi.name}
-                  value={kpi.value}
-                  icon={kpi.icon}
-                  trend={kpi.trendType === 'neutral' ? undefined : kpi.trend}
-                  trendType={kpi.trendType as any}
+                  className="absolute inset-0"
                 />
-              ))
-            )}
-          </div>
+                <m.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+                >
+                  <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Infrastructure Roadmap 2026</h3>
+                      <p className="text-sm font-medium text-slate-500 mt-1">Expansion and upgrade schedule for West Java regions.</p>
+                    </div>
+                    <button
+                      onClick={() => setIsRoadmapOpen(false)}
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400"
+                      aria-label="Close roadmap"
+                    >
+                      <X size={24} />
+                    </button>
+                  </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <section
-              className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-full"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Revenue Growth</h3>
-                  <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">{dynamicData.dateRangeLabel}</p>
+                  <div className="p-8 space-y-6">
+                    {[
+                      { phase: "Phase 1: Bandung Central", status: "In Progress", date: "Q1 2026", icon: Zap, color: "text-blue-500 bg-blue-50" },
+                      { phase: "Phase 2: Cimahi & Padalarang", status: "Planning", date: "Q2 2026", icon: Target, color: "text-orange-500 bg-orange-50" },
+                      { phase: "Phase 3: Garut & Tasikmalaya", status: "Upcoming", date: "Q3 2026", icon: Globe, color: "text-green-500 bg-green-50" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <div className={cn("p-3 rounded-xl", item.color)}>
+                          <item.icon size={20} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-bold text-slate-900 dark:text-slate-100">{item.phase}</h4>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{item.date}</span>
+                          </div>
+                          <p className="text-xs font-medium text-slate-500 mt-1">Status: {item.status}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex justify-end">
+                    <button
+                      onClick={() => setIsRoadmapOpen(false)}
+                      className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20"
+                    >
+                      Acknowledge
+                    </button>
+                  </div>
+                </m.div>
+              </div>
+            )}
+          </AnimatePresence>
+
+          <div ref={dashboardRef} className="pt-4 space-y-8 pb-10">
+            <div className="space-y-8">
+              {/* Header */}
+              <div
+                className="flex flex-row items-start md:items-center justify-between gap-2 md:gap-4"
+              >
+                <div className="flex-1">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">Executive Overview</h1>
+                  <p className="text-[10px] md:text-sm font-medium text-slate-500 mt-1 flex items-center gap-1.5 md:gap-2">
+                    <Clock size={12} className="md:w-[14px] md:h-[14px]" />
+                    {minutesAgo === 0 ? "Data updated just now" : `Data updated ${minutesAgo} min ago`}
+                  </p>
                 </div>
-                <Link
-                  href="/profitability"
-                  className="
+                <div className="flex items-center gap-2 md:gap-4 shrink-0">
+                  <div className="text-right">
+                    <p className="text-[8px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Current Period</p>
+                    <p className="text-[10px] sm:text-xs md:text-sm font-bold text-slate-900 dark:text-slate-100">
+                      {dynamicData.currentPeriod}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => router.push('/profitability')}
+                    className="bg-primary text-white p-2 md:p-3 rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all shrink-0"
+                    aria-label="View Detailed Profitability Analysis"
+                  >
+                    <TrendingUp size={16} className="md:w-[20px] md:h-[20px]" />
+                  </button>
+                </div>
+              </div>
+
+              {/* KPI Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {isLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-[140px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />
+                  ))
+                ) : (
+                  kpis.map((kpi, index) => (
+                    <StatCard
+                      key={kpi.name}
+                      name={kpi.name}
+                      value={kpi.value}
+                      icon={kpi.icon}
+                      trend={kpi.trendType === 'neutral' ? undefined : kpi.trend}
+                      trendType={kpi.trendType as any}
+                    />
+                  ))
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <section
+                  className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-full"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Revenue Growth</h3>
+                      <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">{dynamicData.dateRangeLabel}</p>
+                    </div>
+                    <Link
+                      href="/profitability"
+                      className="
                     inline-flex items-center justify-center gap-2
                     px-4 py-3 rounded-xl w-full sm:w-auto
                     bg-slate-50 dark:bg-slate-800
@@ -539,61 +539,61 @@ export default function Dashboard() {
                     hover:bg-primary hover:text-primary-foreground
                     transition-all
                   "
-                >
-                  <span className="text-sm font-semibold whitespace-nowrap">
-                    View Details
-                  </span>
-                  <ExternalLink size={18} />
-                </Link>
-              </div>
-              <ChartContainer className="flex-1 w-full mt-4 h-[300px]">
-                {isLoading ? (
-                  <div className="h-full w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
-                ) : (
-                  <DashboardRevenueChart data={dynamicData.trendData.filter((d: any) => d.growth !== null)} />
-                )}
-              </ChartContainer>
-            </section>
+                    >
+                      <span className="text-sm font-semibold whitespace-nowrap">
+                        View Details
+                      </span>
+                      <ExternalLink size={18} />
+                    </Link>
+                  </div>
+                  <ChartContainer className="flex-1 w-full mt-4 h-[300px]">
+                    {isLoading ? (
+                      <div className="h-full w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+                    ) : (
+                      <DashboardRevenueChart data={dynamicData.trendData} />
+                    )}
+                  </ChartContainer>
+                </section>
 
-            <div className="space-y-8">
-              {/* Right Column: Customer Mix */}
-              <section
-                className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-200 dark:border-slate-800 shadow-sm"
-              >
-                <div className="mb-8">
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Customer Growth</h3>
-                  <p className="text-xs font-medium text-slate-500 mt-1">{dynamicData.dateRangeLabel}</p>
+                <div className="space-y-8">
+                  {/* Right Column: Customer Mix */}
+                  <section
+                    className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-200 dark:border-slate-800 shadow-sm"
+                  >
+                    <div className="mb-8">
+                      <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100">Customer Growth</h3>
+                      <p className="text-xs font-medium text-slate-500 mt-1">{dynamicData.dateRangeLabel}</p>
+                    </div>
+                    <ChartContainer className="h-[220px] w-full mt-4">
+                      {isLoading ? (
+                        <div className="h-full w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+                      ) : (
+                        <DashboardCustomerChart data={(dynamicData.growthTrend as { growth?: number | null }[]).filter((d) => d.growth !== null)} />
+                      )}
+                    </ChartContainer>
+
+                  </section>
+
+                  <section
+                    className="bg-slate-900 rounded-3xl p-8 shadow-2xl relative overflow-hidden group"
+                  >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/20 transition-colors" />
+                    <h3 className="text-white font-black text-lg mb-2 relative z-10">Upgrade Infrastructure</h3>
+                    <p className="text-slate-400 text-sm mb-6 font-medium leading-relaxed relative z-10">Expand nodes in the Bandung area to capture growing demand.</p>
+                    <m.button
+                      onClick={() => setIsRoadmapOpen(true)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="w-full py-4 bg-white text-slate-900 rounded-2xl font-black text-sm hover:bg-slate-100 transition-all flex items-center justify-center gap-2 relative z-10 shadow-xl shadow-white/5"
+                    >
+                      Review Roadmap <ArrowUpRight size={18} />
+                    </m.button>
+                  </section>
                 </div>
-                <ChartContainer className="h-[220px] w-full mt-4">
-                  {isLoading ? (
-                    <div className="h-full w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
-                  ) : (
-                    <DashboardCustomerChart data={(dynamicData.growthTrend as any[]).filter((d: any) => d.growth !== null)} />
-                  )}
-                </ChartContainer>
-
-              </section>
-
-              <section
-                className="bg-slate-900 rounded-3xl p-8 shadow-2xl relative overflow-hidden group"
-              >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/20 transition-colors" />
-                <h3 className="text-white font-black text-lg mb-2 relative z-10">Upgrade Infrastructure</h3>
-                <p className="text-slate-400 text-sm mb-6 font-medium leading-relaxed relative z-10">Expand nodes in the Bandung area to capture growing demand.</p>
-                <m.button
-                  onClick={() => setIsRoadmapOpen(true)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-full py-4 bg-white text-slate-900 rounded-2xl font-black text-sm hover:bg-slate-100 transition-all flex items-center justify-center gap-2 relative z-10 shadow-xl shadow-white/5"
-                >
-                  Review Roadmap <ArrowUpRight size={18} />
-                </m.button>
-              </section>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-      </>
+        </>
       )}
     </div>
   );

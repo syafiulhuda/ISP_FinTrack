@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { refreshAgingMV } from '@/actions/customers';
 import { refreshPredictions } from '@/actions/predictions';
+import { logger } from '@/lib/logger';
+
+import { refreshDashboardMV } from '@/actions/dashboard';
+import { refreshProfitabilityMV } from '@/actions/profitability';
+import { refreshExecutiveMV } from '@/actions/executive';
 
 export async function GET(request: Request) {
   try {
@@ -9,17 +14,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log("VERCEL CRON: Starting refresh of materialized views...");
+    if (process.env.NODE_ENV === 'development') console.log("VERCEL CRON: Starting refresh of materialized views...");
     
     await Promise.all([
       refreshAgingMV(),
-      refreshPredictions()
+      refreshPredictions(),
+      refreshDashboardMV(),
+      refreshProfitabilityMV(),
+      refreshExecutiveMV()
     ]);
     
-    console.log("VERCEL CRON: Refresh completed successfully.");
+    if (process.env.NODE_ENV === 'development') console.log("VERCEL CRON: Refresh completed successfully.");
     return NextResponse.json({ success: true, message: 'Cron job executed successfully' });
-  } catch (error: any) {
-    console.error("VERCEL CRON ERROR:", error);
-    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ message: "VERCEL CRON ERROR:", error: err, path: "server" });
+    return NextResponse.json({ error: 'Internal Server Error', details: err.message }, { status: 500 });
   }
 }

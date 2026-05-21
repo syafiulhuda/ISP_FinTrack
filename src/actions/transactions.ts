@@ -1,8 +1,8 @@
 'use server';
+import { logger } from '@/lib/logger';
 
 import { query } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import * as Mock from '@/lib/mockData';
 import { Transaction, OcrData, Invoice } from '@/types';
 import { getAdminProfile } from './admin';
 
@@ -21,7 +21,7 @@ export async function getTransactions(monthsBack?: number): Promise<(Transaction
       ORDER BY t.timestamp DESC
     `);
     
-    const data = res.rows.length > 0 ? res.rows : [...Mock.MOCK_TRANSACTIONS].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    const data = res.rows;
     return data.map(r => ({
       ...r,
       amount: r.amount !== null ? Number(r.amount) : 0,
@@ -29,11 +29,8 @@ export async function getTransactions(monthsBack?: number): Promise<(Transaction
       timestamp: r.timestamp ? new Date(r.timestamp).toISOString() : new Date().toISOString()
     })) as (Transaction & { numericAmount?: number })[];
   } catch (e) {
-    console.error("DB Error: getTransactions", e);
-    return Mock.MOCK_TRANSACTIONS.map(r => ({
-      ...r,
-      numericAmount: Number(String(r.amount).replace(/[^0-9.-]+/g,"")),
-    })) as (Transaction & { numericAmount?: number })[];
+    logger.error({ message: "DB Error: getTransactions", error: e, path: "action" });
+    return [];
   }
 }
 
@@ -42,7 +39,7 @@ export async function getInvoices(): Promise<Invoice[]> {
     const res = await query('SELECT * FROM invoices ORDER BY id DESC');
     return res.rows as Invoice[];
   } catch (e) {
-    console.error("DB Error: getInvoices", e);
+    logger.error({ message: "DB Error: getInvoices", error: e, path: "action" });
     return [];
   }
 }
@@ -53,10 +50,10 @@ export async function getExpenses() {
     return res.rows.length > 0 ? res.rows.map(row => ({
       ...row,
       amount: Number(row.amount)
-    })) : Mock.MOCK_EXPENSES;
+    })) : [];
   } catch (e) {
-    console.error("DB Error: getExpenses", e);
-    return Mock.MOCK_EXPENSES;
+    logger.error({ message: "DB Error: getExpenses", error: e, path: "action" });
+    return [];
   }
 }
 
@@ -82,8 +79,8 @@ export async function getOcrData(): Promise<OcrData> {
     
     return res.rows[0] as OcrData;
   } catch (e) {
-    console.error("DB Error: getOcrData", e);
-    return { ...Mock.MOCK_OCR, id: 999 } as unknown as OcrData;
+    logger.error({ message: "DB Error: getOcrData", error: e, path: "action" });
+    return { id: 0, vendor: 'System', date: new Date().toISOString(), amount: '0', reference: 'ERROR', image: '', confidence: '0%', inputter: 'System', inputter_tms: new Date().toISOString() } as unknown as OcrData;
   }
 }
 
@@ -117,7 +114,7 @@ export async function updateOcrData(id: string | number, data: {
     revalidatePath('/finance');
     return res.rows[0];
   } catch (e) {
-    console.error("DB Error: updateOcrData", e);
+    logger.error({ message: "DB Error: updateOcrData", error: e, path: "action" });
     return null;
   }
 }
@@ -280,7 +277,7 @@ export async function postOcrEntry(ocrId: string | number, data: {
     revalidatePath('/inventory');
     return { success: true, trxId };
   } catch (e) {
-    console.error("DB Error: postOcrEntry", e);
+    logger.error({ message: "DB Error: postOcrEntry", error: e, path: "action" });
     return { success: false, error: (e as Error).message };
   }
 }
@@ -354,7 +351,7 @@ export async function getRevenueGrowthTrend() {
 
     return filledData;
   } catch (e) {
-    console.error("DB Error: getRevenueGrowthTrend", e);
+    logger.error({ message: "DB Error: getRevenueGrowthTrend", error: e, path: "action" });
     return [
       { month: 'Oct', revenue: 4800000, expenses: 2500000 },
       { month: 'Nov', revenue: 4200000, expenses: 2100000 },
@@ -388,7 +385,7 @@ export async function getTransactionDateRange(): Promise<{ startDate: string; en
     const wibYear = new Date(now.getTime() + 7 * 60 * 60 * 1000).getUTCFullYear();
     return { startDate: `${wibYear}-01-01`, endDate: `${wibYear}-12-31` };
   } catch (e) {
-    console.error("DB Error: getTransactionDateRange", e);
+    logger.error({ message: "DB Error: getTransactionDateRange", error: e, path: "action" });
     const now = new Date();
     const wibYear = new Date(now.getTime() + 7 * 60 * 60 * 1000).getUTCFullYear();
     return { startDate: `${wibYear}-01-01`, endDate: `${wibYear}-12-31` };
@@ -400,7 +397,7 @@ export async function checkTrxExists(reference: string) {
     const res = await query('SELECT id FROM transactions WHERE id = $1', [reference]);
     return res.rows.length > 0;
   } catch (e) {
-    console.error("DB Error: checkTrxExists", e);
+    logger.error({ message: "DB Error: checkTrxExists", error: e, path: "action" });
     return false;
   }
 }
@@ -414,7 +411,7 @@ export async function getNextExpenseId(): Promise<string> {
     const nextId = res.rows[0].next_id;
     return `OUT-${nextId}`;
   } catch (e) {
-    console.error("DB Error: getNextExpenseId", e);
+    logger.error({ message: "DB Error: getNextExpenseId", error: e, path: "action" });
     try {
       const fallback = await query("SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM expenses");
       return `OUT-${fallback.rows[0].next_id}`;

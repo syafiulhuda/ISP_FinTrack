@@ -185,6 +185,7 @@ export function CustomerDetailDrawer({ customer, onClose }: CustomerDetailDrawer
                   </div>
                 </div>
                 <button onClick={onClose}
+                  aria-label="Close customer drawer"
                   className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all">
                   <X size={18} />
                 </button>
@@ -440,6 +441,7 @@ export function CustomerDetailDrawer({ customer, onClose }: CustomerDetailDrawer
             {/* Footer */}
             <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
               <button onClick={onClose}
+                aria-label="Close customer drawer"
                 className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-xl font-black text-sm transition-all">
                 Tutup
               </button>

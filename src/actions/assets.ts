@@ -1,8 +1,8 @@
 'use server';
+import { logger } from '@/lib/logger';
 
 import { query } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import * as Mock from '@/lib/mockData';
 import { Asset } from '@/types';
 import { getAdminProfile } from './admin';
 
@@ -18,20 +18,20 @@ export async function getAssetRoster(): Promise<Asset[]> {
       FROM asset_roster 
       ORDER BY id ASC
     `);
-    return res.rows.length > 0 ? res.rows as Asset[] : Mock.MOCK_ASSETS as Asset[];
+    return res.rows as Asset[];
   } catch (e) {
-    console.error("DB Error: getAssetRoster", e);
-    return Mock.MOCK_ASSETS as Asset[];
+    logger.error({ message: "DB Error: getAssetRoster", error: e, path: "action" });
+    return [];
   }
 }
 
 export async function getStockAssets() {
   try {
     const res = await query('SELECT *, is_used::boolean as is_used FROM stock_asset_roster ORDER BY id ASC');
-    return res.rows.length > 0 ? res.rows : Mock.MOCK_STOCK;
+    return res.rows;
   } catch (e) {
-    console.error("DB Error: getStockAssets", e);
-    return Mock.MOCK_STOCK;
+    logger.error({ message: "DB Error: getStockAssets", error: e, path: "action" });
+    return [];
   }
 }
 
@@ -40,7 +40,7 @@ export async function getWarehouses() {
     const res = await query('SELECT id, location, latitude, longitude, city FROM warehouse_location ORDER BY location ASC');
     return res.rows;
   } catch (e) {
-    console.error("DB Error: getWarehouses", e);
+    logger.error({ message: "DB Error: getWarehouses", error: e, path: "action" });
     return [
       { id: 1, location: 'Warehouse Main', city: 'Jakarta', latitude: -6.2088, longitude: 106.8456 },
       { id: 2, location: 'Warehouse East', city: 'Yogyakarta', latitude: -7.7956, longitude: 110.3695 }
@@ -87,7 +87,7 @@ export async function createAsset(data: {
     revalidatePath('/inventory');
     return { success: true, asset: res.rows[0] };
   } catch (e) {
-    console.error("DB Error: createAsset", e);
+    logger.error({ message: "DB Error: createAsset", error: e, path: "action" });
     return { success: false, error: String(e) };
   }
 }
@@ -101,7 +101,7 @@ export async function updateAssetCondition(sn: string, condition: string) {
     revalidatePath('/inventory');
     return { success: true };
   } catch (e) {
-    console.error("DB Error: updateAssetCondition", e);
+    logger.error({ message: "DB Error: updateAssetCondition", error: e, path: "action" });
     return { success: false };
   }
 }
@@ -137,7 +137,7 @@ export async function startMaintenance(sn: string, technician: string, reason: s
     revalidatePath('/distribution');
     return { success: true };
   } catch (error) {
-    console.error('DB Error: startMaintenance:', error);
+    logger.error({ message: "DB Error: startMaintenance:", error: error, path: "action" });
     return { success: false, error: String(error) };
   }
 }
@@ -148,7 +148,7 @@ export async function deleteAsset(sn: string) {
     revalidatePath('/inventory');
     return { success: true };
   } catch (e) {
-    console.error("DB Error: deleteAsset", e);
+    logger.error({ message: "DB Error: deleteAsset", error: e, path: "action" });
     return { success: false };
   }
 }
@@ -170,7 +170,7 @@ export async function deployAsset(sn: string, data: { location: string, latitude
     revalidatePath('/inventory');
     return { success: true };
   } catch (e) {
-    console.error("DB Error: deployAsset", e);
+    logger.error({ message: "DB Error: deployAsset", error: e, path: "action" });
     return { success: false, error: String(e) };
   }
 }

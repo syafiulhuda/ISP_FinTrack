@@ -1,7 +1,7 @@
 'use server';
+import { logger } from '@/lib/logger';
 
 import { query } from '@/lib/db';
-import { MOCK_ASSETS } from '@/lib/mockData';
 import { revalidatePath } from 'next/cache';
 import { getAdminProfile } from './admin';
 
@@ -26,10 +26,10 @@ export async function getMapAssets() {
         AND (kepemilikan NOT IN ('Dijual', 'Telah Dijual') OR kepemilikan IS NULL)
       ORDER BY id ASC
     `);
-    return res.rows.length > 0 ? res.rows : MOCK_ASSETS;
+    return res.rows;
   } catch (error) {
-    console.error('DB Error: getMapAssets:', error);
-    return MOCK_ASSETS;
+    logger.error({ message: "DB Error: getMapAssets:", error: error, path: "action" });
+    return [];
   }
 }
 
@@ -62,7 +62,7 @@ export async function addMapNode(data: {
     revalidatePath('/distribution');
     return { success: true, asset: res.rows[0] };
   } catch (error) {
-    console.error('DB Error: addMapNode:', error);
+    logger.error({ message: "DB Error: addMapNode:", error: error, path: "action" });
     return { success: false, error: String(error) };
   }
 }
@@ -98,7 +98,7 @@ export async function dispatchTechnician(assetId: number, sn: string) {
     revalidatePath('/notifications');
     return { success: true };
   } catch (error) {
-    console.error('DB Error: dispatchTechnician:', error);
+    logger.error({ message: "DB Error: dispatchTechnician:", error: error, path: "action" });
     return { success: false, error: String(error) };
   }
 }
@@ -112,7 +112,7 @@ export async function getMaintenanceHistory(assetId: number) {
     `, [assetId]);
     return res.rows;
   } catch (error) {
-    console.error('DB Error: getMaintenanceHistory:', error);
+    logger.error({ message: "DB Error: getMaintenanceHistory:", error: error, path: "action" });
     return [];
   }
 }
@@ -162,7 +162,7 @@ export async function resolveMaintenance(sn: string, technician: string, descrip
     revalidatePath('/notifications');
     return { success: true };
   } catch (error) {
-    console.error('DB Error: resolveMaintenance:', error);
+    logger.error({ message: "DB Error: resolveMaintenance:", error: error, path: "action" });
     return { success: false, error: String(error) };
   }
 }

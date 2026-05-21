@@ -1,4 +1,5 @@
 'use server';
+import { logger } from '@/lib/logger';
 
 import { query } from '@/lib/db';
 import * as ss from 'simple-statistics';
@@ -108,7 +109,7 @@ export async function getPredictions(modelType: 'lr' | 'nn' = 'lr'): Promise<Pre
       model: modelType
     };
   } catch (e) {
-    console.error("Prediction Error:", e);
+    logger.error({ message: "Prediction Error:", error: e, path: "action" });
     return null;
   }
 }
@@ -118,7 +119,7 @@ export async function refreshPredictions() {
     await query('SELECT refresh_predictive_metrics()');
     return { success: true };
   } catch (e) {
-    console.error("Refresh Error:", e);
+    logger.error({ message: "Refresh Error:", error: e, path: "action" });
     return { success: false };
   }
 }

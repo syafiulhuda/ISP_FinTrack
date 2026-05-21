@@ -185,6 +185,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
           <button
             onClick={handleSendReminder}
             disabled={isSending}
+            aria-label="Send payment reminder"
             className="flex items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
           >
             <Bell size={16} className={cn(isSending && "animate-bounce")} />
@@ -193,6 +194,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
           <button
             onClick={handleToggleVip}
             disabled={isTogglingVip}
+            aria-label={isVip ? "Remove VIP status" : "Mark as VIP"}
             className={cn(
               "flex items-center justify-center gap-2 px-4 tablet:px-6 py-3 border rounded-2xl font-bold text-xs tablet:text-sm transition-all disabled:opacity-50",
               isVip

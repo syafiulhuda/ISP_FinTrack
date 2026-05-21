@@ -11,7 +11,7 @@
  *   </ChartContainer>
  */
 
-import { useLayoutEffect, useState, useRef, ReactNode, CSSProperties } from "react";
+import { useLayoutEffect, useState, useEffect, useRef, ReactNode, CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
 interface ChartContainerProps {
@@ -37,6 +37,24 @@ export function ChartContainer({
     });
     return () => cancelAnimationFrame(id);
   }, []);
+
+  // Suppress Recharts width(-1)/height(-1) warning before chart is ready
+  useEffect(() => {
+    if (ready) return;
+    const original = console.error.bind(console);
+    console.error = (...args: unknown[]) => {
+      if (
+        typeof args[0] === "string" &&
+        args[0].includes("width(-1) and height(-1)")
+      ) {
+        return;
+      }
+      original(...args);
+    };
+    return () => {
+      console.error = original;
+    };
+  }, [ready]);
 
   return (
     <div ref={ref} className={cn("relative", className)} style={style}>

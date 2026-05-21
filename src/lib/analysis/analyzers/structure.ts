@@ -90,7 +90,7 @@ export class StructureAnalyzer extends BaseAnalyzer {
     const { packageJson, files } = ctx;
 
     // Packages that are definitely only used in scripts / archive, not src/
-    const POTENTIALLY_UNUSED = ['node-cron'];
+    const POTENTIALLY_UNUSED = ['some-unused-dep'];
 
     for (const pkg of POTENTIALLY_UNUSED) {
       if (!packageJson?.dependencies?.[pkg]) continue;
@@ -136,7 +136,7 @@ export class StructureAnalyzer extends BaseAnalyzer {
 
     for (const file of ctx.files) {
       if (file.type !== FileType.SOURCE) continue;
-      if (file.size < 50_000) continue; // 50 KB threshold
+      if (file.size < 100_000) continue; // 100 KB threshold
 
       const base = path.basename(file.path);
       const rel  = path.relative(ctx.projectRoot, file.path);

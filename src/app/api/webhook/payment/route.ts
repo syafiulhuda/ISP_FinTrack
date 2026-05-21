@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 /**
  * 🚀 PAYMENT GATEWAY WEBHOOK BLUEPRINT (Draft)
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Webhook processed successfully' });
 
   } catch (error) {
-    console.error('Webhook Error:', error);
+    logger.error({ message: "Webhook Error:", error: error, path: window?.location?.pathname || "server" });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

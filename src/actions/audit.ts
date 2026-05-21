@@ -1,4 +1,5 @@
 'use server';
+import { logger } from '@/lib/logger';
 
 import { query } from '@/lib/db';
 
@@ -99,7 +100,7 @@ export async function getAuditLogs() {
     
     return combined;
   } catch (e) {
-    console.error("DB Error: getAuditLogs", e);
+    logger.error({ message: "DB Error: getAuditLogs", error: e, path: "action" });
     return [];
   }
 }

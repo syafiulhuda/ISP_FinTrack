@@ -8,6 +8,14 @@ import { Search, Calendar, FilterX, ChevronLeft, ChevronRight, ChevronsLeft, Che
 import { cn } from "@/lib/utils";
 import { m, AnimatePresence } from "framer-motion";
 
+interface AuditLog {
+  id: string;
+  user: string;
+  timestamp: string;
+  action: string;
+  details: string;
+}
+
 export default function AuditTrailPage() {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['auditLogs'],
@@ -31,7 +39,7 @@ export default function AuditTrailPage() {
   }, [adminSearch, dateFilter]);
 
   const sortedAndFilteredLogs = useMemo(() => {
-    const filtered = logs.filter((log: any) => {
+    const filtered = logs.filter((log: AuditLog) => {
       // Filter by date
       if (dateFilter) {
         const date = new Date(log.timestamp);
@@ -53,7 +61,7 @@ export default function AuditTrailPage() {
     });
 
     // Sort Descending
-    return [...filtered].sort((a: any, b: any) => 
+    return [...filtered].sort((a: AuditLog, b: AuditLog) => 
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
   }, [logs, dateFilter, adminSearch]);
@@ -67,24 +75,24 @@ export default function AuditTrailPage() {
   const columns = [
     { 
       header: "Date & Time", 
-      accessor: "timestamp", 
+      accessor: "timestamp" as keyof AuditLog, 
       className: "whitespace-nowrap",
-      render: (row: any) => {
+      render: (row: AuditLog) => {
         const d = new Date(row.timestamp);
         return <span className="font-mono text-sm text-slate-600 dark:text-slate-300 tabular-nums">{d.toLocaleString('id-ID')}</span>;
       }
     },
     { 
       header: "User / Admin", 
-      accessor: "user", 
+      accessor: "user" as keyof AuditLog, 
       className: "whitespace-nowrap",
-      render: (row: any) => <span className="font-medium text-slate-800 dark:text-slate-200">{row.user}</span>
+      render: (row: AuditLog) => <span className="font-medium text-slate-800 dark:text-slate-200">{row.user}</span>
     },
     { 
       header: "Action Type", 
-      accessor: "action", 
+      accessor: "action" as keyof AuditLog, 
       className: "whitespace-nowrap",
-      render: (row: any) => {
+      render: (row: AuditLog) => {
         let color = "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
         if (row.action === 'System Login') color = "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
         if (row.action === 'Data Insert/Update') color = "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
@@ -99,9 +107,9 @@ export default function AuditTrailPage() {
     },
     { 
       header: "Details / Record ID", 
-      accessor: "details",
+      accessor: "details" as keyof AuditLog,
       className: "whitespace-nowrap min-w-[200px]",
-      render: (row: any) => <span className="text-sm text-slate-500 dark:text-slate-400">{row.details}</span>
+      render: (row: AuditLog) => <span className="text-sm text-slate-500 dark:text-slate-400">{row.details}</span>
     }
   ];
 
@@ -170,7 +178,7 @@ export default function AuditTrailPage() {
                 Tidak ada aktivitas yang sesuai.
               </div>
             ) : (
-              displayLogs.map((log: any) => {
+              displayLogs.map((log: AuditLog) => {
                 const isExpanded = expandedLogId === log.id;
                 const d = new Date(log.timestamp);
                 

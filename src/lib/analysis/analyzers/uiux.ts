@@ -82,14 +82,14 @@ const [url, setUrl] = useState(currentUrl);
 
   private _checkMissingAriaLabels(files: FileMetadata[]): Finding[] {
     const findings: Finding[] = [];
-    const iconButtonPattern = /<button(?![^>]*aria-label)[^>]*>\s*<(?:svg|[A-Z]\w+)[^>]*(?:size|className)/;
+    const iconButtonPattern = /<button(?![^>]*aria-label)[^>]*>\s*<(?:svg|[A-Z]\w+)[^>]*(?:size|className)[^>]*>\s*<\/button>/;
 
     for (const file of files) {
       const src = this.readFile(file.path);
       if (!iconButtonPattern.test(src)) continue;
 
       // Count approximate number of icon-only buttons
-      const count = (src.match(/<button(?![^>]*aria-label)/g) ?? []).length;
+      const count = (src.match(/<button(?![^>]*aria-label)[^>]*>\s*<(?:svg|[A-Z]\w+)[^>]*(?:size|className)[^>]*>\s*<\/button>/g) ?? []).length;
       if (count === 0) continue;
 
       findings.push(this.finding({

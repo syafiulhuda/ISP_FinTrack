@@ -196,7 +196,7 @@ export default function FinancePage() {
         const ret = await worker.recognize(file);
         const text = ret.data.text;
         
-        console.log("[OCR Raw Text]:", text); 
+        if (process.env.NODE_ENV === 'development') console.log("[OCR Raw Text]:", text); 
         // Temporary debug toast to see what Tesseract actually sees
         toast.info("Raw OCR snippet: " + text.substring(0, 100).replace(/\n/g, ' '), { duration: 5000 });
 
@@ -490,7 +490,10 @@ export default function FinancePage() {
               onClick={() => setIsZoomed(true)}
               className="w-full h-[450px] bg-slate-50 dark:bg-slate-800/50 rounded-xl overflow-hidden relative group border border-slate-200/50 dark:border-slate-700 cursor-zoom-in flex items-center justify-center"
             >
-              <img 
+              <Image 
+                unoptimized
+                width={450}
+                height={450}
                 src={uploadedImageUrl || '/images/expense.svg'}
                 alt="Receipt Source" 
                 fetchPriority="high"
@@ -756,7 +759,10 @@ export default function FinancePage() {
                 <X size={20} />
               </button>
 
-              <img 
+              <Image 
+                unoptimized
+                width={800}
+                height={800}
                 src={uploadedImageUrl || '/images/expense.svg'} 
                 className="w-auto max-h-[75vh] object-contain rounded-3xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] border-4 border-white/20"
                 alt="Receipt Zoom"

@@ -1,4 +1,5 @@
 "use server";
+import { logger } from '@/lib/logger';
 
 import { getCustomers, getInactiveCust, getCustomerGrowthTrend } from '@/actions/customers';
 import { getServiceTiers } from '@/actions/tiers';
@@ -48,7 +49,7 @@ export const getDashboardSummary = unstable_cache(
         last_refreshed_at: r.last_refreshed_at,
       }));
     } catch (e) {
-      console.error("DB Error: getDashboardSummary (MV not ready, will fallback)", e);
+      logger.error({ message: "DB Error: getDashboardSummary (MV not ready, will fallback)", error: e, path: "action" });
       return null;
     }
   },
@@ -103,16 +104,16 @@ export async function refreshDashboardMV() {
   try {
     // CONCURRENTLY agar tidak lock tabel saat refresh (non-blocking)
     await query('REFRESH MATERIALIZED VIEW CONCURRENTLY dashboard_summary_mv');
-    console.log('[MV Refresh] dashboard_summary_mv refreshed successfully');
+    if (process.env.NODE_ENV === 'development') console.log('[MV Refresh] dashboard_summary_mv refreshed successfully');
     return { success: true };
   } catch (e) {
     // Fallback: non-concurrent jika unique index belum ada atau data kosong
     try {
       await query('REFRESH MATERIALIZED VIEW dashboard_summary_mv');
-      console.log('[MV Refresh] dashboard_summary_mv refreshed (non-concurrent fallback)');
+      if (process.env.NODE_ENV === 'development') console.log('[MV Refresh] dashboard_summary_mv refreshed (non-concurrent fallback)');
       return { success: true };
     } catch (e2) {
-      console.error('[MV Refresh] dashboard_summary_mv failed:', e2);
+      logger.error({ message: "[MV Refresh] dashboard_summary_mv failed:", error: e2, path: "action" });
       return { success: false, error: String(e2) };
     }
   }

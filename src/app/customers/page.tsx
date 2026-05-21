@@ -22,6 +22,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getAdminProfile } from "@/actions/admin";
 import { cn } from "@/lib/utils";
 
+import { Customer } from "@/types";
+
 function MobileCustomerCard({
   customer,
   idx,
@@ -30,12 +32,12 @@ function MobileCustomerCard({
   getHealthLabel,
   cn
 }: {
-  customer: any;
+  customer: Customer;
   idx: number;
-  formatCurrency: any;
-  getHealthColor: any;
-  getHealthLabel: any;
-  cn: any;
+  formatCurrency: (val: number) => string;
+  getHealthColor: (score: number) => string;
+  getHealthLabel: (score: number) => string;
+  cn: (...args: string[]) => string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -66,9 +68,9 @@ function MobileCustomerCard({
         <div className="flex items-center gap-1.5 md-phone:gap-2 shrink-0">
           <span className={cn(
             "text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 md-phone:px-2 rounded-md border whitespace-nowrap",
-            getHealthColor(customer.healthScore)
+            getHealthColor(customer.healthScore || 0)
           )}>
-            {customer.healthScore}%<span className="hidden min-[450px]:inline"> • {getHealthLabel(customer.healthScore)}</span>
+            {customer.healthScore || 0}%<span className="hidden min-[450px]:inline"> • {getHealthLabel(customer.healthScore || 0)}</span>
           </span>
           <div className="p-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-slate-500 hover:text-indigo-500 dark:hover:text-indigo-400 transition-all">
             {isOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
@@ -90,7 +92,7 @@ function MobileCustomerCard({
             <div className="grid grid-cols-2 gap-4 pb-3 border-b border-slate-100 dark:border-slate-800/50 pt-2">
               <div>
                 <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px] mb-1">Financial LTV</span>
-                <span className="font-black text-slate-850 dark:text-slate-200 tabular-nums">{formatCurrency(customer.ltv)}</span>
+                <span className="font-black text-slate-850 dark:text-slate-200 tabular-nums">{formatCurrency(customer.ltv || 0)}</span>
               </div>
               <div>
                 <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px] mb-1">Payments Count</span>

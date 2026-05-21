@@ -30,6 +30,7 @@ import { Admin } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
+import Image from "next/image";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -64,25 +65,29 @@ export default function SettingsPage() {
   const [isDiscarding, setIsDiscarding] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isAddManagerOpen, setIsAddManagerOpen] = useState(false);
-  const [newAdmin, setNewAdmin] = useState({ nama: '', email: '', password: '', role: 'System Administrator', department: 'Operations', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=256&h=256' });
-
-  const { data: adminList = [] } = useQuery({
-    queryKey: ['adminList'],
-    queryFn: getAdminList
-  });
+  const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
+  const [tempLogoUrl, setTempLogoUrl] = useState('');
+  const [newAdmin, setNewAdmin] = useState({ nama: '', email: '', password: '', role: 'System Administrator', department: 'Operations', image: 'https://ui-avatars.com/api/?name=New+Admin&background=random&size=256' });
 
   const { data: profile } = useQuery({
     queryKey: ['adminProfile'],
     queryFn: getAdminProfile
   });
   const isTimLapangan = profile?.role === 'Tim Lapangan' || profile?.role === 'Pekerja';
+  const isSystemAdmin = profile?.role === 'System Administrator';
+
+  const { data: adminList = [] } = useQuery({
+    queryKey: ['adminList'],
+    queryFn: getAdminList,
+    enabled: isSystemAdmin // Only fetch if user is System Admin
+  });
 
   const createAdminMutation = useMutation({
     mutationFn: createAdmin,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminList'] });
       setIsAddManagerOpen(false);
-      setNewAdmin({ nama: '', email: '', password: '', role: 'System Administrator', department: 'Operations', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=256&h=256' });
+      setNewAdmin({ nama: '', email: '', password: '', role: 'System Administrator', department: 'Operations', image: 'https://ui-avatars.com/api/?name=New+Admin&background=random&size=256' });
     }
   });
 
@@ -97,38 +102,42 @@ export default function SettingsPage() {
     });
   }, [settings]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      updateSettings(formData);
-      setIsSaving(false);
+    try {
+      await updateSettings(formData);
       setShowSuccess(true);
       setIsEditing(false);
       setTimeout(() => setShowSuccess(false), 2000);
-    }, 1200);
+    } catch {
+      toast.error('Failed to save settings.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDiscard = () => {
     setIsDiscarding(true);
-    setTimeout(() => {
-      setFormData({
-        appName: settings.appName,
-        appSubtitle: settings.appSubtitle,
-        accentColor: settings.accentColor,
-        appLogo: settings.appLogo,
-        timezone: settings.timezone || 'Asia/Jakarta (UTC+07)',
-        language: settings.language || 'Indonesian (ID)',
-      });
-      setIsDiscarding(false);
-      setIsEditing(false);
-    }, 800);
+    setFormData({
+      appName: settings.appName,
+      appSubtitle: settings.appSubtitle,
+      accentColor: settings.accentColor,
+      appLogo: settings.appLogo,
+      timezone: settings.timezone || 'Asia/Jakarta (UTC+07)',
+      language: settings.language || 'Indonesian (ID)',
+    });
+    setIsEditing(false);
+    setIsDiscarding(false);
   };
 
   const handleUpdateLogo = () => {
-    const url = window.prompt("Enter Corporate Logo URL:", formData.appLogo);
-    if (url !== null) {
-      setFormData({ ...formData, appLogo: url });
-    }
+    setTempLogoUrl(formData.appLogo);
+    setIsLogoModalOpen(true);
+  };
+
+  const confirmLogoUpdate = () => {
+    setFormData({ ...formData, appLogo: tempLogoUrl });
+    setIsLogoModalOpen(false);
   };
 
   return (
@@ -287,6 +296,54 @@ export default function SettingsPage() {
                   {createAdminMutation.isPending ? <Loader2 className="animate-spin" size={18} /> : "Create User"}
                 </button>
               </form>
+            </m.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isLogoModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <m.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsLogoModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            />
+            <m.div
+              initial={{ scale: 0.9, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+            >
+              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Update Logo</h3>
+                <button onClick={() => setIsLogoModalOpen(false)} aria-label="Close modal" className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-8 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                    <ImagePlus size={12} /> Image URL
+                  </label>
+                  <input
+                    required
+                    type="url"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                    value={tempLogoUrl}
+                    onChange={(e) => setTempLogoUrl(e.target.value)}
+                    placeholder="https://example.com/logo.png"
+                  />
+                </div>
+                <button
+                  onClick={confirmLogoUpdate}
+                  className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 transition-all flex items-center justify-center gap-2 mt-4"
+                >
+                  Save Logo
+                </button>
+              </div>
             </m.div>
           </div>
         )}
@@ -461,7 +518,7 @@ export default function SettingsPage() {
                       )}
                     >
                       {formData.appLogo ? (
-                        <img src={formData.appLogo} alt="Preview" className="w-full h-full object-cover" />
+                        <Image unoptimized src={formData.appLogo} alt="Preview" width={80} height={80} className="w-full h-full object-cover" />
                       ) : (
                         <ImagePlus className="text-slate-400 group-hover:hidden" size={24} />
                       )}
@@ -569,7 +626,10 @@ export default function SettingsPage() {
                   {adminList.map((admin: any) => (
                     <div key={admin.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-2xl transition-all group">
                       <div className="flex items-center gap-4">
-                        <img
+                        <Image
+                          unoptimized
+                          width={40}
+                          height={40}
                           alt={admin.nama}
                           className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700"
                           src={admin.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.nama)}&background=random`}

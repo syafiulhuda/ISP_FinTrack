@@ -1,4 +1,5 @@
 "use server";
+import { logger } from '@/lib/logger';
 
 import { query } from "@/lib/db";
 import crypto from "crypto";
@@ -37,7 +38,7 @@ export async function loginAction(email: string, password: string): Promise<{ su
     await createSession(admin.id);
     return { success: true };
   } catch (err) {
-    console.error("Login Action Error:", err);
+    logger.error({ message: "Login Action Error:", error: err, path: "action" });
     return { success: false, error: 'Terjadi kesalahan server.' };
   }
 }
@@ -76,7 +77,7 @@ export async function requestPasswordReset(email: string) {
 
     return { success: true, message: "Reset link has been sent to your email." };
   } catch (error) {
-    console.error("Auth Action Error: requestPasswordReset", error);
+    logger.error({ message: "Auth Action Error: requestPasswordReset", error: error, path: "action" });
     return { success: false, message: "An unexpected error occurred." };
   }
 }
@@ -109,7 +110,7 @@ export async function resetPassword(token: string, passwordNew: string) {
 
     return { success: true, message: "Password has been updated successfully." };
   } catch (error) {
-    console.error("Auth Action Error: resetPassword", error);
+    logger.error({ message: "Auth Action Error: resetPassword", error: error, path: "action" });
     return { success: false, message: "An unexpected error occurred." };
   }
 }
@@ -122,7 +123,7 @@ export async function validateResetToken(token: string) {
 
     return { valid: tokenRes.rows.length > 0 };
   } catch (error) {
-    console.error("Auth Action Error: validateResetToken", error);
+    logger.error({ message: "Auth Action Error: validateResetToken", error: error, path: "action" });
     return { valid: false };
   }
 }
@@ -148,7 +149,7 @@ export async function changePasswordAction(passwordOld: string, passwordNew: str
 
     return { success: true, message: "Password berhasil diperbarui." };
   } catch (error) {
-    console.error("Auth Action Error: changePasswordAction", error);
+    logger.error({ message: "Auth Action Error: changePasswordAction", error: error, path: "action" });
     return { success: false, message: "Terjadi kesalahan server." };
   }
 }

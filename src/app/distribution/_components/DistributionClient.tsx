@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
+import Image from "next/image";
 import { m, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -800,8 +801,11 @@ export function DistributionClient() {
                         </p>
                         <div className="flex items-center gap-2 lg:gap-3">
                           <div className="h-7 w-7 lg:h-8 lg:w-8 rounded-full bg-slate-200 overflow-hidden ring-2 ring-white dark:ring-slate-800">
-                            <img
-                              src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=100"
+                            <Image
+                              unoptimized
+                              width={32}
+                              height={32}
+                              src="https://ui-avatars.com/api/?name=Budi+Santoso&background=random&size=100"
                               className="w-full h-full object-cover"
                               alt="Technician"
                             />

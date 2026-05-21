@@ -16,6 +16,9 @@
 # vscode
 /.vscode
 
+#kiro
+/.kiro
+
 # next.js
 /.next/
 /out/

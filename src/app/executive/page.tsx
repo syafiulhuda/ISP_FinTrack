@@ -17,13 +17,15 @@ import {
 import { AnimatePresence, m } from "framer-motion";
 import { ChartContainer } from "@/components/charts/ChartContainer";
 
+import { Customer, Transaction, Expense, Asset } from "@/types";
+
 // Define Types for Data
 interface ExecutiveData {
-  customers: any[];
-  transactions: any[];
-  expenses: any[];
-  assetRoster: any[];
-  stockAssets: any[];
+  customers: Customer[];
+  transactions: Transaction[];
+  expenses: Expense[];
+  assetRoster: Asset[];
+  stockAssets: Asset[];
 }
 
 const formatDisplayDate = (dateStr: string) => {
@@ -43,7 +45,7 @@ export default function ExecutiveDashboard() {
   });
 
   const [activeTab, setActiveTab] = useState("financial");
-  const [hoveredSlice, setHoveredSlice] = useState<any>(null);
+  const [hoveredSlice, setHoveredSlice] = useState<{ name: string; value: number } | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [selectedProvince, setSelectedProvince] = useState("All Regions");
@@ -79,7 +81,7 @@ export default function ExecutiveDashboard() {
   // Derive provinces list
   const provinces = useMemo(() => {
     if (!data?.customers) return ["All Regions"];
-    const rawProvs = data.customers.map((c: any) => c.province).filter(Boolean) as string[];
+    const rawProvs = data.customers.map((c: Customer) => c.province).filter(Boolean) as string[];
     const normalized = new Map<string, string>();
     
     rawProvs.forEach(p => {
@@ -99,7 +101,7 @@ export default function ExecutiveDashboard() {
 
     const { customers, transactions, expenses, assetRoster, stockAssets } = data;
     const isAllRegions = selectedProvince === "All Regions";
-    const normalize = (val: any) => val ? String(val).toLowerCase().trim() : "";
+    const normalize = (val: string | undefined | null) => val ? String(val).toLowerCase().trim() : "";
     const selectedProvLower = normalize(selectedProvince);
     const toTitleCase = (val: string) => {
       if (!val) return "";
@@ -154,16 +156,16 @@ export default function ExecutiveDashboard() {
     };
 
     // --- FILTERED BASE DATA ---
-    const filteredCustomers = customers.filter((c: any) => {
-      const joinDate = getLocalDate(c.createdAt || c.registration_date);
+    const filteredCustomers = customers.filter((c: Customer) => {
+      const joinDate = getLocalDate(c.createdAt || c.tanggal_daftar);
       if (joinDate > endDate) return false;
       if (!isAllRegions && normalize(c.province || "") !== selectedProvLower) return false;
       return true;
     });
 
-    const activeCustomers = filteredCustomers.filter((c: any) => c.status === "Active");
+    const activeCustomers = filteredCustomers.filter((c: Customer) => c.status === "Active");
 
-    const filteredAssetRoster = assetRoster.filter((a: any) => {
+    const filteredAssetRoster = assetRoster.filter((a: Asset) => {
       // Filter Region
       let prov = getProvinceFromCity(a.location) || a.location;
       
@@ -182,7 +184,7 @@ export default function ExecutiveDashboard() {
       return true;
     });
 
-    const filteredStockAssets = stockAssets.filter((a: any) => {
+    const filteredStockAssets = stockAssets.filter((a: Asset) => {
       // Filter Region
       let prov = getProvinceFromCity(a.location) || a.location;
 
@@ -209,7 +211,7 @@ export default function ExecutiveDashboard() {
     const monthlyExpenses: Record<string, number> = {};
     const profitByProvince: Record<string, number> = {};
 
-    transactions.forEach((tx: any) => {
+    transactions.forEach((tx: Transaction) => {
       const txDate = getLocalDate(tx.timestamp);
       if (txDate < startDate || txDate > endDate) return;
 
@@ -218,7 +220,7 @@ export default function ExecutiveDashboard() {
       
       if (tx.keterangan === "pemasukan") {
         const idSuffix = tx.id?.split('-')[1];
-        const cust = customers.find((c: any) => String(c.id) === idSuffix);
+        const cust = customers.find((c: Customer) => String(c.id) === idSuffix);
         txProvince = cust?.province || cityProv || "Other";
       } else {
         txProvince = cityProv || "Other";
@@ -277,7 +279,7 @@ export default function ExecutiveDashboard() {
     const ownershipDist: Record<string, number> = {};
     const inventoryByCondition: Record<string, number> = {};
 
-    filteredAssetRoster.forEach((a: any) => {
+    filteredAssetRoster.forEach((a: Asset) => {
       assetByType[a.type || 'Other'] = (assetByType[a.type || 'Other'] || 0) + 1;
       const loc = a.province || getProvinceFromCity(a.location) || 'Unknown';
       assetByLocation[loc] = (assetByLocation[loc] || 0) + 1;
@@ -287,7 +289,7 @@ export default function ExecutiveDashboard() {
       inventoryByCondition[cond] = (inventoryByCondition[cond] || 0) + 1;
     });
 
-    filteredStockAssets.forEach((a: any) => {
+    filteredStockAssets.forEach((a: Asset) => {
       stockByType[a.type || 'Other'] = (stockByType[a.type || 'Other'] || 0) + 1;
       const loc = a.province || getProvinceFromCity(a.location) || 'Unknown';
       stockByLocation[loc] = (stockByLocation[loc] || 0) + 1;
@@ -297,7 +299,7 @@ export default function ExecutiveDashboard() {
       inventoryByCondition[cond] = (inventoryByCondition[cond] || 0) + 1;
     });
 
-    const assetValuation = [...filteredAssetRoster, ...filteredStockAssets].reduce((sum: number, item: any) => {
+    const assetValuation = [...filteredAssetRoster, ...filteredStockAssets].reduce((sum: number, item: Asset & { harga_beli?: string | number }) => {
       // Handle formatting like "Rp 1.000.000,00" or raw numbers
       const raw = String(item.harga_beli || '0')
         .replace(/[^0-9,.]/g, '') // Remove everything except digits, comma, dot
@@ -310,7 +312,7 @@ export default function ExecutiveDashboard() {
 
     // --- REGIONAL GROUPINGS ---
     const subscriberByCity: Record<string, number> = {};
-    activeCustomers.forEach((c: any) => {
+    activeCustomers.forEach((c: Customer) => {
       const city = c.city || "Other";
       subscriberByCity[city] = (subscriberByCity[city] || 0) + 1;
     });
@@ -346,18 +348,18 @@ export default function ExecutiveDashboard() {
         stockByLocation: Object.entries(stockByLocation).map(([name, value]) => ({ name: name as string, value: value as number })),
         ownershipDist: Object.entries(ownershipDist).map(([name, value]) => ({ name: name as string, value: value as number })),
         byCondition: inventoryByCondition,
-        broken: filteredAssetRoster.filter((a: any) => a.condition === "Broken").length + filteredStockAssets.filter((a: any) => a.condition === "Broken").length
+        broken: filteredAssetRoster.filter((a: Asset) => a.condition === "Broken").length + filteredStockAssets.filter((a: Asset) => a.condition === "Broken").length
       },
       regional: {
         subscribers: activeCustomers.length,
         cityDist: Object.entries(subscriberByCity).map(([name, value]) => ({ name: name as string, value: value as number })).sort((a, b) => b.value - a.value).slice(0, 8),
         provinceProfit: Object.entries(profitByProvince).map(([name, value]) => ({ name: name as string, value: value as number, formatted: formatCurrency(value as number) })).sort((a, b) => (b.value as number) - (a.value as number)),
         provinceSubscribers: Object.entries(
-          activeCustomers.reduce((acc: any, c: any) => {
+          activeCustomers.reduce((acc: Record<string, number>, c: Customer) => {
             acc[c.province || 'Other'] = (acc[c.province || 'Other'] || 0) + 1;
             return acc;
           }, {})
-        ).map(([name, value]: any) => ({ name: name as string, value: value as number })).sort((a, b) => b.value - a.value)
+        ).map(([name, value]: [string, number]) => ({ name: name as string, value: value as number })).sort((a, b) => b.value - a.value)
       }
     };
   }, [data, startDate, endDate, selectedProvince]);
@@ -375,7 +377,7 @@ export default function ExecutiveDashboard() {
   return (
     <div className="min-h-screen pb-20">
       {/* GLOBAL CONTROL PANEL */}
-      <div className="lg:sticky lg:top-[-1px] relative z-40 backdrop-blur-xl bg-white/98 dark:bg-slate-950/98 border-b border-slate-200 dark:border-slate-800 p-4 md:px-8 pt-8 shadow-sm">
+      <div className="relative z-40 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 p-4 md:px-8 pt-8 shadow-sm">
         <div className="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-6 w-full">
           <div>
             <h1 className="text-3xl font-black bg-gradient-to-r from-indigo-500 to-cyan-500 bg-clip-text text-transparent">Unified Executive Summary</h1>
@@ -808,7 +810,7 @@ export default function ExecutiveDashboard() {
                               onMouseEnter={(_, index) => setHoveredSlice(processedData.inventory.ownershipDist[index])}
                               onMouseLeave={() => setHoveredSlice(null)}
                             >
-                              {processedData.inventory.ownershipDist.map((_: any, i: number) => (
+                              {processedData.inventory.ownershipDist.map((_: unknown, i: number) => (
                                 <Cell key={i} fill={["#6366f1", "#06b6d4", "#f43f5e"][i % 3]} stroke="rgba(255,255,255,0.05)" strokeWidth={2} className="cursor-pointer outline-none" />
                               ))}
                             </Pie>
@@ -836,14 +838,14 @@ export default function ExecutiveDashboard() {
                           >
                             {hoveredSlice 
                               ? Number(hoveredSlice.value).toLocaleString() 
-                              : processedData.inventory.ownershipDist.reduce((acc: number, curr: any) => acc + (curr.value || 0), 0)
+                              : processedData.inventory.ownershipDist.reduce((acc: number, curr: { value?: number }) => acc + (curr.value || 0), 0)
                             }
                           </span>
                         </div>
                       </div>
                       <div className="flex flex-row md:flex-col flex-wrap justify-center gap-x-4 gap-y-3 w-full md:w-1/2 px-2">
-                        {processedData.inventory.ownershipDist.map((entry: any, i: number) => {
-                          const totalVal = processedData.inventory.ownershipDist.reduce((acc: number, curr: any) => acc + (curr.value || 0), 0);
+                        {processedData.inventory.ownershipDist.map((entry: { name: string; value: number; color?: string }, i: number) => {
+                          const totalVal = processedData.inventory.ownershipDist.reduce((acc: number, curr: { value?: number }) => acc + (curr.value || 0), 0);
                           const pct = totalVal > 0 ? ((entry.value / totalVal) * 100).toFixed(0) : 0;
                           return (
                             <div key={i} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/80 px-4 py-2.5 rounded-2xl border border-slate-100 dark:border-slate-800/40 transition-all shadow-sm">
@@ -950,7 +952,7 @@ export default function ExecutiveDashboard() {
                     <DollarSign className="w-5 h-5 text-emerald-500"/> Profit Bersih tiap Province (Filter Range)
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {processedData.regional.provinceProfit.map((p: any, i: number) => (
+                    {processedData.regional.provinceProfit.map((p: { name: string; value: number; formatted: string }, i: number) => (
                       <div key={i} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                         <span className="font-bold text-slate-600 dark:text-slate-300 text-sm lg:text-base whitespace-nowrap">{p.name}</span>
                         <span className={`font-black text-sm lg:text-base whitespace-nowrap ${p.value >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{p.formatted}</span>

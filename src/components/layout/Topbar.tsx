@@ -3,6 +3,7 @@
 import { Menu, Bell, Settings, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import Link from "next/link";
+import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { getAdminProfile, getNotifications } from "@/actions/admin";
 import { Admin, Notification } from "@/types";
@@ -68,10 +69,13 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           <Settings size={20} />
         </Link>
         <Link href="/profile" className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 ml-1 tablet:ml-2 block shrink-0" aria-label="View user profile">
-          <img
+          <Image
+            unoptimized
+            width={32}
+            height={32}
             alt="User profile avatar"
             className="w-full h-full object-cover"
-            src={adminProfile?.image || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=256&h=256"}
+            src={adminProfile?.image || "https://ui-avatars.com/api/?name=New+Admin&background=random&size=256"}
           />
         </Link>
       </div>

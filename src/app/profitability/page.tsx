@@ -35,7 +35,7 @@ import { Customer, ServiceTier, Transaction, Expense } from "@/types";
 import { StatCard } from "@/components/ui/StatCard";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 
-const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { name: string; value: number; color?: string; dataKey?: string; payload: any }[] }) => {
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white dark:bg-slate-800 px-3 py-2 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700">
@@ -197,7 +197,7 @@ export default function ProfitabilityPage() {
       };
     }
     const isAllRegions = selectedProvince === "All Regions";
-    const normalize = (val: any) => val ? String(val).toLowerCase().trim() : "";
+    const normalize = (val: string | null | undefined) => val ? String(val).toLowerCase().trim() : "";
     const selectedProvLower = normalize(selectedProvince);
 
     // 1. Calculate Selected Range & Months
@@ -332,15 +332,15 @@ export default function ProfitabilityPage() {
     };
 
     // 4. User Status (Cumulative at end of range)
-    const activeAtEnd = customerList.filter((c: any) => {
-      const joinDate = getLocalDate(c.createdAt || c.registration_date);
+    const activeAtEnd = customerList.filter((c: Customer) => {
+      const joinDate = getLocalDate(c.createdAt || (c as any).registration_date);
       if (joinDate > endDate) return false;
       if (!isAllRegions && c.province !== selectedProvince) return false;
       return c.status === "Active";
     }).length;
 
-    const inactiveAtEnd = customerList.filter((c: any) => {
-      const joinDate = getLocalDate(c.createdAt || c.registration_date);
+    const inactiveAtEnd = customerList.filter((c: Customer) => {
+      const joinDate = getLocalDate(c.createdAt || (c as any).registration_date);
       if (joinDate > endDate) return false;
       if (!isAllRegions && c.province !== selectedProvince) return false;
       return c.status === "Inactive" || c.status === "Non-Active";
@@ -359,10 +359,10 @@ export default function ProfitabilityPage() {
 
     const incomeByType: Record<string, number> = {};
     const expenseByType: Record<string, number> = {};
-    const allocationFactor = isAllRegions ? 1 : (customerList.length > 0 ? (customerList.filter((c: any) => normalize(c.province || "") === selectedProvLower).length / customerList.length) : 0);
+    const allocationFactor = isAllRegions ? 1 : (customerList.length > 0 ? (customerList.filter((c: Customer) => normalize(c.province || "") === selectedProvLower).length / customerList.length) : 0);
 
     // For Income (Revenue Component) - purely from transactions
-    transactions.forEach((tx: any) => {
+    transactions.forEach((tx: Transaction) => {
       const txDate = getLocalDate(tx.timestamp);
       if (txDate < startDate || txDate > endDate) return;
 
@@ -372,7 +372,7 @@ export default function ProfitabilityPage() {
         if (!matchesDirectly) {
           const idSuffix = tx.id?.split('-')[1];
           if (tx.keterangan === "pemasukan") {
-            const customer = customerList.find((c: any) => String(c.id) === idSuffix);
+            const customer = customerList.find((c: Customer) => String(c.id) === idSuffix);
             if (normalize(customer?.province || "") !== selectedProvLower) return;
           } else return;
         }
@@ -386,7 +386,7 @@ export default function ProfitabilityPage() {
     });
 
     // For Expenses (Waterfall Components) - purely from expenseList (like SQL)
-    expenseList.forEach((exp: any) => {
+    expenseList.forEach((exp: Expense) => {
       const expDate = getLocalDate(exp.date);
       if (expDate < startDate || expDate > endDate) return;
 
@@ -394,7 +394,7 @@ export default function ProfitabilityPage() {
       if (!isAllRegions && expProv && !normalize(String(expProv)).includes(selectedProvLower)) return;
 
       const type = exp.category || "General Expense";
-      const allocatedAmount = Math.abs(exp.amount || 0) * (isAllRegions ? 1 : allocationFactor);
+      const allocatedAmount = Math.abs(Number(exp.amount) || 0) * (isAllRegions ? 1 : allocationFactor);
       expenseByType[type] = (expenseByType[type] || 0) + allocatedAmount;
     });
 
@@ -403,8 +403,8 @@ export default function ProfitabilityPage() {
       ...Object.entries(expenseByType).map(([name, value]) => ({ name, value: -Number(value), isExpense: true }))
     ].filter(d => d.value !== 0);
 
-    const activeCustomers = customerList.filter((c: any) => {
-      const joinDate = getLocalDate(c.createdAt || c.registration_date);
+    const activeCustomers = customerList.filter((c: Customer) => {
+      const joinDate = getLocalDate(c.createdAt || (c as any).registration_date);
       return joinDate <= endDate && c.status === "Active" && (isAllRegions || normalize(c.province || "") === selectedProvLower);
     });
 
@@ -440,7 +440,7 @@ export default function ProfitabilityPage() {
   }, [selectedProvince, startDate, endDate, customerList, transactions, expenseList]);
 
   const filteredProvinces = useMemo(() =>
-    provinces.filter((p: any) => p.toLowerCase().includes(searchQuery.toLowerCase())),
+    provinces.filter((p: string) => p.toLowerCase().includes(searchQuery.toLowerCase())),
     [searchQuery, provinces]
   );
 

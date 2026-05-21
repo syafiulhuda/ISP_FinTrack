@@ -1,17 +1,17 @@
 'use server';
+import { logger } from '@/lib/logger';
 
 import { query } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import * as Mock from '@/lib/mockData';
 import { ServiceTier } from '@/types';
 
 export async function getServiceTiers(): Promise<ServiceTier[]> {
   try {
     const res = await query('SELECT * FROM service_tiers ORDER BY id ASC');
-    return res.rows.length > 0 ? res.rows as ServiceTier[] : Mock.MOCK_SERVICE_TIERS as ServiceTier[];
+    return res.rows as ServiceTier[];
   } catch (e) {
-    console.error("DB Error: getServiceTiers", e);
-    return Mock.MOCK_SERVICE_TIERS as ServiceTier[];
+    logger.error({ message: "DB Error: getServiceTiers", error: e, path: "action" });
+    return [];
   }
 }
 
@@ -34,7 +34,7 @@ export async function createServiceTier(data: {
     revalidatePath('/profitability');
     return { success: true, tier: res.rows[0] };
   } catch (e) {
-    console.error("DB Error: createServiceTier", e);
+    logger.error({ message: "DB Error: createServiceTier", error: e, path: "action" });
     return { success: false, error: String(e) };
   }
 }

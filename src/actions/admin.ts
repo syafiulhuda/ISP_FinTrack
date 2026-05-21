@@ -1,8 +1,8 @@
 'use server';
+import { logger } from '@/lib/logger';
 
 import { query } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import * as Mock from '@/lib/mockData';
 import { getSession, requireRole } from "@/lib/auth";
 import bcrypt from 'bcryptjs';
 import { Admin, Notification } from '@/types';
@@ -12,18 +12,17 @@ export async function getAdminProfile(): Promise<Admin & { fullName: string }> {
   try {
     const adminId = await getSession();
     if (!adminId) {
-      return Mock.MOCK_ADMIN as Admin & { fullName: string };
+      return { id: 0, fullName: 'Unknown', email: '', role: 'Guest', department: '', image: '' } as Admin & { fullName: string };
     }
 
     const res = await query('SELECT id, nama as "fullName", email, role, department, image FROM admin WHERE id = $1', [adminId]);
     if (res.rows.length === 0) {
-      return Mock.MOCK_ADMIN as Admin & { fullName: string };
+      return { id: 0, fullName: 'Unknown', email: '', role: 'Guest', department: '', image: '' } as Admin & { fullName: string };
     }
     
     return res.rows[0] as Admin & { fullName: string };
   } catch (e) {
-    console.error("DB Error: getAdminProfile", e);
-    return Mock.MOCK_ADMIN as Admin & { fullName: string };
+    return { id: 0, fullName: 'Error', email: '', role: 'Guest', department: '', image: '' } as Admin & { fullName: string };
   }
 }
 
@@ -40,8 +39,7 @@ export async function updateAdminProfile(data: { fullName: string, email: string
     `, [data.fullName, data.email, data.role, data.department, data.image, adminId]);
     return res.rows[0];
   } catch (e) {
-    console.error("DB Error: updateAdminProfile", e);
-    return { ...Mock.MOCK_ADMIN, ...data };
+    return { id: 0, fullName: data.fullName, email: data.email, role: data.role, department: data.department, image: data.image };
   }
 }
 
@@ -51,7 +49,7 @@ export async function getAdminList(): Promise<Admin[]> {
     const res = await query('SELECT id, nama, email, role, department, image, nickname FROM admin ORDER BY id ASC');
     return res.rows as Admin[];
   } catch (e) {
-    console.error("DB Error: getAdminList", e);
+    logger.error({ message: "DB Error: getAdminList", error: e, path: "action" });
     return [];
   }
 }
@@ -68,7 +66,7 @@ export async function createAdmin(data: { nama: string, email: string, password?
     `, [data.nama, data.email, data.role, data.department, data.image, hashedPassword, nickname, adminId.toString()]);
     return res.rows[0];
   } catch (e) {
-    console.error("DB Error: createAdmin", e);
+    logger.error({ message: "DB Error: createAdmin", error: e, path: "action" });
     throw e;
   }
 }
@@ -83,7 +81,7 @@ export async function createNotification(data: { category: string, title: string
     `, [data.category, data.title, data.message, data.type, data.action_label || null]);
     return res.rows[0];
   } catch (e) {
-    console.error("DB Error: createNotification", e);
+    logger.error({ message: "DB Error: createNotification", error: e, path: "action" });
     throw e;
   }
 }
@@ -93,7 +91,7 @@ export async function deleteNotification(id: number) {
     await query('UPDATE notifications SET is_hidden = true WHERE id = $1', [id]);
     return { success: true };
   } catch (e) {
-    console.error("DB Error: deleteNotification", e);
+    logger.error({ message: "DB Error: deleteNotification", error: e, path: "action" });
     throw e;
   }
 }
@@ -103,7 +101,7 @@ export async function hideAllNotifications() {
     await query('UPDATE notifications SET is_hidden = true');
     return { success: true };
   } catch (e) {
-    console.error("DB Error: hideAllNotifications", e);
+    logger.error({ message: "DB Error: hideAllNotifications", error: e, path: "action" });
     throw e;
   }
 }
@@ -117,7 +115,7 @@ export async function getNotifications(): Promise<Notification[]> {
       created_at: row.created_at ? new Date(row.created_at).toISOString() : null
     })) as Notification[];
   } catch (e) {
-    console.error("DB Error: getNotifications", e);
+    logger.error({ message: "DB Error: getNotifications", error: e, path: "action" });
     return [];
   }
 }
@@ -126,7 +124,7 @@ export async function markNotificationAsRead(id: number) {
   try {
     await query('UPDATE notifications SET is_unread = false WHERE id = $1', [id]);
   } catch (e) {
-    console.error("DB Error: markNotificationAsRead", e);
+    logger.error({ message: "DB Error: markNotificationAsRead", error: e, path: "action" });
   }
   return { success: true };
 }
@@ -136,7 +134,7 @@ export async function markAllNotificationsAsRead() {
     await query('UPDATE notifications SET is_unread = false');
     revalidatePath('/notifications');
   } catch (e) {
-    console.error("DB Error: markAllNotificationsAsRead", e);
+    logger.error({ message: "DB Error: markAllNotificationsAsRead", error: e, path: "action" });
   }
   return { success: true };
 }

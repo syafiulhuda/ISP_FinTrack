@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Layers, 
-  CreditCard, 
-  Package, 
-  Map, 
+import {
+  LayoutDashboard,
+  Layers,
+  CreditCard,
+  Package,
+  Map,
   Power,
   Plus,
   X,
@@ -38,7 +39,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
   const pathname = usePathname();
   const router = useRouter();
   const { settings } = useSettings();
-  
+
   const { data: profile } = useQuery({
     queryKey: ['adminProfile'],
     queryFn: getAdminProfile
@@ -87,120 +88,120 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
     <>
       {/* Mobile Backdrop */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[55] md:hidden"
           onClick={onClose}
         />
       )}
-      
+
       <aside className={cn(
         "sidebar-fixed fixed inset-y-0 left-0 z-[60] bg-slate-100 dark:bg-slate-950 flex flex-col border-r border-slate-200 dark:border-slate-800 md:translate-x-0 shadow-2xl md:shadow-none overflow-hidden",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
-      {/* Header */}
-      <div className="pt-6 px-6">
-        <div className="flex items-center space-x-3 mb-4 px-2">
-          <m.div 
-            initial={false}
-            animate={{ scale: 1, opacity: 1 }}
-            className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg overflow-hidden shrink-0", !theme.isCustom && theme.bg, !theme.isCustom && theme.shadow)}
-            style={theme.isCustom ? { backgroundColor: theme.color, boxShadow: `0 10px 15px -3px ${theme.color}44` } : {}}
-          >
-            {settings.appLogo ? (
-              <img src={settings.appLogo} alt="App Logo" className="w-full h-full object-cover" />
-            ) : (
-              settings.appName.substring(0, 2).toUpperCase()
-            )}
-          </m.div>
-          <div className="flex flex-col">
-            <h1 className="font-black text-lg tracking-tight text-slate-900 dark:text-white leading-none whitespace-nowrap">{settings.appName}</h1>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Enterprise Finance</p>
+        {/* Header */}
+        <div className="pt-4 px-6">
+          <div className="flex items-center space-x-3 mb-2 px-2">
+            <m.div
+              initial={false}
+              animate={{ scale: 1, opacity: 1 }}
+              className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-lg overflow-hidden shrink-0", !theme.isCustom && theme.bg, !theme.isCustom && theme.shadow)}
+              style={theme.isCustom ? { backgroundColor: theme.color, boxShadow: `0 10px 15px -3px ${theme.color}44` } : {}}
+            >
+              {settings.appLogo ? (
+                <Image unoptimized src={settings.appLogo} alt="App Logo" width={36} height={36} className="w-full h-full object-cover" />
+              ) : (
+                settings.appName.substring(0, 2).toUpperCase()
+              )}
+            </m.div>
+            <div className="flex flex-col">
+              <h1 className="font-black text-base tracking-tight text-slate-900 dark:text-white leading-none whitespace-nowrap">{settings.appName}</h1>
+              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Enterprise Finance</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="px-4 w-full overflow-hidden">
-        {!isTimLapangan && (
-          <Link 
-            href="/executive"
-            onClick={onClose}
-          className={cn(
-            "group relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 overflow-hidden w-full",
-            pathname === '/executive' 
-              ? cn(theme.bg, "shadow-xl dark:bg-white/10 border border-white/10 dark:border-indigo-500/50", !theme.isCustom && theme.shadow) 
-              : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/30"
-          )}
-          style={pathname === '/executive' && theme.isCustom ? { backgroundColor: theme.color, boxShadow: `0 10px 15px -3px ${theme.color}44` } : {}}
-        >
-          {pathname === '/executive' && (
-            <m.div 
-              layoutId="header-active-bar" 
-              className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-500 rounded-r-full"
-            />
-          )}
-          <div className={cn(
-            "p-1.5 rounded-lg transition-colors shrink-0",
-            pathname === '/executive' ? "bg-white/20 text-white" : "bg-indigo-500/10 text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white"
-          )}>
-            <TrendingUp size={16} />
-          </div>
-          <span className={cn(
-            "text-[11px] font-black uppercase tracking-tight whitespace-nowrap transition-colors", 
-            pathname === '/executive' ? "text-white" : "text-slate-700 dark:text-slate-200"
-          )}>
-            Executive Summary
-          </span>
-        </Link>
-        )}
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 mt-4 px-4 overflow-y-auto overflow-x-hidden no-scrollbar min-h-0 pb-4">
-        {navigation.filter(item => {
-          if (isTimLapangan) {
-            const hiddenItems = ['Finance', 'Regional Analysis', 'Predictive Analysis'];
-            if (hiddenItems.includes(item.name)) return false;
-          }
-          return true;
-        }).map((item) => {
-          const isActive = item.href === "/" 
-            ? pathname === "/" || pathname === "/profitability"
-            : pathname === item.href;
-
-          return (
+        <div className="px-4 w-full overflow-hidden mt-3">
+          {!isTimLapangan && (
             <Link
-              key={item.name}
-              href={item.href}
+              href="/executive"
               onClick={onClose}
               className={cn(
-                "group relative flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors duration-200 overflow-hidden w-full flex-nowrap",
-                isActive 
-                  ? cn("font-bold", theme.textActive) 
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                "group relative flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-300 overflow-hidden w-full",
+                pathname === '/executive'
+                  ? cn(theme.bg, "shadow-xl dark:bg-white/10 border border-white/10 dark:border-indigo-500/50", !theme.isCustom && theme.shadow)
+                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/30"
               )}
+              style={pathname === '/executive' && theme.isCustom ? { backgroundColor: theme.color, boxShadow: `0 10px 15px -3px ${theme.color}44` } : {}}
             >
-              {isActive && (
-                <div
-                  className="absolute inset-0 bg-white dark:bg-slate-900 shadow-sm border border-slate-200/50 dark:border-slate-800 rounded-xl pointer-events-none"
+              {pathname === '/executive' && (
+                <m.div
+                  layoutId="header-active-bar"
+                  className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-500 rounded-r-full"
                 />
               )}
-              <item.icon size={20} className={cn("relative z-10 shrink-0", isActive && !theme.isCustom ? theme.textActive : "group-hover:scale-110 transition-transform")} style={isActive && theme.isCustom ? { color: theme.color } : {}} />
-              <span className="relative z-10 text-[13px] truncate min-w-0" style={isActive && theme.isCustom ? { color: theme.color, fontWeight: 'bold' } : {}}>{item.name}</span>
+              <div className={cn(
+                "p-1 rounded-lg transition-colors shrink-0",
+                pathname === '/executive' ? "bg-white/20 text-white" : "bg-indigo-500/10 text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white"
+              )}>
+                <TrendingUp size={14} />
+              </div>
+              <span className={cn(
+                "text-[11px] font-black uppercase tracking-tight whitespace-nowrap transition-colors",
+                pathname === '/executive' ? "text-white" : "text-slate-700 dark:text-slate-200"
+              )}>
+                Executive Summary
+              </span>
             </Link>
-          );
-        })}
-      </nav>
+          )}
+        </div>
 
-      {/* Footer: Logout Button */}
-      <div className="mt-auto p-4 space-y-1">
-        <button
-          onClick={() => setIsLogoutConfirmOpen(true)}
-          className="group w-full flex items-center space-x-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-xl transition-all overflow-hidden"
-        >
-          <Power size={20} className="group-hover:rotate-12 transition-transform shrink-0" />
-          <span className="text-[13px] font-bold truncate min-w-0">Logout</span>
-        </button>
-      </div>
+        {/* Navigation */}
+        <nav className="flex-1 space-y-0.5 mt-6 px-4 overflow-y-auto overflow-x-hidden no-scrollbar min-h-0 pb-2">
+          {navigation.filter(item => {
+            if (isTimLapangan) {
+              const hiddenItems = ['Finance', 'Regional Analysis', 'Predictive Analysis'];
+              if (hiddenItems.includes(item.name)) return false;
+            }
+            return true;
+          }).map((item) => {
+            const isActive = item.href === "/"
+              ? pathname === "/" || pathname === "/profitability"
+              : pathname === item.href;
+
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={onClose}
+                className={cn(
+                  "group relative flex items-center gap-3 px-4 py-2 rounded-xl transition-colors duration-200 overflow-hidden w-full flex-nowrap",
+                  isActive
+                    ? cn("font-bold", theme.textActive)
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                )}
+              >
+                {isActive && (
+                  <div
+                    className="absolute inset-0 bg-white dark:bg-slate-900 shadow-sm border border-slate-200/50 dark:border-slate-800 rounded-xl pointer-events-none"
+                  />
+                )}
+                <item.icon size={20} className={cn("relative z-10 shrink-0", isActive && !theme.isCustom ? theme.textActive : "group-hover:scale-110 transition-transform")} style={isActive && theme.isCustom ? { color: theme.color } : {}} />
+                <span className="relative z-10 text-[12px] truncate min-w-0" style={isActive && theme.isCustom ? { color: theme.color, fontWeight: 'bold' } : {}}>{item.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Footer: Logout Button */}
+        <div className="mt-auto px-4 pb-3 pt-1">
+          <button
+            onClick={() => setIsLogoutConfirmOpen(true)}
+            className="group w-full flex items-center space-x-3 px-4 py-2 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-xl transition-all overflow-hidden"
+          >
+            <Power size={20} className="group-hover:rotate-12 transition-transform shrink-0" />
+            <span className="text-[12px] font-bold truncate min-w-0">Logout</span>
+          </button>
+        </div>
       </aside>
 
       {/* Logout Confirmation Modal — No blur, transparent overlay */}
