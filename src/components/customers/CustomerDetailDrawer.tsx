@@ -9,7 +9,9 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { getCustomer360 } from "@/actions/customers";
+import { createPaymentLink } from "@/actions/payment";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from "recharts";
+import { toast } from "sonner";
 
 const formatCompactNumber = (number: number) => {
   if (number >= 1000000000) return `Rp ${(number / 1000000000).toFixed(3)} B`;
@@ -431,6 +433,47 @@ export function CustomerDetailDrawer({ customer, onClose }: CustomerDetailDrawer
                       </div>
                     </button>
                   )}
+                  <button 
+                    onClick={async () => {
+                      const amountStr = window.prompt("Masukkan nominal tagihan (IDR):", "350000");
+                      if (!amountStr) return;
+                      const amount = parseInt(amountStr);
+                      if (isNaN(amount) || amount <= 0) {
+                        toast.error("Nominal tidak valid");
+                        return;
+                      }
+
+                      // Buka popup browser terpisah (bukan sekadar tab baru)
+                      const newWindow = window.open('about:blank', 'MidtransPayment', 'width=600,height=800,left=200,top=100');
+                      if (!newWindow) {
+                         toast.error("Gagal membuka pop-up. Pastikan Pop-up Blocker dimatikan.");
+                         return;
+                      }
+
+                      toast.loading("Generating Payment Link...", { id: "snap" });
+                      const res = await createPaymentLink({
+                        customerId: customer.id,
+                        customerName: customer.name,
+                        service: customer.service,
+                        amount
+                      });
+
+                      if (res.success && res.redirect_url) {
+                        toast.success("Payment Link generated!", { id: "snap" });
+                        newWindow.location.href = res.redirect_url;
+                      } else {
+                        newWindow.close();
+                        toast.error("Failed to generate link: " + res.error, { id: "snap" });
+                      }
+                    }}
+                    className="flex items-center gap-2.5 p-3 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-xl transition-all text-left col-span-2"
+                  >
+                    <CreditCard size={14} className="text-blue-500 flex-shrink-0" />
+                    <div>
+                      <p className="text-[11px] font-black text-blue-700 dark:text-blue-400">Generate Payment Link (Midtrans)</p>
+                      <p className="text-[9px] text-blue-400">Buat link bayar otomatis untuk pelanggan ini</p>
+                    </div>
+                  </button>
                 </div>
               </div>
 

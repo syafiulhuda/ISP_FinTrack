@@ -11,6 +11,7 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import Link from "next/link";
 import { toggleVipStatus, sendPaymentReminder } from "@/actions/customers";
+import { createPaymentLink } from "@/actions/payment";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -68,6 +69,38 @@ function ScoreItem({ label, value, positive }: { label: string; value: number; p
     </div>
   );
 }
+
+const generateAIRecommendation = (data: any) => {
+  const service = (data.service || "").toLowerCase();
+  const ltv = Number(data.ltv || 0);
+  const isVip = data.is_vip || false;
+  const isAtRisk = Number(data.healthScore || 0) < 50;
+  const isExcellent = Number(data.healthScore || 0) >= 80;
+  const lateCount = data.late_payments?.length || 0;
+  
+  if (isAtRisk) {
+    if (lateCount > 2) {
+      return `Risiko Churn Kritis: Terdeteksi ${lateCount}x keterlambatan. Sistem AI menyarankan untuk menawarkan Downgrade Paket atau Diskon Win-Back 20% agar pelanggan tidak putus layanan.`;
+    }
+    return "Pelanggan berada di zona risiko churn tinggi. Pola pembayaran tidak stabil. Rekomendasi: Hubungi pelanggan secara personal dan tawarkan restrukturisasi tagihan.";
+  }
+  
+  if (isExcellent) {
+    if (service.includes("10 mbps") || service.includes("basic") || service.includes("reguler")) {
+      return `Peluang Upsell Sangat Kuat: Pelanggan sangat loyal namun masih menggunakan paket ${data.service}. AI memprediksi probabilitas 85% untuk mau di-upgrade ke Paket Premium dengan gratis biaya migrasi.`;
+    }
+    if (!isVip && ltv > 2000000) {
+      return `Kandidat VIP: LTV telah mencapai batas premium. Jadikan VIP sekarang dan tawarkan kontrak tahunan berlangganan dengan ekstra Router Mesh eksklusif.`;
+    }
+    return `Loyalitas sempurna dengan paket tinggi. Tawarkan Add-on layanan seperti IP Statis atau layanan Smart CCTV untuk memaksimalkan ARPU.`;
+  }
+  
+  // Tengah-tengah (Stabilitas terjaga)
+  if (service.includes("premium") || service.includes("gamers")) {
+    return "Pelanggan stabil dengan paket tier atas. Pertahankan kepuasan dengan memberikan layanan teknisi prioritas untuk menjaga retensi.";
+  }
+  return "Stabilitas pembayaran terjaga. AI menyarankan untuk memantau kontribusi MRR dan mengirimkan penawaran Promo Bundling Musiman saat hari raya.";
+};
 
 export default function CustomerDetailView({ data }: { data: any }) {
   const [isVip, setIsVip] = useState(data.is_vip || false);
@@ -204,6 +237,44 @@ export default function CustomerDetailView({ data }: { data: any }) {
           >
             <Star size={16} className={cn(isVip && "fill-current")} />
             <span className="truncate">{isTogglingVip ? "Updating..." : isVip ? "VIP Member" : "Mark VIP"}</span>
+          </button>
+          <button
+            onClick={async () => {
+              const amountStr = window.prompt("Masukkan nominal tagihan (IDR):", "350000");
+              if (!amountStr) return;
+              const amount = parseInt(amountStr);
+              if (isNaN(amount) || amount <= 0) {
+                toast.error("Nominal tidak valid");
+                return;
+              }
+
+              // Buka popup browser terpisah (bukan sekadar tab baru)
+              const newWindow = window.open('about:blank', 'MidtransPayment', 'width=600,height=800,left=200,top=100');
+              if (!newWindow) {
+                 toast.error("Gagal membuka pop-up. Pastikan Pop-up Blocker dimatikan.");
+                 return;
+              }
+
+              toast.loading("Generating Payment Link...", { id: "snap" });
+              const res = await createPaymentLink({
+                customerId: data.id,
+                customerName: data.name,
+                service: data.service,
+                amount
+              });
+
+              if (res.success && res.redirect_url) {
+                toast.success("Payment Link generated!", { id: "snap" });
+                newWindow.location.href = res.redirect_url;
+              } else {
+                newWindow.close();
+                toast.error("Failed to generate link: " + res.error, { id: "snap" });
+              }
+            }}
+            className="flex items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 rounded-2xl font-bold text-xs tablet:text-sm transition-all col-span-2 tablet:col-span-1"
+          >
+            <CreditCard size={16} />
+            <span className="truncate">Payment Link</span>
           </button>
         </div>
       </div>
@@ -506,34 +577,31 @@ export default function CustomerDetailView({ data }: { data: any }) {
             </div>
           </div>
 
-          {/* Retention Strategy Recommendation (Back to Right Column) */}
-          <div className={cn("p-4 md:p-8 rounded-3xl border shadow-lg flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8 flex-1",
+          <div className={cn("p-6 rounded-3xl border shadow-lg flex flex-col gap-4 relative overflow-hidden",
             isAtRisk ? "bg-rose-500/5 border-rose-500/20" : isExcellent ? "bg-emerald-500/5 border-emerald-500/20" : "bg-indigo-500/5 border-indigo-500/20"
           )}>
-            <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0",
-              isAtRisk ? "bg-rose-500 text-white" : isExcellent ? "bg-emerald-500 text-white" : "bg-indigo-500 text-white"
-            )}>
-              {isAtRisk ? <Zap size={32} /> : isExcellent ? <ArrowUpRight size={32} /> : <Activity size={32} />}
-            </div>
-            <div className="flex-1 text-left">
-              <h3 className="text-lg md:text-xl font-black mb-2 uppercase tracking-tight">
+            <div className="flex items-center gap-4">
+              <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
+                isAtRisk ? "bg-rose-500 text-white" : isExcellent ? "bg-emerald-500 text-white" : "bg-indigo-500 text-white"
+              )}>
+                {isAtRisk ? <Zap size={24} /> : isExcellent ? <ArrowUpRight size={24} /> : <Activity size={24} />}
+              </div>
+              <h3 className="text-lg font-black uppercase tracking-tight">
                 {isAtRisk ? "Retention Alert" : isExcellent ? "Upsell Opportunity" : "Growth Maintenance"}
               </h3>
-              <p className="text-slate-500 font-medium text-sm leading-relaxed">
-                {isAtRisk
-                  ? "Pelanggan berada di zona risiko churn tinggi. Rekomendasi: diskon loyalitas segera."
-                  : isExcellent
-                    ? "Loyalitas sangat tinggi. Tawarkan paket Gamers/Premium dengan kontrak tahunan."
-                    : "Stabilitas pembayaran terjaga. Terus pantau kontribusi MRR yang stabil."}
-              </p>
             </div>
-            <button className={cn("px-8 py-4 rounded-2xl font-black text-sm whitespace-nowrap transition-all hover:scale-105 active:scale-95",
+            <p className="text-slate-500 font-medium text-sm leading-relaxed">
+              {generateAIRecommendation(data)}
+            </p>
+            <button className={cn("w-full mt-2 py-3.5 rounded-xl font-black text-sm transition-transform hover:scale-[1.02] active:scale-[0.98]",
               isAtRisk ? "bg-rose-500 text-white shadow-rose-500/20" : isExcellent ? "bg-emerald-500 text-white shadow-emerald-500/20" : "bg-indigo-500 text-white shadow-indigo-500/20"
             )}>
               {isAtRisk ? "Launch Task" : isExcellent ? "Upsell Now" : "Log Observation"}
             </button>
           </div>
+          {/* End of Right Column */}
         </div>
+
       </div>
     </div>
   );

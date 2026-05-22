@@ -25,6 +25,7 @@
     "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.8.0",
+    "midtrans-client": "^1.4.3",
     "modern-screenshot": "^4.7.0",
     "next": "^16.2.4",
     "node-cron": "^4.2.1",

@@ -67,7 +67,7 @@ export default function SettingsPage() {
   const [isAddManagerOpen, setIsAddManagerOpen] = useState(false);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
   const [tempLogoUrl, setTempLogoUrl] = useState('');
-  const [newAdmin, setNewAdmin] = useState({ nama: '', email: '', password: '', role: 'System Administrator', department: 'Operations', image: 'https://ui-avatars.com/api/?name=New+Admin&background=random&size=256' });
+  const [newAdmin, setNewAdmin] = useState({ nama: '', email: '', password: '', role: 'System Administrator', department: 'Operations', image: 'https://ui-avatars.com/api/?name=New+Admin&background=random&size=256', nickname: '' });
 
   const { data: profile } = useQuery({
     queryKey: ['adminProfile'],
@@ -87,7 +87,7 @@ export default function SettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminList'] });
       setIsAddManagerOpen(false);
-      setNewAdmin({ nama: '', email: '', password: '', role: 'System Administrator', department: 'Operations', image: 'https://ui-avatars.com/api/?name=New+Admin&background=random&size=256' });
+      setNewAdmin({ nama: '', email: '', password: '', role: 'System Administrator', department: 'Operations', image: 'https://ui-avatars.com/api/?name=New+Admin&background=random&size=256', nickname: '' });
     }
   });
 
@@ -254,6 +254,52 @@ export default function SettingsPage() {
                     onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
                     placeholder="••••••••"
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                      <UsersIcon size={12} /> Nickname
+                    </label>
+                    <input
+                      required
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                      value={newAdmin.nickname}
+                      onChange={(e) => setNewAdmin({ ...newAdmin, nickname: e.target.value })}
+                      placeholder="e.g. John"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                      <ImagePlus size={12} /> Profile Image
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        className="flex-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium text-sm"
+                        value={newAdmin.image}
+                        onChange={(e) => setNewAdmin({ ...newAdmin, image: e.target.value })}
+                        placeholder="Image URL"
+                      />
+                      <label className="cursor-pointer bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors rounded-xl px-4 flex items-center justify-center text-sm font-bold text-slate-700 dark:text-slate-200">
+                        Upload
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setNewAdmin({ ...newAdmin, image: reader.result as string });
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
