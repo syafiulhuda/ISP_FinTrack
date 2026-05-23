@@ -14,6 +14,7 @@ import { toggleVipStatus, sendPaymentReminder } from "@/actions/customers";
 import { createPaymentLink } from "@/actions/payment";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { PaymentModal } from "@/components/ui/PaymentModal";
 
 const formatCompactNumber = (input: number | string) => {
   const number = Number(input);
@@ -108,6 +109,11 @@ export default function CustomerDetailView({ data }: { data: any }) {
   const [isTogglingVip, setIsTogglingVip] = useState(false);
   const [expandedLatePayments, setExpandedLatePayments] = useState<Record<number, boolean>>({});
   const [mounted, setMounted] = useState(false);
+
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentRedirectUrl, setPaymentRedirectUrl] = useState("");
+  const [paymentOrderId, setPaymentOrderId] = useState("");
+  const [paymentToken, setPaymentToken] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -248,13 +254,6 @@ export default function CustomerDetailView({ data }: { data: any }) {
                 return;
               }
 
-              // Buka popup browser terpisah (bukan sekadar tab baru)
-              const newWindow = window.open('about:blank', 'MidtransPayment', 'width=600,height=800,left=200,top=100');
-              if (!newWindow) {
-                 toast.error("Gagal membuka pop-up. Pastikan Pop-up Blocker dimatikan.");
-                 return;
-              }
-
               toast.loading("Generating Payment Link...", { id: "snap" });
               const res = await createPaymentLink({
                 customerId: data.id,
@@ -263,15 +262,17 @@ export default function CustomerDetailView({ data }: { data: any }) {
                 amount
               });
 
-              if (res.success && res.redirect_url) {
+              if (res.success && res.redirect_url && res.order_id && res.token) {
                 toast.success("Payment Link generated!", { id: "snap" });
-                newWindow.location.href = res.redirect_url;
+                setPaymentRedirectUrl(res.redirect_url);
+                setPaymentOrderId(res.order_id);
+                setPaymentToken(res.token);
+                setPaymentModalOpen(true);
               } else {
-                newWindow.close();
                 toast.error("Failed to generate link: " + res.error, { id: "snap" });
               }
             }}
-            className="flex items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 rounded-2xl font-bold text-xs tablet:text-sm transition-all col-span-2 tablet:col-span-1"
+            className="flex items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 rounded-2xl font-bold text-xs tablet:text-sm transition-all col-span-2 tablet:col-span-1 cursor-pointer"
           >
             <CreditCard size={16} />
             <span className="truncate">Payment Link</span>
@@ -601,8 +602,15 @@ export default function CustomerDetailView({ data }: { data: any }) {
           </div>
           {/* End of Right Column */}
         </div>
-
       </div>
+
+      <PaymentModal
+        isOpen={paymentModalOpen}
+        onClose={() => setPaymentModalOpen(false)}
+        token={paymentToken}
+        redirectUrl={paymentRedirectUrl}
+        orderId={paymentOrderId}
+      />
     </div>
   );
 }

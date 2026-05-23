@@ -16,7 +16,7 @@
 # vscode
 /.vscode
 
-#kiro
+# kiro
 /.kiro
 
 # next.js
@@ -55,6 +55,7 @@ ISP_FinTrack_Development_Guide.md
 AGENTS.md
 CLAUDE.md
 GEMINI.md
+rules.md
 
 # Debug & Temp Logs
 debug_tx*.txt

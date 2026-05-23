@@ -12,6 +12,7 @@ import { getCustomer360 } from "@/actions/customers";
 import { createPaymentLink } from "@/actions/payment";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from "recharts";
 import { toast } from "sonner";
+import { PaymentModal } from "@/components/ui/PaymentModal";
 
 const formatCompactNumber = (number: number) => {
   if (number >= 1000000000) return `Rp ${(number / 1000000000).toFixed(3)} B`;
@@ -86,6 +87,11 @@ function StatCell({ label, value, icon: Icon, accent }: { label: string; value: 
 export function CustomerDetailDrawer({ customer, onClose }: CustomerDetailDrawerProps) {
   const [fullCustomer, setFullCustomer] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentRedirectUrl, setPaymentRedirectUrl] = useState("");
+  const [paymentOrderId, setPaymentOrderId] = useState("");
+  const [paymentToken, setPaymentToken] = useState("");
 
   useEffect(() => {
     if (customer?.id) {
@@ -443,13 +449,6 @@ export function CustomerDetailDrawer({ customer, onClose }: CustomerDetailDrawer
                         return;
                       }
 
-                      // Buka popup browser terpisah (bukan sekadar tab baru)
-                      const newWindow = window.open('about:blank', 'MidtransPayment', 'width=600,height=800,left=200,top=100');
-                      if (!newWindow) {
-                         toast.error("Gagal membuka pop-up. Pastikan Pop-up Blocker dimatikan.");
-                         return;
-                      }
-
                       toast.loading("Generating Payment Link...", { id: "snap" });
                       const res = await createPaymentLink({
                         customerId: customer.id,
@@ -458,15 +457,17 @@ export function CustomerDetailDrawer({ customer, onClose }: CustomerDetailDrawer
                         amount
                       });
 
-                      if (res.success && res.redirect_url) {
+                      if (res.success && res.redirect_url && res.order_id && res.token) {
                         toast.success("Payment Link generated!", { id: "snap" });
-                        newWindow.location.href = res.redirect_url;
+                        setPaymentRedirectUrl(res.redirect_url);
+                        setPaymentOrderId(res.order_id);
+                        setPaymentToken(res.token);
+                        setPaymentModalOpen(true);
                       } else {
-                        newWindow.close();
                         toast.error("Failed to generate link: " + res.error, { id: "snap" });
                       }
                     }}
-                    className="flex items-center gap-2.5 p-3 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-xl transition-all text-left col-span-2"
+                    className="flex items-center gap-2.5 p-3 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-xl transition-all text-left col-span-2 cursor-pointer"
                   >
                     <CreditCard size={14} className="text-blue-500 flex-shrink-0" />
                     <div>
@@ -485,11 +486,19 @@ export function CustomerDetailDrawer({ customer, onClose }: CustomerDetailDrawer
             <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
               <button onClick={onClose}
                 aria-label="Close customer drawer"
-                className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-xl font-black text-sm transition-all">
+                className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-xl font-black text-sm transition-all cursor-pointer">
                 Tutup
               </button>
             </div>
           </m.div>
+
+          <PaymentModal
+            isOpen={paymentModalOpen}
+            onClose={() => setPaymentModalOpen(false)}
+            token={paymentToken}
+            redirectUrl={paymentRedirectUrl}
+            orderId={paymentOrderId}
+          />
         </div>
       )}
     </AnimatePresence>

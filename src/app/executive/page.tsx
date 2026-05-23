@@ -566,7 +566,7 @@ export default function ExecutiveDashboard() {
                     <Activity className="w-5 h-5 text-indigo-500"/> Revenue & Net Profit Trajectory
                   </h2>
                   <ChartContainer className="h-80 w-full">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                       <ComposedChart data={processedData.financial.trendData}>
                         <defs>
                           <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
@@ -681,7 +681,7 @@ export default function ExecutiveDashboard() {
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Assets Group by Type (Deployed)</h2>
                     <ChartContainer className="h-64">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <BarChart data={processedData.inventory.assetByType}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 'bold'}} />
@@ -710,7 +710,7 @@ export default function ExecutiveDashboard() {
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Stock Assets by Type (Unused)</h2>
                     <ChartContainer className="h-64">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <BarChart data={processedData.inventory.stockByType}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 'bold'}} />
@@ -739,7 +739,7 @@ export default function ExecutiveDashboard() {
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Assets by Location (Deployed)</h2>
                     <ChartContainer className="h-64">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <BarChart data={processedData.inventory.assetByLocation} layout="vertical">
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
                           <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
@@ -768,7 +768,7 @@ export default function ExecutiveDashboard() {
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Stock Location (Warehouse)</h2>
                     <ChartContainer className="h-64">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <BarChart data={processedData.inventory.stockByLocation} layout="vertical">
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
                           <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
@@ -798,7 +798,7 @@ export default function ExecutiveDashboard() {
                     <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Ownership & Acquisition Model</h2>
                     <ChartContainer className="h-[360px] md:h-64 flex flex-col md:flex-row items-center justify-center gap-6">
                       <div className="w-full md:w-1/2 h-56 md:h-full relative">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                           <PieChart>
                             <Pie
                               data={processedData.inventory.ownershipDist}
@@ -887,7 +887,7 @@ export default function ExecutiveDashboard() {
                       <Users className="w-5 h-5 text-indigo-500"/> Subscriber Distribution by Province
                     </h2>
                     <ChartContainer className="h-80">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <BarChart data={processedData.regional.provinceSubscribers} layout="vertical">
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
                           <XAxis type="number" hide />
@@ -919,7 +919,7 @@ export default function ExecutiveDashboard() {
                       <MapPin className="w-5 h-5 text-cyan-500"/> Distribution by City (Top 8)
                     </h2>
                     <ChartContainer className="h-80">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <BarChart data={processedData.regional.cityDist} layout="vertical">
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
                           <XAxis type="number" hide />

@@ -264,8 +264,14 @@ export default function CustomerAnalysisPage() {
                 setStatusFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="flex-1 lg-phone:flex-none px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 outline-none cursor-pointer lg-phone:min-w-[120px]"
+              className="flex-1 lg-phone:flex-none px-4 pr-10 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 outline-none cursor-pointer lg-phone:min-w-[120px] appearance-none relative"
               aria-label="Filter by customer status"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 7l5 5 5-5'/%3e%3c/svg%3e")`,
+                backgroundPosition: 'right 0.75rem center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '1.5em 1.5em'
+              }}
             >
               <option value="All">All Status</option>
               <option value="Active">Active</option>

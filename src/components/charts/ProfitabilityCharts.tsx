@@ -30,7 +30,7 @@ interface WaterfallChartProps {
 
 export const WaterfallChart = memo(function WaterfallChart({ data }: WaterfallChartProps) {
   return (
-    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
       <BarChart data={data} margin={{ top: 10, right: 20, left: 20, bottom: 20 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
         <XAxis
@@ -97,7 +97,7 @@ export const ServiceMixChart = memo(function ServiceMixChart({ data, totalActive
         </span>
       </div>
 
-      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <PieChart>
           <Pie
             data={data}
@@ -145,7 +145,7 @@ interface ProfitabilityTrendChartProps {
 
 export const ProfitabilityTrendChart = memo(function ProfitabilityTrendChart({ data }: ProfitabilityTrendChartProps) {
   return (
-    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
       <AreaChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
         <defs>
           <linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1">

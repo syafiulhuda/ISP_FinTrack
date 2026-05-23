@@ -26,7 +26,7 @@ interface SystemLog {
 
 export default function SystemLogsPage() {
   const queryClient = useQueryClient();
-  
+
   // 1. Fetch Profile and check Auth
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['adminProfile'],
@@ -115,11 +115,11 @@ export default function SystemLogsPage() {
         const path = (log.path || "").toLowerCase();
         const uid = (log.user_id || "").toLowerCase();
         const stack = (log.error_stack || "").toLowerCase();
-        
-        if (!msg.includes(queryStr) && 
-            !path.includes(queryStr) && 
-            !uid.includes(queryStr) && 
-            !stack.includes(queryStr)) {
+
+        if (!msg.includes(queryStr) &&
+          !path.includes(queryStr) &&
+          !uid.includes(queryStr) &&
+          !stack.includes(queryStr)) {
           return false;
         }
       }
@@ -244,7 +244,7 @@ export default function SystemLogsPage() {
               {row.user_id && (
                 <span>UID: {row.user_id}</span>
               )}
-              <button 
+              <button
                 onClick={() => toggleLog(row.id)}
                 className="flex items-center gap-1 text-primary font-bold hover:underline"
               >
@@ -252,7 +252,7 @@ export default function SystemLogsPage() {
                 <ChevronDown size={12} className={cn("transition-transform duration-200", isExpanded && "rotate-180")} />
               </button>
             </div>
-            
+
             <AnimatePresence initial={false}>
               {isExpanded && (
                 <m.div
@@ -285,7 +285,7 @@ export default function SystemLogsPage() {
                         disabled={resolveMutation.isPending}
                         className={cn(
                           "px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer",
-                          row.is_resolved 
+                          row.is_resolved
                             ? "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-500 dark:text-slate-400"
                             : "bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-500/10"
                         )}
@@ -327,8 +327,8 @@ export default function SystemLogsPage() {
     <div className="pt-6 md:pt-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto px-4 sm:px-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
-          <Link 
-            href="/settings" 
+          <Link
+            href="/settings"
             className="flex items-center gap-2 text-slate-400 hover:text-slate-600 dark:text-slate-405 dark:hover:text-slate-300 transition-colors text-xs font-bold uppercase tracking-wider w-fit"
           >
             <ArrowLeft size={16} />
@@ -342,7 +342,7 @@ export default function SystemLogsPage() {
             Pusat monitoring runtime error dan logs aktivitas sistem (Alternatif Sentry Lokal).
           </p>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <button
             onClick={() => refetch()}
@@ -352,7 +352,7 @@ export default function SystemLogsPage() {
             <RefreshCw size={14} className={cn(isRefetching && "animate-spin")} />
             Refresh
           </button>
-          
+
           <button
             onClick={handleClearLogs}
             disabled={clearMutation.isPending || logs.length === 0}
@@ -365,20 +365,20 @@ export default function SystemLogsPage() {
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
-        
+
         {/* Filters */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-            <input 
-              type="text" 
-              placeholder="Cari pesan, path, user ID, atau stack trace..." 
+            <input
+              type="text"
+              placeholder="Cari pesan, path, user ID, atau stack trace..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
             />
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative">
               <select
@@ -409,8 +409,8 @@ export default function SystemLogsPage() {
 
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <input 
-                type="date" 
+              <input
+                type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
                 className="w-full sm:w-auto bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-900 dark:text-slate-100 cursor-pointer"
@@ -418,7 +418,7 @@ export default function SystemLogsPage() {
             </div>
 
             {(search || levelFilter !== "ALL" || statusFilter !== "ALL" || dateFilter) && (
-              <button 
+              <button
                 onClick={() => { setSearch(""); setLevelFilter("ALL"); setStatusFilter("ALL"); setDateFilter(""); }}
                 className="flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-colors shrink-0"
               >
@@ -431,9 +431,9 @@ export default function SystemLogsPage() {
 
         {/* Data Table */}
         <div className="border border-slate-100 dark:border-slate-800/80 rounded-2xl overflow-hidden bg-slate-50/20 dark:bg-slate-950/10">
-          <DataTable 
-            data={displayLogs} 
-            columns={columns} 
+          <DataTable
+            data={displayLogs}
+            columns={columns}
             keyExtractor={(row) => row.id}
             isLoading={isLogsLoading}
             emptyMessage="Tidak ada catatan log sistem yang sesuai."
@@ -445,22 +445,22 @@ export default function SystemLogsPage() {
         {!isLogsLoading && filteredLogs.length > 0 && (
           <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center justify-between gap-6 bg-slate-50/30 dark:bg-white/5 mt-8 sm:flex-row">
             <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
-              Showing <span className="text-slate-900 dark:text-white">{(currentPage-1)*itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage*itemsPerPage, filteredLogs.length)}</span> of <span className="text-slate-900 dark:text-white">{filteredLogs.length}</span> entries
+              Showing <span className="text-slate-900 dark:text-white">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage * itemsPerPage, filteredLogs.length)}</span> of <span className="text-slate-900 dark:text-white">{filteredLogs.length}</span> entries
             </p>
             <div className="flex flex-row items-center justify-center gap-1 sm:gap-2 w-full sm:w-auto">
-              <button 
+              <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
                 className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
                 Previous
               </button>
-              
+
               <div className="flex items-center gap-1">
                 {[...Array(Math.min(5, totalPages))].map((_, i) => {
                   let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
                   if (pageNum <= 0 || pageNum > totalPages) return null;
-                  
+
                   return (
                     <button
                       key={pageNum}
@@ -476,7 +476,7 @@ export default function SystemLogsPage() {
                 })}
               </div>
 
-              <button 
+              <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
                 className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
