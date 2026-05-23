@@ -4,9 +4,10 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/DataTable";
 import { getAuditLogs } from "@/actions/audit";
-import { Search, Calendar, FilterX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown } from "lucide-react";
+import { Search, Calendar, FilterX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { m, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 interface AuditLog {
   id: string;
@@ -114,8 +115,15 @@ export default function AuditTrailPage() {
   ];
 
   return (
-    <div className="pt-6 md:pt-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
+    <div className="pt-6 md:pt-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="space-y-1">
+        <Link 
+          href="/settings" 
+          className="flex items-center gap-2 text-slate-400 hover:text-slate-600 dark:text-slate-405 dark:hover:text-slate-300 transition-colors text-xs font-bold uppercase tracking-wider w-fit"
+        >
+          <ArrowLeft size={16} />
+          Pengaturan
+        </Link>
         <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Security & Audit Trail</h1>
         <p className="text-sm font-medium text-slate-500 mt-1">Pusat pemantauan aktivitas admin. Melacak seluruh kejadian login dan perubahan data kritis.</p>
       </div>

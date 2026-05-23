@@ -20,6 +20,7 @@ import {
   MessageSquare,
   FileScan,
   ShieldCheck,
+  Terminal,
   MoreVertical,
   Loader2,
   CheckCircle2
@@ -474,6 +475,16 @@ export default function SettingsPage() {
                   <ShieldCheck size={18} className="shrink-0" />
                   <span>Security & Audit</span>
                 </Link>
+
+                {(profile?.role === 'System Administrator' || profile?.role === 'Admin Kantor') && (
+                  <Link
+                    href="/settings/logs"
+                    className="flex items-center gap-1.5 lg:gap-2 xl:gap-3 px-2 lg:px-3 xl:px-4 py-3 rounded-xl transition-all font-bold text-[13px] lg:text-[14px] xl:text-base whitespace-nowrap text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                  >
+                    <Terminal size={18} className="shrink-0" />
+                    <span>System Logs</span>
+                  </Link>
+                )}
               </>
             )}
           </m.nav>

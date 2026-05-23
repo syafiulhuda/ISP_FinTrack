@@ -235,6 +235,9 @@ const poolConfig: any = {
 
     const heavyDeps: Array<{ name: string; reason: string; alternative?: string }> = [
       { name: 'moment',       reason: 'Very large date library (60+ KB).', alternative: 'date-fns or dayjs' },
+      { name: 'tesseract.js', reason: 'OCR library (extremely large).' },
+      { name: 'html2canvas',  reason: 'HTML to image library (large size).' },
+      { name: 'xlsx',         reason: 'Excel spreadsheet parser/writer (very large).' },
     ];
 
     for (const dep of heavyDeps) {

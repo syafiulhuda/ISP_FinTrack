@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { refreshAgingMV } from '@/actions/customers';
 import { refreshPredictions } from '@/actions/predictions';
 import { logger } from '@/lib/logger';
+import { query } from '@/lib/db';
 
 import { refreshDashboardMV } from '@/actions/dashboard';
 import { refreshProfitabilityMV } from '@/actions/profitability';
@@ -23,8 +24,13 @@ export async function GET(request: Request) {
       refreshProfitabilityMV(),
       refreshExecutiveMV()
     ]);
+
+    // Clean up old system logs, login logs (> 30 days) and expired rate limits
+    await query("DELETE FROM system_logs WHERE created_at < NOW() - INTERVAL '30 days'");
+    await query("DELETE FROM login_logs WHERE login_timestamp < NOW() - INTERVAL '30 days'");
+    await query("DELETE FROM rate_limits WHERE expire_at < NOW()");
     
-    if (process.env.NODE_ENV === 'development') console.log("VERCEL CRON: Refresh completed successfully.");
+    if (process.env.NODE_ENV === 'development') console.log("VERCEL CRON: Refresh and log cleanup completed successfully.");
     return NextResponse.json({ success: true, message: 'Cron job executed successfully' });
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));

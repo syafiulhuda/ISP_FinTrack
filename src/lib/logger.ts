@@ -8,7 +8,26 @@ interface LogPayload {
   user_id?: string;
 }
 
+type LogDbWriter = (level: LogLevel, payload: LogPayload) => void;
+
 class CentralLogger {
+  private dbWriter: LogDbWriter | null = null;
+
+  registerDbWriter(writer: LogDbWriter) {
+    this.dbWriter = writer;
+  }
+
+  private saveToDatabase(level: LogLevel, payload: LogPayload) {
+    if (this.dbWriter) {
+      try {
+        this.dbWriter(level, payload);
+      } catch (err) {
+        // Use console.error directly to avoid recursion
+        console.error('Failed to write log to DB via registered writer:', err);
+      }
+    }
+  }
+
   private formatLog(level: LogLevel, payload: LogPayload) {
     const timestamp = new Date().toISOString();
     
@@ -53,6 +72,7 @@ class CentralLogger {
     } else {
       console.log(`[INFO] ${payload.message}`, log);
     }
+    this.saveToDatabase('info', payload);
   }
 
   warn(payload: LogPayload) {
@@ -62,6 +82,7 @@ class CentralLogger {
     } else {
       console.warn(`[WARN] ${payload.message}`, log);
     }
+    this.saveToDatabase('warn', payload);
   }
 
   error(payload: LogPayload) {
@@ -71,6 +92,7 @@ class CentralLogger {
     } else {
       console.error(`[ERROR] ${payload.message}`, log);
     }
+    this.saveToDatabase('error', payload);
   }
 
   debug(payload: LogPayload) {
@@ -82,3 +104,4 @@ class CentralLogger {
 }
 
 export const logger = new CentralLogger();
+export type { LogLevel, LogPayload };

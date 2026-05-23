@@ -7,9 +7,19 @@ import { sendResetPasswordEmail } from "@/lib/mail";
 import bcrypt from "bcryptjs";
 import { createSession, destroySession, getSession } from "@/lib/auth";
 import { headers } from "next/headers";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function loginAction(email: string, password: string): Promise<{ success: boolean; error?: string }> {
   try {
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
+    
+    const limitKey = `rate:login:${ip}`;
+    const limitCheck = await checkRateLimit(limitKey, 5, 60);
+    if (!limitCheck.success) {
+      return { success: false, error: 'Terlalu banyak percobaan login. Silakan coba lagi nanti.' };
+    }
+
     const res = await query(
       'SELECT id, email, password, nickname FROM admin WHERE email = $1 LIMIT 1',
       [email]
@@ -27,9 +37,6 @@ export async function loginAction(email: string, password: string): Promise<{ su
     }
 
     // Log the login activity
-    const headersList = await headers();
-    const ip = headersList.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
-
     await query(
       'INSERT INTO login_logs (admin_id, nickname, ip_address) VALUES ($1, $2, $3)',
       [admin.id, admin.nickname || admin.email.split('@')[0], ip]
