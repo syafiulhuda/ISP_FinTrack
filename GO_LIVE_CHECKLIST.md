@@ -191,3 +191,13 @@ Berikut adalah daftar perbaikan dan optimasi fitur terbaru yang telah sukses dii
     *   Menghapus pembatasan minimal 6 karakter pada frontend karena password yang dikirim akan otomatis di-hash via bcrypt di server.
     *   Menambahkan trigger pembersihan (*clear*) input form secara otomatis saat modal ganti password ditutup atau tombol batal (x) diklik.
     *   Menampilkan status "Last changed: X time ago" yang ter-update secara real-time menggunakan invalidasi cache `queryClient.invalidateQueries`.
+
+### 🎫 3. Modul Trouble Tickets & Halaman Khusus Histori (`src/app/tickets/`)
+*   **Optimalisasi Responsivitas Kanban Board (`src/components/tickets/TicketsKanban.tsx`):**
+    *   Mengatur agar kolom Kanban (seperti *Open*, *Progress*, *Resolved*, *Closed*) pada layar smartphone (terkecil & terbesar) serta tablet portrait dapat di-expand/collapse secara vertikal dengan transisi `framer-motion` yang halus. Hal ini meniadakan kebutuhan scroll horizontal di layar sempit.
+    *   Penyelarasan palet warna prioritas dan status tiket pada mode gelap agar kontras lebih harmonis dan nyaman dibaca.
+*   **Halaman Khusus Histori Tiket (`src/app/tickets/history/page.tsx` & `src/components/tickets/TicketsHistoryClient.tsx`):**
+    *   Mengganti modal "Resolved History" yang sebelumnya memakan layar penuh (intrusif) dengan dedicated page `/tickets/history`.
+    *   Membuat tabel log data-grid responsif yang otomatis berubah menjadi bentuk list kartu accordion interaktif pada layar mobile.
+    *   Dilengkapi tombol toggle expand/collapse dan pencarian real-time (by ticket number, customer, description) untuk kenyamanan pencarian.
+    *   Menghilangkan border divider bawaan (`divide-y`) pada device mobile dan menambahkan vertical gap (`gap-4`) antar kartu untuk menghindari layout yang terlalu padat dan menumpuk ke bawah.
