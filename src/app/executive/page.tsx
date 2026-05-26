@@ -48,6 +48,8 @@ export default function ExecutiveDashboard() {
   const [activeTab, setActiveTab] = useState("financial");
   const [activeStatFin, setActiveStatFin] = useState(0);
   const [activeStatInv, setActiveStatInv] = useState(0);
+  const touchStartXFin = useRef<number | null>(null);
+  const touchStartXInv = useRef<number | null>(null);
   const [hoveredSlice, setHoveredSlice] = useState<{ name: string; value: number } | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -560,7 +562,24 @@ export default function ExecutiveDashboard() {
                       return (
                         <>
                           {/* Mobile & Tablet 3D Cover Flow Carousel */}
-                          <div className="block lg:hidden h-[160px] sm:h-[220px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+                          <div 
+                            className="block lg:hidden h-[160px] sm:h-[220px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
+                            onTouchStart={(e) => {
+                              touchStartXFin.current = e.touches[0].clientX;
+                            }}
+                            onTouchEnd={(e) => {
+                              if (touchStartXFin.current === null) return;
+                              const touchEndX = e.changedTouches[0].clientX;
+                              const diff = touchStartXFin.current - touchEndX;
+                              const N = finCards.length;
+                              if (diff > 40) {
+                                setActiveStatFin((prev) => (prev + 1) % N);
+                              } else if (diff < -40) {
+                                setActiveStatFin((prev) => (prev - 1 + N) % N);
+                              }
+                              touchStartXFin.current = null;
+                            }}
+                          >
                             {finCards.map((k, i) => {
                               const N = finCards.length;
                               const offset = (i - activeStatFin + N) % N;
@@ -588,7 +607,7 @@ export default function ExecutiveDashboard() {
                                     else if (offset.x > 40) setActiveStatFin((prev) => (prev - 1 + N) % N);
                                   }}
                                   animate={{ x, scale, zIndex, opacity }}
-                                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                  transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
                                   className={cn(
                                     "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[120px] sm:h-[160px] rounded-[1.5rem] cursor-pointer p-5 sm:p-6 flex flex-col justify-between transition-colors duration-300",
                                     "bg-[#0f172a] border",
@@ -738,7 +757,24 @@ export default function ExecutiveDashboard() {
                       return (
                         <>
                           {/* Mobile & Tablet 3D Cover Flow Carousel */}
-                          <div className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+                          <div 
+                            className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
+                            onTouchStart={(e) => {
+                              touchStartXInv.current = e.touches[0].clientX;
+                            }}
+                            onTouchEnd={(e) => {
+                              if (touchStartXInv.current === null) return;
+                              const touchEndX = e.changedTouches[0].clientX;
+                              const diff = touchStartXInv.current - touchEndX;
+                              const N = invCards.length;
+                              if (diff > 40) {
+                                setActiveStatInv((prev) => (prev + 1) % N);
+                              } else if (diff < -40) {
+                                setActiveStatInv((prev) => (prev - 1 + N) % N);
+                              }
+                              touchStartXInv.current = null;
+                            }}
+                          >
                             {invCards.map((k, i) => {
                               const N = invCards.length;
                               const offset = (i - activeStatInv + N) % N;
@@ -766,7 +802,7 @@ export default function ExecutiveDashboard() {
                                     else if (offset.x > 40) setActiveStatInv((prev) => (prev - 1 + N) % N);
                                   }}
                                   animate={{ x, scale, zIndex, opacity }}
-                                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                  transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
                                   className={cn(
                                     "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300",
                                     "bg-[#0f172a] border",

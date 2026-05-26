@@ -158,6 +158,17 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
   const [ticketSlideOpen, setTicketSlideOpen] = useState(false);
   const [isTicketHistoryExpanded, setIsTicketHistoryExpanded] = useState(false);
 
+  // Pagination states
+  const [ticketPage, setTicketPage] = useState(1);
+  const [latePaymentPage, setLatePaymentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+
+  const paginatedTickets = initialTickets?.slice((ticketPage - 1) * ITEMS_PER_PAGE, ticketPage * ITEMS_PER_PAGE) || [];
+  const totalTicketPages = Math.ceil((initialTickets?.length || 0) / ITEMS_PER_PAGE);
+
+  const paginatedLatePayments = data.late_payments?.slice((latePaymentPage - 1) * ITEMS_PER_PAGE, latePaymentPage * ITEMS_PER_PAGE) || [];
+  const totalLatePaymentPages = Math.ceil((data.late_payments?.length || 0) / ITEMS_PER_PAGE);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -550,30 +561,56 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
                   No tickets found for this customer.
                 </div>
               ) : (
-                initialTickets.map((t) => (
-                  <div key={t.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-slate-100 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-black text-slate-900 dark:text-white">{t.ticket_number}</span>
-                        <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase", 
-                          t.priority === 'CRITICAL' ? 'bg-rose-500/10 text-rose-500' :
-                          t.priority === 'HIGH' ? 'bg-amber-500/10 text-amber-500' :
-                          t.priority === 'MEDIUM' ? 'bg-indigo-500/10 text-indigo-500' :
-                          'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                        )}>{t.priority}</span>
-                        <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase", 
-                          t.status === 'OPEN' ? 'bg-amber-500/10 text-amber-500' :
-                          t.status === 'IN_PROGRESS' ? 'bg-blue-500/10 text-blue-500' :
-                          'bg-emerald-500/10 text-emerald-500'
-                        )}>{t.status}</span>
+                <>
+                  {paginatedTickets.map((t) => (
+                    <div key={t.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-slate-100 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-black text-slate-900 dark:text-white">{t.ticket_number}</span>
+                          <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase", 
+                            t.priority === 'CRITICAL' ? 'bg-rose-500/10 text-rose-500' :
+                            t.priority === 'HIGH' ? 'bg-amber-500/10 text-amber-500' :
+                            t.priority === 'MEDIUM' ? 'bg-indigo-500/10 text-indigo-500' :
+                            'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                          )}>{t.priority}</span>
+                          <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase", 
+                            t.status === 'OPEN' ? 'bg-amber-500/10 text-amber-500' :
+                            t.status === 'IN_PROGRESS' ? 'bg-blue-500/10 text-blue-500' :
+                            'bg-emerald-500/10 text-emerald-500'
+                          )}>{t.status}</span>
+                        </div>
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{t.description}</p>
+                        <p className="text-[10px] font-bold text-slate-400 mt-2">
+                          {new Date(t.created_at_str).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                        </p>
                       </div>
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{t.description}</p>
-                      <p className="text-[10px] font-bold text-slate-400 mt-2">
-                        {new Date(t.created_at_str).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
-                      </p>
                     </div>
-                  </div>
-                ))
+                  ))}
+                  
+                  {totalTicketPages > 1 && (
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800 mt-2">
+                      <div className="text-[10px] font-bold text-slate-500">
+                        Page {ticketPage} of {totalTicketPages}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setTicketPage(prev => Math.max(prev - 1, 1))}
+                          disabled={ticketPage === 1}
+                          className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <button
+                          onClick={() => setTicketPage(prev => Math.min(prev + 1, totalTicketPages))}
+                          disabled={ticketPage === totalTicketPages}
+                          className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
                   </div>
                 </m.div>
@@ -598,7 +635,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {data.late_payments?.map((lp: any, i: number) => (
+                  {paginatedLatePayments.map((lp: any, i: number) => (
                     <tr key={i} className={cn(
                       "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors",
                       lp.isUnpaid && "bg-rose-500/5 dark:bg-rose-500/10"
@@ -641,7 +678,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
             {/* Mobile Accordion/Dropdown View (Hidden on Desktop) */}
             <div className="block sm:hidden divide-y divide-slate-100 dark:divide-slate-800 border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden">
               {data.late_payments && data.late_payments.length > 0 ? (
-                data.late_payments.map((lp: any, i: number) => {
+                paginatedLatePayments.map((lp: any, i: number) => {
                   const isExpanded = !!expandedLatePayments[i];
                   return (
                     <div 
@@ -722,6 +759,31 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
                 </div>
               )}
             </div>
+
+            {/* Pagination Controls for Late Payments */}
+            {totalLatePaymentPages > 1 && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="text-[10px] font-bold text-slate-500">
+                  Page {latePaymentPage} of {totalLatePaymentPages}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setLatePaymentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={latePaymentPage === 1}
+                    className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    onClick={() => setLatePaymentPage(prev => Math.min(prev + 1, totalLatePaymentPages))}
+                    disabled={latePaymentPage === totalLatePaymentPages}
+                    className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className={cn("p-6 rounded-3xl border shadow-lg flex flex-col gap-4 relative overflow-hidden",

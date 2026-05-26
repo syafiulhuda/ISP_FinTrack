@@ -122,19 +122,23 @@ export async function getResolvedHistoryTickets() {
   }
 }
 
-export async function updateTicketStatus(id: string, status: string) {
+export async function updateTicketStatus(id: string, status: string, assignTo?: string) {
   try {
     let sql = `UPDATE tickets SET status = $1`;
     const params: any[] = [status];
     
     if (status === 'RESOLVED' || status === 'CLOSED') {
       sql += `, resolved_at = CURRENT_TIMESTAMP`;
+      if (assignTo) {
+        params.push(assignTo);
+        sql += `, assigned_to = $${params.length}`;
+      }
     } else {
       sql += `, resolved_at = NULL`;
     }
     
-    sql += ` WHERE id = $2 RETURNING customer_id`;
     params.push(id);
+    sql += ` WHERE id = $${params.length} RETURNING customer_id`;
     
     const res = await query(sql, params);
     

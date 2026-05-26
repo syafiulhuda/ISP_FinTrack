@@ -153,6 +153,8 @@ export default function ProfitabilityPage() {
   const [mounted, setMounted] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeStat, setActiveStat] = useState(0);
+  const profitabilityRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
 
@@ -554,7 +556,24 @@ export default function ProfitabilityPage() {
         </div>
 
         {/* Mobile & Tablet 3D Cover Flow Carousel */}
-        <div className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+        <div 
+          className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
+          onTouchStart={(e) => {
+            touchStartX.current = e.touches[0].clientX;
+          }}
+          onTouchEnd={(e) => {
+            if (touchStartX.current === null) return;
+            const touchEndX = e.changedTouches[0].clientX;
+            const diff = touchStartX.current - touchEndX;
+            const N = dynamicData.metrics.length;
+            if (diff > 40) {
+              setActiveStat((prev) => (prev + 1) % N);
+            } else if (diff < -40) {
+              setActiveStat((prev) => (prev - 1 + N) % N);
+            }
+            touchStartX.current = null;
+          }}
+        >
           {isDataLoading ? (
             <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[1.5rem] shadow-xl" />
           ) : (
@@ -590,7 +609,7 @@ export default function ProfitabilityPage() {
                     }
                   }}
                   animate={{ x, scale, zIndex, opacity }}
-                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
                   className={cn(
                     "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300",
                     "bg-[#0f172a] border",

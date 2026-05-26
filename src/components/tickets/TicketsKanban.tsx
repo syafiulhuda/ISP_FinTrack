@@ -34,6 +34,13 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
   const [isResolvedExpanded, setIsResolvedExpanded] = useState(false);
   const resolvedRef = useRef<HTMLDivElement>(null);
   const [resolvedHeight, setResolvedHeight] = useState(80);
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+
+  // Modal State for resolving tickets
+  const [resolveModalOpen, setResolveModalOpen] = useState(false);
+  const [ticketToResolve, setTicketToResolve] = useState<string | null>(null);
+  const [assigneeName, setAssigneeName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!resolvedRef.current) return;
@@ -73,14 +80,21 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.setData("ticketId", id);
+    // Optional: Set a drag image or effect
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragLeave = () => {
+    setDragOverCol(null);
   };
 
   const handleDrop = async (e: React.DragEvent, newStatus: string) => {
     e.preventDefault();
+    setDragOverCol(null);
     const id = e.dataTransfer.getData("ticketId");
 
     const ticket = tickets.find(t => t.id.toString() === id);
-    
+
     // Workflow Rule: Prevent skipping "In Progress"
     if (ticket && ticket.status === 'OPEN' && newStatus === 'RESOLVED') {
       toast.error("Action restricted!", {
@@ -90,9 +104,15 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
       return;
     }
 
+    if (newStatus === 'RESOLVED') {
+      setTicketToResolve(id);
+      setResolveModalOpen(true);
+      return;
+    }
+
     // Optimistic UI Update with real-time timestamp
-    setTickets(prev => prev.map(t => t.id.toString() === id ? { 
-      ...t, 
+    setTickets(prev => prev.map(t => t.id.toString() === id ? {
+      ...t,
       status: newStatus,
       resolved_at_str: (newStatus === 'RESOLVED' || newStatus === 'CLOSED') ? new Date().toISOString() : null
     } : t));
@@ -107,8 +127,40 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const submitResolve = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!ticketToResolve || !assigneeName.trim()) return;
+
+    setIsSubmitting(true);
+
+    // Optimistic UI Update with real-time timestamp
+    setTickets(prev => prev.map(t => t.id.toString() === ticketToResolve ? {
+      ...t,
+      status: 'RESOLVED',
+      resolved_at_str: new Date().toISOString()
+    } : t));
+
+    const res = await updateTicketStatus(ticketToResolve, 'RESOLVED', assigneeName.trim());
+    if (!res.success) {
+      toast.error("Failed to resolve ticket");
+      // Revert if failed
+      setTickets(initialTickets);
+    } else {
+      toast.success(`Ticket Resolved by ${assigneeName}`);
+    }
+
+    setIsSubmitting(false);
+    setResolveModalOpen(false);
+    setTicketToResolve(null);
+    setAssigneeName("");
+  };
+
+  const handleDragOver = (e: React.DragEvent, colId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverCol !== colId) {
+      setDragOverCol(colId);
+    }
   };
 
   const filteredTickets = tickets.filter(t => {
@@ -261,8 +313,11 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
       <div ref={resolvedRef} className="sticky top-0 z-30 py-2 bg-slate-50 dark:bg-slate-950 -mx-4 px-4">
         {/* Resolved Tickets Section */}
         <div
-          className="bg-white dark:bg-slate-900 border-2 border-dashed border-emerald-200 dark:border-emerald-900/50 rounded-2xl shadow-sm overflow-hidden shrink-0"
-          onDragOver={handleDragOver}
+          className={cn("bg-white dark:bg-slate-900 border-2 rounded-2xl shadow-sm overflow-hidden shrink-0 transition-colors duration-300",
+            dragOverCol === 'RESOLVED' ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 scale-[1.02]" : "border-dashed border-emerald-200 dark:border-emerald-900/50"
+          )}
+          onDragOver={(e) => handleDragOver(e, 'RESOLVED')}
+          onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, 'RESOLVED')}
         >
           <div
@@ -271,7 +326,7 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
           >
             <div className="flex items-center gap-3">
               <CheckCircle size={18} className="text-emerald-500" />
-              <h3 className="font-black text-slate-900 dark:text-white">Resolved Today <span className="text-xs font-normal text-slate-500">(Drop to Resolve)</span></h3>
+              <h3 className="font-black text-slate-900 dark:text-white">Resolved Today</h3>
               <span className="text-xs font-black px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
                 {resolvedTickets.length}
               </span>
@@ -298,7 +353,7 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
                             <span className="text-xs font-bold text-slate-900 dark:text-white">{t.ticket_number} - {t.customer_name}</span>
                             <span className="text-[10px] text-slate-500 truncate max-w-md">{t.description}</span>
                           </div>
-                          <span className="text-[10px] font-bold text-slate-400">
+                          <span suppressHydrationWarning className="text-[10px] font-bold text-slate-400">
                             {new Date(t.created_at_str).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
@@ -319,7 +374,8 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
             {columns.map((col, index) => (
               <div
                 key={col.id}
-                onDragOver={handleDragOver}
+                onDragOver={(e) => handleDragOver(e, col.id)}
+                onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, col.id)}
                 className="relative w-full lg:w-auto flex flex-col h-full"
               >
@@ -332,7 +388,10 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
                 >
                   <div
                     onClick={() => setExpandedCols(prev => ({ ...prev, [col.id]: !prev[col.id] }))}
-                    className={cn("flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-t-4 rounded-2xl shadow-md mb-2 cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50", col.color)}
+                    className={cn("flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-t-4 rounded-2xl shadow-md mb-2 cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50", 
+                      col.color,
+                      dragOverCol === col.id ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 scale-[1.02]" : "border-slate-200 dark:border-slate-800"
+                    )}
                   >
                     <h3 className="font-black text-slate-900 dark:text-white flex items-center gap-2">
                       <col.icon size={16} className={cn(
@@ -366,7 +425,8 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
                             key={t.id}
                             draggable
                             onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, t.id)}
-                            className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm cursor-grab active:cursor-grabbing hover:border-indigo-500/50 hover:shadow-lg transition-all"
+                            style={{ WebkitTouchCallout: 'none' }}
+                            className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm cursor-grab active:cursor-grabbing hover:border-indigo-500/50 hover:shadow-lg transition-all select-none touch-pan-y"
                           >
                             <div className="flex justify-between items-start mb-3">
                               <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider",
@@ -385,9 +445,36 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
 
                             <div className="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800">
                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.issue_category}</span>
-                              <span className="text-[10px] font-bold text-slate-400">
+                              <span suppressHydrationWarning className="text-[10px] font-bold text-slate-400">
                                 {new Date(t.created_at_str).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })}
                               </span>
+                            </div>
+                            
+                            {/* Mobile Quick Actions (Visible primarily on touch devices or smaller screens) */}
+                            <div className="mt-4 pt-3 flex items-center justify-end border-t border-slate-50 dark:border-slate-800/50 lg:hidden">
+                              {col.id === 'OPEN' ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const mockEvent = { preventDefault: () => {}, dataTransfer: { getData: () => t.id.toString() } } as unknown as React.DragEvent;
+                                    handleDrop(mockEvent, 'IN_PROGRESS');
+                                  }}
+                                  className="text-xs font-bold px-4 py-2 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 active:scale-95 transition-transform"
+                                >
+                                  Start Progress &rarr;
+                                </button>
+                              ) : col.id === 'IN_PROGRESS' ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const mockEvent = { preventDefault: () => {}, dataTransfer: { getData: () => t.id.toString() } } as unknown as React.DragEvent;
+                                    handleDrop(mockEvent, 'RESOLVED');
+                                  }}
+                                  className="text-xs font-bold px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 active:scale-95 transition-transform"
+                                >
+                                  Resolve Ticket &rarr;
+                                </button>
+                              ) : null}
                             </div>
                           </m.div>
                         ))}
@@ -405,6 +492,72 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
           </div>
         </div>
       </div>
+
+      {/* Assignee Verification Modal */}
+      <AnimatePresence>
+        {resolveModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <m.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setResolveModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            />
+            <m.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+            >
+              <div className="p-6">
+                <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center mb-4">
+                  <CheckCircle size={24} />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">
+                  Verify Resolution
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+                  Please specify the technician or assignee who resolved this ticket.
+                </p>
+
+                <form onSubmit={submitResolve} className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">
+                      Assignee Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={assigneeName}
+                      onChange={(e) => setAssigneeName(e.target.value)}
+                      placeholder="e.g. John Doe, Network Team"
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setResolveModalOpen(false)}
+                      className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!assigneeName.trim() || isSubmitting}
+                      className="flex-1 px-4 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                    >
+                      {isSubmitting ? "Saving..." : "Confirm & Resolve"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </m.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
