@@ -13,12 +13,12 @@ export async function loginAction(formData: FormData): Promise<{ success: boolea
   try {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-    
+
     if (!email || !password) return { success: false, error: 'Email dan password harus diisi.' };
 
     const headersList = await headers();
     const ip = headersList.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
-    
+
     const limitKey = `rate:login:${ip}`;
     const limitCheck = await checkRateLimit(limitKey, 5, 60);
     if (!limitCheck.success) {
@@ -59,19 +59,92 @@ export async function logoutAction() {
   await destroySession();
 }
 
-export async function requestPasswordReset(emailInput: string) {
+export async function getUsersForResetDropdown(requesterRole: string) {
   try {
-    // ALIAS: Jika user mengetikkan gmail asli mereka di UI, 
-    // sistem akan otomatis mengarahkannya ke akun owner di database
-    const email = (emailInput === process.env.GMAIL_USER) 
-      ? 'owner@ispfintrack.local' 
-      : emailInput;
+    const roleMap: Record<string, string[]> = {
+      "Owner": ["Owner", "System Administrator", "Admin Kantor", "Tim Lapangan"],
+      "Admin Kantor": ["Tim Lapangan"],
+      "Tim Lapangan": []
+    };
 
-    // 1. Check if admin exists
-    const userCheck = await query("SELECT id FROM admin WHERE email = $1", [email]);
+    const allowedRoles = roleMap[requesterRole] || [];
+    if (allowedRoles.length === 0) return { success: true, users: [] };
+
+    // Bikin array string untuk dipass ke query IN ($1, $2, dll) tapi karena dinamis, 
+    // kita pakai string template atau ILIKE. Yang paling gampang pakai ANY
+    const res = await query(
+      "SELECT id, nama, role, email FROM admin WHERE role = ANY($1) ORDER BY role, nama",
+      [allowedRoles]
+    );
+
+    return { success: true, users: res.rows };
+  } catch (error) {
+    logger.error({ message: "Auth Action Error: getUsersForResetDropdown", error: error, path: "action" });
+    return { success: false, users: [] };
+  }
+}
+
+export async function requestPasswordReset(targetUserId: number, requesterRole: string, requesterPassword?: string) {
+  try {
+    // 1. Check if admin exists and get their role/email based on targetUserId
+    const userCheck = await query("SELECT id, role, email FROM admin WHERE id = $1", [targetUserId]);
     if (userCheck.rows.length === 0) {
-      return { success: false, message: "Email not found." };
+      return { success: false, message: "User tidak ditemukan." };
     }
+
+    const targetRole = userCheck.rows[0].role;
+    const rawEmail = userCheck.rows[0].email;
+
+    // 2. Terapkan Hierarki Reset Password (Form Publik)
+    // Aturan:
+    // - Owner bisa reset siapa saja (termasuk dirinya sendiri)
+    // - Admin Kantor HANYA bisa reset Tim Lapangan
+    // - Tim Lapangan TIDAK BISA reset siapa-siapa
+
+    if (requesterRole === "Tim Lapangan") {
+      return { success: false, message: "Akses Ditolak: Tim Lapangan tidak memiliki izin untuk mereset password." };
+    }
+
+    if (requesterRole === "Admin Kantor") {
+      if (!targetRole.toLowerCase().includes('lapangan')) {
+        return { success: false, message: "Akses Ditolak: Admin Kantor hanya bisa mereset password Tim Lapangan." };
+      }
+    }
+
+    // 3. Validasi Password Peminta (Kecuali Self-Reset)
+    const isSelfReset = requesterRole === "Owner" && (targetRole.toLowerCase().includes("owner") || targetRole.toLowerCase().includes("system"));
+
+    if (!isSelfReset) {
+      if (!requesterPassword) {
+        return { success: false, message: "Akses Ditolak: Password Anda diperlukan untuk memvalidasi tindakan ini." };
+      }
+
+      // Cari semua akun yang memiliki role sesuai dengan requesterRole
+      // Kita pakai ILIKE karena role di database bisa bervariasi (e.g. "System Administrator" untuk Owner)
+      const roleSearch = requesterRole === "Owner" ? "system" : requesterRole.toLowerCase();
+      const requesters = await query("SELECT id, password FROM admin WHERE role ILIKE $1", [`%${roleSearch}%`]);
+
+      let isValidRequester = false;
+      for (const req of requesters.rows) {
+        const match = await bcrypt.compare(requesterPassword, req.password);
+        if (match) {
+          isValidRequester = true;
+          break;
+        }
+      }
+
+      if (!isValidRequester) {
+        return { success: false, message: "Akses Ditolak: Password validasi yang Anda masukkan salah." };
+      }
+    }
+
+    // ALIAS: Jika email target berakhiran @ispfintrack.local (dummy email),
+    // arahkan emailnya ke GMAIL_USER agar bisa diterima saat testing.
+    const targetEmail = (rawEmail.endsWith('@ispfintrack.local') && process.env.GMAIL_USER)
+      ? process.env.GMAIL_USER
+      : rawEmail;
+
+    // Hanya yang lolos (Owner) yang lanjut ke tahap pembuatan token
 
     // 2. Generate secure token
     const token = crypto.randomBytes(32).toString("hex");
@@ -79,20 +152,23 @@ export async function requestPasswordReset(emailInput: string) {
 
     // 3. Store token (Upsert if email exists)
     await query(
-      "DELETE FROM password_resets WHERE email = $1", 
-      [email]
+      "DELETE FROM password_resets WHERE email = $1",
+      [rawEmail]
     );
     await query(
       "INSERT INTO password_resets (email, token, expires_at) VALUES ($1, $2, $3)",
-      [email, token, expiresAt]
+      [rawEmail, token, expiresAt]
     );
 
-    // 4. Send Email (Alias logic for local owner account)
-    const targetEmail = email === 'owner@ispfintrack.local' && process.env.GMAIL_USER 
-      ? process.env.GMAIL_USER 
-      : email;
-      
+    // 4. Send Email
     const emailRes = await sendResetPasswordEmail(targetEmail, token);
+    
+    // 5. Log activity
+    await query(
+      "INSERT INTO change_pass_history (actor_email, target_email, action_type, ip_address) VALUES ($1, $2, $3, $4)",
+      [requesterRole, rawEmail, "Reset Link Requested", "System"]
+    );
+
     if (!emailRes.success) {
       return { success: false, message: "Failed to send email." };
     }
@@ -130,6 +206,12 @@ export async function resetPassword(token: string, passwordNew: string) {
     // 4. Clean up token
     await query("DELETE FROM password_resets WHERE email = $1", [email]);
 
+    // 5. Log activity
+    await query(
+      "INSERT INTO change_pass_history (actor_email, target_email, action_type, ip_address) VALUES ($1, $2, $3, $4)",
+      ["User via Email Link", email, "Password Reset", "System"]
+    );
+
     return { success: true, message: "Password has been updated successfully." };
   } catch (error) {
     logger.error({ message: "Auth Action Error: resetPassword", error: error, path: "action" });
@@ -143,7 +225,17 @@ export async function validateResetToken(token: string) {
       [token]
     );
 
-    return { valid: tokenRes.rows.length > 0 };
+    if (tokenRes.rows.length > 0) {
+      const email = tokenRes.rows[0].email;
+      const userRes = await query("SELECT nama, email FROM admin WHERE email = $1", [email]);
+
+      if (userRes.rows.length > 0) {
+        return { valid: true, user: userRes.rows[0] };
+      }
+      return { valid: true, user: { email } }; // fallback
+    }
+
+    return { valid: false };
   } catch (error) {
     logger.error({ message: "Auth Action Error: validateResetToken", error: error, path: "action" });
     return { valid: false };
@@ -168,6 +260,14 @@ export async function changePasswordAction(passwordOld: string, passwordNew: str
     // 3. Hash and Update new password
     const newHash = await bcrypt.hash(passwordNew, 10);
     await query("UPDATE admin SET password = $1, last_password_change = NOW() WHERE id = $2", [newHash, adminId]);
+
+    // 4. Log activity
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
+    await query(
+      "INSERT INTO change_pass_history (actor_email, target_email, action_type, ip_address) VALUES ($1, $2, $3, $4)",
+      [email, email, "Password Changed Manually", ip]
+    );
 
     return { success: true, message: "Password berhasil diperbarui." };
   } catch (error) {

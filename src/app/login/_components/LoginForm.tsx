@@ -5,7 +5,7 @@ import { Lock, Mail, ArrowRight, ShieldCheck, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { loginAction, requestPasswordReset } from "@/actions/auth";
+import { loginAction, requestPasswordReset, getUsersForResetDropdown } from "@/actions/auth";
 
 export function LoginForm() {
   const router = useRouter();
@@ -16,6 +16,30 @@ export function LoginForm() {
   const [success, setSuccess] = useState("");
   const [shake, setShake] = useState(false);
   const [isForgotMode, setIsForgotMode] = useState(false);
+  
+  // States for Password Reset Hierarchy
+  const [requesterRole, setRequesterRole] = useState("Owner");
+  const [targetUserId, setTargetUserId] = useState<number | "">("");
+  const [requesterPassword, setRequesterPassword] = useState("");
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
+  // Determine if this is a self-reset (Owner resetting Owner)
+  const targetUser = availableUsers.find((u) => u.id === targetUserId);
+  const isSelfReset = requesterRole === "Owner" && targetUser && (targetUser.role.toLowerCase().includes("owner") || targetUser.role.toLowerCase().includes("system"));
+
+  // Fetch users when requesterRole changes and in forgot mode
+  const fetchUsersForRole = async (role: string) => {
+    setIsLoadingUsers(true);
+    setTargetUserId("");
+    const res = await getUsersForResetDropdown(role);
+    if (res.success) {
+      setAvailableUsers(res.users || []);
+    } else {
+      setAvailableUsers([]);
+    }
+    setIsLoadingUsers(false);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,11 +64,21 @@ export function LoginForm() {
 
   const handleForgot = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!targetUserId) {
+      setError("Pilih user yang ingin direset.");
+      return;
+    }
+
+    if (!isSelfReset && !requesterPassword) {
+      setError("Masukkan password Anda untuk memvalidasi permintaan ini.");
+      return;
+    }
+    
     setIsLoading(true);
     setError("");
     setSuccess("");
 
-    const result = await requestPasswordReset(email);
+    const result = await requestPasswordReset(Number(targetUserId), requesterRole, requesterPassword);
 
     if (result.success) {
       setSuccess(result.message || "Reset link sent!");
@@ -104,19 +138,93 @@ export function LoginForm() {
           animate={shake ? { x: [-10, 10, -10, 10, 0] } : {}}
           transition={{ duration: 0.4 }}
         >
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Work Email</label>
-            <div className="relative group">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
-              <input 
-                id="email"
-                type="email" required value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.com"
-                className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-slate-900 dark:text-white font-medium"
-              />
+          {!isForgotMode ? (
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Work Email</label>
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
+                <input 
+                  id="email"
+                  type="email" required value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@company.com"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-slate-900 dark:text-white font-medium"
+                />
+              </div>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Identitas Anda (Role)</label>
+                <div className="relative group">
+                  <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
+                  <select 
+                    value={requesterRole}
+                    onChange={(e) => {
+                      setRequesterRole(e.target.value);
+                      fetchUsersForRole(e.target.value);
+                    }}
+                    className="w-full appearance-none bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-10 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-slate-900 dark:text-white font-medium"
+                  >
+                    <option value="Owner">Owner</option>
+                    <option value="Admin Kantor">Admin Kantor</option>
+                    <option value="Tim Lapangan">Tim Lapangan</option>
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    ▼
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">User yang Ingin Direset</label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
+                  <select 
+                    value={targetUserId}
+                    onChange={(e) => setTargetUserId(e.target.value ? Number(e.target.value) : "")}
+                    disabled={isLoadingUsers || availableUsers.length === 0}
+                    className="w-full appearance-none bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-10 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-slate-900 dark:text-white font-medium disabled:opacity-50"
+                  >
+                    <option value="">-- Pilih User --</option>
+                    {availableUsers.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.email}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    ▼
+                  </div>
+                </div>
+                {availableUsers.length === 0 && !isLoadingUsers && (
+                  <p className="text-xs text-red-500 mt-1">Anda tidak memiliki wewenang mereset siapapun.</p>
+                )}
+              </div>
+
+              {!isSelfReset && availableUsers.length > 0 && targetUserId !== "" && (
+                <m.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="space-y-2 overflow-hidden"
+                >
+                  <label htmlFor="requesterPassword" className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">
+                    Validasi (Password Anda)
+                  </label>
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
+                    <input 
+                      id="requesterPassword"
+                      type="password" required value={requesterPassword}
+                      onChange={(e) => setRequesterPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-slate-900 dark:text-white font-medium"
+                    />
+                  </div>
+                </m.div>
+              )}
+            </>
+          )}
 
           {!isForgotMode && (
             <div className="space-y-2">
@@ -124,7 +232,12 @@ export function LoginForm() {
                 <label htmlFor="password" className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Password</label>
                 <button 
                   type="button" 
-                  onClick={() => { setIsForgotMode(true); setError(""); setSuccess(""); }}
+                  onClick={() => { 
+                    setIsForgotMode(true); 
+                    setError(""); 
+                    setSuccess(""); 
+                    fetchUsersForRole(requesterRole); 
+                  }}
                   className="text-xs font-bold text-primary hover:underline"
                 >
                   Forgot password?

@@ -7,7 +7,7 @@ export async function getAuditLogs() {
   try {
     // Run all queries in parallel for performance
     // Run all queries in parallel for performance
-    const [loginRes, stockRes, assetRes, expRes, mainRes, custRes, trxRes] = await Promise.all([
+    const [loginRes, stockRes, assetRes, expRes, mainRes, custRes, trxRes, passRes] = await Promise.all([
       // 1. Login Logs (no inputter field - use nickname)
       query(`
         SELECT id::text, nickname as user, login_timestamp AT TIME ZONE 'Asia/Jakarta' as timestamp, 
@@ -83,6 +83,16 @@ export async function getAuditLogs() {
         ORDER BY inputter_tms DESC
         LIMIT 50
       `),
+
+      // 8. Password Change History
+      query(`
+        SELECT id::text, actor_email as user, timestamp AT TIME ZONE 'Asia/Jakarta' as timestamp, 
+               action_type as action, 
+               'Target: ' || target_email || ' | IP: ' || COALESCE(ip_address, 'Unknown') as details
+        FROM change_pass_history
+        ORDER BY timestamp DESC
+        LIMIT 50
+      `),
     ]);
     
     // Combine all and sort chronologically
@@ -94,6 +104,7 @@ export async function getAuditLogs() {
       ...mainRes.rows,
       ...custRes.rows,
       ...trxRes.rows,
+      ...passRes.rows,
     ].sort((a, b) => 
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );

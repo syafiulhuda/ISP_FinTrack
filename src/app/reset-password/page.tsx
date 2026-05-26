@@ -20,6 +20,7 @@ function ResetPasswordForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [isTokenValid, setIsTokenValid] = useState(false);
+  const [targetUser, setTargetUser] = useState<{ nama?: string; email: string } | null>(null);
 
   // Validate token on mount
   useEffect(() => {
@@ -33,6 +34,7 @@ function ResetPasswordForm() {
       const result = await validateResetToken(token);
       if (result.valid) {
         setIsTokenValid(true);
+        if (result.user) setTargetUser(result.user);
       } else {
         setError("This password reset link is invalid or has already been used.");
       }
@@ -138,6 +140,25 @@ function ResetPasswordForm() {
       <div className="mb-12">
         <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight mb-3">New Password</h2>
         <p className="text-slate-500 dark:text-slate-400 font-medium text-lg">Create a strong password for your account.</p>
+        
+        {targetUser && (
+          <m.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 p-5 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800"
+          >
+            <p className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Resetting password for:</p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
+                {targetUser.nama ? targetUser.nama.charAt(0).toUpperCase() : targetUser.email.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                {targetUser.nama && <p className="text-slate-900 dark:text-white font-bold">{targetUser.nama}</p>}
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{targetUser.email}</p>
+              </div>
+            </div>
+          </m.div>
+        )}
       </div>
 
       {error && (
