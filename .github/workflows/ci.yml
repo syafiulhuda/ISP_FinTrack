@@ -18,7 +18,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '20.x'
         cache: 'npm'
 
     - name: Install Dependencies
@@ -26,20 +26,28 @@ jobs:
 
     - name: Run Linter
       run: npm run lint
-      
+
     - name: Run Tests
       run: npm run test:run
 
     - name: Build Verification (Dry Run)
       run: npm run build
       env:
-        # Provide dummy env vars for build process if necessary
+        # Neon Tech / PostgreSQL - DATABASE_URL wajib ada untuk build Next.js
+        DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy?sslmode=disable
         DATABASE_USER: postgres
         DATABASE_HOST: localhost
         DATABASE_NAME: clients
         DATABASE_PASSWORD: dummy
-        DATABASE_PORT: 5432
-        MIDTRANS_SERVER_KEY: dummy
-        MIDTRANS_CLIENT_KEY: dummy
-        GMAIL_USER: dummy
-        GMAIL_APP_PASSWORD: dummy
+        DATABASE_PORT: "5432"
+        # Midtrans
+        MIDTRANS_IS_PRODUCTION: "false"
+        MIDTRANS_SERVER_KEY: dummy-server-key
+        MIDTRANS_CLIENT_KEY: dummy-client-key
+        # Gmail
+        GMAIL_USER: dummy@gmail.com
+        GMAIL_APP_PASSWORD: dummy-app-password-16x
+        # Cron Secret
+        CRON_SECRET: dummy-cron-secret-for-build-only-32chars!!
+        # Suppress Next.js telemetry di CI
+        NEXT_TELEMETRY_DISABLED: "1"
