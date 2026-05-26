@@ -59,8 +59,14 @@ export async function logoutAction() {
   await destroySession();
 }
 
-export async function requestPasswordReset(email: string) {
+export async function requestPasswordReset(emailInput: string) {
   try {
+    // ALIAS: Jika user mengetikkan gmail asli mereka di UI, 
+    // sistem akan otomatis mengarahkannya ke akun owner di database
+    const email = (emailInput === process.env.GMAIL_USER) 
+      ? 'owner@ispfintrack.local' 
+      : emailInput;
+
     // 1. Check if admin exists
     const userCheck = await query("SELECT id FROM admin WHERE email = $1", [email]);
     if (userCheck.rows.length === 0) {
@@ -81,8 +87,12 @@ export async function requestPasswordReset(email: string) {
       [email, token, expiresAt]
     );
 
-    // 4. Send Email
-    const emailRes = await sendResetPasswordEmail(email, token);
+    // 4. Send Email (Alias logic for local owner account)
+    const targetEmail = email === 'owner@ispfintrack.local' && process.env.GMAIL_USER 
+      ? process.env.GMAIL_USER 
+      : email;
+      
+    const emailRes = await sendResetPasswordEmail(targetEmail, token);
     if (!emailRes.success) {
       return { success: false, message: "Failed to send email." };
     }
