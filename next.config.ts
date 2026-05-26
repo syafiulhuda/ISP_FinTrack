@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://app.sandbox.midtrans.com https://app.midtrans.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://ui-avatars.com https://images.unsplash.com https://plus.unsplash.com https://app.sandbox.midtrans.com https://app.midtrans.com; connect-src 'self' https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://app.sandbox.midtrans.com https://app.midtrans.com https://api.sandbox.midtrans.com https://api.midtrans.com; font-src 'self' data:; frame-src 'self' https://app.sandbox.midtrans.com https://app.midtrans.com; frame-ancestors 'none';"
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://app.sandbox.midtrans.com https://app.midtrans.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://ui-avatars.com https://images.unsplash.com https://plus.unsplash.com https://app.sandbox.midtrans.com https://app.midtrans.com; connect-src 'self' https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://app.sandbox.midtrans.com https://app.midtrans.com https://api.sandbox.midtrans.com https://api.midtrans.com; font-src 'self' data:; frame-src 'self' https://app.sandbox.midtrans.com https://app.midtrans.com; frame-ancestors 'none'; worker-src 'self';"
           }
         ]
       }
