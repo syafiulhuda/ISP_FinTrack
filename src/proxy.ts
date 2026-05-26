@@ -11,7 +11,11 @@ export function proxy(request: NextRequest) {
     PUBLIC_PATHS.some(p => pathname.startsWith(p)) ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
-    pathname.startsWith('/api')
+    pathname.startsWith('/api') ||
+    pathname === '/manifest.webmanifest' ||
+    pathname === '/sw.js' ||
+    pathname.startsWith('/workbox-') ||
+    pathname.startsWith('/fallback-')
   ) {
     return NextResponse.next();
   }
