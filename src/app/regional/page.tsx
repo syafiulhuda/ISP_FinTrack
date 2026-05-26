@@ -54,6 +54,7 @@ export default function RegionalAnalysisPage() {
   const [selectedSubDistrict, setSelectedSubDistrict] = useState("All Sub-districts");
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [activeStat, setActiveStat] = useState(0);
 
   const [expandedProfitNodes, setExpandedProfitNodes] = useState<Record<string, boolean>>({});
   const [expandedAgingNodes, setExpandedAgingNodes] = useState<Record<string, boolean>>({});
@@ -376,8 +377,82 @@ export default function RegionalAnalysisPage() {
         </div>
       </div>
 
-      {/* Asset Ownership Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Mobile & Tablet 3D Cover Flow Carousel */}
+      <div className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+        {isLoadingAll ? (
+          <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[1.5rem] shadow-xl" />
+        ) : (
+          [
+            { title: "TOTAL ASET", value: mounted ? formatNumber(assetSummary.total) : '---', icon: MapPin },
+            { title: "ONLINE", value: mounted ? formatNumber(assetSummary.online) : '---', icon: TrendingUp },
+            { title: "SOLD", value: mounted ? formatNumber(assetSummary.sold) : '---', icon: Banknote }
+          ].map((stat, i) => {
+            const offset = (i - activeStat + 3) % 3;
+            
+            const isCenter = offset === 0;
+            const x = isCenter ? "0%" : offset === 1 ? "65%" : "-65%";
+            const scale = isCenter ? 1 : 0.8;
+            const zIndex = isCenter ? 30 : 20;
+            const opacity = isCenter ? 1 : 0.4;
+
+            return (
+              <m.div
+                key={i}
+                onClick={() => setActiveStat(i)}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={(e, { offset }) => {
+                  if (offset.x < -40) {
+                    setActiveStat((prev) => (prev + 1) % 3);
+                  } else if (offset.x > 40) {
+                    setActiveStat((prev) => (prev - 1 + 3) % 3);
+                  }
+                }}
+                animate={{
+                  x,
+                  scale,
+                  zIndex,
+                  opacity
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                className={cn(
+                  "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300",
+                  "bg-[#0f172a] border", // Base dark card
+                  isCenter 
+                    ? "border-cyan-400 shadow-[0_0_25px_3px_rgba(34,211,238,0.3)] dark:shadow-[0_0_35px_5px_rgba(34,211,238,0.4)]" 
+                    : "border-slate-800 shadow-none"
+                )}
+              >
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className={cn(
+                    "w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors duration-300",
+                    isCenter ? "bg-cyan-500/20 text-cyan-400" : "bg-white/5 text-slate-500"
+                  )}>
+                    <stat.icon className="w-4 h-4 sm:w-6 sm:h-6" />
+                  </div>
+                  <span className={cn(
+                    "text-[10px] sm:text-sm font-black tracking-widest transition-colors duration-300",
+                    isCenter ? "text-cyan-400" : "text-slate-500"
+                  )}>
+                    {stat.title}
+                  </span>
+                </div>
+                
+                <div className={cn(
+                  "text-3xl sm:text-5xl font-black tracking-tight transition-colors duration-300",
+                  isCenter ? "text-white" : "text-slate-500"
+                )}>
+                  {stat.value}
+                </div>
+              </m.div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop Grid */}
+      <div className="hidden lg:grid lg:grid-cols-3 gap-6">
         {isLoadingAll ? (
           SKELETON_ITEMS.map((_, i) => (
             <div key={i} className="h-[140px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl" />

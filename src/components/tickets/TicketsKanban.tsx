@@ -215,7 +215,7 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
               )}>
                 {!showHistoryOnly ? "Today's Tickets" : "Unresolved History Tickets"}
               </h3>
-              <p className={cn("text-sm mt-0.5 transition-colors truncate",
+              <p className={cn("text-sm mt-0.5 transition-colors line-clamp-2",
                 !showHistoryOnly ? "text-slate-500 dark:text-slate-400" : "text-amber-700 dark:text-amber-400/80"
               )}>
                 {!showHistoryOnly

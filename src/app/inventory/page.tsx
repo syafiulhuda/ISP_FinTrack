@@ -71,26 +71,44 @@ export default function InventoryPage() {
         transition={{ delay: 0.4 }}
         className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-slate-800"
       >
-        <div className="p-6 md:p-8 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="shrink-0">
-            <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Asset Roster</h3>
-            <p className="text-[12px] font-medium text-slate-500 mt-0.5">Detailed list of managed network components.</p>
-          </div>
+        <div className="p-4 md:p-6 lg:p-8 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 w-full min-w-0">
+          
+          {/* Title Area & Mobile Reset Button */}
+          <div className="flex flex-row items-start justify-between w-full lg:w-auto shrink-0 gap-3">
+            <div className="min-w-0">
+              <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight truncate">Asset Roster</h3>
+              <p className="text-[11px] md:text-[12px] font-medium text-slate-500 mt-0.5 leading-tight">Detailed list of managed network components.</p>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto pb-2 md:pb-0">
+            {/* Mobile Reset Button */}
             <m.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleResetFilters}
-              className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-primary rounded-xl border border-slate-200 dark:border-slate-800 transition-all shadow-sm flex flex-row items-center justify-center gap-2 group shrink-0"
+              className="lg:hidden px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-primary rounded-xl border border-slate-200 dark:border-slate-800 transition-all shadow-sm flex flex-row items-center justify-center gap-1.5 group shrink-0"
               title="Reset Filters"
             >
-              <RotateCcw size={16} className="group-hover:text-primary transition-colors" />
-              <span className="text-[10px] font-black uppercase tracking-widest hidden lg-phone:inline">Reset</span>
+              <RotateCcw size={14} className="group-hover:text-primary transition-colors shrink-0" />
+              <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline shrink-0">Reset</span>
+            </m.button>
+          </div>
+
+          <div className="flex-1 min-w-0 flex flex-row items-center justify-end gap-1.5 lg:gap-2 w-full lg:w-auto">
+            {/* Desktop Reset Button */}
+            <m.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleResetFilters}
+              className="hidden lg:flex px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-primary rounded-xl border border-slate-200 dark:border-slate-800 transition-all shadow-sm flex flex-row items-center justify-center gap-1.5 group shrink-0"
+              title="Reset Filters"
+            >
+              <RotateCcw size={14} className="group-hover:text-primary transition-colors shrink-0" />
+              <span className="text-[10px] font-black uppercase tracking-widest shrink-0">Reset</span>
             </m.button>
 
-            <div className="grid grid-cols-2 lg:flex lg:flex-row lg:items-center gap-2 flex-1 w-full lg:w-auto">
-              <div className="relative group lg:min-w-[120px] flex-1">
+            {/* Filters (Grid on Mobile, Flex on Desktop) */}
+            <div className="w-full lg:w-auto flex-1 min-w-0 grid grid-cols-2 lg:flex lg:flex-row items-center gap-2 lg:gap-1.5">
+              <div className="relative min-w-0 flex-1">
                 <select
                   aria-label="Filter by Type"
                   value={selectedType}
@@ -98,17 +116,17 @@ export default function InventoryPage() {
                     setSelectedType(e.target.value);
                     inventory.setCurrentPage(1);
                   }}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-8 shadow-sm"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl pl-3 pr-6 py-2 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none shadow-sm cursor-pointer text-ellipsis"
                 >
                   <option value="All">All Types</option>
                   {uniqueTypes.map((type: string) => (
                     <option key={type} value={type}>{type}s</option>
                   ))}
                 </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
 
-              <div className="relative group lg:min-w-[130px] flex-1">
+              <div className="relative min-w-0 flex-1">
                 <select
                   aria-label="Filter by Condition"
                   value={selectedCondition}
@@ -116,17 +134,17 @@ export default function InventoryPage() {
                     setSelectedCondition(e.target.value);
                     inventory.setCurrentPage(1);
                   }}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-8 shadow-sm"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl pl-3 pr-6 py-2 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none shadow-sm cursor-pointer text-ellipsis"
                 >
                   <option value="All">All Conditions</option>
                   {uniqueConditions.map((cond: string) => (
                     <option key={cond} value={cond}>{cond}</option>
                   ))}
                 </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
 
-              <div className="relative group lg:min-w-[130px] flex-1">
+              <div className="relative min-w-0 flex-1">
                 <select
                   aria-label="Filter by Ownership"
                   value={selectedOwnership}
@@ -134,17 +152,17 @@ export default function InventoryPage() {
                     setSelectedOwnership(e.target.value);
                     inventory.setCurrentPage(1);
                   }}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-8 shadow-sm"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl pl-3 pr-6 py-2 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none shadow-sm cursor-pointer text-ellipsis"
                 >
                   <option value="All">All Ownership</option>
                   <option value="Dimiliki">Dimiliki</option>
                   <option value="Sewa">Sewa</option>
                   <option value="Dijual">Sold / Archive</option>
                 </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
 
-              <div className="relative group lg:min-w-[120px] flex-1">
+              <div className="relative min-w-0 flex-1">
                 <select
                   aria-label="Filter by Usage"
                   value={selectedUsage}
@@ -152,13 +170,13 @@ export default function InventoryPage() {
                     setSelectedUsage(e.target.value);
                     inventory.setCurrentPage(1);
                   }}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2.5 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none pr-8 shadow-sm"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl pl-3 pr-6 py-2 text-[10px] font-black text-slate-600 dark:text-slate-300 focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none shadow-sm cursor-pointer text-ellipsis"
                 >
                   <option value="All">All Usage</option>
                   <option value="Deployed">Deployed</option>
                   <option value="Stock">Warehouse Stock</option>
                 </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
             </div>
           </div>

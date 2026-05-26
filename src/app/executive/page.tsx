@@ -18,6 +18,7 @@ import { AnimatePresence, m } from "framer-motion";
 import { ChartContainer } from "@/components/charts/ChartContainer";
 
 import { Customer, Transaction, Expense, Asset } from "@/types";
+import { cn } from "@/lib/utils";
 
 // Define Types for Data
 interface ExecutiveData {
@@ -45,6 +46,8 @@ export default function ExecutiveDashboard() {
   });
 
   const [activeTab, setActiveTab] = useState("financial");
+  const [activeStatFin, setActiveStatFin] = useState(0);
+  const [activeStatInv, setActiveStatInv] = useState(0);
   const [hoveredSlice, setHoveredSlice] = useState<{ name: string; value: number } | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -525,7 +528,10 @@ export default function ExecutiveDashboard() {
               <div className="space-y-8">
                 {isDataLoading ? (
                   <>
-                    <div className="grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                    <div className="block lg:hidden h-[160px] sm:h-[220px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+                      <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[120px] sm:h-[160px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[1.5rem] shadow-xl" />
+                    </div>
+                    <div className="hidden lg:grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <div key={i} className="bg-white dark:bg-slate-900/40 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm h-[120px] flex flex-col justify-between">
                           <div className="flex justify-between items-start">
@@ -543,23 +549,106 @@ export default function ExecutiveDashboard() {
                   </>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                  {[
-                    { title: "Revenue", val: processedData.financial.totalRevenue, icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-                    { title: "Gross Profit", val: processedData.financial.grossProfit, icon: Target, color: "text-blue-500", bg: "bg-blue-500/10" },
-                    { title: "Net Profit", val: processedData.financial.netProfit, icon: DollarSign, color: "text-indigo-500", bg: "bg-indigo-500/10" },
-                    { title: "Expense", val: processedData.financial.totalExpense, icon: Activity, color: "text-rose-500", bg: "bg-rose-500/10" },
-                    { title: "Active Customer", val: processedData.financial.activeCustomers, icon: Users, color: "text-amber-500", bg: "bg-amber-500/10" }
-                  ].map((k, i) => (
-                    <div key={i} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md h-[120px] flex flex-col justify-between">
-                      <div className="flex justify-between items-start">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{k.title}</p>
-                        <div className={`p-2 rounded-lg ${k.bg} ${k.color}`}><k.icon className="w-4 h-4" /></div>
-                      </div>
-                      <h2 className="text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100 whitespace-nowrap">{k.val}</h2>
-                    </div>
-                  ))}
-                </div>
+                    {(() => {
+                      const finCards = [
+                        { title: "Revenue", val: processedData.financial.totalRevenue, icon: TrendingUp, isBad: false, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+                        { title: "Gross Profit", val: processedData.financial.grossProfit, icon: Target, isBad: false, color: "text-blue-500", bg: "bg-blue-500/10" },
+                        { title: "Net Profit", val: processedData.financial.netProfit, icon: DollarSign, isBad: false, color: "text-indigo-500", bg: "bg-indigo-500/10" },
+                        { title: "Expense", val: processedData.financial.totalExpense, icon: Activity, isBad: true, color: "text-rose-500", bg: "bg-rose-500/10" },
+                        { title: "Active Customer", val: processedData.financial.activeCustomers, icon: Users, isBad: false, color: "text-amber-500", bg: "bg-amber-500/10" }
+                      ];
+                      return (
+                        <>
+                          {/* Mobile & Tablet 3D Cover Flow Carousel */}
+                          <div className="block lg:hidden h-[160px] sm:h-[220px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+                            {finCards.map((k, i) => {
+                              const N = finCards.length;
+                              const offset = (i - activeStatFin + N) % N;
+                              
+                              const isCenter = offset === 0;
+                              const isRight = offset === 1;
+                              const isLeft = offset === N - 1;
+                              const isVisible = isCenter || isRight || isLeft;
+          
+                              const x = isCenter ? "0%" : isRight ? "75%" : isLeft ? "-75%" : "0%";
+                              const scale = isCenter ? 1 : 0.8;
+                              const zIndex = isCenter ? 30 : (isVisible ? 20 : 10);
+                              const opacity = isCenter ? 1 : (isVisible ? 0.4 : 0);
+                              const isBad = k.isBad;
+          
+                              return (
+                                <m.div
+                                  key={k.title}
+                                  onClick={() => isVisible && setActiveStatFin(i)}
+                                  drag="x"
+                                  dragConstraints={{ left: 0, right: 0 }}
+                                  dragElastic={0.2}
+                                  onDragEnd={(e, { offset }) => {
+                                    if (offset.x < -40) setActiveStatFin((prev) => (prev + 1) % N);
+                                    else if (offset.x > 40) setActiveStatFin((prev) => (prev - 1 + N) % N);
+                                  }}
+                                  animate={{ x, scale, zIndex, opacity }}
+                                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                  className={cn(
+                                    "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[120px] sm:h-[160px] rounded-[1.5rem] cursor-pointer p-5 sm:p-6 flex flex-col justify-between transition-colors duration-300",
+                                    "bg-[#0f172a] border",
+                                    isCenter 
+                                      ? (isBad ? "border-orange-500 shadow-[0_0_25px_3px_rgba(249,115,22,0.3)] dark:shadow-[0_0_35px_5px_rgba(249,115,22,0.4)]" : "border-cyan-400 shadow-[0_0_25px_3px_rgba(34,211,238,0.3)] dark:shadow-[0_0_35px_5px_rgba(34,211,238,0.4)]")
+                                      : "border-slate-800 shadow-none",
+                                    !isVisible && "pointer-events-none"
+                                  )}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <div className={cn(
+                                        "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors duration-300",
+                                        isCenter ? (isBad ? "bg-orange-500/20 text-orange-400" : "bg-cyan-500/20 text-cyan-400") : "bg-white/5 text-slate-500"
+                                      )}>
+                                        <k.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                                      </div>
+                                      <span className={cn(
+                                        "text-[10px] sm:text-xs font-black tracking-widest transition-colors duration-300 uppercase",
+                                        isCenter ? (isBad ? "text-orange-400" : "text-cyan-400") : "text-slate-500"
+                                      )}>
+                                        {k.title}
+                                      </span>
+                                    </div>
+                                    {isBad && isCenter && (
+                                      <m.div
+                                        animate={{ opacity: [0.3, 0.8, 0.3] }}
+                                        transition={{ repeat: Infinity, duration: 1.5 }}
+                                        className="w-3 h-3 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)]"
+                                      />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className={cn(
+                                      "text-2xl sm:text-4xl font-black tracking-tight transition-colors duration-300 truncate",
+                                      isCenter ? "text-white" : "text-slate-500"
+                                    )}>
+                                      {k.val}
+                                    </div>
+                                  </div>
+                                </m.div>
+                              );
+                            })}
+                          </div>
+          
+                          {/* Desktop Grid */}
+                          <div className="hidden lg:grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                            {finCards.map((k, i) => (
+                              <div key={i} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md h-[120px] flex flex-col justify-between">
+                                <div className="flex justify-between items-start">
+                                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{k.title}</p>
+                                  <div className={`p-2 rounded-lg ${k.bg} ${k.color}`}><k.icon className="w-4 h-4" /></div>
+                                </div>
+                                <h2 className="text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100 whitespace-nowrap">{k.val}</h2>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      );
+                    })()}
 
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm h-[422px] flex flex-col justify-between">
                   <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
@@ -629,7 +718,10 @@ export default function ExecutiveDashboard() {
               <div className="space-y-8">
                 {isDataLoading ? (
                   <div className="animate-pulse space-y-8">
-                    <div className="h-32 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
+                    <div className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+                      <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] bg-slate-100 dark:bg-slate-800 rounded-[1.5rem] shadow-xl" />
+                    </div>
+                    <div className="hidden lg:block h-32 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="h-80 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
                       <div className="h-80 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
@@ -637,44 +729,141 @@ export default function ExecutiveDashboard() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm md:col-span-2">
-                    <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Total Asset Valuation</p>
-                    <h2 className="text-4xl font-black text-emerald-500">{processedData.inventory.valuation}</h2>
-                    <p className="text-xs text-slate-400 mt-1">Combined value of {processedData.inventory.total} devices</p>
-                  </div>
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between shadow-sm">
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Total Assets</p>
-                      <h3 className="text-3xl font-black text-slate-900 dark:text-white">{processedData.inventory.total}</h3>
-                    </div>
-                    
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase">
-                          {processedData.inventory.byCondition['Good'] || 0} Good
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                        <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase">
-                          {processedData.inventory.byCondition['Maintenance'] || 0} Maint.
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20">
-                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                        <span className="text-[9px] font-black text-rose-600 dark:text-rose-400 uppercase">
-                          {processedData.inventory.byCondition['Broken'] || 0} Broken
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-red-500/10 p-5 rounded-2xl border border-red-500/20 flex flex-col justify-center">
-                    <p className="text-xs font-bold text-red-500 mb-1 uppercase">Broken Devices</p>
-                    <h3 className="text-3xl font-black text-red-600">{processedData.inventory.broken}</h3>
-                  </div>
-                </div>
+                    {(() => {
+                      const invCards = [
+                        { title: "Asset Valuation", val: processedData.inventory.valuation, desc: `Combined value of ${processedData.inventory.total} devices`, icon: DollarSign, isBad: false },
+                        { title: "Total Assets", val: processedData.inventory.total, desc: `${processedData.inventory.byCondition['Good']||0} Good • ${processedData.inventory.byCondition['Maintenance']||0} Maint`, icon: Server, isBad: false },
+                        { title: "Broken Devices", val: processedData.inventory.broken, desc: "Require immediate attention", icon: Activity, isBad: true }
+                      ];
+                      return (
+                        <>
+                          {/* Mobile & Tablet 3D Cover Flow Carousel */}
+                          <div className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+                            {invCards.map((k, i) => {
+                              const N = invCards.length;
+                              const offset = (i - activeStatInv + N) % N;
+                              
+                              const isCenter = offset === 0;
+                              const isRight = offset === 1;
+                              const isLeft = offset === N - 1;
+                              const isVisible = isCenter || isRight || isLeft;
+          
+                              const x = isCenter ? "0%" : isRight ? "75%" : isLeft ? "-75%" : "0%";
+                              const scale = isCenter ? 1 : 0.8;
+                              const zIndex = isCenter ? 30 : (isVisible ? 20 : 10);
+                              const opacity = isCenter ? 1 : (isVisible ? 0.4 : 0);
+                              const isBad = k.isBad;
+          
+                              return (
+                                <m.div
+                                  key={k.title}
+                                  onClick={() => isVisible && setActiveStatInv(i)}
+                                  drag="x"
+                                  dragConstraints={{ left: 0, right: 0 }}
+                                  dragElastic={0.2}
+                                  onDragEnd={(e, { offset }) => {
+                                    if (offset.x < -40) setActiveStatInv((prev) => (prev + 1) % N);
+                                    else if (offset.x > 40) setActiveStatInv((prev) => (prev - 1 + N) % N);
+                                  }}
+                                  animate={{ x, scale, zIndex, opacity }}
+                                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                  className={cn(
+                                    "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300",
+                                    "bg-[#0f172a] border",
+                                    isCenter 
+                                      ? (isBad ? "border-orange-500 shadow-[0_0_25px_3px_rgba(249,115,22,0.3)] dark:shadow-[0_0_35px_5px_rgba(249,115,22,0.4)]" : "border-cyan-400 shadow-[0_0_25px_3px_rgba(34,211,238,0.3)] dark:shadow-[0_0_35px_5px_rgba(34,211,238,0.4)]")
+                                      : "border-slate-800 shadow-none",
+                                    !isVisible && "pointer-events-none"
+                                  )}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <div className={cn(
+                                        "w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors duration-300",
+                                        isCenter ? (isBad ? "bg-orange-500/20 text-orange-400" : "bg-cyan-500/20 text-cyan-400") : "bg-white/5 text-slate-500"
+                                      )}>
+                                        <k.icon className="w-4 h-4 sm:w-6 sm:h-6" />
+                                      </div>
+                                      <span className={cn(
+                                        "text-[10px] sm:text-xs font-black tracking-widest transition-colors duration-300 uppercase",
+                                        isCenter ? (isBad ? "text-orange-400" : "text-cyan-400") : "text-slate-500"
+                                      )}>
+                                        {k.title}
+                                      </span>
+                                    </div>
+                                    {isBad && isCenter && (
+                                      <m.div
+                                        animate={{ opacity: [0.3, 0.8, 0.3] }}
+                                        transition={{ repeat: Infinity, duration: 1.5 }}
+                                        className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)]"
+                                      />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className={cn(
+                                      "text-3xl sm:text-5xl font-black tracking-tight transition-colors duration-300 truncate",
+                                      isCenter ? "text-white" : "text-slate-500"
+                                    )}>
+                                      {k.val}
+                                    </div>
+                                    <div className="mt-1 sm:mt-2">
+                                      <span className={cn(
+                                        "text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-1 rounded-full tracking-wider transition-colors",
+                                        isCenter 
+                                          ? (isBad ? "bg-orange-500/20 text-orange-400" : "bg-white/10 text-slate-300")
+                                          : "bg-transparent text-slate-600"
+                                      )}>
+                                        {k.desc}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </m.div>
+                              );
+                            })}
+                          </div>
+          
+                          {/* Desktop Grid */}
+                          <div className="hidden lg:grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm md:col-span-2">
+                              <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Total Asset Valuation</p>
+                              <h2 className="text-4xl font-black text-emerald-500">{processedData.inventory.valuation}</h2>
+                              <p className="text-xs text-slate-400 mt-1">Combined value of {processedData.inventory.total} devices</p>
+                            </div>
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between shadow-sm">
+                              <div>
+                                <p className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Total Assets</p>
+                                <h3 className="text-3xl font-black text-slate-900 dark:text-white">{processedData.inventory.total}</h3>
+                              </div>
+                              
+                              <div className="mt-4 flex flex-wrap gap-2">
+                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                  <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase">
+                                    {processedData.inventory.byCondition['Good'] || 0} Good
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                  <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase">
+                                    {processedData.inventory.byCondition['Maintenance'] || 0} Maint.
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                  <span className="text-[9px] font-black text-rose-600 dark:text-rose-400 uppercase">
+                                    {processedData.inventory.byCondition['Broken'] || 0} Broken
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="bg-red-500/10 p-5 rounded-2xl border border-red-500/20 flex flex-col justify-center">
+                              <p className="text-xs font-bold text-red-500 mb-1 uppercase">Broken Devices</p>
+                              <h3 className="text-3xl font-black text-red-600">{processedData.inventory.broken}</h3>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Asset Type Distribution */}
@@ -888,7 +1077,7 @@ export default function ExecutiveDashboard() {
                     </h2>
                     <ChartContainer className="h-80">
                       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                        <BarChart data={processedData.regional.provinceSubscribers} layout="vertical">
+                        <BarChart data={processedData.regional.provinceSubscribers} layout="vertical" margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
                           <XAxis type="number" hide />
                           <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 700}} width={120} />
@@ -920,7 +1109,7 @@ export default function ExecutiveDashboard() {
                     </h2>
                     <ChartContainer className="h-80">
                       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                        <BarChart data={processedData.regional.cityDist} layout="vertical">
+                        <BarChart data={processedData.regional.cityDist} layout="vertical" margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
                           <XAxis type="number" hide />
                           <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 700}} width={100} />

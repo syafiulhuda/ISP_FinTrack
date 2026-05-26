@@ -453,12 +453,12 @@ export function InventoryTable({ inventory }: { inventory: any }) {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b-2 border-slate-100 dark:border-slate-800">
-              <th className="px-3 lg:px-4 xl:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Asset Details</th>
-              <th className="px-3 lg:px-4 xl:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden sm:table-cell whitespace-nowrap">Category</th>
-              <th className="px-3 lg:px-4 xl:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Condition</th>
-              <th className="px-3 lg:px-4 xl:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell whitespace-nowrap">Kepemilikan</th>
-              <th className="px-3 lg:px-4 xl:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell whitespace-nowrap">Location</th>
-              <th className="px-3 lg:px-4 xl:px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">Action</th>
+              <th className="px-3 lg:px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Asset Details</th>
+              <th className="px-3 lg:px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden sm:table-cell whitespace-nowrap">Category</th>
+              <th className="px-3 lg:px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Condition</th>
+              <th className="px-3 lg:px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell whitespace-nowrap">Kepemilikan</th>
+              <th className="px-3 lg:px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell whitespace-nowrap">Location</th>
+              <th className="px-3 lg:px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -467,12 +467,12 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                 TABLE_SKELETON_ROWS.map((_, i) => (
                   <tr key={i} className="h-[96px] border-b border-slate-100 dark:border-slate-800 animate-pulse">
                     {/* Skeleton columns */}
-                    <td className="px-3 lg:px-4 xl:px-6 py-6"><div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-xl" /></td>
-                    <td className="px-3 lg:px-4 xl:px-6 py-6"><div className="w-16 h-6 bg-slate-100 dark:bg-slate-800 rounded-lg" /></td>
-                    <td className="px-3 lg:px-4 xl:px-6 py-6"><div className="w-20 h-6 bg-slate-100 dark:bg-slate-800 rounded-full" /></td>
-                    <td className="px-3 lg:px-4 xl:px-6 py-6"><div className="w-20 h-6 bg-slate-100 dark:bg-slate-800 rounded-full" /></td>
-                    <td className="px-3 lg:px-4 xl:px-6 py-6"><div className="w-24 h-4 bg-slate-100 dark:bg-slate-800 rounded" /></td>
-                    <td className="px-3 lg:px-4 xl:px-6 py-6 text-right"><div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full inline-block" /></td>
+                    <td className="px-3 lg:px-4 py-6"><div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-xl" /></td>
+                    <td className="px-3 lg:px-4 py-6"><div className="w-16 h-6 bg-slate-100 dark:bg-slate-800 rounded-lg" /></td>
+                    <td className="px-3 lg:px-4 py-6"><div className="w-20 h-6 bg-slate-100 dark:bg-slate-800 rounded-full" /></td>
+                    <td className="px-3 lg:px-4 py-6"><div className="w-20 h-6 bg-slate-100 dark:bg-slate-800 rounded-full" /></td>
+                    <td className="px-3 lg:px-4 py-6"><div className="w-24 h-4 bg-slate-100 dark:bg-slate-800 rounded" /></td>
+                    <td className="px-3 lg:px-4 py-6 text-right"><div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full inline-block" /></td>
                   </tr>
                 ))
               ) : paginatedAssets.map((asset: Asset & { isStock?: boolean }) => {
@@ -486,7 +486,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                     exit={{ opacity: 0 }}
                     className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group relative"
                   >
-                    <td className="px-3 lg:px-4 xl:px-6 py-6 max-w-[160px] lg:max-w-[200px]">
+                    <td className="px-3 lg:px-4 py-6 max-w-[160px]">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all shrink-0">
                           {asset.type === "Router" && <Router size={24} />}
@@ -499,7 +499,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-black text-slate-900 dark:text-slate-100 text-sm md:text-base truncate whitespace-nowrap" title={asset.sn}>{asset.sn}</p>
+                            <p className="font-black text-slate-900 dark:text-slate-100 text-sm md:text-base whitespace-nowrap" title={asset.sn}>{asset.sn}</p>
                             {!asset.isStock && asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual" && (
                               <span className="bg-blue-100 text-blue-700 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tight hidden sm:inline-block">
                                 Deployed
@@ -511,16 +511,16 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                               </span>
                             )}
                           </div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5 tracking-tighter truncate whitespace-nowrap hidden md:block" title={asset.mac ?? undefined}>{asset.mac}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5 tracking-tighter whitespace-nowrap hidden md:block" title={asset.mac ?? undefined}>{asset.mac}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 lg:px-4 xl:px-6 py-6 hidden sm:table-cell">
+                    <td className="px-3 lg:px-4 py-6 hidden sm:table-cell">
                       <span className="text-[9px] font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg uppercase tracking-wider whitespace-nowrap">
                         {asset.type}
                       </span>
                     </td>
-                    <td className="px-3 lg:px-4 xl:px-6 py-6">
+                    <td className="px-3 lg:px-4 py-6">
                       {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") ? (
                         <div className={cn(
                           "flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit whitespace-nowrap",
@@ -538,7 +538,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                         </div>
                       )}
                     </td>
-                    <td className="px-3 lg:px-4 xl:px-6 py-6 hidden md:table-cell">
+                    <td className="px-3 lg:px-4 py-6 hidden md:table-cell">
                       {(asset.kepemilikan === "Dimiliki" || !asset.kepemilikan) ? (
                         <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 h-7 whitespace-nowrap">
                           <ShieldCheck size={12} />
@@ -556,7 +556,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                         </span>
                       )}
                     </td>
-                    <td className="px-3 lg:px-4 xl:px-6 py-6 hidden md:table-cell min-w-[150px]">
+                    <td className="px-3 lg:px-4 py-6 hidden md:table-cell">
                       <div className="flex items-start gap-3">
                         <div className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-xl mt-0.5 shrink-0">
                           <MapPin size={14} />
@@ -569,7 +569,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 lg:px-4 xl:px-6 py-6 text-right relative">
+                    <td className="px-3 lg:px-4 py-6 text-right relative">
                       {asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual" && (
                         <div className="relative inline-block" ref={activeActionMenu === asset.sn ? actionMenuRef : null}>
                           <button

@@ -192,7 +192,7 @@ Berikut adalah daftar perbaikan dan optimasi fitur terbaru yang telah sukses dii
     *   Menambahkan trigger pembersihan (*clear*) input form secara otomatis saat modal ganti password ditutup atau tombol batal (x) diklik.
     *   Menampilkan status "Last changed: X time ago" yang ter-update secara real-time menggunakan invalidasi cache `queryClient.invalidateQueries`.
 
-### 🎫 3. Modul Trouble Tickets & Halaman Khusus Histori (`src/app/tickets/`)
+### 🎫 3. ebar (`src/app/tickets/`)
 *   **Optimalisasi Responsivitas Kanban Board (`src/components/tickets/TicketsKanban.tsx`):**
     *   Mengatur agar kolom Kanban (seperti *Open*, *Progress*, *Resolved*, *Closed*) pada layar smartphone (terkecil & terbesar) serta tablet portrait dapat di-expand/collapse secara vertikal dengan transisi `framer-motion` yang halus. Hal ini meniadakan kebutuhan scroll horizontal di layar sempit.
     *   Penyelarasan palet warna prioritas dan status tiket pada mode gelap agar kontras lebih harmonis dan nyaman dibaca.

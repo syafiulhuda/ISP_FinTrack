@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -85,15 +85,23 @@ interface ServiceMixChartProps {
 }
 
 export const ServiceMixChart = memo(function ServiceMixChart({ data, totalActiveUsers }: ServiceMixChartProps) {
+  const [hoveredSlice, setHoveredSlice] = useState<DistributionEntry | null>(null);
+
   return (
     <>
       {/* Center Text Overlay */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
-        <span className="text-4xl font-black text-slate-900 dark:text-white leading-none">
-          {totalActiveUsers}
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 transition-all duration-300">
+        <span 
+          className="text-[10px] font-bold uppercase tracking-widest mb-1 transition-colors duration-300"
+          style={{ color: hoveredSlice ? hoveredSlice.color : "#94a3b8" }}
+        >
+          {hoveredSlice ? hoveredSlice.name : "Total Users"}
         </span>
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-          Users
+        <span 
+          className={`text-4xl font-black leading-none transition-colors duration-300 ${hoveredSlice ? '' : 'text-slate-900 dark:text-white'}`}
+          style={{ color: hoveredSlice ? hoveredSlice.color : undefined }}
+        >
+          {hoveredSlice ? hoveredSlice.count : totalActiveUsers}
         </span>
       </div>
 
@@ -109,23 +117,13 @@ export const ServiceMixChart = memo(function ServiceMixChart({ data, totalActive
             endAngle={-180}
             stroke="none"
             cornerRadius={10}
+            onMouseEnter={(_, index) => setHoveredSlice(data[index])}
+            onMouseLeave={() => setHoveredSlice(null)}
           >
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} />
+              <Cell key={`cell-${index}`} fill={entry.color} className="cursor-pointer outline-none hover:opacity-80 transition-opacity" />
             ))}
           </Pie>
-          <Tooltip
-            contentStyle={{
-              borderRadius: "1rem",
-              border: "none",
-              boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
-            }}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            formatter={(value: any, name: any, props: any) => [
-              `${props.payload?.count ?? 0} Users`,
-              String(name),
-            ]}
-          />
         </PieChart>
       </ResponsiveContainer>
     </>

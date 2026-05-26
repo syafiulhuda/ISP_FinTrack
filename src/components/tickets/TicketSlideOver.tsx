@@ -78,7 +78,7 @@ export function TicketSlideOver({ isOpen, onClose, customerId }: TicketSlideOver
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 bottom-0 z-[210] w-full max-w-md bg-white dark:bg-slate-950 shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800"
+            className="fixed right-0 top-0 bottom-0 z-[210] w-full md:max-w-md bg-white dark:bg-slate-950 shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800"
           >
             {/* Header */}
             <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">

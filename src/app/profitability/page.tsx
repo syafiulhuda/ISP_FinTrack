@@ -152,6 +152,7 @@ export default function ProfitabilityPage() {
 
   const [mounted, setMounted] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [activeStat, setActiveStat] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
 
@@ -552,7 +553,105 @@ export default function ProfitabilityPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {/* Mobile & Tablet 3D Cover Flow Carousel */}
+        <div className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+          {isDataLoading ? (
+            <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[1.5rem] shadow-xl" />
+          ) : (
+            dynamicData.metrics.map((kpi, i) => {
+              const N = dynamicData.metrics.length;
+              const offset = (i - activeStat + N) % N;
+              
+              const isCenter = offset === 0;
+              const isRight = offset === 1;
+              const isLeft = offset === N - 1;
+              const isVisible = isCenter || isRight || isLeft;
+
+              const x = isCenter ? "0%" : isRight ? "75%" : isLeft ? "-75%" : "0%";
+              const scale = isCenter ? 1 : 0.8;
+              const zIndex = isCenter ? 30 : (isVisible ? 20 : 10);
+              const opacity = isCenter ? 1 : (isVisible ? 0.4 : 0);
+
+              const isBad = kpi.trendType === "danger";
+              const isGood = kpi.trendType === "up";
+
+              return (
+                <m.div
+                  key={kpi.name}
+                  onClick={() => isVisible && setActiveStat(i)}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={(e, { offset }) => {
+                    if (offset.x < -40) {
+                      setActiveStat((prev) => (prev + 1) % N);
+                    } else if (offset.x > 40) {
+                      setActiveStat((prev) => (prev - 1 + N) % N);
+                    }
+                  }}
+                  animate={{ x, scale, zIndex, opacity }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  className={cn(
+                    "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300",
+                    "bg-[#0f172a] border",
+                    isCenter 
+                      ? (isBad ? "border-orange-500 shadow-[0_0_25px_3px_rgba(249,115,22,0.3)] dark:shadow-[0_0_35px_5px_rgba(249,115,22,0.4)]" : "border-cyan-400 shadow-[0_0_25px_3px_rgba(34,211,238,0.3)] dark:shadow-[0_0_35px_5px_rgba(34,211,238,0.4)]")
+                      : "border-slate-800 shadow-none",
+                    !isVisible && "pointer-events-none"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className={cn(
+                        "w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors duration-300",
+                        isCenter ? (isBad ? "bg-orange-500/20 text-orange-400" : "bg-cyan-500/20 text-cyan-400") : "bg-white/5 text-slate-500"
+                      )}>
+                        <kpi.icon className="w-4 h-4 sm:w-6 sm:h-6" />
+                      </div>
+                      <span className={cn(
+                        "text-[10px] sm:text-sm font-black tracking-widest transition-colors duration-300 uppercase",
+                        isCenter ? (isBad ? "text-orange-400" : "text-cyan-400") : "text-slate-500"
+                      )}>
+                        {kpi.name}
+                      </span>
+                    </div>
+                    {isBad && isCenter && (
+                      <m.div
+                        animate={{ opacity: [0.3, 0.8, 0.3] }}
+                        transition={{ repeat: Infinity, duration: 1.5 }}
+                        className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)]"
+                      />
+                    )}
+                  </div>
+                  
+                  <div>
+                    <div className={cn(
+                      "text-3xl sm:text-5xl font-black tracking-tight transition-colors duration-300",
+                      isCenter ? "text-white" : "text-slate-500"
+                    )}>
+                      {kpi.value}
+                    </div>
+                    <div className="mt-1 sm:mt-2">
+                      {kpi.trendType !== "neutral" && (
+                        <span className={cn(
+                          "text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-1 rounded-full uppercase tracking-wider transition-colors",
+                          isCenter 
+                            ? (isGood ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400")
+                            : "bg-transparent text-slate-600"
+                        )}>
+                          {kpi.trend}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </m.div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Grid */}
+        <div className="hidden lg:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {isDataLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="h-[165px] lg-phone:h-[170px] tablet:h-[160px] lg:h-[200px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl border border-slate-200 dark:border-slate-800" />
