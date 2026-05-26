@@ -10,6 +10,7 @@ const withPWA = withPWAInit({
 const nextConfig: NextConfig = {
   devIndicators: false,
   serverExternalPackages: [],
+  turbopack: {},
   async headers() {
     return [
       {
