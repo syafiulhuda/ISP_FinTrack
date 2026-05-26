@@ -33,21 +33,11 @@ jobs:
     - name: Build Verification (Dry Run)
       run: npm run build
       env:
-        # Neon Tech / PostgreSQL - DATABASE_URL wajib ada untuk build Next.js
-        DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy?sslmode=disable
-        DATABASE_USER: postgres
-        DATABASE_HOST: localhost
-        DATABASE_NAME: clients
-        DATABASE_PASSWORD: dummy
-        DATABASE_PORT: "5432"
-        # Midtrans
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
         MIDTRANS_IS_PRODUCTION: "false"
-        MIDTRANS_SERVER_KEY: dummy-server-key
-        MIDTRANS_CLIENT_KEY: dummy-client-key
-        # Gmail
-        GMAIL_USER: dummy@gmail.com
-        GMAIL_APP_PASSWORD: dummy-app-password-16x
-        # Cron Secret
-        CRON_SECRET: dummy-cron-secret-for-build-only-32chars!!
-        # Suppress Next.js telemetry di CI
+        MIDTRANS_SERVER_KEY: ${{ secrets.MIDTRANS_SERVER_KEY }}
+        MIDTRANS_CLIENT_KEY: ${{ secrets.MIDTRANS_CLIENT_KEY }}
+        GMAIL_USER: ${{ secrets.GMAIL_USER }}
+        GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        CRON_SECRET: ${{ secrets.CRON_SECRET }}
         NEXT_TELEMETRY_DISABLED: "1"
