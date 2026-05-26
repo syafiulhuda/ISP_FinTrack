@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { m, AnimatePresence } from "framer-motion";
 import { useSettings } from "@/components/providers/SettingsProvider";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getAdminProfile } from "@/actions/admin";
 import { LifeBuoy } from "lucide-react";
@@ -51,6 +51,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
 
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const logoutBtnRef = useRef<HTMLDivElement>(null);
 
   const handleLogoutConfirm = async () => {
     setIsLoggingOut(true);
@@ -196,74 +197,132 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
         </nav>
 
         {/* Footer: Logout Button */}
-        <div className="mt-auto px-4 pb-12 md:pb-3 pt-1">
+        <div ref={logoutBtnRef} className="relative mt-auto px-4 pb-12 md:pb-8 pt-1">
           <button
-            onClick={() => setIsLogoutConfirmOpen(true)}
-            className="group w-full flex items-center space-x-3 px-4 py-2 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-xl transition-all overflow-hidden"
+            onClick={() => setIsLogoutConfirmOpen(v => !v)}
+            className={`group w-full flex items-center space-x-3 px-4 py-2 rounded-xl transition-all overflow-hidden ${
+              isLogoutConfirmOpen
+                ? 'text-red-500 bg-red-50 dark:bg-red-500/10'
+                : 'text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400'
+            }`}
           >
             <Power size={20} className="group-hover:rotate-12 transition-transform shrink-0" />
             <span className="text-[12px] font-bold truncate min-w-0">Logout</span>
           </button>
+
+          {/* ── DESKTOP: Popover anchored above logout button (inside sidebar) ── */}
+          <AnimatePresence>
+            {isLogoutConfirmOpen && (
+              <m.div
+                initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                className="hidden md:block absolute bottom-full left-0 right-0 mb-2 z-[200]"
+              >
+                <div className="mx-2 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-700/80 overflow-hidden">
+                  {/* Red gradient header strip */}
+                  <div className="bg-gradient-to-r from-red-500 to-rose-600 px-4 py-3 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                      <AlertTriangle size={16} className="text-white" />
+                    </div>
+                    <p className="text-white text-sm font-black tracking-tight">Keluar dari sesi ini?</p>
+                  </div>
+                  <div className="px-4 py-3">
+                    <p className="text-slate-400 dark:text-slate-500 text-xs font-medium leading-relaxed mb-3">
+                      Pastikan semua pekerjaan sudah tersimpan.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setIsLogoutConfirmOpen(false)}
+                        disabled={isLoggingOut}
+                        className="flex-1 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
+                      >
+                        Batal
+                      </button>
+                      <button
+                        onClick={handleLogoutConfirm}
+                        disabled={isLoggingOut}
+                        className="flex-1 py-2 text-xs font-bold bg-red-500 text-white rounded-xl hover:bg-red-600 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-lg shadow-red-500/25"
+                      >
+                        {isLoggingOut ? (
+                          <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <><LogOut size={13} /> Logout</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </m.div>
+            )}
+          </AnimatePresence>
         </div>
       </aside>
 
-      {/* Logout Confirmation Modal — No blur, transparent overlay */}
+      {/* ── MOBILE / TABLET: Bottom Sheet ── */}
       <AnimatePresence>
         {isLogoutConfirmOpen && (
-          <div className="fixed inset-0 z-[100] flex items-start justify-center pt-40 px-4 md:pl-64">
-            {/* Transparent clickable backdrop — no blur, no color */}
+          <div className="md:hidden fixed inset-0 z-[9999] flex flex-col justify-end">
+            {/* Backdrop */}
             <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsLogoutConfirmOpen(false)}
-              className="absolute inset-0 bg-transparent"
+              className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"
             />
 
-            {/* Modal Card */}
+            {/* Sheet */}
             <m.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              transition={{ type: "spring", stiffness: 400, damping: 28 }}
-              className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[28px] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 400, damping: 36, mass: 0.8 }}
+              className="relative bg-white dark:bg-slate-950 rounded-t-[28px] shadow-2xl overflow-hidden"
             >
-              <div className="p-8">
-                {/* Icon */}
-                <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 mb-6">
-                  <AlertTriangle size={28} />
+              {/* Drag handle */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
+              </div>
+
+              {/* Red strip */}
+              <div className="mx-4 mt-3 bg-gradient-to-r from-red-500 to-rose-600 rounded-2xl px-5 py-4 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                  <AlertTriangle size={20} className="text-white" />
                 </div>
+                <div>
+                  <p className="text-white font-black text-base leading-tight">Keluar dari sesi ini?</p>
+                  <p className="text-white/70 text-xs font-medium mt-0.5">Sesi aktif Anda akan diakhiri.</p>
+                </div>
+              </div>
 
-                <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
-                  Konfirmasi Logout
-                </h3>
-                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed mb-8">
-                  Anda akan keluar dari sesi ini. Pastikan semua pekerjaan sudah tersimpan sebelum melanjutkan.
+              <div className="px-4 py-4">
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed mb-5 text-center">
+                  Pastikan semua pekerjaan sudah tersimpan sebelum melanjutkan.
                 </p>
-
-                <div className="flex gap-3">
+                <div className="flex gap-3 pb-safe">
                   <button
                     onClick={() => setIsLogoutConfirmOpen(false)}
                     disabled={isLoggingOut}
-                    className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
+                    className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-2xl text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
                   >
                     Batal
                   </button>
                   <button
                     onClick={handleLogoutConfirm}
                     disabled={isLoggingOut}
-                    className="flex-1 py-3 bg-red-500 text-white font-bold rounded-2xl shadow-lg shadow-red-500/20 hover:bg-red-600 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 py-4 bg-red-500 text-white font-bold rounded-2xl text-sm shadow-xl shadow-red-500/30 hover:bg-red-600 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {isLoggingOut ? (
                       <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                     ) : (
-                      <>
-                        <LogOut size={16} />
-                        Logout
-                      </>
+                      <><LogOut size={16} /> Logout</>
                     )}
                   </button>
                 </div>
+                {/* Safe area padding for iOS */}
+                <div className="h-6" />
               </div>
             </m.div>
           </div>

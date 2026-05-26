@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Calendar, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Calendar, ChevronDown, ChevronLeft, ChevronRight, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function TicketsHistoryClient({ tickets }: { tickets: any[] }) {
@@ -100,10 +100,16 @@ export function TicketsHistoryClient({ tickets }: { tickets: any[] }) {
                     <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       {ticket.description}
                     </p>
-                    <div className="mt-1">
+                    <div className="mt-1 flex items-center gap-2">
                       <span className="inline-block text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                         {ticket.issue_category}
                       </span>
+                      {ticket.assigned_to && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                          <User size={10} />
+                          {ticket.assigned_to}
+                        </span>
+                      )}
                     </div>
                   </div>
 

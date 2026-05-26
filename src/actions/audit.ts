@@ -6,7 +6,7 @@ import { query } from '@/lib/db';
 export async function getAuditLogs() {
   try {
     // Run all queries in parallel for performance
-    const [loginRes, stockRes, assetRes, expRes, mainRes, custRes, trxRes, passRes] = await Promise.all([
+    const [loginRes, stockRes, assetRes, expRes, mainRes, custRes, trxRes, passRes, userRes] = await Promise.all([
       // 1. Login Logs (no inputter field - use nickname)
       query(`
         SELECT id::text, nickname as user, login_timestamp AT TIME ZONE 'Asia/Jakarta' as timestamp, 
@@ -92,6 +92,17 @@ export async function getAuditLogs() {
         ORDER BY timestamp DESC
         LIMIT 50
       `),
+
+      // 9. Admin/User Creation
+      query(`
+        SELECT 'USR-' || id::text as id, inputter as user, inputter_tms AT TIME ZONE 'Asia/Jakarta' as timestamp, 
+               'User Created' as action, 
+               'New user: ' || nama || ' (' || email || ' - ' || role || ')' as details
+        FROM admin
+        WHERE inputter IS NOT NULL AND inputter_tms IS NOT NULL
+        ORDER BY inputter_tms DESC
+        LIMIT 50
+      `),
     ]);
 
     // Combine all and sort chronologically
@@ -104,6 +115,7 @@ export async function getAuditLogs() {
       ...custRes.rows,
       ...trxRes.rows,
       ...passRes.rows,
+      ...userRes.rows, // admin/user creations
     ].sort((a, b) =>
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );

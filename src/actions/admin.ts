@@ -57,13 +57,11 @@ export async function getAdminList(): Promise<Admin[]> {
 export async function createAdmin(data: { nama: string, email: string, password?: string, role: string, department: string, image: string, nickname?: string }) {
   try {
     const adminId = await requireRole(['System Administrator']);
+    const creatorRes = await query('SELECT nickname FROM admin WHERE id = $1', [adminId]);
+    const inputter = creatorRes.rows[0]?.nickname || 'System Administrator';
+
     const hashedPassword = await bcrypt.hash(data.password || 'admin123', 10);
     const nickname = data.nickname || data.email.split('@')[0];
-    
-    let inputter = adminId.toString();
-    if (data.role === 'Admin Kantor') inputter = 'Admin Kantor';
-    else if (data.role === 'System Administrator') inputter = 'System';
-    else if (data.role === 'Tim Lapangan') inputter = 'Tim Lapangan';
 
     const res = await query(`
       INSERT INTO admin (nama, email, role, department, image, password, nickname, inputter, inputter_tms)

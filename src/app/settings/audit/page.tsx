@@ -98,6 +98,7 @@ export default function AuditTrailPage() {
         if (row.action === 'System Login') color = "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
         if (row.action === 'Data Insert/Update') color = "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
         if (row.action === 'Hardware Deployed') color = "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+        if (row.action === 'User Created') color = "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400";
         
         return (
           <span className={cn("px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap", color)}>
@@ -194,6 +195,7 @@ export default function AuditTrailPage() {
                 if (log.action === 'System Login') actionColor = "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
                 if (log.action === 'Data Insert/Update') actionColor = "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
                 if (log.action === 'Hardware Deployed') actionColor = "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+                if (log.action === 'User Created') actionColor = "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400";
                 
                 return (
                   <div 
