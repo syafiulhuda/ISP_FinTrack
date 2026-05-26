@@ -23,7 +23,9 @@ import {
   Terminal,
   MoreVertical,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  ChevronDown,
+  Briefcase
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAdminList, createAdmin, getAdminProfile } from "@/actions/admin";
@@ -189,164 +191,7 @@ export default function SettingsPage() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {isAddManagerOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <m.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsAddManagerOpen(false)}
-              className="absolute inset-0"
-            />
-            <m.div
-              initial={{ scale: 0.9, y: 20, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.9, y: 20, opacity: 0 }}
-              className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
-            >
-              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Add New User</h3>
-                <button onClick={() => setIsAddManagerOpen(false)} aria-label="Close modal" className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
-                  <X size={20} />
-                </button>
-              </div>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  createAdminMutation.mutate(newAdmin);
-                }}
-                className="p-8 space-y-4"
-              >
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                    <UsersIcon size={12} /> Full Name
-                  </label>
-                  <input
-                    required
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
-                    value={newAdmin.nama}
-                    onChange={(e) => setNewAdmin({ ...newAdmin, nama: e.target.value })}
-                    placeholder="e.g. John Doe"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                    <Mail size={12} /> Email Address
-                  </label>
-                  <input
-                    required
-                    type="email"
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
-                    value={newAdmin.email}
-                    onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
-                    placeholder="john@example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                    <Lock size={12} /> Password
-                  </label>
-                  <input
-                    required
-                    type="password"
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
-                    value={newAdmin.password}
-                    onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
-                    placeholder="••••••••"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                      <UsersIcon size={12} /> Nickname
-                    </label>
-                    <input
-                      required
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
-                      value={newAdmin.nickname}
-                      onChange={(e) => setNewAdmin({ ...newAdmin, nickname: e.target.value })}
-                      placeholder="e.g. John"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                      <ImagePlus size={12} /> Profile Image
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        className="flex-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium text-sm"
-                        value={newAdmin.image}
-                        onChange={(e) => setNewAdmin({ ...newAdmin, image: e.target.value })}
-                        placeholder="Image URL"
-                      />
-                      <label className="cursor-pointer bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors rounded-xl px-4 flex items-center justify-center text-sm font-bold text-slate-700 dark:text-slate-200">
-                        Upload
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                setNewAdmin({ ...newAdmin, image: reader.result as string });
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Role</label>
-                    <select
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none"
-                      value={newAdmin.role}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setNewAdmin({
-                          ...newAdmin,
-                          role: val,
-                          department: val === 'System Administrator' ? 'Operations' : newAdmin.department
-                        });
-                      }}
-                    >
-                      <option value="System Administrator">System Administrator</option>
-                      <option value="Admin Kantor">Admin Kantor</option>
-                      <option value="Tim Lapangan">Tim Lapangan</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Department</label>
-                    <select
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none"
-                      value={newAdmin.department}
-                      onChange={(e) => setNewAdmin({ ...newAdmin, department: e.target.value })}
-                    >
-                      <option>Operations</option>
-                      <option>Finance</option>
-                      <option>Technical</option>
-                    </select>
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  disabled={createAdminMutation.isPending}
-                  className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 transition-all flex items-center justify-center gap-2"
-                >
-                  {createAdminMutation.isPending ? <Loader2 className="animate-spin" size={18} /> : "Create User"}
-                </button>
-              </form>
-            </m.div>
-          </div>
-        )}
-      </AnimatePresence>
+      
 
       <AnimatePresence>
         {isLogoModalOpen && (
@@ -666,7 +511,7 @@ export default function SettingsPage() {
 
             {/* Section 4: User Management */}
             {activeTab === 'users' && (
-              <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900/50 p-4 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
                 <div className="flex items-center justify-between mb-8">
                   <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
                     <ShieldCheck className="text-primary" size={20} />
@@ -679,6 +524,163 @@ export default function SettingsPage() {
                     Add New User
                   </button>
                 </div>
+                <AnimatePresence>
+                  {isAddManagerOpen && (
+                    <m.div initial={{ height: 0, opacity: 0, marginBottom: 0 }} animate={{ height: 'auto', opacity: 1, marginBottom: 32 }} exit={{ height: 0, opacity: 0, marginBottom: 0 }} className="overflow-hidden">
+                      <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  createAdminMutation.mutate(newAdmin);
+                }}
+                className="p-4 sm:p-6 space-y-4 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-200 dark:border-slate-700"
+              >
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                    <UsersIcon size={12} /> Full Name
+                  </label>
+                  <input
+                    required
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                    value={newAdmin.nama}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, nama: e.target.value })}
+                    placeholder="e.g. John Doe"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                    <Mail size={12} /> Email Address
+                  </label>
+                  <input
+                    required
+                    type="email"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                    value={newAdmin.email}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
+                    placeholder="john@example.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                    <Lock size={12} /> Password
+                  </label>
+                  <input
+                    required
+                    type="password"
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                    value={newAdmin.password}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                      <UsersIcon size={12} /> Nickname
+                    </label>
+                    <input
+                      required
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium"
+                      value={newAdmin.nickname}
+                      onChange={(e) => setNewAdmin({ ...newAdmin, nickname: e.target.value })}
+                      placeholder="e.g. John"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                      <ImagePlus size={12} /> Profile Image
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="text"
+                        className="flex-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium text-sm"
+                        value={newAdmin.image}
+                        onChange={(e) => setNewAdmin({ ...newAdmin, image: e.target.value })}
+                        placeholder="Image URL"
+                      />
+                      <label className="cursor-pointer bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors rounded-xl px-4 py-3 sm:py-0 flex items-center justify-center text-sm font-bold text-slate-700 dark:text-slate-200 shrink-0">
+                        Upload
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setNewAdmin({ ...newAdmin, image: reader.result as string });
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                      <BadgeCheck size={12} /> Role
+                    </label>
+                    <div className="relative">
+                    <select
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none"
+                      value={newAdmin.role}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewAdmin({
+                          ...newAdmin,
+                          role: val,
+                          department: val === 'System Administrator' ? 'Operations' : newAdmin.department
+                        });
+                      }}
+                    >
+                      <option value="System Administrator">System Administrator</option>
+                      <option value="Admin Kantor">Admin Kantor</option>
+                      <option value="Tim Lapangan">Tim Lapangan</option>
+                    </select>
+                    <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                      <Briefcase size={12} /> Department
+                    </label>
+                    <div className="relative">
+                    <select
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none"
+                      value={newAdmin.department}
+                      onChange={(e) => setNewAdmin({ ...newAdmin, department: e.target.value })}
+                    >
+                      <option>Operations</option>
+                      <option>Finance</option>
+                      <option>Technical</option>
+                    </select>
+                    <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-4 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddManagerOpen(false)}
+                    className="flex-1 py-4 bg-slate-200 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 rounded-2xl font-black text-sm hover:bg-slate-300 dark:hover:bg-slate-600 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={createAdminMutation.isPending}
+                    className="flex-1 py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                  >
+                    {createAdminMutation.isPending ? <Loader2 className="animate-spin" size={18} /> : "Create User"}
+                  </button>
+                </div>
+              </form>
+                    </m.div>
+                  )}
+                </AnimatePresence>
                 <div className="space-y-2">
                   {adminList.map((admin: any) => (
                     <div key={admin.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-2xl transition-all group">

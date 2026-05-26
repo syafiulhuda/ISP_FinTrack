@@ -196,7 +196,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
         </nav>
 
         {/* Footer: Logout Button */}
-        <div className="mt-auto px-4 pb-3 pt-1">
+        <div className="mt-auto px-4 pb-12 md:pb-3 pt-1">
           <button
             onClick={() => setIsLogoutConfirmOpen(true)}
             className="group w-full flex items-center space-x-3 px-4 py-2 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-xl transition-all overflow-hidden"

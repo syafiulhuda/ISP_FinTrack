@@ -6,7 +6,6 @@ import { query } from '@/lib/db';
 export async function getAuditLogs() {
   try {
     // Run all queries in parallel for performance
-    // Run all queries in parallel for performance
     const [loginRes, stockRes, assetRes, expRes, mainRes, custRes, trxRes, passRes] = await Promise.all([
       // 1. Login Logs (no inputter field - use nickname)
       query(`
@@ -94,21 +93,21 @@ export async function getAuditLogs() {
         LIMIT 50
       `),
     ]);
-    
+
     // Combine all and sort chronologically
     const combined = [
-      ...loginRes.rows, 
-      ...stockRes.rows, 
-      ...assetRes.rows, 
-      ...expRes.rows, 
+      ...loginRes.rows,
+      ...stockRes.rows,
+      ...assetRes.rows,
+      ...expRes.rows,
       ...mainRes.rows,
       ...custRes.rows,
       ...trxRes.rows,
       ...passRes.rows,
-    ].sort((a, b) => 
+    ].sort((a, b) =>
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
-    
+
     return combined;
   } catch (e) {
     logger.error({ message: "DB Error: getAuditLogs", error: e, path: "action" });
