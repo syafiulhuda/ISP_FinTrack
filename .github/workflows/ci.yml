@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+defaults:
+  run:
+    working-directory: ./isp-fintrack-web
+
 jobs:
   build-and-test:
     name: Build, Lint, and Test
@@ -20,6 +24,7 @@ jobs:
       with:
         node-version: '20.x'
         cache: 'npm'
+        cache-dependency-path: isp-fintrack-web/package-lock.json
 
     - name: Install Dependencies
       run: npm ci
