@@ -30,7 +30,9 @@ jobs:
       run: npm run test:run
 
     - name: Build Verification (Dry Run)
-      run: npm run build
+      run: |
+        npm install lightningcss-linux-x64-gnu --no-save
+        npm run build
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
         MIDTRANS_IS_PRODUCTION: "false"
