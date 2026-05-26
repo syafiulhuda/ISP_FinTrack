@@ -291,7 +291,7 @@ export function DistributionClient() {
   return (
     <div ref={mapContainerRef} className="flex-1 flex flex-col min-h-screen relative overflow-hidden bg-slate-50 dark:bg-slate-950 pt-4 md:pt-6">
       {/* Header Overlay */}
-      <header className="absolute top-4 md:top-6 left-0 w-full z-40 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md flex justify-start tablet:justify-between items-center h-16 px-2 sm-phone:px-4 md:px-8 border-b border-slate-200/50 dark:border-slate-800/50">
+      <header className="absolute top-4 md:top-6 left-0 w-full z-40 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md flex justify-between items-center h-16 px-2 sm-phone:px-4 md:px-8 border-b border-slate-200/50 dark:border-slate-800/50">
         <div className="flex items-center gap-4">
           <div className="relative flex items-center">
             <SearchIcon className="absolute left-3 text-slate-400" size={18} />
@@ -379,7 +379,7 @@ export function DistributionClient() {
           </div>
 
           {/* User Profile Avatar AD */}
-          <div className="relative">
+          <div className="relative hidden sm:block">
             <button
               onClick={() => {
                 setIsProfileOpen(!isProfileOpen);
