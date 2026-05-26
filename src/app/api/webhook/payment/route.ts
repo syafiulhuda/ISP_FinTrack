@@ -62,8 +62,17 @@ export async function POST(req: Request) {
           // Kirim Peringatan ke Aplikasi (Lonceng Notifikasi)
           await query(`
             INSERT INTO notifications (category, title, message, type, action_label)
-            VALUES ('Finance', 'Auto-Payment Received', 'Pembayaran sebesar Rp ' || $2 || ' diterima dari ' || $1 || ' via otomatisasi.', 'transaction', 'View Ledger')
+            VALUES ('Billing', 'Auto-Payment Received', 'Pembayaran sebesar Rp ' || $2 || ' diterima dari ' || $1 || ' via otomatisasi.', 'transaction', 'View Ledger')
           `, [customerId, gross_amount]);
+
+          // Remove the trigger-generated 'Finance' notification to prevent double counting
+          await query(`
+            DELETE FROM notifications 
+            WHERE category = 'Finance' 
+              AND title = 'New transaction detected' 
+              AND message LIKE $1 
+              AND created_at >= NOW() - interval '1 minute'
+          `, [`%${gross_amount}%`]);
         }
       }
     }

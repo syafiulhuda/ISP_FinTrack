@@ -87,11 +87,20 @@ export async function POST(req: Request) {
           VALUES ($1, $2, $3, 'Verified', NOW() + interval '7 hours', 'Tagihan', 'pemasukan', $4, 'System', NOW() + interval '7 hours')
         `, [order_id, method, amount, city]);
 
-        // Insert notification
+        // Insert notification for Billing
         await query(`
           INSERT INTO notifications (type, category, title, message, created_at, is_unread)
           VALUES ('success', 'Billing', 'Pembayaran Otomatis Diterima', $1, NOW() + interval '7 hours', true)
         `, [notificationMsg]);
+
+        // Remove the trigger-generated 'Finance' notification to prevent double counting
+        await query(`
+          DELETE FROM notifications 
+          WHERE category = 'Finance' 
+            AND title = 'New transaction detected' 
+            AND message LIKE $1 
+            AND created_at >= NOW() + interval '6 hours'
+        `, [`%${amount}%`]);
       }
     }
 

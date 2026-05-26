@@ -85,32 +85,32 @@ function MobileAssetCard({
         }
       }}
       className={cn(
-        "px-4 py-5 transition-all cursor-pointer relative overflow-hidden select-none border-b border-slate-100 dark:border-slate-800/50",
+        "px-3 sm:px-4 py-4 sm:py-5 transition-all cursor-pointer relative overflow-hidden select-none border-b border-slate-100 dark:border-slate-800/50",
         isOpen ? "bg-slate-50/50 dark:bg-white/5" : "hover:bg-slate-50/30 dark:hover:bg-white/5"
       )}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-1.5 sm:gap-3">
         {/* Left Side: Avatar Icon */}
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 shrink-0">
-            {asset.type === "Router" && <Router size={18} />}
-            {asset.type === "Switch" && <Box size={18} />}
-            {asset.type === "Server" && <Cpu size={18} />}
-            {asset.type === "Access Point" && <Wifi size={18} />}
-            {asset.type === "OLT" && <Cpu size={18} />}
-            {asset.type === "ONT" && <Smartphone size={18} />}
-            {asset.type === "ODP" && <Box size={18} />}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 shrink-0">
+            {asset.type === "Router" && <Router className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />}
+            {asset.type === "Switch" && <Box className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />}
+            {asset.type === "Server" && <Cpu className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />}
+            {asset.type === "Access Point" && <Wifi className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />}
+            {asset.type === "OLT" && <Cpu className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />}
+            {asset.type === "ONT" && <Smartphone className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />}
+            {asset.type === "ODP" && <Box className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 min-w-0 w-full flex-wrap">
+            <div className="flex items-center gap-1.5 min-w-0">
               <p className="font-black text-slate-900 dark:text-slate-100 text-xs md-phone:text-sm truncate">{asset.sn}</p>
               {!asset.isStock && asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual" && (
-                <span className="bg-blue-100 text-blue-750 dark:bg-blue-900/30 dark:text-blue-400 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tight whitespace-nowrap">
+                <span className="bg-blue-100 text-blue-750 dark:bg-blue-900/30 dark:text-blue-400 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tight whitespace-nowrap shrink-0">
                   Deployed
                 </span>
               )}
               {asset.isStock && (
-                <span className="bg-amber-100 text-amber-750 dark:bg-amber-900/30 dark:text-amber-400 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tight whitespace-nowrap">
+                <span className="bg-amber-100 text-amber-750 dark:bg-amber-900/30 dark:text-amber-400 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tight whitespace-nowrap shrink-0">
                   Stock
                 </span>
               )}
@@ -120,7 +120,7 @@ function MobileAssetCard({
         </div>
 
         {/* Right Side: Status Badge & Chevron */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") ? (
             <span className={cn(
               "text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md border whitespace-nowrap uppercase",
@@ -150,10 +150,10 @@ function MobileAssetCard({
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden mt-4 space-y-3.5 text-xs font-medium"
+            className="overflow-hidden mt-3 flex flex-col gap-3 text-xs font-medium"
           >
             {/* Category & Ownership */}
-            <div className="grid grid-cols-2 gap-4 pb-3 border-b border-slate-100 dark:border-slate-800/50 pt-2" onClick={e => e.stopPropagation()}>
+            <div className="grid grid-cols-2 gap-4 pb-3 border-b border-slate-100 dark:border-slate-800/50 pt-1" onClick={e => e.stopPropagation()}>
               <div>
                 <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px] mb-1.5">Category</span>
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full uppercase tracking-wider h-7">
@@ -196,7 +196,7 @@ function MobileAssetCard({
 
             {/* Action Buttons Block */}
             {(asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual") && (
-              <div className="pt-3 mt-3 space-y-3">
+              <div className="space-y-3">
                 <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px]">Actions</span>
                 
                 {/* Normal Action Buttons */}

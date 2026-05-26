@@ -12,8 +12,7 @@ export default function LogoutPage() {
   useEffect(() => {
     const performLogout = async () => {
       await logoutAction();
-      router.push("/login");
-      router.refresh();
+      window.location.href = "/login";
     };
 
     const timer = setTimeout(performLogout, 2000);

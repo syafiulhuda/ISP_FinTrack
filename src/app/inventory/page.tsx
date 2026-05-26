@@ -77,7 +77,7 @@ export default function InventoryPage() {
             <p className="text-[12px] font-medium text-slate-500 mt-0.5">Detailed list of managed network components.</p>
           </div>
 
-          <div className="flex flex-row items-center gap-2 md:gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto pb-2 md:pb-0">
             <m.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -89,8 +89,8 @@ export default function InventoryPage() {
               <span className="text-[10px] font-black uppercase tracking-widest hidden lg-phone:inline">Reset</span>
             </m.button>
 
-            <div className="flex items-center gap-2 flex-1 min-w-max">
-              <div className="relative group min-w-[120px]">
+            <div className="grid grid-cols-2 lg:flex lg:flex-row lg:items-center gap-2 flex-1 w-full lg:w-auto">
+              <div className="relative group lg:min-w-[120px] flex-1">
                 <select
                   aria-label="Filter by Type"
                   value={selectedType}
@@ -108,7 +108,7 @@ export default function InventoryPage() {
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
 
-              <div className="relative group min-w-[130px]">
+              <div className="relative group lg:min-w-[130px] flex-1">
                 <select
                   aria-label="Filter by Condition"
                   value={selectedCondition}
@@ -126,7 +126,7 @@ export default function InventoryPage() {
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
 
-              <div className="relative group min-w-[130px]">
+              <div className="relative group lg:min-w-[130px] flex-1">
                 <select
                   aria-label="Filter by Ownership"
                   value={selectedOwnership}
@@ -144,7 +144,7 @@ export default function InventoryPage() {
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
 
-              <div className="relative group min-w-[120px]">
+              <div className="relative group lg:min-w-[120px] flex-1">
                 <select
                   aria-label="Filter by Usage"
                   value={selectedUsage}

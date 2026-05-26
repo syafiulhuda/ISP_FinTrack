@@ -24,6 +24,8 @@ import { useSettings } from "@/components/providers/SettingsProvider";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getAdminProfile } from "@/actions/admin";
+import { LifeBuoy } from "lucide-react";
+
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Service Tiers", href: "/service-tiers", icon: Layers },
@@ -32,6 +34,7 @@ const navigation = [
   { name: "Distribution Map", href: "/distribution", icon: Map },
   { name: "Customer Analysis", href: "/customers", icon: Users },
   { name: "Regional Analysis", href: "/regional", icon: Map },
+  { name: "Trouble Tickets", href: "/tickets", icon: LifeBuoy },
   { name: "Predictive Analysis", href: "/predictions", icon: TrendingUp },
 ];
 

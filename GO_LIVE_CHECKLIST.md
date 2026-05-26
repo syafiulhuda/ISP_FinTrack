@@ -156,16 +156,38 @@ Bagaimana cara Anda menjual aplikasi ini? Keputusan ini memengaruhi arsitektur d
 
 Silakan centang item berikut setelah Anda menyelesaikannya:
 
-- [ ] **Pembayaran (Midtrans):** Daftarkan akun badan hukum (PT/CV) dan aktifkan metode VA, E-Wallet, dll.
-- [ ] **Pembayaran (Midtrans):** Ubah variabel lingkungan ke server key & client key produksi.
-- [ ] **Pembayaran (Midtrans):** Tangani status webhook `pending`, `deny`, `cancel`, dan `expire` di server action.
-- [ ] **Otomatisasi:** Pindahkan `node-cron` lokal ke Vercel Cron atau scheduler eksternal.
+- [Ini dilakukan jika sudah ada client yang pakai project ini] **Pembayaran (Midtrans):** Daftarkan akun badan hukum (PT/CV) dan aktifkan metode VA, E-Wallet, dll.
+- [Pindah ke Environment Productions jika sudah ada client yang pakai project ini] **Pembayaran (Midtrans):** Ubah variabel lingkungan ke server key & client key produksi.
+- [x] **Otomatisasi:** Pindahkan `node-cron` lokal ke Vercel Cron atau scheduler eksternal. *(Selesai: Diimplementasikan via `/api/cron` dan `vercel.json` untuk refresh Materialized Views & log cleanup).*
 - [ ] **Infrastruktur:** Buat cadangan database Neon harian ke AWS S3 / Google Cloud Storage.
-- [ ] **Email:** Ganti Gmail SMTP dengan penyedia email transaksional (Resend, SendGrid, SES).
-- [ ] **Email:** Konfigurasikan SPF, DKIM, dan DMARC pada domain kustom Anda.
-- [ ] **Keamanan:** Tambahkan HTTP Security Headers pada `next.config.ts`.
-- [ ] **Keamanan:** Pasang rate-limiter untuk endpoint Auth & Payment.
-- [ ] **Pemantauan:** Hubungkan Sentry untuk pelacakan error runtime.
-- [ ] **Pemantauan:** Pasang Uptime monitoring untuk memantau status server.
-- [ ] **Hukum:** Tulis dokumen Kebijakan Privasi (UU PDP) dan Syarat & Ketentuan.
-- [ ] **CI/CD:** Buat alur GitHub Actions untuk menjalankan `npm run test:run` dan linting sebelum proses build vercel dimulai.
+- [Karena email hanya digunakan ketika forgot password, jadi tidak perlu pakai SMTP] **Email:** Ganti Gmail SMTP dengan penyedia email transaksional (Resend, SendGrid, SES).
+- [Karena email hanya digunakan ketika forgot password, jadi tidak perlu pakai] **Email:** Konfigurasikan SPF, DKIM, dan DMARC pada domain kustom Anda.
+- [x] **Keamanan:** Tambahkan HTTP Security Headers pada `next.config.ts`. *(Selesai: Header keamanan lengkap seperti CSP, HSTS, X-Frame-Options, dll. sudah aktif).*
+- [x] **Keamanan:** Pasang rate-limiter untuk endpoint Auth & Payment. *(Selesai: Database-backed rate limiter aktif di `loginAction`, `createPaymentLink`, dan webhook endpoint).*
+- [kita pakai yang gratis, dan sudah tersedia di /settings/logs] **Pemantauan:** Hubungkan Sentry untuk pelacakan error runtime.
+- [x] **Pemantauan:** Pasang Uptime monitoring untuk memantau status server. *(Selesai: Telah dibuatkan endpoint `/api/health` yang mengecek status koneksi database. Anda bisa mendaftarkan URL ini di UptimeRobot.com secara gratis).*
+- [x] **Hukum:** Tulis dokumen Kebijakan Privasi (UU PDP) dan Syarat & Ketentuan. *(Selesai: Halaman `/privacy-policy` dan `/terms-of-service` telah dibuat dan ditambahkan link-nya di halaman Login serta Sidebar).*
+- [x] **CI/CD:** Buat alur GitHub Actions untuk menjalankan `npm run test:run` dan linting sebelum proses build vercel dimulai. *(Selesai: Script CI/CD telah dibuat di `.github/workflows/ci.yml`).*
+
+---
+
+## 🆕 Pembaruan & Perbaikan Codebase Terbaru (Mei 2026)
+
+Berikut adalah daftar perbaikan dan optimasi fitur terbaru yang telah sukses diimplementasikan ke dalam kode aplikasi:
+
+### 📱 1. Optimasi UI/UX & Responsive Layout (Mobile & Tablet)
+*   **Sistem Expandable Logs (`src/app/settings/logs/page.tsx`):**
+    *   Tabel log pada perangkat smartphone diubah menjadi format kartu accordion interaktif yang dapat di-expand/collapse guna menghilangkan scroll horizontal.
+    *   Ditambahkan tombol **Copy** pada bagian *Error Stack Trace* untuk mempermudah penyalinan jejak error ke clipboard.
+*   **Pagination Responsif & Presisi:**
+    *   **Smartphone Terkecil:** Dibatasi hanya menampilkan 3 angka halaman + elipsis (`...`), menjaga tombol *Previous* & *Next* tetap satu baris tanpa melebihi batas kontainer.
+    *   **Smartphone Terbesar & Tablet Portrait:** Mengembalikan layout pagination ke format satu baris normal (menampilkan 5 angka halaman secara horizontal) dengan mengunci breakpoint CSS.
+
+### 🔒 2. Manajemen Password & Integrasi Database (`src/app/profile/page.tsx`)
+*   **Keamanan Database Neon Tech:**
+    *   Menambahkan kolom `last_password_change` berjenis `timestamptz` di tabel `admin` untuk merekam waktu presisi pergantian password.
+    *   Menyesuaikan `changePasswordAction` dan `resetPassword` di `src/actions/auth.ts` untuk memperbarui timestamp ini ke Neon DB.
+*   **Penyempurnaan Form Profile:**
+    *   Menghapus pembatasan minimal 6 karakter pada frontend karena password yang dikirim akan otomatis di-hash via bcrypt di server.
+    *   Menambahkan trigger pembersihan (*clear*) input form secara otomatis saat modal ganti password ditutup atau tombol batal (x) diklik.
+    *   Menampilkan status "Last changed: X time ago" yang ter-update secara real-time menggunakan invalidasi cache `queryClient.invalidateQueries`.

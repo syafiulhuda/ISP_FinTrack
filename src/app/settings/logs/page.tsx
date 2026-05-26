@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/DataTable";
 import { getSystemLogs, clearSystemLogs, resolveSystemLog } from "@/actions/logs";
 import { getAdminProfile } from "@/actions/admin";
-import { Search, Calendar, FilterX, Trash2, ArrowLeft, AlertCircle, Terminal, RefreshCw, ChevronDown, CheckCircle2, ShieldAlert } from "lucide-react";
+import { Search, Calendar, FilterX, Trash2, ArrowLeft, AlertCircle, Terminal, RefreshCw, ChevronDown, CheckCircle2, ShieldAlert, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { m, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -271,8 +271,21 @@ export default function SystemLogsPage() {
                       </div>
                     )}
                     {row.error_stack && (
-                      <div>
-                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Error Stack Trace</div>
+                      <div className="relative group">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Error Stack Trace</div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(row.error_stack!);
+                              toast.success("Stack trace disalin");
+                            }}
+                            className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-primary transition-colors"
+                          >
+                            <Copy size={12} />
+                            Copy
+                          </button>
+                        </div>
                         <pre className="text-[10px] text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/10 p-2 rounded border border-red-100/50 dark:border-red-950/20 overflow-x-auto whitespace-pre">
                           {row.error_stack}
                         </pre>
@@ -325,7 +338,7 @@ export default function SystemLogsPage() {
 
   return (
     <div className="pt-6 md:pt-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto px-4 sm:px-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="space-y-1">
           <Link
             href="/settings"
@@ -430,7 +443,7 @@ export default function SystemLogsPage() {
         </div>
 
         {/* Data Table */}
-        <div className="border border-slate-100 dark:border-slate-800/80 rounded-2xl overflow-hidden bg-slate-50/20 dark:bg-slate-950/10">
+        <div className="hidden lg:block border border-slate-100 dark:border-slate-800/80 rounded-2xl overflow-hidden bg-slate-50/20 dark:bg-slate-950/10">
           <DataTable
             data={displayLogs}
             columns={columns}
@@ -441,32 +454,215 @@ export default function SystemLogsPage() {
           />
         </div>
 
+        {/* Mobile/Tablet Portrait Accordion Cards */}
+        {!isLogsLoading && (
+          <div className="block lg:hidden space-y-3">
+            {displayLogs.length === 0 ? (
+              <div className="text-center py-10 text-slate-500 dark:text-slate-400 text-sm font-medium">
+                Tidak ada catatan log sistem yang sesuai.
+              </div>
+            ) : (
+              displayLogs.map((log: SystemLog) => {
+                const isExpanded = expandedLogId === log.id;
+                const d = new Date(log.timestamp);
+                
+                let levelStyle = "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
+                if (log.level === 'ERROR') levelStyle = "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400";
+                if (log.level === 'WARN') levelStyle = "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400";
+                if (log.level === 'INFO') levelStyle = "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400";
+
+                return (
+                  <div 
+                    key={log.id} 
+                    className={cn(
+                      "bg-slate-50 dark:bg-slate-900/50 border rounded-2xl p-4 transition-all",
+                      log.level === 'ERROR' && !log.is_resolved ? "border-red-200 dark:border-red-900/50" : "border-slate-200 dark:border-slate-800"
+                    )}
+                  >
+                    <div 
+                      onClick={() => toggleLog(log.id)}
+                      className="flex items-start justify-between gap-3 cursor-pointer"
+                    >
+                      <div className="space-y-2 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase whitespace-nowrap shrink-0", levelStyle)}>
+                            {log.level}
+                          </span>
+                          {log.is_resolved ? (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400 flex items-center gap-1 shrink-0">
+                              <CheckCircle2 size={10} className="shrink-0" />
+                              RESOLVED
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 flex items-center gap-1 shrink-0">
+                              <AlertCircle size={10} className="shrink-0" />
+                              ACTIVE
+                            </span>
+                          )}
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-auto">
+                            {log.environment}
+                          </span>
+                        </div>
+                        <p className={cn(
+                          "font-medium text-sm break-words line-clamp-2",
+                          log.is_resolved ? "text-slate-400 dark:text-slate-500 line-through" : "text-slate-800 dark:text-slate-200"
+                        )}>
+                          {log.message}
+                        </p>
+                        <div className="flex items-center gap-2 flex-wrap text-xs text-slate-400 font-medium">
+                          <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[10px] font-mono truncate max-w-full">
+                            {log.path}
+                          </span>
+                          <span className="font-mono tabular-nums text-[10px]">
+                            {d.toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="shrink-0 pt-0.5">
+                        <m.div
+                          animate={{ rotate: isExpanded ? 180 : 0 }}
+                          transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                          className="p-1 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"
+                        >
+                          <ChevronDown size={16} />
+                        </m.div>
+                      </div>
+                    </div>
+                    
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <m.div
+                          initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                          animate={{ height: "auto", opacity: 1, marginTop: 12 }}
+                          exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                          transition={{ duration: 0.2, ease: "easeInOut" }}
+                          className="overflow-hidden"
+                        >
+                          <div className="p-3 bg-white dark:bg-slate-950/50 rounded-xl border border-slate-200/60 dark:border-slate-800 text-xs font-mono space-y-3 whitespace-pre-wrap break-all overflow-x-auto max-w-full">
+                            {log.context && (
+                              <div>
+                                <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Context / Payload</div>
+                                <pre className="text-[11px] text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 p-2 rounded border border-slate-100 dark:border-slate-900 overflow-x-auto">
+                                  {typeof log.context === 'string' ? log.context : JSON.stringify(log.context, null, 2)}
+                                </pre>
+                              </div>
+                            )}
+                            {log.error_stack && (
+                              <div className="relative group">
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Error Stack Trace</div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigator.clipboard.writeText(log.error_stack!);
+                                      toast.success("Stack trace disalin");
+                                    }}
+                                    className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-primary transition-colors"
+                                  >
+                                    <Copy size={12} />
+                                    Copy
+                                  </button>
+                                </div>
+                                <pre className="text-[10px] text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/10 p-2 rounded border border-red-100/50 dark:border-red-950/20 overflow-x-auto whitespace-pre">
+                                  {log.error_stack}
+                                </pre>
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  resolveMutation.mutate({ id: log.id, resolved: !log.is_resolved });
+                                }}
+                                disabled={resolveMutation.isPending}
+                                className={cn(
+                                  "px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+                                  log.is_resolved
+                                    ? "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-500 dark:text-slate-400"
+                                    : "bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-500/10"
+                                )}
+                              >
+                                {log.is_resolved ? (
+                                  <>
+                                    <AlertCircle size={12} className="shrink-0" />
+                                    Tandai Belum Selesai (Aktif)
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle2 size={12} className="shrink-0" />
+                                    Tandai Sudah Selesai (Fixed)
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </m.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {/* Loading Spinner for Mobile */}
+        {isLogsLoading && (
+          <div className="block lg:hidden text-center py-10">
+            <span className="text-sm font-medium text-slate-500">Loading logs...</span>
+          </div>
+        )}
+
         {/* Pagination */}
         {!isLogsLoading && filteredLogs.length > 0 && (
-          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center justify-between gap-6 bg-slate-50/30 dark:bg-white/5 mt-8 sm:flex-row">
-            <p className="text-xs font-bold text-slate-400 text-center sm:text-left">
+          <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row items-center justify-between gap-6 bg-slate-50/30 dark:bg-white/5 mt-8">
+            <p className="text-xs font-bold text-slate-400 text-center lg:text-left">
               Showing <span className="text-slate-900 dark:text-white">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-white">{Math.min(currentPage * itemsPerPage, filteredLogs.length)}</span> of <span className="text-slate-900 dark:text-white">{filteredLogs.length}</span> entries
             </p>
-            <div className="flex flex-row items-center justify-center gap-1 sm:gap-2 w-full sm:w-auto">
+            <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-1.5 sm:gap-2 w-full lg:w-auto">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
-                Previous
+                Prev
               </button>
 
-              <div className="flex items-center gap-1">
+              {/* Mobile Pagination (3 items) */}
+              <div className="flex sm:hidden items-center gap-1">
+                {[...Array(Math.min(3, totalPages))].map((_, i) => {
+                  let pageNum = currentPage <= 2 ? i + 1 : (currentPage >= totalPages - 1 ? totalPages - 2 + i : currentPage - 1 + i);
+                  if (pageNum <= 0 || pageNum > totalPages) return null;
+                  return (
+                    <button
+                      key={`mob-${pageNum}`}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={cn(
+                        "w-8 h-8 rounded-lg text-[10px] font-bold transition-all",
+                        currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      )}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                {totalPages > 3 && currentPage < totalPages - 1 && (
+                  <span className="text-slate-400 text-[10px] font-bold tracking-widest px-0.5">...</span>
+                )}
+              </div>
+
+              {/* Desktop Pagination (5 items) */}
+              <div className="hidden sm:flex items-center gap-1">
                 {[...Array(Math.min(5, totalPages))].map((_, i) => {
                   let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
                   if (pageNum <= 0 || pageNum > totalPages) return null;
-
                   return (
                     <button
-                      key={pageNum}
+                      key={`desk-${pageNum}`}
                       onClick={() => setCurrentPage(pageNum)}
                       className={cn(
-                        "w-8 h-8 rounded-lg text-[10px] sm:text-xs font-bold transition-all",
+                        "w-8 h-8 rounded-lg text-xs font-bold transition-all",
                         currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
                       )}
                     >
@@ -479,7 +675,7 @@ export default function SystemLogsPage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+                className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
               >
                 Next
               </button>

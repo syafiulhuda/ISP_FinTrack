@@ -815,7 +815,7 @@ export default function FinancePage() {
           </div>
         </div>
 
-        <div id="finance-table" className="space-y-3 bg-slate-50 dark:bg-slate-950 p-2 md:p-4 rounded-2xl w-full overflow-hidden">
+        <div id="finance-table" className="space-y-3 bg-slate-50 dark:bg-slate-950 py-2 md:py-4 rounded-2xl w-full overflow-hidden">
           {/* Table Header (Hidden on Mobile) */}
           <div className="hidden md:grid grid-cols-12 gap-2 px-8 py-3 text-[9px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200 dark:border-slate-800 mb-1">
             <div className="col-span-1">LNK-ID</div>

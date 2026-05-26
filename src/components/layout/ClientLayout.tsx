@@ -24,7 +24,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   }, [isMobileMenuOpen]);
 
   const pathname = usePathname();
-  const isAuthPage = pathname === "/login" || pathname === "/logout" || pathname.startsWith("/reset-password");
+  const isAuthPage = 
+    pathname === "/login" || 
+    pathname === "/logout" || 
+    pathname.startsWith("/reset-password") ||
+    pathname === "/privacy-policy" ||
+    pathname === "/terms-of-service";
 
   if (isAuthPage) {
     return (

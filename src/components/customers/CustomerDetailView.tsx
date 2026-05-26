@@ -5,7 +5,8 @@ import {
   TrendingUp, CreditCard, Activity,
   Star, Bell, ArrowUpRight,
   Zap, Clock, Package, Users, Milestone,
-  ChevronLeft, ChevronRight, MapPin, Phone, ShieldCheck, Crown
+  ChevronLeft, ChevronRight, ChevronDown, MapPin, Phone, ShieldCheck, Crown,
+  Router, Globe, Cpu, Copy, Check, Info, Settings, AlertCircle
 } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -15,6 +16,8 @@ import { createPaymentLink } from "@/actions/payment";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { PaymentModal } from "@/components/ui/PaymentModal";
+import { CustomerEditModal } from "@/components/customers/CustomerEditModal";
+import { TicketSlideOver } from "@/components/tickets/TicketSlideOver";
 
 const formatCompactNumber = (input: number | string) => {
   const number = Number(input);
@@ -103,7 +106,44 @@ const generateAIRecommendation = (data: any) => {
   return "Stabilitas pembayaran terjaga. AI menyarankan untuk memantau kontribusi MRR dan mengirimkan penawaran Promo Bundling Musiman saat hari raya.";
 };
 
-export default function CustomerDetailView({ data }: { data: any }) {
+function CopyItem({ label, value, icon: Icon }: { label: string; value: string; icon: any }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!value || value === 'N/A') return;
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast.success(`${label} disalin ke clipboard!`);
+  };
+
+  return (
+    <div>
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
+      <div 
+        onClick={handleCopy}
+        className={cn(
+          "flex items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-xl transition-all",
+          value && value !== 'N/A' ? "cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 group" : "opacity-70"
+        )}
+      >
+        <div className="flex items-center gap-2.5 truncate">
+          <Icon size={16} className="text-slate-400 group-hover:text-indigo-500 transition-colors shrink-0" />
+          <span className="font-mono text-sm font-bold text-slate-700 dark:text-slate-300 truncate">
+            {value || 'N/A'}
+          </span>
+        </div>
+        {value && value !== 'N/A' && (
+          <div className="shrink-0 text-slate-400 group-hover:text-indigo-500 transition-colors">
+            {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function CustomerDetailView({ data, initialTickets = [] }: { data: any, initialTickets?: any[] }) {
   const [isVip, setIsVip] = useState(data.is_vip || false);
   const [isSending, setIsSending] = useState(false);
   const [isTogglingVip, setIsTogglingVip] = useState(false);
@@ -114,6 +154,9 @@ export default function CustomerDetailView({ data }: { data: any }) {
   const [paymentRedirectUrl, setPaymentRedirectUrl] = useState("");
   const [paymentOrderId, setPaymentOrderId] = useState("");
   const [paymentToken, setPaymentToken] = useState("");
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [ticketSlideOpen, setTicketSlideOpen] = useState(false);
+  const [isTicketHistoryExpanded, setIsTicketHistoryExpanded] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -180,9 +223,8 @@ export default function CustomerDetailView({ data }: { data: any }) {
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20">
       {/* Header & Back Button */}
-      {/* Header & Back Button */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="flex items-start tablet:items-center gap-3 tablet:gap-4 w-full">
+      <div className="flex flex-col xl:flex-row xl:flex-wrap justify-between items-start xl:items-center gap-6">
+        <div className="flex items-start tablet:items-center gap-3 tablet:gap-4 w-full xl:w-auto max-w-full">
           <Link href="/customers" aria-label="Back to customer list" className="p-2.5 tablet:p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:scale-105 transition-transform shrink-0 mt-1 tablet:mt-0">
             <ChevronLeft size={18} className="text-slate-500" />
           </Link>
@@ -204,15 +246,15 @@ export default function CustomerDetailView({ data }: { data: any }) {
                 isActive ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
               )}>{data.status}</span>
             </div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-              <p className="text-[10px] tablet:text-sm text-slate-500 font-medium flex items-center gap-1">
+            <div className="flex items-center gap-2 mt-1 overflow-x-auto no-scrollbar w-full pb-1 -mb-1">
+              <p className="text-[10px] tablet:text-sm text-slate-500 font-medium flex items-center gap-1 whitespace-nowrap">
                 <ShieldCheck size={12} className="text-indigo-500 shrink-0" />
                 ID: {data.id}
               </p>
-              <span className="hidden sm-phone:inline text-slate-300">•</span>
-              <p className="text-[10px] tablet:text-sm text-slate-500 font-medium">{data.service} Plan</p>
-              <span className="hidden sm-phone:inline text-slate-300">•</span>
-              <p className="text-[10px] tablet:text-sm text-slate-500 font-medium flex items-center gap-1">
+              <span className="text-slate-300 shrink-0">•</span>
+              <p className="text-[10px] tablet:text-sm text-slate-500 font-medium whitespace-nowrap shrink-0">{data.service} Plan</p>
+              <span className="text-slate-300 shrink-0">•</span>
+              <p className="text-[10px] tablet:text-sm text-slate-500 font-medium flex items-center gap-1 whitespace-nowrap shrink-0">
                 <MapPin size={12} className="text-slate-400 shrink-0" />
                 {data.city}, {data.province}
               </p>
@@ -220,12 +262,20 @@ export default function CustomerDetailView({ data }: { data: any }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 tablet:flex gap-3 w-full tablet:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto shrink-0">
+          <button
+            onClick={() => setEditModalOpen(true)}
+            aria-label="Edit Network Profile"
+            className="flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-sm"
+          >
+            <Settings size={16} />
+            <span className="truncate">Edit Profile</span>
+          </button>
           <button
             onClick={handleSendReminder}
             disabled={isSending}
             aria-label="Send payment reminder"
-            className="flex items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+            className="flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
           >
             <Bell size={16} className={cn(isSending && "animate-bounce")} />
             <span className="truncate">{isSending ? "Sending..." : "Send Reminder"}</span>
@@ -235,7 +285,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
             disabled={isTogglingVip}
             aria-label={isVip ? "Remove VIP status" : "Mark as VIP"}
             className={cn(
-              "flex items-center justify-center gap-2 px-4 tablet:px-6 py-3 border rounded-2xl font-bold text-xs tablet:text-sm transition-all disabled:opacity-50",
+              "flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 border rounded-2xl font-bold text-xs tablet:text-sm transition-all disabled:opacity-50",
               isVip
                 ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400"
                 : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -272,7 +322,7 @@ export default function CustomerDetailView({ data }: { data: any }) {
                 toast.error("Failed to generate link: " + res.error, { id: "snap" });
               }
             }}
-            className="flex items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 rounded-2xl font-bold text-xs tablet:text-sm transition-all col-span-2 tablet:col-span-1 cursor-pointer"
+            className="flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 rounded-2xl font-bold text-xs tablet:text-sm transition-all cursor-pointer"
           >
             <CreditCard size={16} />
             <span className="truncate">Payment Link</span>
@@ -356,6 +406,36 @@ export default function CustomerDetailView({ data }: { data: any }) {
               </div>
             </div>
           </div>
+
+          {/* Network Profile Card */}
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex-1">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-base sm:text-lg font-black flex items-start gap-3">
+                <Router size={20} className="text-indigo-500 mt-1 shrink-0" />
+                <span>Network Profile</span>
+              </h2>
+            </div>
+            
+              <div className="space-y-4">
+              <CopyItem label="PPPoE Username" value={data.pppoe_user} icon={Users} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <CopyItem label="IP Address" value={data.ip_address} icon={Globe} />
+                <CopyItem label="MAC Address" value={data.mac_address} icon={Cpu} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <CopyItem label="OLT Port" value={data.olt_port} icon={Router} />
+                <CopyItem label="Optical Attenuation" value={data.optical_attenuation} icon={Activity} />
+              </div>
+              
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2 p-3 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-medium">
+                  <Info size={14} className="shrink-0" />
+                  <p>Click any item above to copy it to your clipboard for quick NOC troubleshooting.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         {/* Right Column: Charts & Tables */}
@@ -433,6 +513,72 @@ export default function CustomerDetailView({ data }: { data: any }) {
                 <div className="w-full h-full bg-slate-100/5 animate-pulse rounded-2xl border border-slate-200/10 dark:border-slate-800/10" />
               )}
             </div>
+          </div>
+
+          {/* Ticket History */}
+          <div className="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="flex justify-between items-center mb-6">
+              <div 
+                className="flex items-center gap-3 cursor-pointer group"
+                onClick={() => setIsTicketHistoryExpanded(!isTicketHistoryExpanded)}
+              >
+                <h2 className="text-base sm:text-lg font-black flex items-center gap-3 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
+                  <AlertCircle size={20} className="text-rose-500 shrink-0" />
+                  <span>Ticket History</span>
+                </h2>
+                <ChevronDown size={16} className={cn("text-slate-400 transition-transform", isTicketHistoryExpanded && "rotate-180")} />
+              </div>
+              <button
+                onClick={() => setTicketSlideOpen(true)}
+                className="px-4 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold text-xs rounded-xl transition-colors"
+              >
+                + New Ticket
+              </button>
+            </div>
+            
+            <AnimatePresence initial={false}>
+              {isTicketHistoryExpanded && (
+                <m.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-3 pt-2">
+              {initialTickets.length === 0 ? (
+                <div className="text-center p-6 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-slate-400 text-sm font-medium">
+                  No tickets found for this customer.
+                </div>
+              ) : (
+                initialTickets.map((t) => (
+                  <div key={t.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-slate-100 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-black text-slate-900 dark:text-white">{t.ticket_number}</span>
+                        <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase", 
+                          t.priority === 'CRITICAL' ? 'bg-rose-500/10 text-rose-500' :
+                          t.priority === 'HIGH' ? 'bg-amber-500/10 text-amber-500' :
+                          t.priority === 'MEDIUM' ? 'bg-indigo-500/10 text-indigo-500' :
+                          'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                        )}>{t.priority}</span>
+                        <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase", 
+                          t.status === 'OPEN' ? 'bg-amber-500/10 text-amber-500' :
+                          t.status === 'IN_PROGRESS' ? 'bg-blue-500/10 text-blue-500' :
+                          'bg-emerald-500/10 text-emerald-500'
+                        )}>{t.status}</span>
+                      </div>
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{t.description}</p>
+                      <p className="text-[10px] font-bold text-slate-400 mt-2">
+                        {new Date(t.created_at_str).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+                  </div>
+                </m.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="bg-white dark:bg-slate-900 p-4 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -610,6 +756,18 @@ export default function CustomerDetailView({ data }: { data: any }) {
         token={paymentToken}
         redirectUrl={paymentRedirectUrl}
         orderId={paymentOrderId}
+      />
+      
+      <CustomerEditModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        customer={data}
+      />
+
+      <TicketSlideOver
+        isOpen={ticketSlideOpen}
+        onClose={() => setTicketSlideOpen(false)}
+        customerId={data.id}
       />
     </div>
   );

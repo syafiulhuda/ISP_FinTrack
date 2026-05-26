@@ -9,8 +9,13 @@ import { createSession, destroySession, getSession } from "@/lib/auth";
 import { headers } from "next/headers";
 import { checkRateLimit } from "@/lib/rateLimit";
 
-export async function loginAction(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+export async function loginAction(formData: FormData): Promise<{ success: boolean; error?: string }> {
   try {
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    
+    if (!email || !password) return { success: false, error: 'Email dan password harus diisi.' };
+
     const headersList = await headers();
     const ip = headersList.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
     
@@ -108,7 +113,7 @@ export async function resetPassword(token: string, passwordNew: string) {
 
     // 3. Update Admin Table
     await query(
-      "UPDATE admin SET password = $1 WHERE email = $2",
+      "UPDATE admin SET password = $1, last_password_change = NOW() WHERE email = $2",
       [hashedPassword, email]
     );
 
@@ -152,7 +157,7 @@ export async function changePasswordAction(passwordOld: string, passwordNew: str
 
     // 3. Hash and Update new password
     const newHash = await bcrypt.hash(passwordNew, 10);
-    await query("UPDATE admin SET password = $1 WHERE id = $2", [newHash, adminId]);
+    await query("UPDATE admin SET password = $1, last_password_change = NOW() WHERE id = $2", [newHash, adminId]);
 
     return { success: true, message: "Password berhasil diperbarui." };
   } catch (error) {

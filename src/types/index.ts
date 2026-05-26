@@ -101,6 +101,7 @@ export interface Admin {
   department: string;
   image: string;
   password?: string;
+  last_password_change?: string | null;
 }
 
 

@@ -1,4 +1,5 @@
 import { getCustomer360 } from "@/actions/customers";
+import { getCustomerTickets } from "@/actions/tickets";
 import CustomerDetailView from "@/components/customers/CustomerDetailView";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
@@ -30,9 +31,11 @@ export default async function CustomerDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  const tickets = await getCustomerTickets(id);
+
   return (
     <div className="p-4 md:p-8">
-      <CustomerDetailView data={data} />
+      <CustomerDetailView data={data} initialTickets={tickets} />
     </div>
   );
 }

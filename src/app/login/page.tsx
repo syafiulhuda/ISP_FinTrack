@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { LoginForm } from "./_components/LoginForm";
 
@@ -49,8 +50,18 @@ export default function LoginPage() {
       </div>
 
       {/* Right side - Form (Client Component) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-24 relative">
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 md:p-24 relative">
         <LoginForm />
+        
+        <div className="mt-8 flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+          <Link href="/privacy-policy" className="hover:text-primary transition-colors">
+            Kebijakan Privasi
+          </Link>
+          <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+          <Link href="/terms-of-service" className="hover:text-primary transition-colors">
+            Syarat & Ketentuan
+          </Link>
+        </div>
 
         <div className="absolute bottom-8 lg:hidden text-slate-400 text-xs font-bold uppercase tracking-widest">
           ISP-FinTrack Enterprise v2.4.0

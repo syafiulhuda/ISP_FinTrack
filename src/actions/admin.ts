@@ -15,7 +15,7 @@ export async function getAdminProfile(): Promise<Admin & { fullName: string }> {
       return { id: 0, fullName: 'Unknown', email: '', role: 'Guest', department: '', image: '' } as Admin & { fullName: string };
     }
 
-    const res = await query('SELECT id, nama as "fullName", email, role, department, image FROM admin WHERE id = $1', [adminId]);
+    const res = await query('SELECT id, nama as "fullName", email, role, department, image, last_password_change FROM admin WHERE id = $1', [adminId]);
     if (res.rows.length === 0) {
       return { id: 0, fullName: 'Unknown', email: '', role: 'Guest', department: '', image: '' } as Admin & { fullName: string };
     }

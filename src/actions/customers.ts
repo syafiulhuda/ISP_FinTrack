@@ -345,7 +345,7 @@ export async function getCustomerAnalysis() {
 
 export async function getCustomer360(customerId: string) {
   try {
-    const customerRes = await query('SELECT id, name, service, status, is_vip, no_telp, city, province, "createdAt" AT TIME ZONE \'Asia/Jakarta\' as created_at FROM customers WHERE id = $1', [customerId]);
+    const customerRes = await query('SELECT id, name, service, status, is_vip, no_telp, city, province, "createdAt" AT TIME ZONE \'Asia/Jakarta\' as created_at, pppoe_user, pppoe_password, ip_address, mac_address, olt_port, optical_attenuation FROM customers WHERE id = $1', [customerId]);
     if (customerRes.rows.length === 0) return null;
     const c = customerRes.rows[0];
 
@@ -492,3 +492,43 @@ export async function sendPaymentReminder(customerId: string) {
   }
 }
 
+export async function updateCustomerNetwork(
+  customerId: string, 
+  data: {
+    pppoe_user?: string,
+    pppoe_password?: string,
+    ip_address?: string,
+    mac_address?: string,
+    olt_port?: string,
+    optical_attenuation?: string
+  }
+) {
+  try {
+    await query(`
+      UPDATE customers 
+      SET 
+        pppoe_user = $1,
+        pppoe_password = $2,
+        ip_address = $3,
+        mac_address = $4,
+        olt_port = $5,
+        optical_attenuation = $6
+      WHERE id = $7
+    `, [
+      data.pppoe_user || null,
+      data.pppoe_password || null,
+      data.ip_address || null,
+      data.mac_address || null,
+      data.olt_port || null,
+      data.optical_attenuation || null,
+      customerId
+    ]);
+
+    revalidatePath(`/customers/${customerId}`);
+    revalidatePath('/customers');
+    return { success: true };
+  } catch (e) {
+    logger.error({ message: "DB Error: updateCustomerNetwork", error: e, path: "action" });
+    return { success: false, error: String(e) };
+  }
+}

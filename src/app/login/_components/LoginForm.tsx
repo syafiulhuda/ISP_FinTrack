@@ -22,11 +22,14 @@ export function LoginForm() {
     setIsLoading(true);
     setError("");
 
-    const result = await loginAction(email, password);
+    const formData = new FormData();
+    formData.append("email", email);
+    formData.append("password", password);
+
+    const result = await loginAction(formData);
 
     if (result.success) {
-      router.push("/");
-      router.refresh();
+      window.location.href = "/";
     } else {
       setError(result.error || "Login gagal.");
       setShake(true);

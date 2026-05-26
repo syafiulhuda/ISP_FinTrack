@@ -24,6 +24,25 @@ const itemVariants: Variants = {
   show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
 
+const getTimeAgo = (dateString: string | null | undefined) => {
+  if (!dateString) return "Never";
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return "Just now";
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 30) return `${diffInDays}d ago`;
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) return `${diffInMonths}mo ago`;
+  const diffInYears = Math.floor(diffInDays / 365);
+  return `${diffInYears}y ago`;
+};
+
 export default function ProfilePage() {
   const queryClient = useQueryClient();
   
@@ -88,10 +107,6 @@ export default function ProfilePage() {
       toast.error("Konfirmasi password tidak cocok");
       return;
     }
-    if (passData.new.length < 6) {
-      toast.error("Password minimal 6 karakter");
-      return;
-    }
 
     setIsPassLoading(true);
     try {
@@ -100,6 +115,7 @@ export default function ProfilePage() {
         toast.success(res.message);
         setIsPasswordModalOpen(false);
         setPassData({ old: '', new: '', confirm: '' });
+        queryClient.invalidateQueries({ queryKey: ['adminProfile'] });
       } else {
         toast.error(res.message);
       }
@@ -422,7 +438,10 @@ export default function ProfilePage() {
                     <Lock size={20} />
                   </div>
                   <button 
-                    onClick={() => setIsPasswordModalOpen(false)}
+                    onClick={() => {
+                      setIsPasswordModalOpen(false);
+                      setPassData({ old: '', new: '', confirm: '' });
+                    }}
                     className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                   >
                     <X size={18} className="text-slate-400" />
@@ -456,7 +475,7 @@ export default function ProfilePage() {
                         value={passData.new}
                         onChange={e => setPassData({...passData, new: e.target.value})}
                         className="w-full bg-slate-50 dark:bg-slate-800 border border-transparent focus:border-primary/20 rounded-xl py-2.5 pl-11 pr-4 outline-none transition-all font-medium text-sm text-slate-900 dark:text-white"
-                        placeholder="Min. 6 characters"
+                        placeholder="••••••••"
                       />
                     </div>
                   </div>
@@ -503,7 +522,7 @@ export default function ProfilePage() {
                 <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 mb-4">
                   <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Password</label>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                    Last changed: 3mo ago
+                    Last changed: {(profileData as any).last_password_change ? getTimeAgo((profileData as any).last_password_change) : 'Never'}
                   </span>
                 </div>
                 <button 

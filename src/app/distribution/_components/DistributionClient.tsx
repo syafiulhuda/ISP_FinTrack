@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useDeferredValue, useCallback } from "react";
 import Image from "next/image";
 import { m, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -115,6 +115,7 @@ function LegendContent({ nodeStats }: { nodeStats: any }) {
 export function DistributionClient() {
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [zoom, setZoom] = useState(5);
@@ -143,7 +144,7 @@ export function DistributionClient() {
     return { label: '98.4%', value: 98, textColor: 'text-green-500', barColor: 'bg-green-500' };
   }, [nodeStatus]);
 
-  const handleSelectNode = (node: any) => {
+  const handleSelectNode = useCallback((node: any) => {
     setSelectedNode(node);
     if (node) {
       const lat = parseFloat(String(node.latitude));
@@ -152,7 +153,7 @@ export function DistributionClient() {
         setCenter([lat, lng]);
       }
     }
-  };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -171,6 +172,7 @@ export function DistributionClient() {
     Good: true,
     Maintenance: true,
   });
+  const deferredActiveLayers = useDeferredValue(activeLayers);
 
 
   const [maintenanceHistory, setMaintenanceHistory] = useState<any[]>([]);
@@ -232,14 +234,14 @@ export function DistributionClient() {
     const typeFilters = ['OLT', 'ODP', 'ONT', 'Server'];
     const statusFilters = ['Good', 'Maintenance'] as const;
 
-    const activeTypeFilters = typeFilters.filter(t => activeLayers[t as keyof typeof activeLayers]);
-    const activeStatusFilters = statusFilters.filter(s => activeLayers[s as keyof typeof activeLayers]);
+    const activeTypeFilters = typeFilters.filter(t => deferredActiveLayers[t as keyof typeof deferredActiveLayers]);
+    const activeStatusFilters = statusFilters.filter(s => deferredActiveLayers[s as keyof typeof deferredActiveLayers]);
 
 
     return assets.filter(a => {
-      const matchesSearch = (a.sn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (a.location || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        String(a.id || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = (a.sn || '').toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+        (a.location || '').toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+        String(a.id || '').toLowerCase().includes(deferredSearchQuery.toLowerCase());
 
       const matchesType = activeTypeFilters.length === 0 || activeTypeFilters.includes(a.type);
 
@@ -260,7 +262,7 @@ export function DistributionClient() {
     });
 
 
-  }, [assets, searchQuery, activeLayers]);
+  }, [assets, deferredSearchQuery, deferredActiveLayers]);
 
   const nodeStats = useMemo(() => {
     return {
@@ -271,7 +273,18 @@ export function DistributionClient() {
     };
   }, [filteredAssets]);
 
-
+  const mapComponent = useMemo(() => (
+    <IndonesiaMap
+      assets={filteredAssets}
+      onSelectNode={handleSelectNode}
+      selectedNode={selectedNode}
+      zoom={zoom}
+      center={center}
+      setZoom={setZoom}
+      setCenter={setCenter}
+      theme={mapTheme}
+    />
+  ), [filteredAssets, handleSelectNode, selectedNode, zoom, center, mapTheme]);
 
   if (!mounted) return null;
 
@@ -423,16 +436,7 @@ export function DistributionClient() {
             ? "m-0 rounded-none border-none shadow-none"
             : "mx-2 sm-phone:mx-4 my-4 md:m-0 rounded-[2rem] md:rounded-none border border-slate-200 dark:border-slate-800 md:border-none shadow-2xl md:shadow-none"
         )}>
-          <IndonesiaMap
-            assets={filteredAssets}
-            onSelectNode={handleSelectNode}
-            selectedNode={selectedNode}
-            zoom={zoom}
-            center={center}
-            setZoom={setZoom}
-            setCenter={setCenter}
-            theme={mapTheme}
-          />
+          {mapComponent}
         </div>
 
         {/* Top Right Control - Layers */}
@@ -507,10 +511,10 @@ export function DistributionClient() {
             <AnimatePresence>
               {isLegendOpen && (
                 <m.div
-                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                  className="absolute top-full mt-3 left-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-6 w-64 z-50"
+                  initial={{ opacity: 0, scale: 0.95, x: -10 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, x: -10 }}
+                  className="absolute top-0 left-full ml-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-6 w-64 z-50"
                 >
                   <LegendContent nodeStats={nodeStats} />
                 </m.div>
@@ -616,6 +620,7 @@ export function DistributionClient() {
                 animate={isMobile ? { y: 0, opacity: 1 } : { x: 0, opacity: 1 }}
                 exit={isMobile ? { y: "100%", opacity: 0 } : { x: 400, opacity: 0 }}
                 transition={{ type: "spring", damping: 30, stiffness: 250 }}
+                style={{ contentVisibility: 'auto' }}
                 className="w-full max-w-full md:max-w-md lg:w-96 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-t-[2.5rem] lg:rounded-[2.5rem] shadow-2xl border border-white/20 dark:border-slate-800/50 flex flex-col overflow-hidden pointer-events-auto h-[65vh] lg:h-full"
               >
                 {isMobile && (
