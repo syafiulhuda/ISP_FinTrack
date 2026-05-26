@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   serverExternalPackages: [],
   turbopack: {},
+  // Membuka akses HMR (Hot Reloading) untuk IP HP Anda
+  allowedDevOrigins: ['10.203.217.55'],
   async headers() {
     return [
       {
