@@ -160,8 +160,14 @@ export async function requestPasswordReset(targetUserId: number, requesterRole: 
       [rawEmail, token, expiresAt]
     );
 
-    // 4. Send Email
-    const emailRes = await sendResetPasswordEmail(targetEmail, token);
+    // 4. Determine origin dynamically to support mobile testing (LAN IP)
+    const headersList = await headers();
+    const protocol = headersList.get('x-forwarded-proto') || 'http';
+    const host = headersList.get('host') || 'localhost:3000';
+    const appUrl = `${protocol}://${host}`;
+
+    // 5. Send Email
+    const emailRes = await sendResetPasswordEmail(targetEmail, token, appUrl);
     
     // 5. Log activity
     await query(
@@ -194,7 +200,17 @@ export async function resetPassword(token: string, passwordNew: string) {
 
     const { email } = tokenRes.rows[0];
 
-    // 2. Hash new password
+    // 2. Prevent reusing the old password
+    const userRes = await query("SELECT password FROM admin WHERE email = $1", [email]);
+    if (userRes.rows.length > 0) {
+      const currentHash = userRes.rows[0].password;
+      const isSamePassword = await bcrypt.compare(passwordNew, currentHash);
+      if (isSamePassword) {
+        return { success: false, message: "Password baru tidak boleh sama dengan password lama." };
+      }
+    }
+
+    // 3. Hash new password
     const hashedPassword = await bcrypt.hash(passwordNew, 10);
 
     // 3. Update Admin Table
@@ -256,6 +272,10 @@ export async function changePasswordAction(passwordOld: string, passwordNew: str
     // 2. Verify old password
     const isMatch = await bcrypt.compare(passwordOld, currentHash);
     if (!isMatch) return { success: false, message: "Password lama salah." };
+
+    if (passwordOld === passwordNew) {
+      return { success: false, message: "Password baru tidak boleh sama dengan password lama." };
+    }
 
     // 3. Hash and Update new password
     const newHash = await bcrypt.hash(passwordNew, 10);

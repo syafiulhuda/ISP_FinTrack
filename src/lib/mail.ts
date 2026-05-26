@@ -8,9 +8,10 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export async function sendResetPasswordEmail(email: string, token: string) {
-  // Ganti dengan URL domain Anda nantinya
-  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+export async function sendResetPasswordEmail(email: string, token: string, appUrl?: string) {
+  // Gunakan ENV Vercel URL sebagai prioritas utama, jika tidak ada baru gunakan dynamic origin
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || appUrl || 'http://localhost:3000';
+  const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
   const mailOptions = {
     from: `"ISP FinTrack Support" <${process.env.GMAIL_USER}>`,
