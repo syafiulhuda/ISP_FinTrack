@@ -17,6 +17,14 @@ import { FramerProvider } from "@/components/providers/FramerProvider";
 export const metadata: Metadata = {
   title: "ISP-FinTrack - Financial Management for ISPs",
   description: "Enterprise finance, profitability analysis, and inventory management for ISPs.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'ISP-FinTrack',
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export const viewport: Viewport = {
@@ -24,6 +32,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({

@@ -107,7 +107,6 @@ export async function getResolvedHistoryTickets() {
       FROM tickets t
       JOIN customers c ON c.id = t.customer_id
       WHERE t.status IN ('RESOLVED', 'CLOSED')
-      AND DATE(t.resolved_at) < CURRENT_DATE
       ORDER BY t.resolved_at DESC
       LIMIT 100
     `);
@@ -130,6 +129,8 @@ export async function updateTicketStatus(id: string, status: string) {
     
     if (status === 'RESOLVED' || status === 'CLOSED') {
       sql += `, resolved_at = CURRENT_TIMESTAMP`;
+    } else {
+      sql += `, resolved_at = NULL`;
     }
     
     sql += ` WHERE id = $2 RETURNING customer_id`;

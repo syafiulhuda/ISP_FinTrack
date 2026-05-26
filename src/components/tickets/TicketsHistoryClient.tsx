@@ -1,18 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Calendar, ChevronDown } from "lucide-react";
+import { Search, Calendar, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function TicketsHistoryClient({ tickets }: { tickets: any[] }) {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const TICKETS_PER_PAGE = 10;
   
   const filteredTickets = tickets.filter(t => 
     t.ticket_number.toLowerCase().includes(search.toLowerCase()) ||
     t.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
     t.description?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const totalPages = Math.ceil(filteredTickets.length / TICKETS_PER_PAGE);
+  const paginatedTickets = filteredTickets.slice((currentPage - 1) * TICKETS_PER_PAGE, currentPage * TICKETS_PER_PAGE);
+
+  // Reset page when search changes
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setCurrentPage(1);
+  };
 
   return (
     <div className="space-y-6">
@@ -23,7 +34,7 @@ export function TicketsHistoryClient({ tickets }: { tickets: any[] }) {
             type="text" 
             placeholder="Search history by ID, customer..." 
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow"
           />
         </div>
@@ -43,7 +54,7 @@ export function TicketsHistoryClient({ tickets }: { tickets: any[] }) {
 
         {/* List Body */}
         <div className="flex flex-col gap-4 md:gap-0 md:divide-y md:divide-slate-100 md:dark:divide-slate-800">
-          {filteredTickets.map((ticket) => {
+          {paginatedTickets.map((ticket) => {
             const isExpanded = expandedId === ticket.id;
             return (
               <div key={ticket.id} className="flex flex-col md:grid md:grid-cols-12 md:gap-4 p-5 md:p-4 bg-white dark:bg-slate-900 md:bg-transparent md:dark:bg-transparent rounded-2xl md:rounded-none border border-slate-200 dark:border-slate-800 md:border-none shadow-sm md:shadow-none hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group">
@@ -124,6 +135,31 @@ export function TicketsHistoryClient({ tickets }: { tickets: any[] }) {
           )}
         </div>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mt-4">
+          <div className="text-sm font-medium text-slate-500">
+            Page {currentPage} of {totalPages}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

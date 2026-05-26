@@ -79,8 +79,23 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
     e.preventDefault();
     const id = e.dataTransfer.getData("ticketId");
 
-    // Optimistic UI Update
-    setTickets(prev => prev.map(t => t.id.toString() === id ? { ...t, status: newStatus } : t));
+    const ticket = tickets.find(t => t.id.toString() === id);
+    
+    // Workflow Rule: Prevent skipping "In Progress"
+    if (ticket && ticket.status === 'OPEN' && newStatus === 'RESOLVED') {
+      toast.error("Action restricted!", {
+        description: "Please move the ticket to 'In Progress' first before resolving it.",
+        icon: <AlertCircle size={16} className="text-rose-500" />
+      });
+      return;
+    }
+
+    // Optimistic UI Update with real-time timestamp
+    setTickets(prev => prev.map(t => t.id.toString() === id ? { 
+      ...t, 
+      status: newStatus,
+      resolved_at_str: (newStatus === 'RESOLVED' || newStatus === 'CLOSED') ? new Date().toISOString() : null
+    } : t));
 
     const res = await updateTicketStatus(id, newStatus);
     if (!res.success) {

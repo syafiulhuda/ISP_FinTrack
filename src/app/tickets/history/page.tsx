@@ -16,7 +16,7 @@ export default async function TicketsHistoryPage() {
     <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
       <div className="mb-8">
         <Link href="/tickets" className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 mb-4 transition-colors">
-          <ChevronLeft size={16} /> Back to Kanban Board
+          <ChevronLeft size={16} /> Back to Tickets List
         </Link>
         <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
           <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center shrink-0">
