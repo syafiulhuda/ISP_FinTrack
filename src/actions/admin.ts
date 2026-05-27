@@ -19,7 +19,7 @@ export async function getAdminProfile(): Promise<Admin & { fullName: string }> {
     if (res.rows.length === 0) {
       return { id: 0, fullName: 'Unknown', email: '', role: 'Guest', department: '', image: '' } as Admin & { fullName: string };
     }
-    
+
     return res.rows[0] as Admin & { fullName: string };
   } catch (e) {
     return { id: 0, fullName: 'Error', email: '', role: 'Guest', department: '', image: '' } as Admin & { fullName: string };
@@ -75,6 +75,28 @@ export async function createAdmin(data: { nama: string, email: string, password?
   }
 }
 
+export async function deleteAdmin(id: number) {
+  try {
+    const callerId = await requireRole(['System Administrator', 'Owner']);
+
+    const targetRes = await query('SELECT role FROM admin WHERE id = $1', [id]);
+    if (targetRes.rows.length === 0) throw new Error("User not found");
+    if (targetRes.rows[0].role === 'Owner') {
+      throw new Error("Cannot delete an Owner account");
+    }
+
+    if (callerId === id) {
+      throw new Error("Cannot delete your own account");
+    }
+
+    await query('DELETE FROM admin WHERE id = $1', [id]);
+    return { success: true };
+  } catch (e: any) {
+    logger.error({ message: "DB Error: deleteAdmin", error: e, path: "action" });
+    return { success: false, error: e.message || String(e) };
+  }
+}
+
 // Notifications
 export async function createNotification(data: { category: string, title: string, message: string, type: string, action_label?: string }) {
   try {
@@ -107,6 +129,34 @@ export async function hideAllNotifications() {
   } catch (e) {
     logger.error({ message: "DB Error: hideAllNotifications", error: e, path: "action" });
     throw e;
+  }
+}
+
+export async function getIntegrationStatus() {
+  try {
+    const isMidtransConfigured = !!process.env.MIDTRANS_SERVER_KEY && !!process.env.MIDTRANS_CLIENT_KEY;
+    const midtransEnv = process.env.MIDTRANS_IS_PRODUCTION ? 'SANDBOX' : 'PRODUCTION';
+    const isWhatsAppConfigured = !!process.env.FONNTE_TOKEN || !!process.env.WHATSAPP_API_KEY;
+    const isOcrConfigured = !!process.env.OCR_API_KEY;
+
+    return {
+      midtrans: {
+        status: isMidtransConfigured ? 'CONNECTED' : 'DISCONNECTED',
+        env: isMidtransConfigured ? midtransEnv : null
+      },
+      whatsapp: {
+        status: isWhatsAppConfigured ? 'CONNECTED' : 'MANUAL (WA.ME)'
+      },
+      ocr: {
+        status: isOcrConfigured ? 'CONNECTED' : 'IDLE'
+      }
+    };
+  } catch (e) {
+    return {
+      midtrans: { status: 'DISCONNECTED', env: null },
+      whatsapp: { status: 'DISCONNECTED' },
+      ocr: { status: 'IDLE' }
+    };
   }
 }
 

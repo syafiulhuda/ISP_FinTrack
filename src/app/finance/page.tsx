@@ -83,11 +83,13 @@ export default function FinancePage() {
   const [serialNumber, setSerialNumber] = useState("");
   const [macNumber, setMacNumber] = useState("");
   const [location, setLocation] = useState("Warehouse Main");
+  const [confidence, setConfidence] = useState("");
 
   // Remove auto-sync useEffect to keep form empty with placeholders initially
   // We will only fill it if the user manually triggers or edits it
 
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const isInitialState = !isEditing && uploadedImageUrl === null;
   const [isScanning, setIsScanning] = useState(false);
   const [activeTab, setActiveTab] = useState<'pemasukan' | 'pengeluaran'>('pemasukan');
 
@@ -154,8 +156,6 @@ export default function FinancePage() {
     }
   }, [date, activeTab]);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
     e.preventDefault();
     let files: FileList | null = null;
@@ -173,11 +173,7 @@ export default function FinancePage() {
       const previewUrl = URL.createObjectURL(file);
       setUploadedImageUrl(previewUrl);
 
-      // Clear the file input value to prevent "InvalidStateError" 
-      // if React or extensions try to restore the value
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+
 
       // Reset form states for new analysis
       setVendor("");
@@ -185,13 +181,20 @@ export default function FinancePage() {
       setAmount("");
       setReference("");
       setMethod("Bank Transfer");
+      setConfidence("");
 
       setIsScanning(true);
       setIsEditing(true);
       toast.success("File uploaded! Starting OCR analysis...", { duration: 3000 });
 
       try {
-        const worker = await Tesseract.createWorker('eng');
+        console.log("Starting OCR with safe LOCAL worker...");
+        const worker = await Tesseract.createWorker('eng', 1, {
+          workerBlobURL: false,
+          logger: m => console.log("OCR:", m),
+          workerPath: '/tesseract/worker.min.js',
+          corePath: '/tesseract/tesseract-core.wasm.js',
+        });
         const ret = await worker.recognize(file);
         const text = ret.data.text;
 
@@ -279,6 +282,7 @@ export default function FinancePage() {
         const locMatch = text.match(/Location\s*[:\-\;\|\!\.\s]*\s*([^\n\r]+)/i);
 
         const extractedConfidence = ret.data.confidence.toFixed(0) + "%";
+        setConfidence(extractedConfidence);
 
         // Capture values into variables for immediate DB save (since state updates are async)
         const finalVendor = detectedVendor || "";
@@ -384,6 +388,7 @@ export default function FinancePage() {
     if (res?.success) {
       toast.success(`Transaction ${res.trxId} posted successfully!`);
       setShowDuplicateWarning(false);
+      handleCancel();
     } else {
       toast.error(res?.error || "Failed to post transaction");
     }
@@ -391,12 +396,13 @@ export default function FinancePage() {
   };
 
   const handleCancel = () => {
-    if (ocrData) {
-      setVendor(ocrData.vendor || "");
-      setDate(ocrData.date || "");
-      setAmount(ocrData.amount || "");
-      setReference(ocrData.reference || "");
-    }
+    setVendor("");
+    setDate("");
+    setAmount("");
+    setReference("");
+    setMethod("Bank Transfer");
+    setConfidence("");
+
     setUploadedImageUrl(null);
     setIsEditing(false);
   };
@@ -433,19 +439,19 @@ export default function FinancePage() {
             </div>
             <div className="w-full lg:flex-1 flex flex-row gap-2 md:gap-4">
               <div
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/*';
+                  input.onchange = (e) => {
+                    handleFileUpload(e as unknown as React.ChangeEvent<HTMLInputElement>);
+                  };
+                  input.click();
+                }}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleFileUpload}
                 className="flex-1 bg-slate-100 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors group"
               >
-                <input
-                  aria-label="Upload document"
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  accept="image/*"
-                />
                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center mb-2 md:mb-3 group-hover:bg-primary group-hover:text-white transition-colors shadow-sm shrink-0">
                   <CloudUpload size={18} className="md:w-[20px] md:h-[20px] text-primary group-hover:text-white" />
                 </div>
@@ -487,17 +493,16 @@ export default function FinancePage() {
                 </div>
                 <div
                   onClick={() => setIsZoomed(true)}
-                  className="w-full h-[450px] bg-slate-50 dark:bg-slate-800/50 rounded-xl overflow-hidden relative group border border-slate-200/50 dark:border-slate-700 cursor-zoom-in flex items-center justify-center"
+                  className="w-full flex-1 min-h-[300px] md:min-h-[400px] bg-slate-50 dark:bg-slate-800/50 rounded-xl overflow-hidden relative group border border-slate-200/50 dark:border-slate-700 cursor-zoom-in flex items-center justify-center"
                 >
                   <Image
                     unoptimized
-                    width={450}
-                    height={450}
+                    fill
                     src={uploadedImageUrl || '/images/expense.svg'}
                     alt="Receipt Source"
                     fetchPriority="high"
                     loading="eager"
-                    className="w-full h-full object-contain opacity-90 transition-transform duration-500 group-hover:scale-105"
+                    className="object-contain opacity-90 transition-transform duration-500 group-hover:scale-105 p-4"
                   />
                   {/* Scanning overlay */}
                   {isScanning && (
@@ -517,18 +522,11 @@ export default function FinancePage() {
               {/* Right: AI Extracted Data Form */}
               <div className="bg-white dark:bg-slate-900 rounded-xl p-4 md:p-10 flex flex-col justify-between shadow-sm border border-slate-200/50 dark:border-slate-800">
                 <div>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 md:mb-8">
-                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Extracted Data</h2>
-                    <div className="px-4 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-primary rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-2">
-                      <Sparkles size={14} />
-                      {loadingOcr || !ocrData ? (
-                        <span className="h-3.5 w-16 bg-blue-200 dark:bg-blue-800 animate-pulse rounded inline-block" />
-                      ) : (
-                        `AI Confidence: ${ocrData?.confidence || "66%"}`
-                      )}
-                    </div>
+                  <div className="flex flex-row items-center justify-between gap-2 mb-6 md:mb-8">
+                    <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">Extracted Data</h2>
                   </div>
 
+                  <fieldset disabled={isInitialState} className={cn("transition-opacity duration-500", isInitialState && "opacity-50 grayscale-[25%]")}>
                   {/* Income / Expense Tabs */}
                   <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl md:p-1.5 md:rounded-2xl mb-8 md:mb-10 relative">
                     <m.div
@@ -571,17 +569,15 @@ export default function FinancePage() {
                       <div className="relative">
                         <input
                           id="vendor"
-                          disabled={!isEditing && uploadedImageUrl !== null}
                           className={cn(
                             "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all",
-                            (isEditing || uploadedImageUrl === null) && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                            !isInitialState && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
                           )}
                           placeholder="e.g. PT Mega Indah"
                           type="text"
                           value={vendor}
                           onChange={(e) => setVendor(e.target.value)}
                         />
-                        {!isEditing && <CheckCircle2 size={20} className="absolute right-4 top-4 text-green-500" />}
                       </div>
                     </div>
 
@@ -591,10 +587,9 @@ export default function FinancePage() {
                       <div className="relative">
                         <input
                           id="date"
-                          disabled={!isEditing && uploadedImageUrl !== null}
                           className={cn(
                             "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all",
-                            (isEditing || uploadedImageUrl === null) && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                            !isInitialState && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
                           )}
                           placeholder="DD/MM/YYYY"
                           type="text"
@@ -634,7 +629,6 @@ export default function FinancePage() {
                             }
                           }}
                         />
-                        {!isEditing && <CheckCircle2 size={20} className="absolute right-4 top-4 text-green-500" />}
                       </div>
                     </div>
 
@@ -645,17 +639,15 @@ export default function FinancePage() {
                         <span className="absolute left-5 top-4 text-slate-400 font-bold">Rp</span>
                         <input
                           id="amount"
-                          disabled={!isEditing && uploadedImageUrl !== null}
                           placeholder="0"
                           className={cn(
                             "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-xl rounded-xl pl-14 pr-12 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-black transition-all",
-                            (isEditing || uploadedImageUrl === null) && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                            !isInitialState && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
                           )}
                           type="text"
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
                         />
-                        {!isEditing && <CheckCircle2 size={20} className="absolute right-4 top-4 text-green-500" />}
                       </div>
                     </div>
 
@@ -664,10 +656,9 @@ export default function FinancePage() {
                       <label htmlFor="method" className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Payment Method</label>
                       <select
                         id="method"
-                        disabled={!isEditing && uploadedImageUrl !== null}
                         className={cn(
-                          "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all appearance-none cursor-pointer",
-                          (isEditing || uploadedImageUrl === null) && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                          "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 appearance-none border-none focus:ring-2 focus:ring-primary/20 outline-none font-semibold transition-all cursor-pointer",
+                          !isInitialState && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
                         )}
                         value={method}
                         onChange={(e) => setMethod(e.target.value)}
@@ -692,7 +683,7 @@ export default function FinancePage() {
                         className={cn(
                           "w-full bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-xl px-5 py-4 border-none outline-none font-mono font-bold transition-all",
                           (!isEditing && uploadedImageUrl !== null) && "text-slate-400 dark:text-slate-500 cursor-not-allowed",
-                          (isEditing || uploadedImageUrl === null) && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
+                          !isInitialState && "ring-2 ring-primary/40 bg-white dark:bg-slate-900"
                         )}
                         type="text"
                         value={reference}
@@ -701,17 +692,11 @@ export default function FinancePage() {
                       <p className="text-[10px] text-slate-400 font-medium px-1">Auto-generated based on system sequence.</p>
                     </div>
                   </div>
-                </div>
 
                 <div className="mt-12 flex flex-col sm:flex-row gap-4">
                   <button
                     onClick={() => isEditing ? handleCancel() : setIsEditing(true)}
-                    className={cn(
-                      "w-full sm:flex-1 rounded-xl py-4 px-4 text-sm font-bold transition-all",
-                      isEditing
-                        ? "bg-red-500 text-white shadow-xl hover:bg-red-600"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200"
-                    )}
+                    className="w-full sm:flex-1 rounded-xl py-4 px-4 text-sm font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700"
                   >
                     {isEditing ? "Cancel" : "Edit Details"}
                   </button>
@@ -719,16 +704,15 @@ export default function FinancePage() {
                     onClick={() => isEditing ? handleSaveAndPost() : handlePost()}
                     disabled={isPosting}
                     className={cn(
-                      "w-full sm:flex-[2] text-white rounded-xl py-4 px-4 text-sm font-bold transition-all shadow-lg",
-                      isEditing
-                        ? "bg-green-500 hover:bg-green-600 shadow-green-500/20"
-                        : "bg-gradient-to-r from-primary to-blue-700 hover:opacity-90 shadow-blue-500/25",
+                      "w-full sm:flex-[2] text-white rounded-xl py-4 px-4 text-sm font-bold transition-all shadow-lg bg-gradient-to-r from-primary to-blue-700 hover:opacity-90 shadow-blue-500/25",
                       isPosting && "opacity-50 cursor-not-allowed"
                     )}
                   >
                     {isPosting ? "Processing..." : (isEditing ? "Save & Post Entry ✓" : "Confirm & Post Entry")}
                   </button>
                 </div>
+                </fieldset>
+               </div>
               </div>
             </div>
           </div>

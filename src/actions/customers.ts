@@ -471,21 +471,38 @@ export async function toggleVipStatus(customerId: string, status: boolean) {
 
 export async function sendPaymentReminder(customerId: string) {
   try {
-    const res = await query('SELECT name, no_telp FROM customers WHERE id = $1', [customerId]);
+    const res = await query(`
+      SELECT c.name, c.no_telp, c.service, st.price
+      FROM customers c
+      LEFT JOIN service_tiers st ON TRIM(BOTH FROM c.service) ILIKE st.name
+      WHERE c.id = $1
+    `, [customerId]);
     if (res.rows.length === 0) throw new Error('Customer not found');
     const customer = res.rows[0];
 
-    // Mock WhatsApp/Fonnte integration logic
-    if (process.env.NODE_ENV === 'development') console.log(`[WA REMINDER] Sending to ${customer.name} (${customer.no_telp})...`);
+    // Format phone number for WhatsApp (replace leading 0 with 62)
+    let waNumber = customer.no_telp.replace(/\D/g, '');
+    if (waNumber.startsWith('0')) {
+      waNumber = '62' + waNumber.substring(1);
+    }
+    
+    // Format Price
+    const priceStr = customer.price ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(customer.price) : 'Rp -';
+
+    // Customize your billing message here
+    const message = `Halo ${customer.name},\n\nIni adalah pengingat otomatis dari ISP-FinTrack. Tagihan internet Anda untuk bulan ini telah diterbitkan.\n\nDetail Layanan:\n- Paket: ${customer.service}\n- Tagihan: ${priceStr}\n\nMohon untuk segera melakukan pembayaran agar layanan tetap aktif.\n\nTerima kasih.`;
+    const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+
+    if (process.env.NODE_ENV === 'development') console.log(`[WA REMINDER] URL Generated for ${customer.name}: ${waUrl}`);
 
     // Record in notifications
     await query(`
       INSERT INTO notifications (type, category, title, message, created_at, is_unread)
-      VALUES ('info', 'Billing', 'Reminder Sent', 'Payment reminder sent to ' || $1 || ' (' || $2 || ')', NOW(), true)
+      VALUES ('info', 'Reminder', 'Reminder Sent', 'Payment reminder sent to ' || $1 || ' (' || $2 || ')', NOW(), true)
     `, [customer.name, customerId]);
 
     revalidatePath(`/customers/${customerId}`);
-    return { success: true };
+    return { success: true, waUrl };
   } catch (e) {
     logger.error({ message: "DB Error: sendPaymentReminder", error: e, path: "action" });
     return { success: false, error: String(e) };

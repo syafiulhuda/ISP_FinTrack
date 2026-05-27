@@ -163,9 +163,9 @@ export default function NotificationsPage() {
 
   const unreadAlerts = notifications.filter((n: Notification) => n.is_unread).length;
   const inventoryFlagged = notifications.filter((n: Notification) => n.category === 'Inventory' && n.is_unread).length;
-  const financialPending = notifications.filter((n: Notification) => (n.category === 'Finance' || n.category === 'Billing') && n.is_unread).length;
+  const financialPending = notifications.filter((n: Notification) => (n.category === 'Finance' || n.category === 'Billing' || n.category === 'Reminder') && n.is_unread).length;
 
-  const categories = ['Finance', 'Billing', 'Inventory', 'System'];
+  const categories = ['Finance', 'Billing', 'Reminder', 'Inventory', 'System'];
 
   return (
     <m.div 
@@ -240,7 +240,7 @@ export default function NotificationsPage() {
             <m.section key={cat} variants={itemVariants} className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${cat === 'Finance' ? 'bg-primary' : cat === 'Inventory' ? 'bg-orange-500' : 'bg-slate-400'}`}></span>
+                  <span className={`w-2 h-2 rounded-full ${cat === 'Finance' ? 'bg-primary' : cat === 'Inventory' ? 'bg-orange-500' : cat === 'Reminder' ? 'bg-indigo-500' : 'bg-slate-400'}`}></span>
                   {cat}
                 </h3>
               </div>
@@ -260,7 +260,7 @@ export default function NotificationsPage() {
                       }`}
                     >
                       {notif.is_unread && (
-                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${cat === 'Finance' ? 'bg-primary' : cat === 'Inventory' ? 'bg-orange-500' : 'bg-slate-400'}`}></div>
+                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${cat === 'Finance' ? 'bg-primary' : cat === 'Inventory' ? 'bg-orange-500' : cat === 'Reminder' ? 'bg-indigo-500' : 'bg-slate-400'}`}></div>
                       )}
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${config.bg} ${config.color}`}>
                         <Icon size={20} />
@@ -282,6 +282,7 @@ export default function NotificationsPage() {
                               className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
                               cat === 'Finance' ? 'bg-primary text-primary-foreground hover:bg-blue-600' : 
                               cat === 'Inventory' ? 'bg-orange-500 text-white hover:bg-orange-600' :
+                              cat === 'Reminder' ? 'bg-indigo-600 text-white hover:bg-indigo-700' :
                               'bg-purple-600 text-white hover:bg-purple-700'
                             }`}>
                               {notif.action_label}
@@ -300,7 +301,7 @@ export default function NotificationsPage() {
                       </div>
                       {notif.is_unread && (
                         <div className="hidden sm:flex flex-col items-end shrink-0">
-                          <span className={`w-2 h-2 rounded-full ${cat === 'Finance' ? 'bg-primary' : cat === 'Inventory' ? 'bg-orange-500' : 'bg-slate-400'}`}></span>
+                          <span className={`w-2 h-2 rounded-full ${cat === 'Finance' ? 'bg-primary' : cat === 'Inventory' ? 'bg-orange-500' : cat === 'Reminder' ? 'bg-indigo-500' : 'bg-slate-400'}`}></span>
                         </div>
                       )}
 

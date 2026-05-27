@@ -8,6 +8,7 @@ import { SettingsProvider } from "@/components/providers/SettingsProvider";
 import { m, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PwaUpdater } from "@/components/layout/PwaUpdater";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -38,6 +39,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           <main className="flex-1 w-full h-full min-h-screen">
             {children}
           </main>
+          <PwaUpdater />
         </ThemeProvider>
       </SettingsProvider>
     );
@@ -61,6 +63,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
               </div>
             </main>
           </div>
+          <PwaUpdater />
         </div>
       </ThemeProvider>
     </SettingsProvider>

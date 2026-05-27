@@ -22,13 +22,14 @@ import {
   ShieldCheck,
   Terminal,
   MoreVertical,
+  Trash2,
   Loader2,
   CheckCircle2,
   ChevronDown,
   Briefcase
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAdminList, createAdmin, getAdminProfile } from "@/actions/admin";
+import { getAdminList, createAdmin, getAdminProfile, deleteAdmin, getIntegrationStatus } from "@/actions/admin";
 import { Admin } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -85,12 +86,32 @@ export default function SettingsPage() {
     enabled: isSystemAdmin // Only fetch if user is System Admin
   });
 
+  const { data: integrations } = useQuery({
+    queryKey: ['integrationStatus'],
+    queryFn: getIntegrationStatus
+  });
+
   const createAdminMutation = useMutation({
     mutationFn: createAdmin,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminList'] });
       setIsAddManagerOpen(false);
       setNewAdmin({ nama: '', email: '', password: '', role: 'System Administrator', department: 'Operations', image: 'https://ui-avatars.com/api/?name=New+Admin&background=random&size=256', nickname: '' });
+    }
+  });
+
+  const deleteAdminMutation = useMutation({
+    mutationFn: deleteAdmin,
+    onSuccess: (res) => {
+      if (res.success) {
+        toast.success("User successfully deleted");
+        queryClient.invalidateQueries({ queryKey: ['adminList'] });
+      } else {
+        toast.error(res.error || "Failed to delete user");
+      }
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete user");
     }
   });
 
@@ -487,17 +508,43 @@ export default function SettingsPage() {
                 </h3>
                 <div className="space-y-4">
                   {[
-                    { name: "Bank API Gateway", icon: Landmark, status: "CONNECTED", color: "bg-blue-50 text-primary", dotColor: "bg-primary" },
-                    { name: "WhatsApp Gateway", icon: MessageSquare, status: "DISCONNECTED", color: "bg-red-50 text-red-600", dotColor: "bg-red-600" },
-                    { name: "OCR Processor", icon: FileScan, status: "IDLE", color: "bg-orange-50 text-orange-600", dotColor: "bg-orange-500" },
+                    { 
+                      name: "Bank API Gateway (Midtrans)", 
+                      icon: Landmark, 
+                      status: integrations?.midtrans.status || "DISCONNECTED", 
+                      env: integrations?.midtrans.env,
+                      color: integrations?.midtrans.status === 'CONNECTED' ? "bg-blue-50 text-primary" : "bg-red-50 text-red-600", 
+                      dotColor: integrations?.midtrans.status === 'CONNECTED' ? "bg-primary" : "bg-red-600" 
+                    },
+                    { 
+                      name: "WhatsApp Gateway", 
+                      icon: MessageSquare, 
+                      status: integrations?.whatsapp.status || "DISCONNECTED", 
+                      color: integrations?.whatsapp.status === 'CONNECTED' ? "bg-emerald-50 text-emerald-600" : integrations?.whatsapp.status === 'MANUAL (WA.ME)' ? "bg-blue-50 text-blue-600" : "bg-red-50 text-red-600", 
+                      dotColor: integrations?.whatsapp.status === 'CONNECTED' ? "bg-emerald-500" : integrations?.whatsapp.status === 'MANUAL (WA.ME)' ? "bg-blue-500" : "bg-red-600" 
+                    },
+                    { 
+                      name: "OCR Processor", 
+                      icon: FileScan, 
+                      status: integrations?.ocr.status || "IDLE", 
+                      color: integrations?.ocr.status === 'CONNECTED' ? "bg-emerald-50 text-emerald-600" : "bg-orange-50 text-orange-600", 
+                      dotColor: integrations?.ocr.status === 'CONNECTED' ? "bg-emerald-500" : "bg-orange-500" 
+                    },
                   ].map((item) => (
                     <div key={item.name} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                       <div className="flex items-center gap-3">
                         <item.icon className="text-slate-400" size={18} />
-                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.name}</span>
+                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                          {item.name}
+                          {item.env && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-500 tracking-wider">
+                              {item.env}
+                            </span>
+                          )}
+                        </span>
                       </div>
                       <button
-                        onClick={() => toast.info("Fitur ini segera hadir 🚀")}
+                        onClick={() => toast.info("Status ditarik otomatis dari konfigurasi server (Environment Variables).")}
                         className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest cursor-pointer hover:opacity-80 transition-opacity", item.color)}
                       >
                         <span className={cn("w-1.5 h-1.5 rounded-full", item.dotColor, item.status === "CONNECTED" && "animate-pulse")}></span>
@@ -701,10 +748,24 @@ export default function SettingsPage() {
                           <p className="text-xs text-slate-500">{admin.role} • {admin.department}</p>
                         </div>
                       </div>
-                      <MoreVertical
-                        onClick={() => toast.info("Fitur ini segera hadir 🚀")}
-                        className="text-slate-400 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity" size={18}
-                      />
+                      {admin.role !== 'Owner' ? (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete ${admin.nama}?`)) {
+                              deleteAdminMutation.mutate(admin.id);
+                            }
+                          }}
+                          disabled={deleteAdminMutation.isPending}
+                          className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 cursor-pointer transition-all disabled:opacity-50 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                          title="Delete User"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      ) : (
+                        <div className="p-2 opacity-0 group-hover:opacity-50 text-slate-400" title="Owner cannot be deleted">
+                          <Lock size={18} />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -712,7 +773,8 @@ export default function SettingsPage() {
             )}
 
             {/* Actions */}
-            <m.div variants={itemVariants} className="flex items-center justify-end gap-4 py-8">
+            {activeTab !== 'users' && (
+              <m.div variants={itemVariants} className="flex items-center justify-end gap-4 py-8">
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
@@ -739,6 +801,7 @@ export default function SettingsPage() {
                 </>
               )}
             </m.div>
+            )}
 
           </div>
         </div>

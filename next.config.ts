@@ -5,6 +5,9 @@ const withPWA = withPWAInit({
   dest: "public",
   disable: false, // Diaktifkan agar bisa testing PWA Install di local
   register: true,
+  workboxOptions: {
+    skipWaiting: false,
+  },
 });
 
 const nextConfig: NextConfig = {

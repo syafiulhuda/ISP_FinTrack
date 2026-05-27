@@ -210,55 +210,66 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
             <span className="text-[12px] font-bold truncate min-w-0">Logout</span>
           </button>
 
-          {/* ── DESKTOP: Popover anchored above logout button (inside sidebar) ── */}
-          <AnimatePresence>
-            {isLogoutConfirmOpen && (
-              <m.div
-                initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 32 }}
-                className="hidden md:block absolute bottom-full left-0 right-0 mb-2 z-[200]"
-              >
-                <div className="mx-2 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-700/80 overflow-hidden">
-                  {/* Red gradient header strip */}
-                  <div className="bg-gradient-to-r from-red-500 to-rose-600 px-4 py-3 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
-                      <AlertTriangle size={16} className="text-white" />
-                    </div>
-                    <p className="text-white text-sm font-black tracking-tight">Keluar dari sesi ini?</p>
-                  </div>
-                  <div className="px-4 py-3">
-                    <p className="text-slate-400 dark:text-slate-500 text-xs font-medium leading-relaxed mb-3">
-                      Pastikan semua pekerjaan sudah tersimpan.
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setIsLogoutConfirmOpen(false)}
-                        disabled={isLoggingOut}
-                        className="flex-1 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
-                      >
-                        Batal
-                      </button>
-                      <button
-                        onClick={handleLogoutConfirm}
-                        disabled={isLoggingOut}
-                        className="flex-1 py-2 text-xs font-bold bg-red-500 text-white rounded-xl hover:bg-red-600 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-lg shadow-red-500/25"
-                      >
-                        {isLoggingOut ? (
-                          <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                        ) : (
-                          <><LogOut size={13} /> Logout</>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </m.div>
-            )}
-          </AnimatePresence>
         </div>
       </aside>
+
+      {/* ── DESKTOP: Popup disamping sidebar sejajar tombol logout ── */}
+      <AnimatePresence>
+        {isLogoutConfirmOpen && (
+          <>
+            {/* Invisible backdrop */}
+            <div
+              className="hidden md:block fixed inset-0 z-[9998]"
+              onClick={() => setIsLogoutConfirmOpen(false)}
+            />
+            <m.div
+              initial={{ opacity: 0, x: -20, y: 0 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              exit={{ opacity: 0, x: -20, y: 0 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+              className="hidden md:block fixed bottom-8 left-[17rem] w-72 z-[9999]"
+            >
+              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-700/80 overflow-hidden">
+                {/* Red gradient header strip */}
+                <div className="bg-gradient-to-r from-red-500 to-rose-600 px-4 py-3 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                    <AlertTriangle size={16} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-black tracking-tight leading-tight">Keluar dari sesi ini?</p>
+                    <p className="text-white/70 text-[10px] font-medium mt-0.5">Sesi aktif Anda akan diakhiri.</p>
+                  </div>
+                </div>
+                <div className="px-4 py-3">
+                  <p className="text-slate-400 dark:text-slate-500 text-xs font-medium leading-relaxed mb-3">
+                    Pastikan semua pekerjaan sudah tersimpan sebelum melanjutkan.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setIsLogoutConfirmOpen(false)}
+                      disabled={isLoggingOut}
+                      className="flex-1 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={handleLogoutConfirm}
+                      disabled={isLoggingOut}
+                      className="flex-1 py-2 text-xs font-bold bg-red-500 text-white rounded-xl hover:bg-red-600 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-lg shadow-red-500/25"
+                    >
+                      {isLoggingOut ? (
+                        <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <><LogOut size={13} /> Logout</>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </m.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* ── MOBILE / TABLET: Bottom Sheet ── */}
       <AnimatePresence>

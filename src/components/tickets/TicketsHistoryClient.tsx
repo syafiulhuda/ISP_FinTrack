@@ -46,8 +46,8 @@ export function TicketsHistoryClient({ tickets }: { tickets: any[] }) {
       <div className="md:bg-white md:dark:bg-slate-900 md:rounded-2xl md:border border-slate-200 dark:border-slate-800 md:shadow-sm overflow-hidden">
         {/* Desktop Header */}
         <div className="hidden md:grid grid-cols-12 gap-4 p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-xs font-black text-slate-500 uppercase tracking-widest">
-          <div className="col-span-3">Ticket ID & Priority</div>
-          <div className="col-span-3">Customer</div>
+          <div className="col-span-4">Ticket ID & Priority</div>
+          <div className="col-span-2">Customer</div>
           <div className="col-span-4">Issue Description</div>
           <div className="col-span-2 text-right">Resolved Date</div>
         </div>
@@ -59,11 +59,11 @@ export function TicketsHistoryClient({ tickets }: { tickets: any[] }) {
             return (
               <div key={ticket.id} className="flex flex-col md:grid md:grid-cols-12 md:gap-4 p-5 md:p-4 bg-white dark:bg-slate-900 md:bg-transparent md:dark:bg-transparent rounded-2xl md:rounded-none border border-slate-200 dark:border-slate-800 md:border-none shadow-sm md:shadow-none hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group">
                 
-                {/* Always visible mobile header / Desktop Columns 1 & 2 */}
-                <div className="md:col-span-6 grid grid-cols-[1fr_auto] md:grid-cols-2 gap-4 items-center w-full cursor-pointer md:cursor-auto" onClick={() => { if(window.innerWidth < 768) setExpandedId(isExpanded ? null : ticket.id) }}>
+                {/* Always visible mobile header / Desktop Column 1 */}
+                <div className="md:col-span-4 grid grid-cols-[1fr_auto] md:flex md:flex-col gap-4 md:gap-2 items-center md:items-start w-full cursor-pointer md:cursor-auto" onClick={() => { if(window.innerWidth < 768) setExpandedId(isExpanded ? null : ticket.id) }}>
                   {/* Column 1: Ticket ID */}
                   <div className="flex flex-col gap-2 items-start">
-                    <span className="text-xs font-mono font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md text-slate-700 dark:text-slate-300">
+                    <span className="text-[11px] xl:text-xs font-mono font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md text-slate-700 dark:text-slate-300 whitespace-nowrap">
                       {ticket.ticket_number}
                     </span>
                     <span className={cn("px-2 py-0.5 text-[9px] font-black rounded-md uppercase tracking-wider inline-block", 
@@ -76,14 +76,14 @@ export function TicketsHistoryClient({ tickets }: { tickets: any[] }) {
                     </span>
                   </div>
                   
-                  {/* Column 2: Customer & Expand Button */}
-                  <div className="flex items-center justify-end md:justify-start gap-3 text-right md:text-left">
-                    <span className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2 md:truncate">
+                  {/* Mobile Only: Customer & Expand Button */}
+                  <div className="md:hidden flex items-center justify-end gap-3 text-right">
+                    <span className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2">
                       {ticket.customer_name}
                     </span>
                     {/* Mobile Expand Button */}
                     <button 
-                      className="md:hidden p-1.5 shrink-0 text-slate-400 hover:text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-full"
+                      className="p-1.5 shrink-0 text-slate-400 hover:text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-full"
                       onClick={(e) => { e.stopPropagation(); setExpandedId(isExpanded ? null : ticket.id); }}
                     >
                       <ChevronDown size={16} className={cn("transition-transform duration-200", isExpanded && "rotate-180")} />
@@ -91,10 +91,17 @@ export function TicketsHistoryClient({ tickets }: { tickets: any[] }) {
                   </div>
                 </div>
 
-                {/* The Expandable Details */}
-                <div className={cn("md:col-span-6 md:grid md:grid-cols-6 gap-3 md:gap-4 flex-col mt-4 md:mt-0 pt-4 md:pt-0 border-t border-slate-100 dark:border-slate-800 md:border-t-0", isExpanded ? "flex" : "hidden md:grid")}>
+                {/* The Expandable Details / Desktop Columns 2, 3, 4 */}
+                <div className={cn("md:col-span-8 md:grid md:grid-cols-8 gap-3 md:gap-4 flex-col mt-4 md:mt-0 pt-4 md:pt-0 border-t border-slate-100 dark:border-slate-800 md:border-t-0", isExpanded ? "flex" : "hidden md:grid")}>
                   
-                  {/* Description */}
+                  {/* Column 2: Customer (Desktop Only) */}
+                  <div className="hidden md:block md:col-span-2 pt-1">
+                    <span className="font-bold text-sm text-slate-900 dark:text-white truncate block" title={ticket.customer_name}>
+                      {ticket.customer_name}
+                    </span>
+                  </div>
+
+                  {/* Column 3: Description */}
                   <div className="md:col-span-4 flex flex-col gap-1">
                     <span className="md:hidden text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Issue Description</span>
                     <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -113,11 +120,11 @@ export function TicketsHistoryClient({ tickets }: { tickets: any[] }) {
                     </div>
                   </div>
 
-                  {/* Resolved Date */}
+                  {/* Column 4: Resolved Date */}
                   <div className="md:col-span-2 flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start gap-2 mt-2 md:mt-0 pt-3 md:pt-0 border-t border-slate-50 dark:border-slate-800/50 md:border-t-0 md:text-right">
                     <span className="md:hidden text-[9px] font-bold text-slate-400 uppercase tracking-widest">Resolved</span>
                     <div className="flex flex-col items-end gap-1">
-                      <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 whitespace-nowrap">
                         <Calendar size={14} className="text-slate-400" />
                         {new Date(ticket.created_at_str).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </span>

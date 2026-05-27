@@ -201,9 +201,12 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
     const res = await sendPaymentReminder(data.id);
     if (res.success) {
       toast.success('Reminder Sent!', {
-        description: `Notification sent to ${data.name} via WhatsApp.`,
+        description: `Notification sent to ${data.name}.`,
         icon: <Bell size={16} className="text-indigo-500" />
       });
+      if (res.waUrl) {
+        window.open(res.waUrl, '_blank');
+      }
     } else {
       toast.error('Failed to send reminder');
     }
