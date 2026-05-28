@@ -1,5 +1,5 @@
-import { DistributionClient } from "./_components/DistributionClient";
+import { DistributionClient } from"./_components/DistributionClient";
 
 export default function DistributionMapPage() {
-  return <DistributionClient />;
+ return <DistributionClient />;
 }

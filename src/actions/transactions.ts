@@ -1,366 +1,366 @@
 'use server';
-import { logger } from '@/lib/logger';
+import { logger } from'@/lib/logger';
 
-import { query } from '@/lib/db';
-import { revalidatePath } from 'next/cache';
-import { Transaction, OcrData, Invoice } from '@/types';
-import { getAdminProfile } from './admin';
+import { query } from'@/lib/db';
+import { revalidatePath } from'next/cache';
+import { Transaction, OcrData, Invoice } from'@/types';
+import { getAdminProfile } from'./admin';
 
 export async function getTransactions(monthsBack?: number): Promise<(Transaction & { numericAmount?: number })[]> {
-  try {
-    const dateFilter = monthsBack
-      ? `AND timestamp >= NOW() - INTERVAL '${monthsBack} months'`
-      : '';
+ try {
+ const dateFilter = monthsBack
+ ?`AND timestamp >= NOW() - INTERVAL'${monthsBack} months'`
+ :'';
 
-    const res = await query(`
-      SELECT 
-        split_part(t.id, '-', 2) as linked_id,
-        t.*
-      FROM transactions t
-      WHERE 1=1 ${dateFilter}
-      ORDER BY t.timestamp DESC
-    `);
-    
-    const data = res.rows;
-    return data.map(r => ({
-      ...r,
-      amount: r.amount !== null ? Number(r.amount) : 0,
-      numericAmount: r.amount !== null ? Number(r.amount) : 0,
-      timestamp: r.timestamp ? new Date(r.timestamp).toISOString() : new Date().toISOString()
-    })) as (Transaction & { numericAmount?: number })[];
-  } catch (e) {
-    logger.error({ message: "DB Error: getTransactions", error: e, path: "action" });
-    return [];
-  }
+ const res = await query(`
+ SELECT 
+ split_part(t.id,'-', 2) as linked_id,
+ t.*
+ FROM transactions t
+ WHERE 1=1 ${dateFilter}
+ ORDER BY t.timestamp DESC
+`);
+ 
+ const data = res.rows;
+ return data.map(r => ({
+ ...r,
+ amount: r.amount !== null ? Number(r.amount) : 0,
+ numericAmount: r.amount !== null ? Number(r.amount) : 0,
+ timestamp: r.timestamp ? new Date(r.timestamp).toISOString() : new Date().toISOString()
+ })) as (Transaction & { numericAmount?: number })[];
+ } catch (e) {
+ logger.error({ message:"DB Error: getTransactions", error: e, path:"action"});
+ return [];
+ }
 }
 
 export async function getInvoices(): Promise<Invoice[]> {
-  try {
-    const res = await query('SELECT * FROM invoices ORDER BY id DESC');
-    return res.rows as Invoice[];
-  } catch (e) {
-    logger.error({ message: "DB Error: getInvoices", error: e, path: "action" });
-    return [];
-  }
+ try {
+ const res = await query('SELECT * FROM invoices ORDER BY id DESC');
+ return res.rows as Invoice[];
+ } catch (e) {
+ logger.error({ message:"DB Error: getInvoices", error: e, path:"action"});
+ return [];
+ }
 }
 
 export async function getExpenses() {
-  try {
-    const res = await query('SELECT * FROM expenses ORDER BY date DESC');
-    return res.rows.length > 0 ? res.rows.map(row => ({
-      ...row,
-      amount: Number(row.amount)
-    })) : [];
-  } catch (e) {
-    logger.error({ message: "DB Error: getExpenses", error: e, path: "action" });
-    return [];
-  }
+ try {
+ const res = await query('SELECT * FROM expenses ORDER BY date DESC');
+ return res.rows.length > 0 ? res.rows.map(row => ({
+ ...row,
+ amount: Number(row.amount)
+ })) : [];
+ } catch (e) {
+ logger.error({ message:"DB Error: getExpenses", error: e, path:"action"});
+ return [];
+ }
 }
 
 export async function getOcrData(): Promise<OcrData> {
-  try {
-    // Get the LATEST ocr entry to maintain session state across refreshes
-    let res = await query('SELECT * FROM ocr_data ORDER BY id DESC LIMIT 1');
-    
-    // If table is empty, return a default object (don't force insert ID 1)
-    if (res.rows.length === 0) {
-      return {
-        id: 0,
-        vendor: 'System Start',
-        date: new Date().toISOString(),
-        amount: '0',
-        reference: 'TRX-INIT',
-        image: 'https://plus.unsplash.com/premium_photo-1679923814036-8febf10a04c0?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        confidence: '0%',
-        inputter: 'System',
-        inputter_tms: new Date().toISOString()
-      } as unknown as OcrData;
-    }
-    
-    return res.rows[0] as OcrData;
-  } catch (e) {
-    logger.error({ message: "DB Error: getOcrData", error: e, path: "action" });
-    return { id: 0, vendor: 'System', date: new Date().toISOString(), amount: '0', reference: 'ERROR', image: '', confidence: '0%', inputter: 'System', inputter_tms: new Date().toISOString() } as unknown as OcrData;
-  }
+ try {
+ // Get the LATEST ocr entry to maintain session state across refreshes
+ let res = await query('SELECT * FROM ocr_data ORDER BY id DESC LIMIT 1');
+ 
+ // If table is empty, return a default object (don't force insert ID 1)
+ if (res.rows.length === 0) {
+ return {
+ id: 0,
+ vendor:'System Start',
+ date: new Date().toISOString(),
+ amount:'0',
+ reference:'TRX-INIT',
+ image:'https://plus.unsplash.com/premium_photo-1679923814036-8febf10a04c0?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+ confidence:'0%',
+ inputter:'System',
+ inputter_tms: new Date().toISOString()
+ } as unknown as OcrData;
+ }
+ 
+ return res.rows[0] as OcrData;
+ } catch (e) {
+ logger.error({ message:"DB Error: getOcrData", error: e, path:"action"});
+ return { id: 0, vendor:'System', date: new Date().toISOString(), amount:'0', reference:'ERROR', image:'', confidence:'0%', inputter:'System', inputter_tms: new Date().toISOString() } as unknown as OcrData;
+ }
 }
 
 export async function updateOcrData(id: string | number, data: { 
-  vendor: string, 
-  date: string, 
-  amount: string, 
-  reference: string,
-  image?: string,
-  confidence?: string
+ vendor: string, 
+ date: string, 
+ amount: string, 
+ reference: string,
+ image?: string,
+ confidence?: string
 }) {
-  try {
-    const profile = await getAdminProfile();
-    const inputterName = (profile as any).nickname || profile.fullName || 'Unknown Admin';
-    
-    // Create a NEW row for every update/save to maintain history
-    const res = await query(`
-      INSERT INTO ocr_data (vendor, date, amount, reference, image, confidence, inputter, inputter_tms)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-      RETURNING *
-    `, [
-      data.vendor, 
-      isNaN(Date.parse(data.date)) ? null : data.date, 
-      Number(String(data.amount).replace(/[^0-9.-]+/g, '')) || 0, 
-      data.reference, 
-      data.image || null, 
-      data.confidence || null, 
-      inputterName
-    ]);
-    
-    revalidatePath('/finance');
-    return res.rows[0];
-  } catch (e) {
-    logger.error({ message: "DB Error: updateOcrData", error: e, path: "action" });
-    return null;
-  }
+ try {
+ const profile = await getAdminProfile();
+ const inputterName = (profile as any).nickname || profile.fullName ||'Unknown Admin';
+ 
+ // Create a NEW row for every update/save to maintain history
+ const res = await query(`
+ INSERT INTO ocr_data (vendor, date, amount, reference, image, confidence, inputter, inputter_tms)
+ VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+ RETURNING *
+`, [
+ data.vendor, 
+ isNaN(Date.parse(data.date)) ? null : data.date, 
+ Number(String(data.amount).replace(/[^0-9.-]+/g,'')) || 0, 
+ data.reference, 
+ data.image || null, 
+ data.confidence || null, 
+ inputterName
+ ]);
+ 
+ revalidatePath('/finance');
+ return res.rows[0];
+ } catch (e) {
+ logger.error({ message:"DB Error: updateOcrData", error: e, path:"action"});
+ return null;
+ }
 }
 
 export async function postOcrEntry(ocrId: string | number, data: { 
-  vendor: string, 
-  amount: string, 
-  date: string, 
-  reference: string, 
-  method: string, 
-  keterangan?: string,
-  purchaseType?: string,
-  serialNumber?: string,
-  macNumber?: string,
-  location?: string
+ vendor: string, 
+ amount: string, 
+ date: string, 
+ reference: string, 
+ method: string, 
+ keterangan?: string,
+ purchaseType?: string,
+ serialNumber?: string,
+ macNumber?: string,
+ location?: string
 }) {
-  try {
-    let sanitizedDate = data.date;
-    const monthsId: Record<string, string> = {
-      'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar', 'Apr': 'Apr', 'Mei': 'May', 
-      'Jun': 'Jun', 'Jul': 'Jul', 'Agu': 'Aug', 'Ags': 'Aug', 'Sep': 'Sep', 
-      'Okt': 'Oct', 'Nov': 'Nov', 'Des': 'Dec'
-    };
-    
-    Object.keys(monthsId).forEach(key => {
-      sanitizedDate = sanitizedDate.replace(key, monthsId[key]);
-    });
-    
-    const timestamp = isNaN(Date.parse(sanitizedDate)) ? new Date().toISOString() : sanitizedDate;
+ try {
+ let sanitizedDate = data.date;
+ const monthsId: Record<string, string> = {
+'Jan':'Jan','Feb':'Feb','Mar':'Mar','Apr':'Apr','Mei':'May', 
+'Jun':'Jun','Jul':'Jul','Agu':'Aug','Ags':'Aug','Sep':'Sep', 
+'Okt':'Oct','Nov':'Nov','Des':'Dec'
+ };
+ 
+ Object.keys(monthsId).forEach(key => {
+ sanitizedDate = sanitizedDate.replace(key, monthsId[key]);
+ });
+ 
+ const timestamp = isNaN(Date.parse(sanitizedDate)) ? new Date().toISOString() : sanitizedDate;
 
-    try {
-      await query(`SELECT setval(pg_get_serial_sequence('notifications', 'id'), (SELECT MAX(id) FROM notifications))`);
-    } catch (seqError) {
-      console.warn("Sequence sync skipped or failed (might be non-serial):", seqError);
-    }
+ try {
+ await query(`SELECT setval(pg_get_serial_sequence('notifications','id'), (SELECT MAX(id) FROM notifications))`);
+ } catch (seqError) {
+ console.warn("Sequence sync skipped or failed (might be non-serial):", seqError);
+ }
 
-    const cleanNumeric = data.amount.replace(/[^0-9.-]+/g, '');
-    const finalAmount = Number(cleanNumeric);
+ const cleanNumeric = data.amount.replace(/[^0-9.-]+/g,'');
+ const finalAmount = Number(cleanNumeric);
 
-    // Get the current admin for audit trail
-    const profile = await getAdminProfile();
-    const inputterName = profile.fullName || 'Unknown Admin';
+ // Get the current admin for audit trail
+ const profile = await getAdminProfile();
+ const inputterName = profile.fullName ||'Unknown Admin';
 
-    let trxCity = '';
-    const cleanLoc = (data.location || '').replace(/©/g, '').trim();
-    if (data.keterangan === 'pengeluaran' && cleanLoc) {
-      try {
-        const cityRes = await query('SELECT city FROM warehouse_location WHERE location = $1 LIMIT 1', [cleanLoc]);
-        if (cityRes.rows.length > 0) {
-          trxCity = cityRes.rows[0].city;
-        }
-      } catch (e) {
-        console.warn("City lookup failed:", e);
-      }
-    }
+ let trxCity ='';
+ const cleanLoc = (data.location ||'').replace(/©/g,'').trim();
+ if (data.keterangan ==='pengeluaran'&& cleanLoc) {
+ try {
+ const cityRes = await query('SELECT city FROM warehouse_location WHERE location = $1 LIMIT 1', [cleanLoc]);
+ if (cityRes.rows.length > 0) {
+ trxCity = cityRes.rows[0].city;
+ }
+ } catch (e) {
+ console.warn("City lookup failed:", e);
+ }
+ }
 
-    let trxId = '';
+ let trxId ='';
 
-    if (data.keterangan === 'pengeluaran') {
-      const transactionType = data.purchaseType || 'Lainnya';
-      const expenseRes = await query(`
-        INSERT INTO expenses (category, amount, date, description, city, inputter, inputter_tms)
-        VALUES ($1, $2, $3, $4, $5, $6, NOW())
-        RETURNING id
-      `, [transactionType, Number(cleanNumeric), timestamp, '', trxCity || null, inputterName]);
+ if (data.keterangan ==='pengeluaran') {
+ const transactionType = data.purchaseType ||'Lainnya';
+ const expenseRes = await query(`
+ INSERT INTO expenses (category, amount, date, description, city, inputter, inputter_tms)
+ VALUES ($1, $2, $3, $4, $5, $6, NOW())
+ RETURNING id
+`, [transactionType, Number(cleanNumeric), timestamp,'', trxCity || null, inputterName]);
 
-      const expenseId = expenseRes.rows[0].id;
+ const expenseId = expenseRes.rows[0].id;
 
-      // Derive date suffix from ACTUAL transaction date, not from reference
-      const tsDate = isNaN(Date.parse(timestamp)) ? new Date() : new Date(timestamp);
-      const datePart = tsDate.getFullYear().toString() +
-        String(tsDate.getMonth() + 1).padStart(2, '0') +
-        String(tsDate.getDate()).padStart(2, '0');
-      trxId = `OUT-${expenseId}-${datePart}`;
+ // Derive date suffix from ACTUAL transaction date, not from reference
+ const tsDate = isNaN(Date.parse(timestamp)) ? new Date() : new Date(timestamp);
+ const datePart = tsDate.getFullYear().toString() +
+ String(tsDate.getMonth() + 1).padStart(2,'0') +
+ String(tsDate.getDate()).padStart(2,'0');
+ trxId =`OUT-${expenseId}-${datePart}`;
 
-      await query('UPDATE expenses SET description = $1 WHERE id = $2', [trxId, expenseId]);
+ await query('UPDATE expenses SET description = $1 WHERE id = $2', [trxId, expenseId]);
 
-      await query(`
-        INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, city, inputter, inputter_tms)
-        VALUES ($1, $2, $3, 'Verified', $4, $5, $6, $7, $8, NOW())
-      `, [trxId, data.method, finalAmount, timestamp, transactionType, 'pengeluaran', trxCity || null, inputterName]);
+ await query(`
+ INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, city, inputter, inputter_tms)
+ VALUES ($1, $2, $3,'Verified', $4, $5, $6, $7, $8, NOW())
+`, [trxId, data.method, finalAmount, timestamp, transactionType,'pengeluaran', trxCity || null, inputterName]);
 
-    } else {
-      trxId = data.reference || `TRX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+ } else {
+ trxId = data.reference ||`TRX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-      // Logic to fetch city from customer if it's a standard TRX-CT... format
-      let customerCity = null;
-      if (trxId.startsWith('TRX-CT')) {
-        try {
-          const custId = trxId.split('-')[1]; // Extract CTxxx
-          const custRes = await query('SELECT city FROM customers WHERE id = $1 LIMIT 1', [custId]);
-          if (custRes.rows.length > 0) {
-            customerCity = custRes.rows[0].city;
-          }
-        } catch (cityErr) {
-          console.warn("Failed to fetch customer city for transaction:", cityErr);
-        }
-      }
+ // Logic to fetch city from customer if it's a standard TRX-CT... format
+ let customerCity = null;
+ if (trxId.startsWith('TRX-CT')) {
+ try {
+ const custId = trxId.split('-')[1]; // Extract CTxxx
+ const custRes = await query('SELECT city FROM customers WHERE id = $1 LIMIT 1', [custId]);
+ if (custRes.rows.length > 0) {
+ customerCity = custRes.rows[0].city;
+ }
+ } catch (cityErr) {
+ console.warn("Failed to fetch customer city for transaction:", cityErr);
+ }
+ }
 
-      await query(`
-        INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, city, inputter, inputter_tms)
-        VALUES ($1, $2, $3, 'Verified', $4, $5, $6, $7, $8, NOW())
-      `, [trxId, data.method, finalAmount, timestamp, 'Tagihan', 'pemasukan', customerCity, inputterName]);
+ await query(`
+ INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, city, inputter, inputter_tms)
+ VALUES ($1, $2, $3,'Verified', $4, $5, $6, $7, $8, NOW())
+`, [trxId, data.method, finalAmount, timestamp,'Tagihan','pemasukan', customerCity, inputterName]);
 
-      // NOTE: Invoice is auto-created by DB trigger insert_invoice_from_transaction
-    }
+ // NOTE: Invoice is auto-created by DB trigger insert_invoice_from_transaction
+ }
 
-    const equipmentTypes = ['ONT', 'SERVER', 'ODP', 'OLT'];
-    if (data.keterangan === 'pengeluaran' && data.purchaseType && equipmentTypes.includes(data.purchaseType.toUpperCase())) {
-      const cleanLocation = cleanLoc || 'Warehouse Main';
-      const locationCoords: Record<string, { lat: string, long: string }> = {
-        'Warehouse Main': { lat: '-6.2088', long: '106.8166' },
-        'Warehouse South': { lat: '-8.4095', long: '115.1889' },
-        'Warehouse East': { lat: '-3.1317', long: '130.0577' },
-        'Warehouse West': { lat: '3.3537', long: '97.5727' },
-        'Warehouse North': { lat: '1.8519', long: '106.9461' }
-      };
+ const equipmentTypes = ['ONT','SERVER','ODP','OLT'];
+ if (data.keterangan ==='pengeluaran'&& data.purchaseType && equipmentTypes.includes(data.purchaseType.toUpperCase())) {
+ const cleanLocation = cleanLoc ||'Warehouse Main';
+ const locationCoords: Record<string, { lat: string, long: string }> = {
+'Warehouse Main': { lat:'-6.2088', long:'106.8166'},
+'Warehouse South': { lat:'-8.4095', long:'115.1889'},
+'Warehouse East': { lat:'-3.1317', long:'130.0577'},
+'Warehouse West': { lat:'3.3537', long:'97.5727'},
+'Warehouse North': { lat:'1.8519', long:'106.9461'}
+ };
 
-      const coords = locationCoords[cleanLocation] || locationCoords['Warehouse Main'];
-      const cleanMac = (data.macNumber || '-').replace(/©/g, '').trim();
-      const cleanSn = (data.serialNumber || '-').replace(/©/g, '').trim();
+ const coords = locationCoords[cleanLocation] || locationCoords['Warehouse Main'];
+ const cleanMac = (data.macNumber ||'-').replace(/©/g,'').trim();
+ const cleanSn = (data.serialNumber ||'-').replace(/©/g,'').trim();
 
-      const now = new Date();
-      const tzOffset = '+07';
-      const pgTimestamp = now.getFullYear() + '-' +
-        String(now.getMonth() + 1).padStart(2, '0') + '-' +
-        String(now.getDate()).padStart(2, '0') + ' ' +
-        String(now.getHours()).padStart(2, '0') + ':' +
-        String(now.getMinutes()).padStart(2, '0') + ':' +
-        String(now.getSeconds()).padStart(2, '0') + '.' +
-        String(now.getMilliseconds()).padStart(3, '0') + '000' + tzOffset;
+ const now = new Date();
+ const tzOffset ='+07';
+ const pgTimestamp = now.getFullYear() +'-'+
+ String(now.getMonth() + 1).padStart(2,'0') +'-'+
+ String(now.getDate()).padStart(2,'0') +''+
+ String(now.getHours()).padStart(2,'0') +':'+
+ String(now.getMinutes()).padStart(2,'0') +':'+
+ String(now.getSeconds()).padStart(2,'0') +'.'+
+ String(now.getMilliseconds()).padStart(3,'0') +'000'+ tzOffset;
 
-      const stockIdRes = await query('SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM stock_asset_roster');
-      const nextStockId = stockIdRes.rows[0].next_id;
+ const stockIdRes = await query('SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM stock_asset_roster');
+ const nextStockId = stockIdRes.rows[0].next_id;
 
-      await query(`
-        INSERT INTO stock_asset_roster (
-          id, sn, mac, type, location, condition, status, kepemilikan, is_used, latitude, longitude, tanggal_perubahan, inputter, inputter_tms
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
-      `, [
-        nextStockId, 
-        cleanSn,
-        cleanMac,
-        data.purchaseType, 
-        cleanLocation, 
-        'Good', 
-        'Offline', 
-        'Dimiliki', 
-        false, 
-        coords.lat, 
-        coords.long, 
-        pgTimestamp,
-        inputterName
-      ]);
-    }
+ await query(`
+ INSERT INTO stock_asset_roster (
+ id, sn, mac, type, location, condition, status, kepemilikan, is_used, latitude, longitude, tanggal_perubahan, inputter, inputter_tms
+ )
+ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
+`, [
+ nextStockId, 
+ cleanSn,
+ cleanMac,
+ data.purchaseType, 
+ cleanLocation, 
+'Good', 
+'Offline', 
+'Dimiliki', 
+ false, 
+ coords.lat, 
+ coords.long, 
+ pgTimestamp,
+ inputterName
+ ]);
+ }
 
-    revalidatePath('/finance');
-    revalidatePath('/assets');
-    revalidatePath('/inventory');
-    return { success: true, trxId };
-  } catch (e) {
-    logger.error({ message: "DB Error: postOcrEntry", error: e, path: "action" });
-    return { success: false, error: (e as Error).message };
-  }
+ revalidatePath('/finance');
+ revalidatePath('/assets');
+ revalidatePath('/inventory');
+ return { success: true, trxId };
+ } catch (e) {
+ logger.error({ message:"DB Error: postOcrEntry", error: e, path:"action"});
+ return { success: false, error: (e as Error).message };
+ }
 }
 
 export async function getRevenueGrowthTrend() {
-  try {
-    const res = await query(`
-      WITH MonthlyRevenue AS (
-          SELECT 
-              TO_CHAR(timestamp AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM') as month,
-              SUM(amount) as revenue
-          FROM transactions
-          WHERE status = 'Verified' AND keterangan = 'pemasukan'
-          GROUP BY 1
-      ),
-      MonthlyExpenses AS (
-          SELECT 
-              TO_CHAR(timestamp AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM') as month,
-              SUM(amount) as expense
-          FROM transactions
-          WHERE status = 'Verified' AND keterangan = 'pengeluaran'
-          GROUP BY 1
-      ),
-      AggregatedExpenses AS (
-          SELECT month, SUM(expense) as total_expense
-          FROM MonthlyExpenses
-          GROUP BY 1
-      )
-      SELECT 
-          COALESCE(r.month, e.month) as "Month",
-          COALESCE(r.revenue, 0) as "Revenue",
-          COALESCE(e.total_expense, 0) as "Expenses"
-      FROM MonthlyRevenue r
-      FULL OUTER JOIN AggregatedExpenses e ON r.month = e.month
-      ORDER BY "Month" ASC
-      LIMIT 6
-    `);
-    
-    if (res.rows.length === 0) return [];
+ try {
+ const res = await query(`
+ WITH MonthlyRevenue AS (
+ SELECT 
+ TO_CHAR(timestamp AT TIME ZONE'Asia/Jakarta','YYYY-MM') as month,
+ SUM(amount) as revenue
+ FROM transactions
+ WHERE status ='Verified'AND keterangan ='pemasukan'
+ GROUP BY 1
+ ),
+ MonthlyExpenses AS (
+ SELECT 
+ TO_CHAR(timestamp AT TIME ZONE'Asia/Jakarta','YYYY-MM') as month,
+ SUM(amount) as expense
+ FROM transactions
+ WHERE status ='Verified'AND keterangan ='pengeluaran'
+ GROUP BY 1
+ ),
+ AggregatedExpenses AS (
+ SELECT month, SUM(expense) as total_expense
+ FROM MonthlyExpenses
+ GROUP BY 1
+ )
+ SELECT 
+ COALESCE(r.month, e.month) as"Month",
+ COALESCE(r.revenue, 0) as"Revenue",
+ COALESCE(e.total_expense, 0) as"Expenses"
+ FROM MonthlyRevenue r
+ FULL OUTER JOIN AggregatedExpenses e ON r.month = e.month
+ ORDER BY"Month"ASC
+ LIMIT 6
+`);
+ 
+ if (res.rows.length === 0) return [];
 
-    const rawData = res.rows.map(row => ({
-      monthKey: row.Month,
-      revenue: Number(row.Revenue),
-      expenses: Number(row.Expenses)
-    }));
+ const rawData = res.rows.map(row => ({
+ monthKey: row.Month,
+ revenue: Number(row.Revenue),
+ expenses: Number(row.Expenses)
+ }));
 
-    const filledData = [];
-    if (rawData.length > 0) {
-      const firstMonth = new Date(rawData[0].monthKey + '-01');
-      const lastMonth = new Date(rawData[rawData.length - 1].monthKey + '-01');
-      
-      let current = new Date(firstMonth);
-      while (current <= lastMonth) {
-        // UTC+7 math — do NOT use toISOString() which gives UTC month
-        const wibMs = current.getTime() + 7 * 60 * 60 * 1000;
-        const wibDate = new Date(wibMs);
-        const year = wibDate.getUTCFullYear();
-        const month = String(wibDate.getUTCMonth() + 1).padStart(2, '0');
-        const monthStr = `${year}-${month}`;
-        const existing = rawData.find(d => d.monthKey === monthStr);
-        
-        filledData.push({
-          month: new Date(year, wibDate.getUTCMonth()).toLocaleString('default', { month: 'short' }),
-          revenue: existing ? existing.revenue : 0,
-          expenses: existing ? existing.expenses : 0
-        });
-        
-        current.setUTCMonth(current.getUTCMonth() + 1);
-      }
-    }
+ const filledData = [];
+ if (rawData.length > 0) {
+ const firstMonth = new Date(rawData[0].monthKey +'-01');
+ const lastMonth = new Date(rawData[rawData.length - 1].monthKey +'-01');
+ 
+ let current = new Date(firstMonth);
+ while (current <= lastMonth) {
+ // UTC+7 math — do NOT use toISOString() which gives UTC month
+ const wibMs = current.getTime() + 7 * 60 * 60 * 1000;
+ const wibDate = new Date(wibMs);
+ const year = wibDate.getUTCFullYear();
+ const month = String(wibDate.getUTCMonth() + 1).padStart(2,'0');
+ const monthStr =`${year}-${month}`;
+ const existing = rawData.find(d => d.monthKey === monthStr);
+ 
+ filledData.push({
+ month: new Date(year, wibDate.getUTCMonth()).toLocaleString('default', { month:'short'}),
+ revenue: existing ? existing.revenue : 0,
+ expenses: existing ? existing.expenses : 0
+ });
+ 
+ current.setUTCMonth(current.getUTCMonth() + 1);
+ }
+ }
 
-    return filledData;
-  } catch (e) {
-    logger.error({ message: "DB Error: getRevenueGrowthTrend", error: e, path: "action" });
-    return [
-      { month: 'Oct', revenue: 4800000, expenses: 2500000 },
-      { month: 'Nov', revenue: 4200000, expenses: 2100000 },
-      { month: 'Dec', revenue: 3500000, expenses: 1800000 },
-      { month: 'Jan', revenue: 3800000, expenses: 1900000 },
-      { month: 'Feb', revenue: 4100000, expenses: 2000000 },
-      { month: 'Mar', revenue: 0, expenses: 0 }
-    ];
-  }
+ return filledData;
+ } catch (e) {
+ logger.error({ message:"DB Error: getRevenueGrowthTrend", error: e, path:"action"});
+ return [
+ { month:'Oct', revenue: 4800000, expenses: 2500000 },
+ { month:'Nov', revenue: 4200000, expenses: 2100000 },
+ { month:'Dec', revenue: 3500000, expenses: 1800000 },
+ { month:'Jan', revenue: 3800000, expenses: 1900000 },
+ { month:'Feb', revenue: 4100000, expenses: 2000000 },
+ { month:'Mar', revenue: 0, expenses: 0 }
+ ];
+ }
 }
 
 /**
@@ -368,55 +368,55 @@ export async function getRevenueGrowthTrend() {
  * Digunakan sebagai default filter date range di semua halaman.
  */
 export async function getTransactionDateRange(): Promise<{ startDate: string; endDate: string }> {
-  try {
-    const res = await query(`
-      SELECT 
-        TO_CHAR(MIN(timestamp AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM-DD') as start_date,
-        TO_CHAR(MAX(timestamp AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM-DD') as end_date
-      FROM transactions
-      WHERE status = 'Verified'
-    `);
-    const row = res.rows[0];
-    if (row?.start_date && row?.end_date) {
-      return { startDate: row.start_date, endDate: row.end_date };
-    }
-    // Fallback: current year
-    const now = new Date();
-    const wibYear = new Date(now.getTime() + 7 * 60 * 60 * 1000).getUTCFullYear();
-    return { startDate: `${wibYear}-01-01`, endDate: `${wibYear}-12-31` };
-  } catch (e) {
-    logger.error({ message: "DB Error: getTransactionDateRange", error: e, path: "action" });
-    const now = new Date();
-    const wibYear = new Date(now.getTime() + 7 * 60 * 60 * 1000).getUTCFullYear();
-    return { startDate: `${wibYear}-01-01`, endDate: `${wibYear}-12-31` };
-  }
+ try {
+ const res = await query(`
+ SELECT 
+ TO_CHAR(MIN(timestamp AT TIME ZONE'Asia/Jakarta'),'YYYY-MM-DD') as start_date,
+ TO_CHAR(MAX(timestamp AT TIME ZONE'Asia/Jakarta'),'YYYY-MM-DD') as end_date
+ FROM transactions
+ WHERE status ='Verified'
+`);
+ const row = res.rows[0];
+ if (row?.start_date && row?.end_date) {
+ return { startDate: row.start_date, endDate: row.end_date };
+ }
+ // Fallback: current year
+ const now = new Date();
+ const wibYear = new Date(now.getTime() + 7 * 60 * 60 * 1000).getUTCFullYear();
+ return { startDate:`${wibYear}-01-01`, endDate:`${wibYear}-12-31`};
+ } catch (e) {
+ logger.error({ message:"DB Error: getTransactionDateRange", error: e, path:"action"});
+ const now = new Date();
+ const wibYear = new Date(now.getTime() + 7 * 60 * 60 * 1000).getUTCFullYear();
+ return { startDate:`${wibYear}-01-01`, endDate:`${wibYear}-12-31`};
+ }
 }
 
 export async function checkTrxExists(reference: string) {
-  try {
-    const res = await query('SELECT id FROM transactions WHERE id = $1', [reference]);
-    return res.rows.length > 0;
-  } catch (e) {
-    logger.error({ message: "DB Error: checkTrxExists", error: e, path: "action" });
-    return false;
-  }
+ try {
+ const res = await query('SELECT id FROM transactions WHERE id = $1', [reference]);
+ return res.rows.length > 0;
+ } catch (e) {
+ logger.error({ message:"DB Error: checkTrxExists", error: e, path:"action"});
+ return false;
+ }
 }
 
 export async function getNextExpenseId(): Promise<string> {
-  try {
-    const res = await query(`
-      SELECT last_value + CASE WHEN is_called THEN 1 ELSE 0 END as next_id 
-      FROM expenses_id_seq
-    `);
-    const nextId = res.rows[0].next_id;
-    return `OUT-${nextId}`;
-  } catch (e) {
-    logger.error({ message: "DB Error: getNextExpenseId", error: e, path: "action" });
-    try {
-      const fallback = await query("SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM expenses");
-      return `OUT-${fallback.rows[0].next_id}`;
-    } catch {
-      return "OUT-1";
-    }
-  }
+ try {
+ const res = await query(`
+ SELECT last_value + CASE WHEN is_called THEN 1 ELSE 0 END as next_id 
+ FROM expenses_id_seq
+`);
+ const nextId = res.rows[0].next_id;
+ return`OUT-${nextId}`;
+ } catch (e) {
+ logger.error({ message:"DB Error: getNextExpenseId", error: e, path:"action"});
+ try {
+ const fallback = await query("SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM expenses");
+ return`OUT-${fallback.rows[0].next_id}`;
+ } catch {
+ return"OUT-1";
+ }
+ }
 }

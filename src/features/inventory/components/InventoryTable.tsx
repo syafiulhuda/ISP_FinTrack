@@ -832,19 +832,21 @@ export function InventoryTable({ inventory }: { inventory: any }) {
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="p-4 sm:p-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 rounded-b-[2.5rem]">
-          <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest hidden sm:block">
+        <div className="p-3 sm:p-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 rounded-b-[2.5rem]">
+          <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest hidden sm:block w-1/3">
             Page {currentPage} of {totalPages}
           </p>
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="flex items-center gap-2 sm:gap-2 w-full sm:w-auto justify-center sm:justify-end">
             <button 
               onClick={() => setCurrentPage((prev: number) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300 shrink-0"
             >
               Prev
             </button>
-            <div className="flex items-center gap-1">
+            
+            {/* Desktop Numbers */}
+            <div className="hidden sm:flex items-center gap-1">
               {[...Array(Math.min(5, totalPages))].map((_, i) => {
                 let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
                 if (pageNum <= 0 || pageNum > totalPages) return null;
@@ -854,7 +856,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
                     className={cn(
-                      "w-8 h-8 rounded-lg text-[10px] sm:text-xs font-bold transition-all",
+                      "w-8 h-8 rounded-lg text-xs font-bold transition-all",
                       currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
                     )}
                   >
@@ -863,10 +865,18 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                 );
               })}
             </div>
+
+            {/* Mobile Compact Text */}
+            <div className="flex sm:hidden items-center justify-center px-1">
+               <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest bg-slate-200/50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg">
+                 {currentPage} / {totalPages}
+               </span>
+            </div>
+
             <button 
               onClick={() => setCurrentPage((prev: number) => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300"
+              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] sm:text-xs font-bold disabled:opacity-50 hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-600 dark:text-slate-300 shrink-0"
             >
               Next
             </button>

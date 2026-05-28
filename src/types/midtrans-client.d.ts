@@ -1,1 +1,1 @@
-declare module 'midtrans-client';
+declare module'midtrans-client';

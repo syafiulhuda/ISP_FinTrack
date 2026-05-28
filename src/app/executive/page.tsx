@@ -1,1198 +1,1194 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getExecutiveReport } from "@/actions/executive";
-import { getTransactionDateRange } from "@/actions/transactions";
+import { useState, useMemo, useEffect, useRef } from"react";
+import { useQuery } from"@tanstack/react-query";
+import { getExecutiveReport } from"@/actions/executive";
+import { getTransactionDateRange } from"@/actions/transactions";
 
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
-  LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, ComposedChart
-} from "recharts";
+ BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
+ LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, ComposedChart
+} from"recharts";
 import { 
-  TrendingUp, Users, DollarSign, Activity, Calendar, MapPin, Package, Server, 
-  Wifi, CreditCard, PieChart as PieChartIcon, ArrowUpRight, ArrowDownRight, Target,
-  ChevronDown
-} from "lucide-react";
-import { AnimatePresence, m } from "framer-motion";
-import { ChartContainer } from "@/components/charts/ChartContainer";
+ TrendingUp, Users, DollarSign, Activity, Calendar, MapPin, Package, Server, 
+ Wifi, CreditCard, PieChart as PieChartIcon, ArrowUpRight, ArrowDownRight, Target,
+ ChevronDown
+} from"lucide-react";
+import { AnimatePresence, m } from"framer-motion";
+import { ChartContainer } from"@/components/charts/ChartContainer";
 
-import { Customer, Transaction, Expense, Asset } from "@/types";
-import { cn } from "@/lib/utils";
+import { Customer, Transaction, Expense, Asset } from"@/types";
+import { cn } from"@/lib/utils";
 
 // Define Types for Data
 interface ExecutiveData {
-  customers: Customer[];
-  transactions: Transaction[];
-  expenses: Expense[];
-  assetRoster: Asset[];
-  stockAssets: Asset[];
+ customers: Customer[];
+ transactions: Transaction[];
+ expenses: Expense[];
+ assetRoster: Asset[];
+ stockAssets: Asset[];
 }
 
 const formatDisplayDate = (dateStr: string) => {
-  if (!dateStr) return "";
-  const parts = dateStr.split("-");
-  if (parts.length !== 3) return dateStr;
-  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+ if (!dateStr) return"";
+ const parts = dateStr.split("-");
+ if (parts.length !== 3) return dateStr;
+ return`${parts[2]}/${parts[1]}/${parts[0]}`;
 };
 
 export default function ExecutiveDashboard() {
-  const { data, isLoading, isError } = useQuery<ExecutiveData>({
-    queryKey: ['executiveReport'],
-    queryFn: async () => {
-      const res = await getExecutiveReport();
-      return res as ExecutiveData;
-    }
-  });
+ const { data, isLoading, isError } = useQuery<ExecutiveData>({
+ queryKey: ['executiveReport'],
+ queryFn: async () => {
+ const res = await getExecutiveReport();
+ return res as ExecutiveData;
+ }
+ });
 
-  const [activeTab, setActiveTab] = useState("financial");
-  const [activeStatFin, setActiveStatFin] = useState(0);
-  const [activeStatInv, setActiveStatInv] = useState(0);
-  const touchStartXFin = useRef<number | null>(null);
-  const touchStartXInv = useRef<number | null>(null);
-  const [hoveredSlice, setHoveredSlice] = useState<{ name: string; value: number } | null>(null);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [selectedProvince, setSelectedProvince] = useState("All Regions");
-  const [isRegionOpen, setIsRegionOpen] = useState(false);
-  const [datesInitialized, setDatesInitialized] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+ const [activeTab, setActiveTab] = useState("financial");
+ const [activeStatFin, setActiveStatFin] = useState(0);
+ const [activeStatInv, setActiveStatInv] = useState(0);
+ const touchStartXFin = useRef<number | null>(null);
+ const touchStartXInv = useRef<number | null>(null);
+ const [hoveredSlice, setHoveredSlice] = useState<{ name: string; value: number } | null>(null);
+ const [startDate, setStartDate] = useState("");
+ const [endDate, setEndDate] = useState("");
+ const [selectedProvince, setSelectedProvince] = useState("All Regions");
+ const [isRegionOpen, setIsRegionOpen] = useState(false);
+ const [datesInitialized, setDatesInitialized] = useState(false);
+ const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { data: dateRange } = useQuery({
-    queryKey: ['transactionDateRange'],
-    queryFn: getTransactionDateRange,
-    staleTime: 5 * 60 * 1000,
-  });
+ const { data: dateRange } = useQuery({
+ queryKey: ['transactionDateRange'],
+ queryFn: getTransactionDateRange,
+ staleTime: 5 * 60 * 1000,
+ });
 
-  useEffect(() => {
-    if (!datesInitialized && dateRange?.startDate && dateRange?.endDate) {
-      setStartDate(dateRange.startDate);
-      setEndDate(dateRange.endDate);
-      setDatesInitialized(true);
-    }
-  }, [dateRange, datesInitialized]);
+ useEffect(() => {
+ if (!datesInitialized && dateRange?.startDate && dateRange?.endDate) {
+ setStartDate(dateRange.startDate);
+ setEndDate(dateRange.endDate);
+ setDatesInitialized(true);
+ }
+ }, [dateRange, datesInitialized]);
 
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsRegionOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+ useEffect(() => {
+ const handleClickOutside = (event: MouseEvent) => {
+ if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+ setIsRegionOpen(false);
+ }
+ };
+ document.addEventListener("mousedown", handleClickOutside);
+ return () => document.removeEventListener("mousedown", handleClickOutside);
+ }, []);
 
-  // Derive provinces list
-  const provinces = useMemo(() => {
-    if (!data?.customers) return ["All Regions"];
-    const rawProvs = data.customers.map((c: Customer) => c.province).filter(Boolean) as string[];
-    const normalized = new Map<string, string>();
-    
-    rawProvs.forEach(p => {
-      const trimmed = p.trim();
-      const key = trimmed.toLowerCase();
-      if (!normalized.has(key) || (trimmed !== key && normalized.get(key) === key)) {
-        const formatted = trimmed.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-        normalized.set(key, formatted);
-      }
-    });
+ // Derive provinces list
+ const provinces = useMemo(() => {
+ if (!data?.customers) return ["All Regions"];
+ const rawProvs = data.customers.map((c: Customer) => c.province).filter(Boolean) as string[];
+ const normalized = new Map<string, string>();
+ 
+ rawProvs.forEach(p => {
+ const trimmed = p.trim();
+ const key = trimmed.toLowerCase();
+ if (!normalized.has(key) || (trimmed !== key && normalized.get(key) === key)) {
+ const formatted = trimmed.split('').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
+ normalized.set(key, formatted);
+ }
+ });
 
-    return ["All Regions", ...Array.from(normalized.values()).sort()];
-  }, [data?.customers]);
+ return ["All Regions", ...Array.from(normalized.values()).sort()];
+ }, [data?.customers]);
 
-  const processedData = useMemo(() => {
-    if (!data) return null;
+ const processedData = useMemo(() => {
+ if (!data) return null;
 
-    const { customers, transactions, expenses, assetRoster, stockAssets } = data;
-    const isAllRegions = selectedProvince === "All Regions";
-    const normalize = (val: string | undefined | null) => val ? String(val).toLowerCase().trim() : "";
-    const selectedProvLower = normalize(selectedProvince);
-    const toTitleCase = (val: string) => {
-      if (!val) return "";
-      return val.trim().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-    };
+ const { customers, transactions, expenses, assetRoster, stockAssets } = data;
+ const isAllRegions = selectedProvince ==="All Regions";
+ const normalize = (val: string | undefined | null) => val ? String(val).toLowerCase().trim() :"";
+ const selectedProvLower = normalize(selectedProvince);
+ const toTitleCase = (val: string) => {
+ if (!val) return"";
+ return val.trim().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+ };
 
-    // --- UTILITIES ---
-    const getLocalDate = (d?: string | Date | null) => {
-      if (!d) return "";
-      const date = new Date(d);
-      if (isNaN(date.getTime())) return String(d).split('T')[0];
-      const localTime = date.getTime() + (7 * 60 * 60 * 1000);
-      const localDate = new Date(localTime);
-      const year = localDate.getUTCFullYear();
-      const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(localDate.getUTCDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
+ // --- UTILITIES ---
+ const getLocalDate = (d?: string | Date | null) => {
+ if (!d) return"";
+ const date = new Date(d);
+ if (isNaN(date.getTime())) return String(d).split('T')[0];
+ const localTime = date.getTime() + (7 * 60 * 60 * 1000);
+ const localDate = new Date(localTime);
+ const year = localDate.getUTCFullYear();
+ const month = String(localDate.getUTCMonth() + 1).padStart(2,'0');
+ const day = String(localDate.getUTCDate()).padStart(2,'0');
+ return`${year}-${month}-${day}`;
+ };
 
-    const getProvinceFromCity = (city?: string | null) => {
-      if (!city) return null;
-      const c = city.toLowerCase();
-      
-      // Maluku - Priority check
-      if (c.includes("ambon") || c.includes("tual") || c.includes("buru") || c.includes("maluku") || c.includes("seram") || c.includes("arru") || c.includes("kei") || c.includes("warehouse east")) return "Maluku";
+ const getProvinceFromCity = (city?: string | null) => {
+ if (!city) return null;
+ const c = city.toLowerCase();
+ 
+ // Maluku - Priority check
+ if (c.includes("ambon") || c.includes("tual") || c.includes("buru") || c.includes("maluku") || c.includes("seram") || c.includes("arru") || c.includes("kei") || c.includes("warehouse east")) return"Maluku";
 
-      // DKI Jakarta
-      if (c.includes("jakarta") || c.includes("data center") || c.includes("client home a") || c.includes("warehouse main")) return "DKI Jakarta";
-      
-      // Jawa Barat
-      if (c.includes("bandung") || c.includes("bogor") || c.includes("depok") || c.includes("bekasi") || c.includes("cimahi") || c.includes("tasikmalaya") || c.includes("garut") || c.includes("cianjur") || c.includes("sukabumi") || c.includes("bdo") || c.includes("node")) return "Jawa Barat";
-      
-      // Jawa Timur
-      if (c.includes("surabaya") || c.includes("malang") || c.includes("sidoarjo") || c.includes("gresik") || c.includes("mojokerto") || c.includes("pasuruan") || c.includes("banyuwangi") || c.includes("jember") || c.includes("kediri") || c.includes("madiun") || c.includes("gubeng")) return "Jawa Timur";
-      
-      // Sulawesi Selatan
-      if (c.includes("makassar") || c.includes("gowa") || c.includes("maros") || c.includes("takalar") || c.includes("pangkep") || c.includes("barru") || c.includes("panakkukang")) return "Sulawesi Selatan";
-      
-      // Bali
-      if (c.includes("bali") || c.includes("denpasar") || c.includes("kuta") || c.includes("ubud") || c.includes("warehouse south")) return "Bali";
-      
-      // DI Yogyakarta
-      if (c.includes("yogyakarta") || c.includes("sleman") || c.includes("bantul") || c.includes("kulon progo") || c.includes("gunung kidul")) return "DI Yogyakarta";
-      
-      // Jawa Tengah
-      if (c.includes("semarang") || c.includes("solo") || c.includes("surakarta") || c.includes("magelang") || c.includes("pekalongan") || c.includes("tegal") || c.includes("purwokerto") || c.includes("cilacap") || c.includes("kebumen")) return "Jawa Tengah";
-      
-      // Sumatera Utara
-      if (c.includes("medan") || c.includes("binjai") || c.includes("pematang siantar") || c.includes("tanjung balai") || c.includes("tebing tinggi")) return "Sumatera Utara";
+ // DKI Jakarta
+ if (c.includes("jakarta") || c.includes("data center") || c.includes("client home a") || c.includes("warehouse main")) return"DKI Jakarta";
+ 
+ // Jawa Barat
+ if (c.includes("bandung") || c.includes("bogor") || c.includes("depok") || c.includes("bekasi") || c.includes("cimahi") || c.includes("tasikmalaya") || c.includes("garut") || c.includes("cianjur") || c.includes("sukabumi") || c.includes("bdo") || c.includes("node")) return"Jawa Barat";
+ 
+ // Jawa Timur
+ if (c.includes("surabaya") || c.includes("malang") || c.includes("sidoarjo") || c.includes("gresik") || c.includes("mojokerto") || c.includes("pasuruan") || c.includes("banyuwangi") || c.includes("jember") || c.includes("kediri") || c.includes("madiun") || c.includes("gubeng")) return"Jawa Timur";
+ 
+ // Sulawesi Selatan
+ if (c.includes("makassar") || c.includes("gowa") || c.includes("maros") || c.includes("takalar") || c.includes("pangkep") || c.includes("barru") || c.includes("panakkukang")) return"Sulawesi Selatan";
+ 
+ // Bali
+ if (c.includes("bali") || c.includes("denpasar") || c.includes("kuta") || c.includes("ubud") || c.includes("warehouse south")) return"Bali";
+ 
+ // DI Yogyakarta
+ if (c.includes("yogyakarta") || c.includes("sleman") || c.includes("bantul") || c.includes("kulon progo") || c.includes("gunung kidul")) return"DI Yogyakarta";
+ 
+ // Jawa Tengah
+ if (c.includes("semarang") || c.includes("solo") || c.includes("surakarta") || c.includes("magelang") || c.includes("pekalongan") || c.includes("tegal") || c.includes("purwokerto") || c.includes("cilacap") || c.includes("kebumen")) return"Jawa Tengah";
+ 
+ // Sumatera Utara
+ if (c.includes("medan") || c.includes("binjai") || c.includes("pematang siantar") || c.includes("tanjung balai") || c.includes("tebing tinggi")) return"Sumatera Utara";
 
-      return null;
-    };
+ return null;
+ };
 
-    // --- FILTERED BASE DATA ---
-    const filteredCustomers = customers.filter((c: Customer) => {
-      const joinDate = getLocalDate(c.createdAt || c.tanggal_daftar);
-      if (joinDate > endDate) return false;
-      if (!isAllRegions && normalize(c.province || "") !== selectedProvLower) return false;
-      return true;
-    });
+ // --- FILTERED BASE DATA ---
+ const filteredCustomers = customers.filter((c: Customer) => {
+ const joinDate = getLocalDate(c.createdAt || c.tanggal_daftar);
+ if (joinDate > endDate) return false;
+ if (!isAllRegions && normalize(c.province ||"") !== selectedProvLower) return false;
+ return true;
+ });
 
-    const activeCustomers = filteredCustomers.filter((c: Customer) => c.status === "Active");
+ const activeCustomers = filteredCustomers.filter((c: Customer) => c.status ==="Active");
 
-    const filteredAssetRoster = assetRoster.filter((a: Asset) => {
-      // Filter Region
-      let prov = getProvinceFromCity(a.location) || a.location;
-      
-      // Fallback: Detect Province by Coordinates if name mapping fails
-      if (!getProvinceFromCity(a.location)) {
-        const lat = Number(a.latitude);
-        const lon = Number(a.longitude);
-        if (lon > 124 && lon < 136 && lat > -9 && lat < 2) prov = "Maluku";
-        else if (lon > 118 && lon < 121 && lat > -7 && lat < -4) prov = "Sulawesi Selatan";
-        else if (lon > 112 && lon < 116 && lat > -9 && lat < -6) prov = "Jawa Timur";
-        else if (lon > 106 && lon < 109 && lat > -8 && lat < -5) prov = "Jawa Barat";
-        else if (lon > 106.5 && lon < 107 && lat > -6.5 && lat < -6) prov = "DKI Jakarta";
-      }
+ const filteredAssetRoster = assetRoster.filter((a: Asset) => {
+ // Filter Region
+ let prov = getProvinceFromCity(a.location) || a.location;
+ 
+ // Fallback: Detect Province by Coordinates if name mapping fails
+ if (!getProvinceFromCity(a.location)) {
+ const lat = Number(a.latitude);
+ const lon = Number(a.longitude);
+ if (lon > 124 && lon < 136 && lat > -9 && lat < 2) prov ="Maluku";
+ else if (lon > 118 && lon < 121 && lat > -7 && lat < -4) prov ="Sulawesi Selatan";
+ else if (lon > 112 && lon < 116 && lat > -9 && lat < -6) prov ="Jawa Timur";
+ else if (lon > 106 && lon < 109 && lat > -8 && lat < -5) prov ="Jawa Barat";
+ else if (lon > 106.5 && lon < 107 && lat > -6.5 && lat < -6) prov ="DKI Jakarta";
+ }
 
-      if (!isAllRegions && !normalize(String(prov)).includes(selectedProvLower)) return false;
-      return true;
-    });
+ if (!isAllRegions && !normalize(String(prov)).includes(selectedProvLower)) return false;
+ return true;
+ });
 
-    const filteredStockAssets = stockAssets.filter((a: Asset) => {
-      // Filter Region
-      let prov = getProvinceFromCity(a.location) || a.location;
+ const filteredStockAssets = stockAssets.filter((a: Asset) => {
+ // Filter Region
+ let prov = getProvinceFromCity(a.location) || a.location;
 
-      // Fallback: Detect Province by Coordinates
-      if (!getProvinceFromCity(a.location)) {
-        const lat = Number(a.latitude);
-        const lon = Number(a.longitude);
-        if (lon > 124 && lon < 136 && lat > -9 && lat < 2) prov = "Maluku";
-        else if (lon > 118 && lon < 121 && lat > -7 && lat < -4) prov = "Sulawesi Selatan";
-        else if (lon > 112 && lon < 116 && lat > -9 && lat < -6) prov = "Jawa Timur";
-        else if (lon > 106 && lon < 109 && lat > -8 && lat < -5) prov = "Jawa Barat";
-        else if (lon > 106.5 && lon < 107 && lat > -6.5 && lat < -6) prov = "DKI Jakarta";
-      }
+ // Fallback: Detect Province by Coordinates
+ if (!getProvinceFromCity(a.location)) {
+ const lat = Number(a.latitude);
+ const lon = Number(a.longitude);
+ if (lon > 124 && lon < 136 && lat > -9 && lat < 2) prov ="Maluku";
+ else if (lon > 118 && lon < 121 && lat > -7 && lat < -4) prov ="Sulawesi Selatan";
+ else if (lon > 112 && lon < 116 && lat > -9 && lat < -6) prov ="Jawa Timur";
+ else if (lon > 106 && lon < 109 && lat > -8 && lat < -5) prov ="Jawa Barat";
+ else if (lon > 106.5 && lon < 107 && lat > -6.5 && lat < -6) prov ="DKI Jakarta";
+ }
 
-      if (!isAllRegions && !normalize(String(prov)).includes(selectedProvLower)) return false;
-      return true;
-    });
+ if (!isAllRegions && !normalize(String(prov)).includes(selectedProvLower)) return false;
+ return true;
+ });
 
-    // --- FINANCIAL CALCULATIONS BY PROVINCE ---
-    let totalRevenue = 0;
-    let totalExpenses = 0;
-    let directCosts = 0; // COGS: Server, Maintenance, Listrik
-    const monthlyRevenue: Record<string, number> = {};
-    const monthlyExpenses: Record<string, number> = {};
-    const profitByProvince: Record<string, number> = {};
+ // --- FINANCIAL CALCULATIONS BY PROVINCE ---
+ let totalRevenue = 0;
+ let totalExpenses = 0;
+ let directCosts = 0; // COGS: Server, Maintenance, Listrik
+ const monthlyRevenue: Record<string, number> = {};
+ const monthlyExpenses: Record<string, number> = {};
+ const profitByProvince: Record<string, number> = {};
 
-    transactions.forEach((tx: Transaction) => {
-      const txDate = getLocalDate(tx.timestamp);
-      if (txDate < startDate || txDate > endDate) return;
+ transactions.forEach((tx: Transaction) => {
+ const txDate = getLocalDate(tx.timestamp);
+ if (txDate < startDate || txDate > endDate) return;
 
-      let txProvince = "Unknown";
-      const cityProv = getProvinceFromCity(tx.city) || tx.city;
-      
-      if (tx.keterangan === "pemasukan") {
-        const idSuffix = tx.id?.split('-')[1];
-        const cust = customers.find((c: Customer) => String(c.id) === idSuffix);
-        txProvince = cust?.province || cityProv || "Other";
-      } else {
-        txProvince = cityProv || "Other";
-      }
+ let txProvince ="Unknown";
+ const cityProv = getProvinceFromCity(tx.city) || tx.city;
+ 
+ if (tx.keterangan ==="pemasukan") {
+ const idSuffix = tx.id?.split('-')[1];
+ const cust = customers.find((c: Customer) => String(c.id) === idSuffix);
+ txProvince = cust?.province || cityProv ||"Other";
+ } else {
+ txProvince = cityProv ||"Other";
+ }
 
-      if (!isAllRegions && !normalize(String(txProvince)).includes(selectedProvLower)) return;
+ if (!isAllRegions && !normalize(String(txProvince)).includes(selectedProvLower)) return;
 
-      const amt = Number(tx.numericAmount || String(tx.amount).replace(/[^0-9]/g, ''));
-      const monthStr = txDate.substring(0, 7);
+ const amt = Number(tx.numericAmount || String(tx.amount).replace(/[^0-9]/g,''));
+ const monthStr = txDate.substring(0, 7);
 
-      if (tx.status === "Verified") {
-        if (tx.keterangan === "pemasukan") {
-          totalRevenue += amt;
-          const normProv = toTitleCase(txProvince);
-          monthlyRevenue[monthStr] = (monthlyRevenue[monthStr] || 0) + amt;
-          profitByProvince[normProv] = (profitByProvince[normProv] || 0) + amt;
-        }
-        if (tx.keterangan === "pengeluaran") {
-          totalExpenses += amt;
-          
-          // Categorize Direct Costs from transactions
-          const cat = String(tx.type || '').toLowerCase();
-          if (cat.includes('server') || cat.includes('maintenance') || cat.includes('listrik') || cat.includes('hardware')) {
-            directCosts += amt;
-          }
+ if (tx.status ==="Verified") {
+ if (tx.keterangan ==="pemasukan") {
+ totalRevenue += amt;
+ const normProv = toTitleCase(txProvince);
+ monthlyRevenue[monthStr] = (monthlyRevenue[monthStr] || 0) + amt;
+ profitByProvince[normProv] = (profitByProvince[normProv] || 0) + amt;
+ }
+ if (tx.keterangan ==="pengeluaran") {
+ totalExpenses += amt;
+ 
+ // Categorize Direct Costs from transactions
+ const cat = String(tx.type ||'').toLowerCase();
+ if (cat.includes('server') || cat.includes('maintenance') || cat.includes('listrik') || cat.includes('hardware')) {
+ directCosts += amt;
+ }
 
-          const normProv = toTitleCase(txProvince);
-          monthlyExpenses[monthStr] = (monthlyExpenses[monthStr] || 0) + amt;
-          profitByProvince[normProv] = (profitByProvince[normProv] || 0) - amt;
-        }
-      }
-    });
+ const normProv = toTitleCase(txProvince);
+ monthlyExpenses[monthStr] = (monthlyExpenses[monthStr] || 0) + amt;
+ profitByProvince[normProv] = (profitByProvince[normProv] || 0) - amt;
+ }
+ }
+ });
 
-    // Note: We skip the separate "expenses" table loop because all expense records 
-    // are already included in the "transactions" table with keterangan='pengeluaran'.
+ // Note: We skip the separate"expenses"table loop because all expense records 
+ // are already included in the"transactions"table with keterangan='pengeluaran'.
 
-    const grossProfit = totalRevenue - directCosts;
-    const netProfit = totalRevenue - totalExpenses;
-    // Calculate monthly stats from transactions only
-    const allMonths = Array.from(new Set([...Object.keys(monthlyRevenue), ...Object.keys(monthlyExpenses)]))
-      .filter(m => (monthlyRevenue[m] || 0) > 0 || (monthlyExpenses[m] || 0) > 0) // Strictly only months with data
-      .sort();
+ const grossProfit = totalRevenue - directCosts;
+ const netProfit = totalRevenue - totalExpenses;
+ // Calculate monthly stats from transactions only
+ const allMonths = Array.from(new Set([...Object.keys(monthlyRevenue), ...Object.keys(monthlyExpenses)]))
+ .filter(m => (monthlyRevenue[m] || 0) > 0 || (monthlyExpenses[m] || 0) > 0) // Strictly only months with data
+ .sort();
 
-    const trendData = allMonths.map(month => ({
-        month,
-        revenue: monthlyRevenue[month] || 0,
-        expenses: monthlyExpenses[month] || 0,
-        profit: (monthlyRevenue[month] || 0) - (monthlyExpenses[month] || 0)
-    }));
+ const trendData = allMonths.map(month => ({
+ month,
+ revenue: monthlyRevenue[month] || 0,
+ expenses: monthlyExpenses[month] || 0,
+ profit: (monthlyRevenue[month] || 0) - (monthlyExpenses[month] || 0)
+ }));
 
-    // --- INVENTORY GROUPINGS ---
-    const assetByType: Record<string, number> = {};
-    const assetByLocation: Record<string, number> = {};
-    const stockByType: Record<string, number> = {};
-    const stockByLocation: Record<string, number> = {};
-    const ownershipDist: Record<string, number> = {};
-    const inventoryByCondition: Record<string, number> = {};
+ // --- INVENTORY GROUPINGS ---
+ const assetByType: Record<string, number> = {};
+ const assetByLocation: Record<string, number> = {};
+ const stockByType: Record<string, number> = {};
+ const stockByLocation: Record<string, number> = {};
+ const ownershipDist: Record<string, number> = {};
+ const inventoryByCondition: Record<string, number> = {};
 
-    filteredAssetRoster.forEach((a: Asset) => {
-      assetByType[a.type || 'Other'] = (assetByType[a.type || 'Other'] || 0) + 1;
-      const loc = a.province || getProvinceFromCity(a.location) || 'Unknown';
-      assetByLocation[loc] = (assetByLocation[loc] || 0) + 1;
-      ownershipDist[a.kepemilikan || 'Company'] = (ownershipDist[a.kepemilikan || 'Company'] || 0) + 1;
-      
-      const cond = a.condition || 'Unknown';
-      inventoryByCondition[cond] = (inventoryByCondition[cond] || 0) + 1;
-    });
+ filteredAssetRoster.forEach((a: Asset) => {
+ assetByType[a.type ||'Other'] = (assetByType[a.type ||'Other'] || 0) + 1;
+ const loc = a.province || getProvinceFromCity(a.location) ||'Unknown';
+ assetByLocation[loc] = (assetByLocation[loc] || 0) + 1;
+ ownershipDist[a.kepemilikan ||'Company'] = (ownershipDist[a.kepemilikan ||'Company'] || 0) + 1;
+ 
+ const cond = a.condition ||'Unknown';
+ inventoryByCondition[cond] = (inventoryByCondition[cond] || 0) + 1;
+ });
 
-    filteredStockAssets.forEach((a: Asset) => {
-      stockByType[a.type || 'Other'] = (stockByType[a.type || 'Other'] || 0) + 1;
-      const loc = a.province || getProvinceFromCity(a.location) || 'Unknown';
-      stockByLocation[loc] = (stockByLocation[loc] || 0) + 1;
-      ownershipDist[a.kepemilikan || 'Company'] = (ownershipDist[a.kepemilikan || 'Company'] || 0) + 1;
-      
-      const cond = a.condition || 'Unknown';
-      inventoryByCondition[cond] = (inventoryByCondition[cond] || 0) + 1;
-    });
+ filteredStockAssets.forEach((a: Asset) => {
+ stockByType[a.type ||'Other'] = (stockByType[a.type ||'Other'] || 0) + 1;
+ const loc = a.province || getProvinceFromCity(a.location) ||'Unknown';
+ stockByLocation[loc] = (stockByLocation[loc] || 0) + 1;
+ ownershipDist[a.kepemilikan ||'Company'] = (ownershipDist[a.kepemilikan ||'Company'] || 0) + 1;
+ 
+ const cond = a.condition ||'Unknown';
+ inventoryByCondition[cond] = (inventoryByCondition[cond] || 0) + 1;
+ });
 
-    const assetValuation = [...filteredAssetRoster, ...filteredStockAssets].reduce((sum: number, item: Asset & { harga_beli?: string | number }) => {
-      // Handle formatting like "Rp 1.000.000,00" or raw numbers
-      const raw = String(item.harga_beli || '0')
-        .replace(/[^0-9,.]/g, '') // Remove everything except digits, comma, dot
-        .replace(/(\d+)\.(\d+)\.(\d+)/g, '$1$2$3') // Remove thousand separators (dots between digits)
-        .replace(',', '.'); // Convert comma to dot for parseFloat
-      
-      const val = parseFloat(raw);
-      return sum + (isNaN(val) ? 0 : val);
-    }, 0);
+ const assetValuation = [...filteredAssetRoster, ...filteredStockAssets].reduce((sum: number, item: Asset & { harga_beli?: string | number }) => {
+ // Handle formatting like"Rp 1.000.000,00"or raw numbers
+ const raw = String(item.harga_beli ||'0')
+ .replace(/[^0-9,.]/g,'') // Remove everything except digits, comma, dot
+ .replace(/(\d+)\.(\d+)\.(\d+)/g,'$1$2$3') // Remove thousand separators (dots between digits)
+ .replace(',','.'); // Convert comma to dot for parseFloat
+ 
+ const val = parseFloat(raw);
+ return sum + (isNaN(val) ? 0 : val);
+ }, 0);
 
-    // --- REGIONAL GROUPINGS ---
-    const subscriberByCity: Record<string, number> = {};
-    activeCustomers.forEach((c: Customer) => {
-      const city = c.city || "Other";
-      subscriberByCity[city] = (subscriberByCity[city] || 0) + 1;
-    });
+ // --- REGIONAL GROUPINGS ---
+ const subscriberByCity: Record<string, number> = {};
+ activeCustomers.forEach((c: Customer) => {
+ const city = c.city ||"Other";
+ subscriberByCity[city] = (subscriberByCity[city] || 0) + 1;
+ });
 
-    const formatCurrency = (val: number) => {
-      const sign = val < 0 ? "-" : "";
-      const absVal = Math.abs(val);
-      
-      // Support Trillions (T), Billions (B), Millions (M)
-      if (absVal >= 1000000000000) return `${sign}Rp ${(absVal / 1000000000000).toFixed(2)}T`;
-      if (absVal >= 1000000000) return `${sign}Rp ${(absVal / 1000000000).toFixed(2)}B`;
-      if (absVal >= 1000000) return `${sign}Rp ${(absVal / 1000000).toFixed(1)}M`;
-      if (absVal >= 1000) return `${sign}Rp ${(absVal / 1000).toFixed(0)}k`;
-      
-      return `${sign}Rp ${absVal.toLocaleString('id-ID')}`;
-    };
+ const formatCurrency = (val: number) => {
+ const sign = val < 0 ?"-":"";
+ const absVal = Math.abs(val);
+ 
+ // Support Trillions (T), Billions (B), Millions (M)
+ if (absVal >= 1000000000000) return`${sign}Rp ${(absVal / 1000000000000).toFixed(2)}T`;
+ if (absVal >= 1000000000) return`${sign}Rp ${(absVal / 1000000000).toFixed(2)}B`;
+ if (absVal >= 1000000) return`${sign}Rp ${(absVal / 1000000).toFixed(1)}M`;
+ if (absVal >= 1000) return`${sign}Rp ${(absVal / 1000).toFixed(0)}k`;
+ 
+ return`${sign}Rp ${absVal.toLocaleString('id-ID')}`;
+ };
 
-    return {
-      financial: {
-        totalRevenue: formatCurrency(totalRevenue),
-        grossProfit: formatCurrency(grossProfit),
-        netProfit: formatCurrency(netProfit),
-        totalExpense: formatCurrency(totalExpenses),
-        activeCustomers: activeCustomers.length,
-        trendData
-      },
-      inventory: {
-        total: filteredAssetRoster.length + filteredStockAssets.length,
-        valuation: formatCurrency(assetValuation),
-        assetByType: Object.entries(assetByType).map(([name, value]) => ({ name: name as string, value: value as number })),
-        assetByLocation: Object.entries(assetByLocation).map(([name, value]) => ({ name: name as string, value: value as number })),
-        stockByType: Object.entries(stockByType).map(([name, value]) => ({ name: name as string, value: value as number })),
-        stockByLocation: Object.entries(stockByLocation).map(([name, value]) => ({ name: name as string, value: value as number })),
-        ownershipDist: Object.entries(ownershipDist).map(([name, value]) => ({ name: name as string, value: value as number })),
-        byCondition: inventoryByCondition,
-        broken: filteredAssetRoster.filter((a: Asset) => a.condition === "Broken").length + filteredStockAssets.filter((a: Asset) => a.condition === "Broken").length
-      },
-      regional: {
-        subscribers: activeCustomers.length,
-        cityDist: Object.entries(subscriberByCity).map(([name, value]) => ({ name: name as string, value: value as number })).sort((a, b) => b.value - a.value).slice(0, 8),
-        provinceProfit: Object.entries(profitByProvince).map(([name, value]) => ({ name: name as string, value: value as number, formatted: formatCurrency(value as number) })).sort((a, b) => (b.value as number) - (a.value as number)),
-        provinceSubscribers: Object.entries(
-          activeCustomers.reduce((acc: Record<string, number>, c: Customer) => {
-            acc[c.province || 'Other'] = (acc[c.province || 'Other'] || 0) + 1;
-            return acc;
-          }, {})
-        ).map(([name, value]: [string, number]) => ({ name: name as string, value: value as number })).sort((a, b) => b.value - a.value)
-      }
-    };
-  }, [data, startDate, endDate, selectedProvince]);
+ return {
+ financial: {
+ totalRevenue: formatCurrency(totalRevenue),
+ grossProfit: formatCurrency(grossProfit),
+ netProfit: formatCurrency(netProfit),
+ totalExpense: formatCurrency(totalExpenses),
+ activeCustomers: activeCustomers.length,
+ trendData
+ },
+ inventory: {
+ total: filteredAssetRoster.length + filteredStockAssets.length,
+ valuation: formatCurrency(assetValuation),
+ assetByType: Object.entries(assetByType).map(([name, value]) => ({ name: name as string, value: value as number })),
+ assetByLocation: Object.entries(assetByLocation).map(([name, value]) => ({ name: name as string, value: value as number })),
+ stockByType: Object.entries(stockByType).map(([name, value]) => ({ name: name as string, value: value as number })),
+ stockByLocation: Object.entries(stockByLocation).map(([name, value]) => ({ name: name as string, value: value as number })),
+ ownershipDist: Object.entries(ownershipDist).map(([name, value]) => ({ name: name as string, value: value as number })),
+ byCondition: inventoryByCondition,
+ broken: filteredAssetRoster.filter((a: Asset) => a.condition ==="Broken").length + filteredStockAssets.filter((a: Asset) => a.condition ==="Broken").length
+ },
+ regional: {
+ subscribers: activeCustomers.length,
+ cityDist: Object.entries(subscriberByCity).map(([name, value]) => ({ name: name as string, value: value as number })).sort((a, b) => b.value - a.value).slice(0, 8),
+ provinceProfit: Object.entries(profitByProvince).map(([name, value]) => ({ name: name as string, value: value as number, formatted: formatCurrency(value as number) })).sort((a, b) => (b.value as number) - (a.value as number)),
+ provinceSubscribers: Object.entries(
+ activeCustomers.reduce((acc: Record<string, number>, c: Customer) => {
+ acc[c.province ||'Other'] = (acc[c.province ||'Other'] || 0) + 1;
+ return acc;
+ }, {})
+ ).map(([name, value]: [string, number]) => ({ name: name as string, value: value as number })).sort((a, b) => b.value - a.value)
+ }
+ };
+ }, [data, startDate, endDate, selectedProvince]);
 
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center min-h-[80vh] text-rose-500 font-bold">
-        Error loading executive data. Please check your connection.
-      </div>
-    );
-  }
+ if (isError) {
+ return (
+ <div className="flex items-center justify-center min-h-[80vh] text-rose-500 font-bold">
+ Error loading executive data. Please check your connection.
+ </div>
+ );
+ }
 
-  const isDataLoading = isLoading || !processedData;
+ const isDataLoading = isLoading || !processedData;
 
-  return (
-    <div className="min-h-screen pb-20">
-      {/* GLOBAL CONTROL PANEL */}
-      <div className="relative z-40 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 p-4 md:px-8 pt-8 shadow-sm">
-        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-6 w-full">
-          <div>
-            <h1 className="text-3xl font-black bg-gradient-to-r from-indigo-500 to-cyan-500 bg-clip-text text-transparent">Unified Executive Summary</h1>
-            <p className="text-slate-500 text-sm mt-1 font-medium">Single-pane-of-glass overview of ISP-FinTrack metrics.</p>
-          </div>
+ return (
+ <div className="min-h-screen pb-20">
+ {/* GLOBAL CONTROL PANEL */}
+ <div className="relative z-40 bg-card border-b border-border p-4 md:px-8 pt-8 shadow-sm">
+ <div className="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-6 w-full">
+ <div>
+ <h1 className="text-3xl font-black text-foreground">Unified Executive Summary</h1>
+ <p className="text-muted-foreground text-sm mt-1 font-medium">Single-pane-of-glass overview of ISP-FinTrack metrics.</p>
+ </div>
 
-          <div className="flex flex-col lg-phone:flex-row items-stretch lg-phone:items-center justify-between gap-2 w-full tablet:w-auto">
-            <div className="relative flex items-center justify-between bg-slate-100 dark:bg-slate-900 px-3 tablet:px-4 py-2.5 tablet:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 w-full lg-phone:w-[220px] tablet:w-[255px] h-[42px] tablet:h-[38px] shrink-0 shadow-sm">
-              {/* Visual Representation (Flawless, left-aligned to align with Region text kawan!) */}
-              <div className="flex items-center gap-1.5 tablet:gap-2 overflow-hidden w-full pointer-events-none pr-8">
-                <Calendar className="w-3.5 h-3.5 tablet:w-4 tablet:h-4 text-indigo-500 shrink-0" />
-                {!startDate || !endDate ? (
-                  <div className="h-3.5 w-[180px] lg-phone:w-full bg-slate-200 dark:bg-slate-800 animate-pulse rounded-md" />
-                ) : (
-                  <div className="flex items-center gap-1 tablet:gap-1.5 text-[10px] lg-phone:text-xs tablet:text-sm font-bold text-slate-700 dark:text-slate-300">
-                    <span>{formatDisplayDate(startDate)}</span>
-                    <span className="text-slate-400 font-bold shrink-0">-</span>
-                    <span>{formatDisplayDate(endDate)}</span>
-                  </div>
-                )}
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0 pointer-events-none absolute right-3 tablet:right-4" />
+ <div className="flex flex-col lg-phone:flex-row items-stretch lg-phone:items-center justify-between gap-2 w-full tablet:w-auto">
+ <div className="relative flex items-center justify-between bg-muted px-3 tablet:px-4 py-2.5 tablet:py-2 rounded-[1rem] border border-border w-full lg-phone:w-[220px] tablet:w-[255px] h-[42px] tablet:h-[38px] shrink-0 shadow-sm">
+ {/* Visual Representation (Flawless, left-aligned to align with Region text kawan!) */}
+ <div className="flex items-center gap-1.5 tablet:gap-2 overflow-hidden w-full pointer-events-none pr-8">
+ <Calendar className="w-3.5 h-3.5 tablet:w-4 tablet:h-4 text-primary shrink-0"/>
+ {!startDate || !endDate ? (
+ <div className="h-3.5 w-[180px] lg-phone:w-full bg-muted animate-pulse rounded-md"/>
+ ) : (
+ <div className="flex items-center gap-1 tablet:gap-1.5 text-[10px] lg-phone:text-xs tablet:text-sm font-bold text-foreground">
+ <span>{formatDisplayDate(startDate)}</span>
+ <span className="text-muted-foreground font-bold shrink-0">-</span>
+ <span>{formatDisplayDate(endDate)}</span>
+ </div>
+ )}
+ </div>
+ <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 pointer-events-none absolute right-3 tablet:right-4"/>
 
-              {/* Under the hood: Invisible full-pill tap targets */}
-              <div className="absolute inset-0 flex">
-                {/* Left half: Tap to open Start Date picker */}
-                <div className="relative w-1/2 h-full overflow-hidden">
-                  <input 
-                    type="date" 
-                    value={startDate} 
-                    onChange={e => setStartDate(e.target.value)} 
-                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-20" 
-                    aria-label="Report start date" 
-                  />
-                </div>
-                {/* Right half: Tap to open End Date picker */}
-                <div className="relative w-1/2 h-full overflow-hidden">
-                  <input 
-                    type="date" 
-                    value={endDate} 
-                    onChange={e => setEndDate(e.target.value)} 
-                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-20" 
-                    aria-label="Report end date" 
-                  />
-                </div>
-              </div>
-            </div>
+ {/* Under the hood: Invisible full-pill tap targets */}
+ <div className="absolute inset-0 flex">
+ {/* Left half: Tap to open Start Date picker */}
+ <div className="relative w-1/2 h-full overflow-hidden">
+ <input 
+ type="date"
+ value={startDate} 
+ onChange={e => setStartDate(e.target.value)} 
+ className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-20"
+ aria-label="Report start date"
+ />
+ </div>
+ {/* Right half: Tap to open End Date picker */}
+ <div className="relative w-1/2 h-full overflow-hidden">
+ <input 
+ type="date"
+ value={endDate} 
+ onChange={e => setEndDate(e.target.value)} 
+ className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-20"
+ aria-label="Report end date"
+ />
+ </div>
+ </div>
+ </div>
 
-            <div className="relative w-full lg-phone:w-auto shrink-0" ref={dropdownRef}>
-              <button 
-                onClick={() => !isDataLoading && setIsRegionOpen(!isRegionOpen)}
-                className="flex items-center justify-between gap-1 tablet:gap-3 bg-slate-100 dark:bg-slate-900 px-3 tablet:px-4 py-2.5 tablet:py-2 rounded-[1rem] border border-slate-200 dark:border-slate-800 w-full lg-phone:min-w-[125px] lg-phone:max-w-[150px] tablet:min-w-[160px] tablet:max-w-none h-[42px] tablet:h-[38px] hover:border-indigo-500/50 transition-all active:scale-95 shrink-0"
-                aria-label={`Select region. Current selection: ${selectedProvince}`}
-                aria-expanded={isRegionOpen}
-              >
-                <div className="flex items-center gap-1.5 tablet:gap-2 overflow-hidden w-full">
-                  <MapPin className="w-3.5 h-3.5 tablet:w-4 tablet:h-4 text-indigo-500 shrink-0" />
-                  {isDataLoading ? (
-                    <div className="h-3.5 w-full bg-slate-200 dark:bg-slate-800 animate-pulse rounded-md" />
-                  ) : (
-                    <span className="text-[10px] lg-phone:text-xs tablet:text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{selectedProvince}</span>
-                  )}
-                </div>
-                {!isDataLoading && (
-                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-300 ${isRegionOpen ? 'rotate-180' : ''}`} />
-                )}
-              </button>
+ <div className="relative w-full lg-phone:w-auto shrink-0"ref={dropdownRef}>
+ <button 
+ onClick={() => !isDataLoading && setIsRegionOpen(!isRegionOpen)}
+ className="flex items-center justify-between gap-1 tablet:gap-3 bg-muted px-3 tablet:px-4 py-2.5 tablet:py-2 rounded-[1rem] border border-border w-full lg-phone:min-w-[125px] lg-phone:max-w-[150px] tablet:min-w-[160px] tablet:max-w-none h-[42px] tablet:h-[38px] hover:border-primary/50 transition-all active:scale-95 shrink-0"
+ aria-label={`Select region. Current selection: ${selectedProvince}`}
+ aria-expanded={isRegionOpen}
+ >
+ <div className="flex items-center gap-1.5 tablet:gap-2 overflow-hidden w-full">
+ <MapPin className="w-3.5 h-3.5 tablet:w-4 tablet:h-4 text-primary shrink-0"/>
+ {isDataLoading ? (
+ <div className="h-3.5 w-full bg-muted animate-pulse rounded-md"/>
+ ) : (
+ <span className="text-[10px] lg-phone:text-xs tablet:text-sm font-bold text-foreground truncate">{selectedProvince}</span>
+ )}
+ </div>
+ {!isDataLoading && (
+ <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-300 ${isRegionOpen ?'rotate-180':''}`} />
+ )}
+ </button>
 
-              <AnimatePresence>
-                {isRegionOpen && (
-                  <m.div 
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-xl"
-                  >
-                    <div className="p-1">
-                      {provinces.map((p: string) => (
-                        <button
-                          key={p}
-                          onClick={() => {
-                            setSelectedProvince(p);
-                            setIsRegionOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-between group ${
-                            selectedProvince === p 
-                              ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
-                              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                          }`}
-                        >
-                          {p}
-                          {selectedProvince === p && <m.div layoutId="activeCheck" className="w-1.5 h-1.5 bg-white rounded-full" />}
-                        </button>
-                      ))}
-                    </div>
-                  </m.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
+ <AnimatePresence>
+ {isRegionOpen && (
+ <m.div 
+ initial={{ opacity: 0, y: 10, scale: 0.95 }}
+ animate={{ opacity: 1, y: 0, scale: 1 }}
+ exit={{ opacity: 0, y: 10, scale: 0.95 }}
+ className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-xl"
+ >
+ <div className="p-1">
+ {provinces.map((p: string) => (
+ <button
+ key={p}
+ onClick={() => {
+ setSelectedProvince(p);
+ setIsRegionOpen(false);
+ }}
+ className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-between group ${
+ selectedProvince === p 
+ ?"bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+ :"text-muted-foreground hover:bg-muted dark:hover:bg-muted"
+ }`}
+ >
+ {p}
+ {selectedProvince === p && <m.div layoutId="activeCheck"className="w-1.5 h-1.5 bg-primary-foreground rounded-full"/>}
+ </button>
+ ))}
+ </div>
+ </m.div>
+ )}
+ </AnimatePresence>
+ </div>
+ </div>
+ </div>
 
-        {/* DYNAMIC TABS - Segmented Control Style */}
-        <div className="bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded-2xl grid grid-cols-3 tablet:flex gap-1 w-full tablet:w-fit mx-auto tablet:mx-0">
-          {[
-            { id: 'financial', label: 'Financial & Profitability', mobileLabel: 'Financial', icon: DollarSign },
-            { id: 'inventory', label: 'Inventory & Assets', mobileLabel: 'Inventory', icon: Server },
-            { id: 'regional', label: 'Regional Analytics', mobileLabel: 'Regional', icon: MapPin },
-          ].map(tab => (
-            <button 
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`relative flex flex-1 tablet:flex-none items-center justify-center gap-2 px-3 py-2.5 tablet:py-3 rounded-xl font-bold text-[10px] tablet:text-sm whitespace-nowrap transition-all duration-300 group ${
-                activeTab === tab.id 
-                  ? "text-white shadow-lg shadow-indigo-500/20" 
-                  : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-              }`}
-            >
-              {activeTab === tab.id && (
-                <m.div 
-                  layoutId="activeTabPill"
-                  className="absolute inset-0 bg-indigo-500 rounded-xl z-0"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
-              )}
-              <tab.icon className={`w-3.5 h-3.5 tablet:w-4 tablet:h-4 shrink-0 relative z-10 transition-transform group-hover:scale-110 ${activeTab === tab.id ? 'text-white' : 'text-slate-400'}`} />
-              <span className="tablet:hidden relative z-10">{tab.mobileLabel}</span>
-              <span className="hidden tablet:inline relative z-10">{tab.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+ {/* DYNAMIC TABS - Segmented Control Style */}
+ <div className="bg-muted p-1.5 rounded-2xl grid grid-cols-3 tablet:flex gap-1 w-full tablet:w-fit mx-auto tablet:mx-0">
+ {[
+ { id:'financial', label:'Financial & Profitability', mobileLabel:'Financial', icon: DollarSign },
+ { id:'inventory', label:'Inventory & Assets', mobileLabel:'Inventory', icon: Server },
+ { id:'regional', label:'Regional Analytics', mobileLabel:'Regional', icon: MapPin },
+ ].map(tab => (
+ <button 
+ key={tab.id}
+ onClick={() => setActiveTab(tab.id)}
+ className={`relative flex flex-1 tablet:flex-none items-center justify-center gap-2 px-3 py-2.5 tablet:py-3 rounded-xl font-bold text-[10px] tablet:text-sm whitespace-nowrap transition-all duration-300 group ${
+ activeTab === tab.id 
+ ?"text-primary-foreground shadow-lg shadow-primary/20"
+ :"text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground"
+ }`}
+ >
+ {activeTab === tab.id && (
+ <m.div 
+ layoutId="activeTabPill"
+ className="absolute inset-0 bg-primary rounded-xl z-0"
+ transition={{ type:"spring", bounce: 0.2, duration: 0.6 }}
+ />
+ )}
+ <tab.icon className={`w-3.5 h-3.5 tablet:w-4 tablet:h-4 shrink-0 relative z-10 transition-transform group-hover:scale-110 ${activeTab === tab.id ?'text-primary-foreground':'text-muted-foreground'}`} />
+ <span className="tablet:hidden relative z-10">{tab.mobileLabel}</span>
+ <span className="hidden tablet:inline relative z-10">{tab.label}</span>
+ </button>
+ ))}
+ </div>
+ </div>
 
-      <div className="p-4 md:p-8">
-        <AnimatePresence>
-          <m.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            {/* TAB 1: FINANCIAL OVERVIEW */}
-            {activeTab === 'financial' && (
-              <div className="space-y-8">
-                {isDataLoading ? (
-                  <>
-                    <div className="block lg:hidden h-[160px] sm:h-[220px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
-                      <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[120px] sm:h-[160px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[1.5rem] shadow-xl" />
-                    </div>
-                    <div className="hidden lg:grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="bg-white dark:bg-slate-900/40 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm h-[120px] flex flex-col justify-between">
-                          <div className="flex justify-between items-start">
-                            <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                            <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-800 animate-pulse" />
-                          </div>
-                          <div className="h-6 w-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm h-[422px] flex flex-col justify-between">
-                      <div className="h-6 w-48 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-lg" />
-                      <div className="h-80 w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl" />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {(() => {
-                      const finCards = [
-                        { title: "Revenue", val: processedData.financial.totalRevenue, icon: TrendingUp, isBad: false, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-                        { title: "Gross Profit", val: processedData.financial.grossProfit, icon: Target, isBad: false, color: "text-blue-500", bg: "bg-blue-500/10" },
-                        { title: "Net Profit", val: processedData.financial.netProfit, icon: DollarSign, isBad: false, color: "text-indigo-500", bg: "bg-indigo-500/10" },
-                        { title: "Expense", val: processedData.financial.totalExpense, icon: Activity, isBad: true, color: "text-rose-500", bg: "bg-rose-500/10" },
-                        { title: "Active Customer", val: processedData.financial.activeCustomers, icon: Users, isBad: false, color: "text-amber-500", bg: "bg-amber-500/10" }
-                      ];
-                      return (
-                        <>
-                          {/* Mobile & Tablet 3D Cover Flow Carousel */}
-                          <div 
-                            className="block lg:hidden h-[160px] sm:h-[220px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
-                            onTouchStart={(e) => {
-                              touchStartXFin.current = e.touches[0].clientX;
-                            }}
-                            onTouchEnd={(e) => {
-                              if (touchStartXFin.current === null) return;
-                              const touchEndX = e.changedTouches[0].clientX;
-                              const diff = touchStartXFin.current - touchEndX;
-                              const N = finCards.length;
-                              if (diff > 40) {
-                                setActiveStatFin((prev) => (prev + 1) % N);
-                              } else if (diff < -40) {
-                                setActiveStatFin((prev) => (prev - 1 + N) % N);
-                              }
-                              touchStartXFin.current = null;
-                            }}
-                          >
-                            {finCards.map((k, i) => {
-                              const N = finCards.length;
-                              const offset = (i - activeStatFin + N) % N;
-                              
-                              const isCenter = offset === 0;
-                              const isRight = offset === 1;
-                              const isLeft = offset === N - 1;
-                              const isVisible = isCenter || isRight || isLeft;
-          
-                              const x = isCenter ? "0%" : isRight ? "75%" : isLeft ? "-75%" : "0%";
-                              const scale = isCenter ? 1 : 0.8;
-                              const zIndex = isCenter ? 30 : (isVisible ? 20 : 10);
-                              const opacity = isCenter ? 1 : (isVisible ? 0.4 : 0);
-                              const isBad = k.isBad;
-          
-                              return (
-                                <m.div
-                                  key={k.title}
-                                  onClick={() => isVisible && setActiveStatFin(i)}
-                                  drag="x"
-                                  dragConstraints={{ left: 0, right: 0 }}
-                                  dragElastic={0.2}
-                                  onDragEnd={(e, { offset }) => {
-                                    if (offset.x < -40) setActiveStatFin((prev) => (prev + 1) % N);
-                                    else if (offset.x > 40) setActiveStatFin((prev) => (prev - 1 + N) % N);
-                                  }}
-                                  animate={{ x, scale, zIndex, opacity }}
-                                  transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-                                  className={cn(
-                                    "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[120px] sm:h-[160px] rounded-[1.5rem] cursor-pointer p-5 sm:p-6 flex flex-col justify-between transition-colors duration-300",
-                                    "bg-[#0f172a] border",
-                                    isCenter 
-                                      ? (isBad ? "border-orange-500 shadow-[0_0_25px_3px_rgba(249,115,22,0.3)] dark:shadow-[0_0_35px_5px_rgba(249,115,22,0.4)]" : "border-cyan-400 shadow-[0_0_25px_3px_rgba(34,211,238,0.3)] dark:shadow-[0_0_35px_5px_rgba(34,211,238,0.4)]")
-                                      : "border-slate-800 shadow-none",
-                                    !isVisible && "pointer-events-none"
-                                  )}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                      <div className={cn(
-                                        "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors duration-300",
-                                        isCenter ? (isBad ? "bg-orange-500/20 text-orange-400" : "bg-cyan-500/20 text-cyan-400") : "bg-white/5 text-slate-500"
-                                      )}>
-                                        <k.icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                                      </div>
-                                      <span className={cn(
-                                        "text-[10px] sm:text-xs font-black tracking-widest transition-colors duration-300 uppercase",
-                                        isCenter ? (isBad ? "text-orange-400" : "text-cyan-400") : "text-slate-500"
-                                      )}>
-                                        {k.title}
-                                      </span>
-                                    </div>
-                                    {isBad && isCenter && (
-                                      <m.div
-                                        animate={{ opacity: [0.3, 0.8, 0.3] }}
-                                        transition={{ repeat: Infinity, duration: 1.5 }}
-                                        className="w-3 h-3 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)]"
-                                      />
-                                    )}
-                                  </div>
-                                  <div>
-                                    <div className={cn(
-                                      "text-2xl sm:text-4xl font-black tracking-tight transition-colors duration-300 truncate",
-                                      isCenter ? "text-white" : "text-slate-500"
-                                    )}>
-                                      {k.val}
-                                    </div>
-                                  </div>
-                                </m.div>
-                              );
-                            })}
-                          </div>
-          
-                          {/* Desktop Grid */}
-                          <div className="hidden lg:grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                            {finCards.map((k, i) => (
-                              <div key={i} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md h-[120px] flex flex-col justify-between">
-                                <div className="flex justify-between items-start">
-                                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{k.title}</p>
-                                  <div className={`p-2 rounded-lg ${k.bg} ${k.color}`}><k.icon className="w-4 h-4" /></div>
-                                </div>
-                                <h2 className="text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100 whitespace-nowrap">{k.val}</h2>
-                              </div>
-                            ))}
-                          </div>
-                        </>
-                      );
-                    })()}
+ <div className="p-4 md:p-8">
+ <AnimatePresence>
+ <m.div
+ key={activeTab}
+ initial={{ opacity: 0, y: 10 }}
+ animate={{ opacity: 1, y: 0 }}
+ exit={{ opacity: 0, y: -10 }}
+ transition={{ duration: 0.2 }}
+ >
+ {/* TAB 1: FINANCIAL OVERVIEW */}
+ {activeTab ==='financial'&& (
+ <div className="space-y-8">
+ {isDataLoading ? (
+ <>
+ <div className="block lg:hidden h-[160px] sm:h-[220px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+ <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[120px] sm:h-[160px] bg-muted animate-pulse rounded-[1.5rem] shadow-xl"/>
+ </div>
+ <div className="hidden lg:grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+ {Array.from({ length: 5 }).map((_, i) => (
+ <div key={i} className="bg-card/40 p-5 rounded-2xl border border-border/50 shadow-sm h-[120px] flex flex-col justify-between">
+ <div className="flex justify-between items-start">
+ <div className="h-3 w-16 bg-muted animate-pulse rounded"/>
+ <div className="w-8 h-8 rounded-lg bg-muted animate-pulse"/>
+ </div>
+ <div className="h-6 w-24 bg-muted animate-pulse rounded"/>
+ </div>
+ ))}
+ </div>
+ <div className="bg-card p-6 rounded-3xl border border-border shadow-sm h-[422px] flex flex-col justify-between">
+ <div className="h-6 w-48 bg-muted animate-pulse rounded-lg"/>
+ <div className="h-80 w-full bg-muted animate-pulse rounded-2xl"/>
+ </div>
+ </>
+ ) : (
+ <>
+ {(() => {
+ const finCards = [
+ { title:"Revenue", val: processedData.financial.totalRevenue, icon: TrendingUp, isBad: false, color:"text-emerald-500", bg:"bg-emerald-500/10"},
+ { title:"Gross Profit", val: processedData.financial.grossProfit, icon: Target, isBad: false, color:"text-blue-500", bg:"bg-blue-500/10"},
+ { title:"Net Profit", val: processedData.financial.netProfit, icon: DollarSign, isBad: false, color:"text-indigo-500", bg:"bg-indigo-500/10"},
+ { title:"Expense", val: processedData.financial.totalExpense, icon: Activity, isBad: true, color:"text-rose-500", bg:"bg-rose-500/10"},
+ { title:"Active Customer", val: processedData.financial.activeCustomers, icon: Users, isBad: false, color:"text-amber-500", bg:"bg-amber-500/10"}
+ ];
+ return (
+ <>
+ {/* Mobile & Tablet 3D Cover Flow Carousel */}
+ <div 
+ className="block lg:hidden h-[160px] sm:h-[220px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
+ onTouchStart={(e) => {
+ touchStartXFin.current = e.touches[0].clientX;
+ }}
+ onTouchEnd={(e) => {
+ if (touchStartXFin.current === null) return;
+ const touchEndX = e.changedTouches[0].clientX;
+ const diff = touchStartXFin.current - touchEndX;
+ const N = finCards.length;
+ if (diff > 40) {
+ setActiveStatFin((prev) => (prev + 1) % N);
+ } else if (diff < -40) {
+ setActiveStatFin((prev) => (prev - 1 + N) % N);
+ }
+ touchStartXFin.current = null;
+ }}
+ >
+ {finCards.map((k, i) => {
+ const N = finCards.length;
+ const offset = (i - activeStatFin + N) % N;
+ 
+ const isCenter = offset === 0;
+ const isRight = offset === 1;
+ const isLeft = offset === N - 1;
+ const isVisible = isCenter || isRight || isLeft;
+ 
+ const x = isCenter ?"0%": isRight ?"85%": isLeft ?"-85%":"0%";
+ const scale = isCenter ? 1 : 0.85;
+ const zIndex = isCenter ? 30 : (isVisible ? 20 : 10);
+ const opacity = isCenter ? 1 : (isVisible ? 0.7 : 0);
+ const isBad = k.isBad;
+ 
+ return (
+ <m.div
+ key={k.title}
+ onClick={() => isVisible && setActiveStatFin(i)}
+ drag="x"
+ dragConstraints={{ left: 0, right: 0 }}
+ dragElastic={0.2}
+ onDragEnd={(e, { offset }) => {
+ if (offset.x < -40) setActiveStatFin((prev) => (prev + 1) % N);
+ else if (offset.x > 40) setActiveStatFin((prev) => (prev - 1 + N) % N);
+ }}
+ animate={{ x, scale, zIndex, opacity }}
+ transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+ className={cn(
+"absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[120px] sm:h-[160px] rounded-[1.5rem] cursor-pointer p-5 sm:p-6 flex flex-col justify-between transition-colors duration-300 border",
+ isCenter ?"bg-card border-cyan-400 dark:border-cyan-500/50 shadow-[0_0_30px_-5px_rgba(34,211,238,0.4)] dark:shadow-[0_0_30px_-5px_rgba(6,182,212,0.3)]":"bg-muted/80 border-border shadow-none",
+ isBad && isCenter ?"border-rose-400 dark:border-rose-500/50 shadow-[0_0_30px_-5px_rgba(244,63,94,0.4)] dark:shadow-[0_0_30px_-5px_rgba(225,29,72,0.3)]":"",
+ !isVisible &&"pointer-events-none"
+ )}
+ >
+ <div className="flex items-center justify-between">
+ <div className="flex items-center gap-3">
+ <div className={cn(
+"w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors duration-300",
+ isCenter ? (isBad ?"bg-orange-500/20 text-orange-400":"bg-cyan-500/20 text-cyan-400") :"bg-white/5 text-muted-foreground"
+ )}>
+ <k.icon className="w-4 h-4 sm:w-5 sm:h-5"/>
+ </div>
+ <span className={cn(
+"text-[10px] sm:text-xs font-black tracking-widest transition-colors duration-300 uppercase",
+ isCenter ? (isBad ?"text-orange-400":"text-cyan-400") :"text-muted-foreground"
+ )}>
+ {k.title}
+ </span>
+ </div>
+ {isBad && isCenter && (
+ <m.div
+ animate={{ opacity: [0.3, 0.8, 0.3] }}
+ transition={{ repeat: Infinity, duration: 1.5 }}
+ className="w-3 h-3 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)]"
+ />
+ )}
+ </div>
+ <div>
+ <div className={cn(
+"text-2xl sm:text-4xl font-black tracking-tight transition-colors duration-300 truncate",
+ isCenter ?"text-white":"text-muted-foreground"
+ )}>
+ {k.val}
+ </div>
+ </div>
+ </m.div>
+ );
+ })}
+ </div>
+ 
+ {/* Desktop Grid */}
+ <div className="hidden lg:grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+ {finCards.map((k, i) => (
+ <div key={i} className="bg-card p-5 rounded-2xl border border-border shadow-sm transition-all hover:shadow-md h-[120px] flex flex-col justify-between group">
+ <div className="flex justify-between items-start">
+ <p className="text-xs font-bold text-muted-foreground group-hover:text-foreground transition-colors uppercase tracking-wider">{k.title}</p>
+ <div className={`p-2 rounded-lg ${k.bg} ${k.color}`}><k.icon className="w-4 h-4"/></div>
+ </div>
+ <h2 className="text-xl lg:text-2xl font-black text-foreground whitespace-nowrap">{k.val}</h2>
+ </div>
+ ))}
+ </div>
+ </>
+ );
+ })()}
 
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm h-[422px] flex flex-col justify-between">
-                  <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-indigo-500"/> Revenue & Net Profit Trajectory
-                  </h2>
-                  <ChartContainer className="h-80 w-full">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                      <ComposedChart data={processedData.financial.trendData}>
-                        <defs>
-                          <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
-                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                        <YAxis tickFormatter={(val) => `Rp${val/1000000}M`} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                        <RechartsTooltip 
-                          cursor={{ stroke: '#6366f1', strokeWidth: 2, strokeDasharray: '5 5' }} 
-                          content={({ active, payload }) => active && payload && payload.length && (
-                            <div className="bg-slate-900/90 backdrop-blur-md text-white px-4 py-3 rounded-2xl text-xs font-black shadow-2xl border border-white/10">
-                              <p className="opacity-60 mb-2 uppercase tracking-tighter text-[9px]">{payload[0].payload.month}</p>
-                              <div className="flex flex-col gap-2">
-                                {payload.map((entry: any, i: number) => (
-                                  <div key={i} className="flex items-center justify-between gap-6">
-                                    <span className="flex items-center gap-2">
-                                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                                      {entry.name}
-                                    </span>
-                                    <span className="font-mono">{new Intl.NumberFormat('id-ID', {style: 'currency', currency: 'IDR', maximumFractionDigits: 0}).format(entry.value)}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )} 
-                        />
-                        <Legend 
-                          verticalAlign="bottom" 
-                          height={36}
-                          content={({ payload }) => (
-                            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-6">
-                              {payload?.map((entry: any, index: number) => (
-                                <div key={`item-${index}`} className="flex items-center gap-1.5">
-                                  <div className="w-1.5 h-1.5 tablet:w-2 tablet:h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                                  <span className="text-[10px] tablet:text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                    {entry.value}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        />
-                        <Area type="monotone" dataKey="revenue" name="Gross Revenue" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
-                        <Line type="monotone" dataKey="expenses" name="Expenses" stroke="#f43f5e" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                        <Line type="monotone" dataKey="profit" name="Net Profit" stroke="#10b981" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </div>
-                </>
-              )}
-              </div>
-            )}
+ <div className="bg-card p-6 rounded-3xl border border-border shadow-sm h-[422px] flex flex-col justify-between">
+ <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+ <Activity className="w-5 h-5 text-primary"/> Revenue & Net Profit Trajectory
+ </h2>
+ <ChartContainer className="h-80 w-full">
+ <ResponsiveContainer width="100%"height="100%"minWidth={0} minHeight={0}>
+ <ComposedChart data={processedData.financial.trendData}>
+ <defs>
+ <linearGradient id="colorRev"x1="0"y1="0"x2="0"y2="1">
+ <stop offset="5%"stopColor="#6366f1"stopOpacity={0.3}/>
+ <stop offset="95%"stopColor="#6366f1"stopOpacity={0}/>
+ </linearGradient>
+ </defs>
+ <CartesianGrid strokeDasharray="3 3"vertical={false} stroke="currentColor"className="text-border"opacity={0.5} />
+ <XAxis dataKey="month"axisLine={false} tickLine={false} tick={{fill:'currentColor', fontSize: 12}} dy={10} className="text-muted-foreground" />
+ <YAxis tickFormatter={(val) =>`Rp${val/1000000}M`} axisLine={false} tickLine={false} tick={{fill:'currentColor', fontSize: 12}} className="text-muted-foreground" />
+ <RechartsTooltip 
+ cursor={{ stroke:'hsl(var(--primary))', strokeWidth: 2, strokeDasharray:'5 5'}} 
+ content={({ active, payload }) => active && payload && payload.length && (
+ <div className="bg-card/90 backdrop-blur-md text-foreground px-4 py-3 rounded-2xl text-xs font-black shadow-2xl border border-border">
+ <p className="opacity-60 mb-2 uppercase tracking-tighter text-[9px]">{payload[0].payload.month}</p>
+ <div className="flex flex-col gap-2">
+ {payload.map((entry: any, i: number) => (
+ <div key={i} className="flex items-center justify-between gap-6">
+ <span className="flex items-center gap-2">
+ <div className="w-2 h-2 rounded-full"style={{ backgroundColor: entry.color }} />
+ {entry.name}
+ </span>
+ <span className="font-mono">{new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits: 0}).format(entry.value)}</span>
+ </div>
+ ))}
+ </div>
+ </div>
+ )} 
+ />
+ <Legend 
+ verticalAlign="bottom"
+ height={36}
+ content={({ payload }) => (
+ <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-6">
+ {payload?.map((entry: any, index: number) => (
+ <div key={`item-${index}`} className="flex items-center gap-1.5">
+ <div className="w-1.5 h-1.5 tablet:w-2 tablet:h-2 rounded-full"style={{ backgroundColor: entry.color }} />
+ <span className="text-[10px] tablet:text-xs font-bold text-muted-foreground whitespace-nowrap">
+ {entry.value}
+ </span>
+ </div>
+ ))}
+ </div>
+ )}
+ />
+ <Area type="monotone"dataKey="revenue"name="Gross Revenue"stroke="#6366f1"strokeWidth={3} fillOpacity={1} fill="url(#colorRev)"/>
+ <Line type="monotone"dataKey="expenses"name="Expenses"stroke="#f43f5e"strokeWidth={2} strokeDasharray="5 5"dot={false} />
+ <Line type="monotone"dataKey="profit"name="Net Profit"stroke="#10b981"strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
+ </ComposedChart>
+ </ResponsiveContainer>
+ </ChartContainer>
+ </div>
+ </>
+ )}
+ </div>
+ )}
 
-            {/* TAB 2: INVENTORY & ASSETS */}
-            {activeTab === 'inventory' && (
-              <div className="space-y-8">
-                {isDataLoading ? (
-                  <div className="animate-pulse space-y-8">
-                    <div className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
-                      <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] bg-slate-100 dark:bg-slate-800 rounded-[1.5rem] shadow-xl" />
-                    </div>
-                    <div className="hidden lg:block h-32 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="h-80 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
-                      <div className="h-80 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {(() => {
-                      const invCards = [
-                        { title: "Asset Valuation", val: processedData.inventory.valuation, desc: `Combined value of ${processedData.inventory.total} devices`, icon: DollarSign, isBad: false },
-                        { title: "Total Assets", val: processedData.inventory.total, desc: `${processedData.inventory.byCondition['Good']||0} Good • ${processedData.inventory.byCondition['Maintenance']||0} Maint`, icon: Server, isBad: false },
-                        { title: "Broken Devices", val: processedData.inventory.broken, desc: "Require immediate attention", icon: Activity, isBad: true }
-                      ];
-                      return (
-                        <>
-                          {/* Mobile & Tablet 3D Cover Flow Carousel */}
-                          <div 
-                            className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
-                            onTouchStart={(e) => {
-                              touchStartXInv.current = e.touches[0].clientX;
-                            }}
-                            onTouchEnd={(e) => {
-                              if (touchStartXInv.current === null) return;
-                              const touchEndX = e.changedTouches[0].clientX;
-                              const diff = touchStartXInv.current - touchEndX;
-                              const N = invCards.length;
-                              if (diff > 40) {
-                                setActiveStatInv((prev) => (prev + 1) % N);
-                              } else if (diff < -40) {
-                                setActiveStatInv((prev) => (prev - 1 + N) % N);
-                              }
-                              touchStartXInv.current = null;
-                            }}
-                          >
-                            {invCards.map((k, i) => {
-                              const N = invCards.length;
-                              const offset = (i - activeStatInv + N) % N;
-                              
-                              const isCenter = offset === 0;
-                              const isRight = offset === 1;
-                              const isLeft = offset === N - 1;
-                              const isVisible = isCenter || isRight || isLeft;
-          
-                              const x = isCenter ? "0%" : isRight ? "75%" : isLeft ? "-75%" : "0%";
-                              const scale = isCenter ? 1 : 0.8;
-                              const zIndex = isCenter ? 30 : (isVisible ? 20 : 10);
-                              const opacity = isCenter ? 1 : (isVisible ? 0.4 : 0);
-                              const isBad = k.isBad;
-          
-                              return (
-                                <m.div
-                                  key={k.title}
-                                  onClick={() => isVisible && setActiveStatInv(i)}
-                                  drag="x"
-                                  dragConstraints={{ left: 0, right: 0 }}
-                                  dragElastic={0.2}
-                                  onDragEnd={(e, { offset }) => {
-                                    if (offset.x < -40) setActiveStatInv((prev) => (prev + 1) % N);
-                                    else if (offset.x > 40) setActiveStatInv((prev) => (prev - 1 + N) % N);
-                                  }}
-                                  animate={{ x, scale, zIndex, opacity }}
-                                  transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-                                  className={cn(
-                                    "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300",
-                                    "bg-[#0f172a] border",
-                                    isCenter 
-                                      ? (isBad ? "border-orange-500 shadow-[0_0_25px_3px_rgba(249,115,22,0.3)] dark:shadow-[0_0_35px_5px_rgba(249,115,22,0.4)]" : "border-cyan-400 shadow-[0_0_25px_3px_rgba(34,211,238,0.3)] dark:shadow-[0_0_35px_5px_rgba(34,211,238,0.4)]")
-                                      : "border-slate-800 shadow-none",
-                                    !isVisible && "pointer-events-none"
-                                  )}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                      <div className={cn(
-                                        "w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors duration-300",
-                                        isCenter ? (isBad ? "bg-orange-500/20 text-orange-400" : "bg-cyan-500/20 text-cyan-400") : "bg-white/5 text-slate-500"
-                                      )}>
-                                        <k.icon className="w-4 h-4 sm:w-6 sm:h-6" />
-                                      </div>
-                                      <span className={cn(
-                                        "text-[10px] sm:text-xs font-black tracking-widest transition-colors duration-300 uppercase",
-                                        isCenter ? (isBad ? "text-orange-400" : "text-cyan-400") : "text-slate-500"
-                                      )}>
-                                        {k.title}
-                                      </span>
-                                    </div>
-                                    {isBad && isCenter && (
-                                      <m.div
-                                        animate={{ opacity: [0.3, 0.8, 0.3] }}
-                                        transition={{ repeat: Infinity, duration: 1.5 }}
-                                        className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)]"
-                                      />
-                                    )}
-                                  </div>
-                                  <div>
-                                    <div className={cn(
-                                      "text-3xl sm:text-5xl font-black tracking-tight transition-colors duration-300 truncate",
-                                      isCenter ? "text-white" : "text-slate-500"
-                                    )}>
-                                      {k.val}
-                                    </div>
-                                    <div className="mt-1 sm:mt-2">
-                                      <span className={cn(
-                                        "text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-1 rounded-full tracking-wider transition-colors",
-                                        isCenter 
-                                          ? (isBad ? "bg-orange-500/20 text-orange-400" : "bg-white/10 text-slate-300")
-                                          : "bg-transparent text-slate-600"
-                                      )}>
-                                        {k.desc}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </m.div>
-                              );
-                            })}
-                          </div>
-          
-                          {/* Desktop Grid */}
-                          <div className="hidden lg:grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm md:col-span-2">
-                              <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Total Asset Valuation</p>
-                              <h2 className="text-4xl font-black text-emerald-500">{processedData.inventory.valuation}</h2>
-                              <p className="text-xs text-slate-400 mt-1">Combined value of {processedData.inventory.total} devices</p>
-                            </div>
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between shadow-sm">
-                              <div>
-                                <p className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Total Assets</p>
-                                <h3 className="text-3xl font-black text-slate-900 dark:text-white">{processedData.inventory.total}</h3>
-                              </div>
-                              
-                              <div className="mt-4 flex flex-wrap gap-2">
-                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                  <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase">
-                                    {processedData.inventory.byCondition['Good'] || 0} Good
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                  <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase">
-                                    {processedData.inventory.byCondition['Maintenance'] || 0} Maint.
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                  <span className="text-[9px] font-black text-rose-600 dark:text-rose-400 uppercase">
-                                    {processedData.inventory.byCondition['Broken'] || 0} Broken
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="bg-red-500/10 p-5 rounded-2xl border border-red-500/20 flex flex-col justify-center">
-                              <p className="text-xs font-bold text-red-500 mb-1 uppercase">Broken Devices</p>
-                              <h3 className="text-3xl font-black text-red-600">{processedData.inventory.broken}</h3>
-                            </div>
-                          </div>
-                        </>
-                      );
-                    })()}
+ {/* TAB 2: INVENTORY & ASSETS */}
+ {activeTab ==='inventory'&& (
+ <div className="space-y-8">
+ {isDataLoading ? (
+ <div className="animate-pulse space-y-8">
+ <div className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+ <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] bg-muted rounded-[1.5rem] shadow-xl"/>
+ </div>
+ <div className="hidden lg:block h-32 bg-muted rounded-3xl"/>
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+ <div className="h-80 bg-muted rounded-3xl"/>
+ <div className="h-80 bg-muted rounded-3xl"/>
+ </div>
+ </div>
+ ) : (
+ <>
+ {(() => {
+ const invCards = [
+ { title:"Asset Valuation", val: processedData.inventory.valuation, desc:`Combined value of ${processedData.inventory.total} devices`, icon: DollarSign, isBad: false },
+ { title:"Total Assets", val: processedData.inventory.total, desc:`${processedData.inventory.byCondition['Good']||0} Good • ${processedData.inventory.byCondition['Maintenance']||0} Maint`, icon: Server, isBad: false },
+ { title:"Broken Devices", val: processedData.inventory.broken, desc:"Require immediate attention", icon: Activity, isBad: true }
+ ];
+ return (
+ <>
+ {/* Mobile & Tablet 3D Cover Flow Carousel */}
+ <div 
+ className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
+ onTouchStart={(e) => {
+ touchStartXInv.current = e.touches[0].clientX;
+ }}
+ onTouchEnd={(e) => {
+ if (touchStartXInv.current === null) return;
+ const touchEndX = e.changedTouches[0].clientX;
+ const diff = touchStartXInv.current - touchEndX;
+ const N = invCards.length;
+ if (diff > 40) {
+ setActiveStatInv((prev) => (prev + 1) % N);
+ } else if (diff < -40) {
+ setActiveStatInv((prev) => (prev - 1 + N) % N);
+ }
+ touchStartXInv.current = null;
+ }}
+ >
+ {invCards.map((k, i) => {
+ const N = invCards.length;
+ const offset = (i - activeStatInv + N) % N;
+ 
+ const isCenter = offset === 0;
+ const isRight = offset === 1;
+ const isLeft = offset === N - 1;
+ const isVisible = isCenter || isRight || isLeft;
+ 
+ const x = isCenter ?"0%": isRight ?"85%": isLeft ?"-85%":"0%";
+ const scale = isCenter ? 1 : 0.85;
+ const zIndex = isCenter ? 30 : (isVisible ? 20 : 10);
+ const opacity = isCenter ? 1 : (isVisible ? 0.7 : 0);
+ const isBad = k.isBad;
+ 
+ return (
+ <m.div
+ key={k.title}
+ onClick={() => isVisible && setActiveStatInv(i)}
+ drag="x"
+ dragConstraints={{ left: 0, right: 0 }}
+ dragElastic={0.2}
+ onDragEnd={(e, { offset }) => {
+ if (offset.x < -40) setActiveStatInv((prev) => (prev + 1) % N);
+ else if (offset.x > 40) setActiveStatInv((prev) => (prev - 1 + N) % N);
+ }}
+ animate={{ x, scale, zIndex, opacity }}
+ transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+ className={cn(
+ "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300 border",
+ isCenter ? "bg-card border-cyan-400 shadow-[0_0_25px_3px_rgba(34,211,238,0.3)] dark:shadow-[0_0_35px_5px_rgba(34,211,238,0.4)]" : "bg-muted/80 border-border shadow-none",
+ isBad && isCenter ? "border-orange-500 shadow-[0_0_25px_3px_rgba(249,115,22,0.3)] dark:shadow-[0_0_35px_5px_rgba(249,115,22,0.4)]" : "",
+ !isVisible && "pointer-events-none"
+ )}
+ >
+ <div className="flex items-center justify-between">
+ <div className="flex items-center gap-3">
+ <div className={cn(
+"w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors duration-300",
+ isCenter ? (isBad ?"bg-orange-500/20 text-orange-400":"bg-cyan-500/20 text-cyan-400") :"bg-white/5 text-muted-foreground"
+ )}>
+ <k.icon className="w-4 h-4 sm:w-6 sm:h-6"/>
+ </div>
+ <span className={cn(
+"text-[10px] sm:text-xs font-black tracking-widest transition-colors duration-300 uppercase",
+ isCenter ? (isBad ?"text-orange-400":"text-cyan-400") :"text-muted-foreground"
+ )}>
+ {k.title}
+ </span>
+ </div>
+ {isBad && isCenter && (
+ <m.div
+ animate={{ opacity: [0.3, 0.8, 0.3] }}
+ transition={{ repeat: Infinity, duration: 1.5 }}
+ className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)]"
+ />
+ )}
+ </div>
+ <div>
+ <div className={cn(
+"text-3xl sm:text-5xl font-black tracking-tight transition-colors duration-300 truncate",
+ isCenter ?"text-white":"text-muted-foreground"
+ )}>
+ {k.val}
+ </div>
+ <div className="mt-1 sm:mt-2">
+ <span className={cn(
+"text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-1 rounded-full tracking-wider transition-colors",
+ isCenter 
+ ? (isBad ?"bg-orange-500/20 text-orange-400":"bg-white/10 text-muted-foreground")
+ :"bg-transparent text-muted-foreground"
+ )}>
+ {k.desc}
+ </span>
+ </div>
+ </div>
+ </m.div>
+ );
+ })}
+ </div>
+ 
+ {/* Desktop Grid */}
+ <div className="hidden lg:grid grid-cols-1 md:grid-cols-4 gap-4">
+ <div className="bg-card p-6 rounded-3xl border border-border shadow-sm md:col-span-2">
+ <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-2">Total Asset Valuation</p>
+ <h2 className="text-4xl font-black text-emerald-500">{processedData.inventory.valuation}</h2>
+ <p className="text-xs text-muted-foreground mt-1">Combined value of {processedData.inventory.total} devices</p>
+ </div>
+ <div className="bg-card p-6 rounded-3xl border border-border flex flex-col justify-between shadow-sm">
+ <div>
+ <p className="text-xs font-bold text-muted-foreground mb-1 uppercase tracking-widest">Total Assets</p>
+ <h3 className="text-3xl font-black text-foreground">{processedData.inventory.total}</h3>
+ </div>
+ 
+ <div className="mt-4 flex flex-wrap gap-2">
+ <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+ <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"/>
+ <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase">
+ {processedData.inventory.byCondition['Good'] || 0} Good
+ </span>
+ </div>
+ <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+ <div className="w-1.5 h-1.5 rounded-full bg-amber-500"/>
+ <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase">
+ {processedData.inventory.byCondition['Maintenance'] || 0} Maint.
+ </span>
+ </div>
+ <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20">
+ <div className="w-1.5 h-1.5 rounded-full bg-rose-500"/>
+ <span className="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase">
+ {processedData.inventory.byCondition['Broken'] || 0} Broken
+ </span>
+ </div>
+ </div>
+ </div>
+ <div className="bg-red-500/10 p-5 rounded-2xl border border-red-500/20 flex flex-col justify-center">
+ <p className="text-xs font-bold text-red-500 mb-1 uppercase">Broken Devices</p>
+ <h3 className="text-3xl font-black text-red-600">{processedData.inventory.broken}</h3>
+ </div>
+ </div>
+ </>
+ );
+ })()}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Asset Type Distribution */}
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Assets Group by Type (Deployed)</h2>
-                    <ChartContainer className="h-64">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                        <BarChart data={processedData.inventory.assetByType}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 'bold'}} />
-                          <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
-                          <RechartsTooltip 
-                            cursor={{ fill: 'transparent' }} 
-                            content={({ active, payload }) => active && payload && payload.length && (
-                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
-                                {Number(payload[0].value).toLocaleString()}
-                              </div>
-                            )} 
-                          />
-                          <defs>
-                            <linearGradient id="barGradient1" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
-                              <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.8} />
-                            </linearGradient>
-                          </defs>
-                          <Bar dataKey="value" fill="url(#barGradient1)" radius={[10, 10, 0, 0]} barSize={40} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  </div>
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+ {/* Asset Type Distribution */}
+ <div className="bg-card p-6 rounded-3xl border border-border shadow-sm">
+ <h2 className="text-lg font-bold text-foreground mb-6">Assets Group by Type (Deployed)</h2>
+ <ChartContainer className="h-64">
+ <ResponsiveContainer width="100%"height="100%"minWidth={0} minHeight={0}>
+ <BarChart data={processedData.inventory.assetByType}>
+ <CartesianGrid strokeDasharray="3 3"vertical={false} stroke="currentColor"className="text-border"opacity={0.5} />
+ <XAxis dataKey="name"axisLine={false} tickLine={false} tick={{fill:'currentColor', fontSize: 10, fontWeight:'bold'}} className="text-muted-foreground" />
+ <YAxis axisLine={false} tickLine={false} tick={{fill:'currentColor', fontSize: 10}} className="text-muted-foreground" />
+ <RechartsTooltip 
+ cursor={{ fill:'transparent'}} 
+ content={({ active, payload }) => active && payload && payload.length && (
+ <div className="bg-card/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
+ {Number(payload[0].value).toLocaleString()}
+ </div>
+ )} 
+ />
+ <defs>
+ <linearGradient id="barGradient1"x1="0"y1="0"x2="0"y2="1">
+ <stop offset="0%"stopColor="#6366f1"stopOpacity={1} />
+ <stop offset="100%"stopColor="#4f46e5"stopOpacity={0.8} />
+ </linearGradient>
+ </defs>
+ <Bar dataKey="value"fill="url(#barGradient1)"radius={[10, 10, 0, 0]} barSize={40} />
+ </BarChart>
+ </ResponsiveContainer>
+ </ChartContainer>
+ </div>
 
-                  {/* Stock Asset Group by Type */}
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Stock Assets by Type (Unused)</h2>
-                    <ChartContainer className="h-64">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                        <BarChart data={processedData.inventory.stockByType}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 'bold'}} />
-                          <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
-                          <RechartsTooltip 
-                            cursor={{ fill: 'transparent' }} 
-                            content={({ active, payload }) => active && payload && payload.length && (
-                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
-                                {Number(payload[0].value).toLocaleString()}
-                              </div>
-                            )} 
-                          />
-                          <defs>
-                            <linearGradient id="barGradient2" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1} />
-                              <stop offset="100%" stopColor="#7c3aed" stopOpacity={0.8} />
-                            </linearGradient>
-                          </defs>
-                          <Bar dataKey="value" fill="url(#barGradient2)" radius={[10, 10, 0, 0]} barSize={40} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  </div>
+ {/* Stock Asset Group by Type */}
+ <div className="bg-card p-6 rounded-3xl border border-border shadow-sm">
+ <h2 className="text-lg font-bold text-foreground mb-6">Stock Assets by Type (Unused)</h2>
+ <ChartContainer className="h-64">
+ <ResponsiveContainer width="100%"height="100%"minWidth={0} minHeight={0}>
+ <BarChart data={processedData.inventory.stockByType}>
+ <CartesianGrid strokeDasharray="3 3"vertical={false} stroke="currentColor"className="text-border"opacity={0.5} />
+ <XAxis dataKey="name"axisLine={false} tickLine={false} tick={{fill:'currentColor', fontSize: 10, fontWeight:'bold'}} className="text-muted-foreground" />
+ <YAxis axisLine={false} tickLine={false} tick={{fill:'currentColor', fontSize: 10}} className="text-muted-foreground" />
+ <RechartsTooltip 
+ cursor={{ fill:'transparent'}} 
+ content={({ active, payload }) => active && payload && payload.length && (
+ <div className="bg-card/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
+ {Number(payload[0].value).toLocaleString()}
+ </div>
+ )} 
+ />
+ <defs>
+ <linearGradient id="barGradient2"x1="0"y1="0"x2="0"y2="1">
+ <stop offset="0%"stopColor="#8b5cf6"stopOpacity={1} />
+ <stop offset="100%"stopColor="#7c3aed"stopOpacity={0.8} />
+ </linearGradient>
+ </defs>
+ <Bar dataKey="value"fill="url(#barGradient2)"radius={[10, 10, 0, 0]} barSize={40} />
+ </BarChart>
+ </ResponsiveContainer>
+ </ChartContainer>
+ </div>
 
-                  {/* Assets by Location */}
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Assets by Location (Deployed)</h2>
-                    <ChartContainer className="h-64">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                        <BarChart data={processedData.inventory.assetByLocation} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
-                          <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
-                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 'bold'}} width={100} />
-                          <RechartsTooltip 
-                            cursor={{ fill: 'transparent' }} 
-                            content={({ active, payload }) => active && payload && payload.length && (
-                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
-                                {Number(payload[0].value).toLocaleString()}
-                              </div>
-                            )} 
-                          />
-                          <defs>
-                            <linearGradient id="barGradient3" x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor="#10b981" stopOpacity={1} />
-                              <stop offset="100%" stopColor="#059669" stopOpacity={0.8} />
-                            </linearGradient>
-                          </defs>
-                          <Bar dataKey="value" fill="url(#barGradient3)" radius={[0, 10, 10, 0]} barSize={20} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  </div>
+ {/* Assets by Location */}
+ <div className="bg-card p-6 rounded-3xl border border-border shadow-sm">
+ <h2 className="text-lg font-bold text-foreground mb-6">Assets by Location (Deployed)</h2>
+ <ChartContainer className="h-64">
+ <ResponsiveContainer width="100%"height="100%"minWidth={0} minHeight={0}>
+ <BarChart data={processedData.inventory.assetByLocation} layout="vertical">
+ <CartesianGrid strokeDasharray="3 3"horizontal={false} stroke="currentColor"className="text-border"opacity={0.5} />
+ <XAxis type="number"axisLine={false} tickLine={false} tick={{fill:'currentColor', fontSize: 10}} className="text-muted-foreground" />
+ <YAxis dataKey="name"type="category"axisLine={false} tickLine={false} tick={{fill:'currentColor', fontSize: 10, fontWeight:'bold'}} width={100} className="text-muted-foreground" />
+ <RechartsTooltip 
+ cursor={{ fill:'transparent'}} 
+ content={({ active, payload }) => active && payload && payload.length && (
+ <div className="bg-card/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
+ {Number(payload[0].value).toLocaleString()}
+ </div>
+ )} 
+ />
+ <defs>
+ <linearGradient id="barGradient3"x1="0"y1="0"x2="1"y2="0">
+ <stop offset="0%"stopColor="#10b981"stopOpacity={1} />
+ <stop offset="100%"stopColor="#059669"stopOpacity={0.8} />
+ </linearGradient>
+ </defs>
+ <Bar dataKey="value"fill="url(#barGradient3)"radius={[0, 10, 10, 0]} barSize={20} />
+ </BarChart>
+ </ResponsiveContainer>
+ </ChartContainer>
+ </div>
 
-                  {/* Stock Assets by Province */}
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Stock Location (Warehouse)</h2>
-                    <ChartContainer className="h-64">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                        <BarChart data={processedData.inventory.stockByLocation} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
-                          <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
-                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 'bold'}} width={100} />
-                          <RechartsTooltip 
-                            cursor={{ fill: 'transparent' }} 
-                            content={({ active, payload }) => active && payload && payload.length && (
-                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
-                                {Number(payload[0].value).toLocaleString()}
-                              </div>
-                            )} 
-                          />
-                          <defs>
-                            <linearGradient id="barGradient4" x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor="#3b82f6" stopOpacity={1} />
-                              <stop offset="100%" stopColor="#2563eb" stopOpacity={0.8} />
-                            </linearGradient>
-                          </defs>
-                          <Bar dataKey="value" fill="url(#barGradient4)" radius={[0, 10, 10, 0]} barSize={20} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  </div>
+ {/* Stock Assets by Province */}
+ <div className="bg-card p-6 rounded-3xl border border-border shadow-sm">
+ <h2 className="text-lg font-bold text-foreground mb-6">Stock Location (Warehouse)</h2>
+ <ChartContainer className="h-64">
+ <ResponsiveContainer width="100%"height="100%"minWidth={0} minHeight={0}>
+ <BarChart data={processedData.inventory.stockByLocation} layout="vertical">
+ <CartesianGrid strokeDasharray="3 3"horizontal={false} stroke="currentColor"className="text-border"opacity={0.5} />
+ <XAxis type="number"axisLine={false} tickLine={false} tick={{fill:'currentColor', fontSize: 10}} className="text-muted-foreground" />
+ <YAxis dataKey="name"type="category"axisLine={false} tickLine={false} tick={{fill:'currentColor', fontSize: 10, fontWeight:'bold'}} width={100} className="text-muted-foreground" />
+ <RechartsTooltip 
+ cursor={{ fill:'transparent'}} 
+ content={({ active, payload }) => active && payload && payload.length && (
+ <div className="bg-card/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-sm font-black shadow-2xl border border-white/10">
+ {Number(payload[0].value).toLocaleString()}
+ </div>
+ )} 
+ />
+ <defs>
+ <linearGradient id="barGradient4"x1="0"y1="0"x2="1"y2="0">
+ <stop offset="0%"stopColor="#3b82f6"stopOpacity={1} />
+ <stop offset="100%"stopColor="#2563eb"stopOpacity={0.8} />
+ </linearGradient>
+ </defs>
+ <Bar dataKey="value"fill="url(#barGradient4)"radius={[0, 10, 10, 0]} barSize={20} />
+ </BarChart>
+ </ResponsiveContainer>
+ </ChartContainer>
+ </div>
 
-                  {/* Ownership Distribution */}
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm md:col-span-2">
-                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6">Ownership & Acquisition Model</h2>
-                    <ChartContainer className="h-[360px] md:h-64 flex flex-col md:flex-row items-center justify-center gap-6">
-                      <div className="w-full md:w-1/2 h-56 md:h-full relative">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                          <PieChart>
-                            <Pie
-                              data={processedData.inventory.ownershipDist}
-                              cx="50%" cy="50%"
-                              innerRadius={55}
-                              outerRadius={75}
-                              paddingAngle={3}
-                              dataKey="value"
-                              onMouseEnter={(_, index) => setHoveredSlice(processedData.inventory.ownershipDist[index])}
-                              onMouseLeave={() => setHoveredSlice(null)}
-                            >
-                              {processedData.inventory.ownershipDist.map((_: unknown, i: number) => (
-                                <Cell key={i} fill={["#6366f1", "#06b6d4", "#f43f5e"][i % 3]} stroke="rgba(255,255,255,0.05)" strokeWidth={2} className="cursor-pointer outline-none" />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
-                        {/* Center Text inside Donut */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-all duration-300">
-                          <span 
-                            className="text-[10px] font-bold uppercase tracking-widest transition-all duration-300"
-                            style={{ 
-                              color: hoveredSlice 
-                                ? ["#6366f1", "#06b6d4", "#f43f5e"][processedData.inventory.ownershipDist.indexOf(hoveredSlice) % 3] 
-                                : "#94a3b8" 
-                            }}
-                          >
-                            {hoveredSlice ? hoveredSlice.name : "Total"}
-                          </span>
-                          <span 
-                            className="text-2xl font-black transition-all duration-300"
-                            style={{ 
-                              color: hoveredSlice 
-                                ? ["#6366f1", "#06b6d4", "#f43f5e"][processedData.inventory.ownershipDist.indexOf(hoveredSlice) % 3] 
-                                : undefined 
-                            }}
-                          >
-                            {hoveredSlice 
-                              ? Number(hoveredSlice.value).toLocaleString() 
-                              : processedData.inventory.ownershipDist.reduce((acc: number, curr: { value?: number }) => acc + (curr.value || 0), 0)
-                            }
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex flex-row md:flex-col flex-wrap justify-center gap-x-4 gap-y-3 w-full md:w-1/2 px-2">
-                        {processedData.inventory.ownershipDist.map((entry: { name: string; value: number; color?: string }, i: number) => {
-                          const totalVal = processedData.inventory.ownershipDist.reduce((acc: number, curr: { value?: number }) => acc + (curr.value || 0), 0);
-                          const pct = totalVal > 0 ? ((entry.value / totalVal) * 100).toFixed(0) : 0;
-                          return (
-                            <div key={i} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/80 px-4 py-2.5 rounded-2xl border border-slate-100 dark:border-slate-800/40 transition-all shadow-sm">
-                              <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: ["#6366f1", "#06b6d4", "#f43f5e"][i % 3] }} />
-                              <div className="flex flex-col">
-                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{entry.name}</span>
-                                <span className="text-xs font-black text-slate-800 dark:text-slate-200">
-                                  {entry.value} Devices <span className="text-indigo-500 dark:text-indigo-400 font-extrabold ml-1">({pct}%)</span>
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </ChartContainer>
-                  </div>
-                </div>
-                </>
-              )}
-              </div>
-            )}
+ {/* Ownership Distribution */}
+ <div className="bg-card p-6 rounded-3xl border border-border shadow-sm md:col-span-2">
+ <h2 className="text-lg font-bold text-foreground mb-6">Ownership & Acquisition Model</h2>
+ <ChartContainer className="h-[360px] md:h-64 flex flex-col md:flex-row items-center justify-center gap-6">
+ <div className="w-full md:w-1/2 h-56 md:h-full relative">
+ <ResponsiveContainer width="100%"height="100%"minWidth={0} minHeight={0}>
+ <PieChart>
+ <Pie
+ data={processedData.inventory.ownershipDist}
+ cx="50%"cy="50%"
+ innerRadius={55}
+ outerRadius={75}
+ paddingAngle={3}
+ dataKey="value"
+ onMouseEnter={(_, index) => setHoveredSlice(processedData.inventory.ownershipDist[index])}
+ onMouseLeave={() => setHoveredSlice(null)}
+ >
+ {processedData.inventory.ownershipDist.map((_: unknown, i: number) => (
+ <Cell key={i} fill={["#6366f1","#06b6d4","#f43f5e"][i % 3]} stroke="rgba(255,255,255,0.05)"strokeWidth={2} className="cursor-pointer outline-none"/>
+ ))}
+ </Pie>
+ </PieChart>
+ </ResponsiveContainer>
+ {/* Center Text inside Donut */}
+ <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-all duration-300">
+ <span 
+ className="text-[10px] font-bold uppercase tracking-widest transition-all duration-300"
+ style={{ 
+ color: hoveredSlice 
+ ? ["#6366f1","#06b6d4","#f43f5e"][processedData.inventory.ownershipDist.indexOf(hoveredSlice) % 3] 
+ :"hsl(var(--muted-foreground))"
+ }}
+ >
+ {hoveredSlice ? hoveredSlice.name :"Total"}
+ </span>
+ <span 
+ className="text-2xl font-black transition-all duration-300"
+ style={{ 
+ color: hoveredSlice 
+ ? ["#6366f1","#06b6d4","#f43f5e"][processedData.inventory.ownershipDist.indexOf(hoveredSlice) % 3] 
+ : undefined 
+ }}
+ >
+ {hoveredSlice 
+ ? Number(hoveredSlice.value).toLocaleString() 
+ : processedData.inventory.ownershipDist.reduce((acc: number, curr: { value?: number }) => acc + (curr.value || 0), 0)
+ }
+ </span>
+ </div>
+ </div>
+ <div className="flex flex-row md:flex-col flex-wrap justify-center gap-x-4 gap-y-3 w-full md:w-1/2 px-2">
+ {processedData.inventory.ownershipDist.map((entry: { name: string; value: number; color?: string }, i: number) => {
+ const totalVal = processedData.inventory.ownershipDist.reduce((acc: number, curr: { value?: number }) => acc + (curr.value || 0), 0);
+ const pct = totalVal > 0 ? ((entry.value / totalVal) * 100).toFixed(0) : 0;
+ return (
+ <div key={i} className="flex items-center gap-3 bg-card hover:bg-muted dark:hover:bg-muted/80 px-4 py-2.5 rounded-2xl border border-border transition-all shadow-sm">
+ <div className="w-3 h-3 rounded-full shrink-0"style={{ backgroundColor: ["#6366f1","#06b6d4","#f43f5e"][i % 3] }} />
+ <div className="flex flex-col">
+ <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{entry.name}</span>
+ <span className="text-xs font-black text-foreground">
+ {entry.value} Devices <span className="font-extrabold ml-1"style={{ color: ["#6366f1","#06b6d4","#f43f5e"][i % 3] }}>({pct}%)</span>
+ </span>
+ </div>
+ </div>
+ );
+ })}
+ </div>
+ </ChartContainer>
+ </div>
+ </div>
+ </>
+ )}
+ </div>
+ )}
 
-            {/* TAB 3: REGIONAL ANALYTICS */}
-            {activeTab === 'regional' && (
-              <div className="space-y-8">
-                {isDataLoading ? (
-                  <div className="animate-pulse space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="h-96 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
-                      <div className="h-96 bg-slate-100 dark:bg-slate-800 rounded-3xl" />
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Subscriber Distribution by Province */}
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
-                      <Users className="w-5 h-5 text-indigo-500"/> Subscriber Distribution by Province
-                    </h2>
-                    <ChartContainer className="h-80">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                        <BarChart data={processedData.regional.provinceSubscribers} layout="vertical" margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
-                          <XAxis type="number" hide />
-                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 700}} width={120} />
-                          <RechartsTooltip 
-                            cursor={{ fill: 'transparent' }} 
-                            content={({ active, payload }) => active && payload && payload.length && (
-                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-xs font-black shadow-2xl border border-white/10">
-                                <p className="opacity-60 mb-1 uppercase tracking-tighter text-[9px]">{payload[0].payload.name}</p>
-                                <p className="text-sm font-black">{Number(payload[0].value).toLocaleString()}</p>
-                              </div>
-                            )} 
-                          />
-                          <defs>
-                            <linearGradient id="regGradient1" x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
-                              <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.8} />
-                            </linearGradient>
-                          </defs>
-                          <Bar dataKey="value" fill="url(#regGradient1)" radius={[0, 10, 10, 0]} barSize={24} label={{ position: 'right', fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  </div>
+ {/* TAB 3: REGIONAL ANALYTICS */}
+ {activeTab ==='regional'&& (
+ <div className="space-y-8">
+ {isDataLoading ? (
+ <div className="animate-pulse space-y-8">
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+ <div className="h-96 bg-muted rounded-3xl"/>
+ <div className="h-96 bg-muted rounded-3xl"/>
+ </div>
+ </div>
+ ) : (
+ <>
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+ {/* Subscriber Distribution by Province */}
+ <div className="bg-card p-6 rounded-3xl border border-border shadow-sm">
+ <h2 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
+ <Users className="w-5 h-5 text-primary"/> Subscriber Distribution by Province
+ </h2>
+ <ChartContainer className="h-80">
+ <ResponsiveContainer width="100%"height="100%"minWidth={0} minHeight={0}>
+ <BarChart data={processedData.regional.provinceSubscribers} layout="vertical"margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
+ <CartesianGrid strokeDasharray="3 3"horizontal={false} stroke="currentColor"className="text-border"opacity={0.5} />
+ <XAxis type="number"hide />
+ <YAxis dataKey="name"type="category"axisLine={false} tickLine={false} tick={{fill:'currentColor', fontSize: 12, fontWeight: 700}} width={120} className="text-muted-foreground" />
+ <RechartsTooltip 
+ cursor={{ fill:'transparent'}} 
+ content={({ active, payload }) => active && payload && payload.length && (
+ <div className="bg-card/90 backdrop-blur-md text-foreground px-4 py-2 rounded-2xl text-xs font-black shadow-2xl border border-border">
+ <p className="opacity-60 mb-1 uppercase tracking-tighter text-[9px]">{payload[0].payload.name}</p>
+ <p className="text-sm font-black">{Number(payload[0].value).toLocaleString()}</p>
+ </div>
+ )} 
+ />
+ <defs>
+ <linearGradient id="regGradient1"x1="0"y1="0"x2="1"y2="0">
+ <stop offset="0%"stopColor="#6366f1"stopOpacity={1} />
+ <stop offset="100%"stopColor="#4f46e5"stopOpacity={0.8} />
+ </linearGradient>
+ </defs>
+ <Bar dataKey="value"fill="url(#regGradient1)"radius={[0, 10, 10, 0]} barSize={24} label={{ position:'right', fill:'currentColor', fontSize: 10, fontWeight:'bold'}} className="text-muted-foreground" />
+ </BarChart>
+ </ResponsiveContainer>
+ </ChartContainer>
+ </div>
 
-                  {/* Distribution by City (Top 8) */}
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-cyan-500"/> Distribution by City (Top 8)
-                    </h2>
-                    <ChartContainer className="h-80">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                        <BarChart data={processedData.regional.cityDist} layout="vertical" margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.1} />
-                          <XAxis type="number" hide />
-                          <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 700}} width={100} />
-                          <RechartsTooltip 
-                            cursor={{ fill: 'transparent' }} 
-                            content={({ active, payload }) => active && payload && payload.length && (
-                              <div className="bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-xs font-black shadow-2xl border border-white/10">
-                                <p className="opacity-60 mb-1 uppercase tracking-tighter text-[9px]">{payload[0].payload.name}</p>
-                                <p className="text-sm font-black">{Number(payload[0].value).toLocaleString()}</p>
-                              </div>
-                            )} 
-                          />
-                          <defs>
-                            <linearGradient id="regGradient2" x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor="#06b6d4" stopOpacity={1} />
-                              <stop offset="100%" stopColor="#0891b2" stopOpacity={0.8} />
-                            </linearGradient>
-                          </defs>
-                          <Bar dataKey="value" fill="url(#regGradient2)" radius={[0, 10, 10, 0]} barSize={18} label={{ position: 'right', fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  </div>
-                </div>
+ {/* Distribution by City (Top 8) */}
+ <div className="bg-card p-6 rounded-3xl border border-border shadow-sm">
+ <h2 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
+ <MapPin className="w-5 h-5 text-cyan-500"/> Distribution by City (Top 8)
+ </h2>
+ <ChartContainer className="h-80">
+ <ResponsiveContainer width="100%"height="100%"minWidth={0} minHeight={0}>
+ <BarChart data={processedData.regional.cityDist} layout="vertical"margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
+ <CartesianGrid strokeDasharray="3 3"horizontal={false} stroke="currentColor"className="text-border"opacity={0.5} />
+ <XAxis type="number"hide />
+ <YAxis dataKey="name"type="category"axisLine={false} tickLine={false} tick={{fill:'currentColor', fontSize: 12, fontWeight: 700}} width={100} className="text-muted-foreground" />
+ <RechartsTooltip 
+ cursor={{ fill:'transparent'}} 
+ content={({ active, payload }) => active && payload && payload.length && (
+ <div className="bg-card/90 backdrop-blur-md text-foreground px-4 py-2 rounded-2xl text-xs font-black shadow-2xl border border-border">
+ <p className="opacity-60 mb-1 uppercase tracking-tighter text-[9px]">{payload[0].payload.name}</p>
+ <p className="text-sm font-black">{Number(payload[0].value).toLocaleString()}</p>
+ </div>
+ )} 
+ />
+ <defs>
+ <linearGradient id="regGradient2"x1="0"y1="0"x2="1"y2="0">
+ <stop offset="0%"stopColor="#06b6d4"stopOpacity={1} />
+ <stop offset="100%"stopColor="#0891b2"stopOpacity={0.8} />
+ </linearGradient>
+ </defs>
+ <Bar dataKey="value"fill="url(#regGradient2)"radius={[0, 10, 10, 0]} barSize={18} label={{ position:'right', fill:'currentColor', fontSize: 10, fontWeight:'bold'}} className="text-muted-foreground" />
+ </BarChart>
+ </ResponsiveContainer>
+ </ChartContainer>
+ </div>
+ </div>
 
-                {/* Profit per Province */}
-                <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                  <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-emerald-500"/> Profit Bersih tiap Province (Filter Range)
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {processedData.regional.provinceProfit.map((p: { name: string; value: number; formatted: string }, i: number) => (
-                      <div key={i} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                        <span className="font-bold text-slate-600 dark:text-slate-300 text-sm lg:text-base whitespace-nowrap">{p.name}</span>
-                        <span className={`font-black text-sm lg:text-base whitespace-nowrap ${p.value >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{p.formatted}</span>
-                      </div>
-                    ))}
-                    {processedData.regional.provinceProfit.length === 0 && <p className="text-slate-500 italic">No financial data for selected filters.</p>}
-                  </div>
-                </div>
-                </>
-              )}
-              </div>
-            )}
-          </m.div>
-        </AnimatePresence>
-      </div>
-    </div>
-  );
+ {/* Profit per Province */}
+ <div className="bg-card p-8 rounded-3xl border border-border shadow-sm">
+ <h2 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
+ <DollarSign className="w-5 h-5 text-emerald-500"/> Profit Bersih tiap Province (Filter Range)
+ </h2>
+ <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+ {processedData.regional.provinceProfit.map((p: { name: string; value: number; formatted: string }, i: number) => (
+ <div key={i} className="flex justify-between items-center p-4 bg-muted rounded-2xl border border-border">
+ <span className="font-bold text-muted-foreground text-xs lg:text-sm whitespace-nowrap">{p.name}</span>
+ <span className={`font-black text-sm lg:text-base whitespace-nowrap ${p.value >= 0 ?'text-emerald-500':'text-rose-500'}`}>{p.formatted}</span>
+ </div>
+ ))}
+ {processedData.regional.provinceProfit.length === 0 && <p className="text-muted-foreground italic">No financial data for selected filters.</p>}
+ </div>
+ </div>
+ </>
+ )}
+ </div>
+ )}
+ </m.div>
+ </AnimatePresence>
+ </div>
+ </div>
+ );
 }

@@ -1,72 +1,72 @@
-import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
-import { LoginForm } from "./_components/LoginForm";
+import Link from"next/link";
+import { ShieldCheck } from"lucide-react";
+import { LoginForm } from"./_components/LoginForm";
 
 export default function LoginPage() {
-  return (
-    <div className="min-h-screen w-full flex bg-background overflow-hidden font-sans">
-      {/* Left side - Visual & Branding (Server Rendered) */}
-      <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-primary via-blue-700 to-indigo-900 relative p-16 flex-col justify-between overflow-hidden">
-        <div 
-          className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-float"
-        />
-        <div 
-          className="absolute -bottom-48 -right-48 w-[500px] h-[500px] bg-blue-400/20 rounded-full blur-3xl animate-float-delayed"
-        />
+ return (
+ <div className="min-h-screen w-full flex bg-background overflow-hidden font-sans">
+ {/* Left side - Visual & Branding (Server Rendered) */}
+ <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-primary via-blue-700 to-indigo-900 relative p-16 flex-col justify-between overflow-hidden">
+ <div 
+ className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-float"
+ />
+ <div 
+ className="absolute -bottom-48 -right-48 w-[500px] h-[500px] bg-blue-400/20 rounded-full blur-3xl animate-float-delayed"
+ />
 
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-2xl">
-            <span className="text-primary font-black text-2xl">IF</span>
-          </div>
-          <span className="text-2xl font-black text-white tracking-tight">ISP-FinTrack</span>
-        </div>
+ <div className="relative z-10 flex items-center gap-3">
+ <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-2xl">
+ <span className="text-primary font-black text-2xl">IF</span>
+ </div>
+ <span className="text-2xl font-black text-white tracking-tight">ISP-FinTrack</span>
+ </div>
 
-        <div className="relative z-10 max-w-lg">
-          <div>
-            <h1 className="text-6xl font-black text-white leading-[1.1] mb-6">
-              Empowering <span className="text-blue-300">ISP Growth</span> Through Data.
-            </h1>
-            <p className="text-blue-100/80 text-xl leading-relaxed font-medium">
-              Enterprise-grade financial intelligence, income automation, and inventory control tailored for internet service providers.
-            </p>
-          </div>
-          <div className="mt-12 flex gap-8">
-            <div className="flex flex-col gap-1">
-              <span className="text-3xl font-black text-white">1.2B+</span>
-              <span className="text-sm font-bold text-blue-200/60 uppercase tracking-widest text-[10px]">Monthly Revenue</span>
-            </div>
-            <div className="w-px h-12 bg-white/10" />
-            <div className="flex flex-col gap-1">
-              <span className="text-3xl font-black text-white">88%</span>
-              <span className="text-sm font-bold text-blue-200/60 uppercase tracking-widest text-[10px]">Efficiency Gain</span>
-            </div>
-          </div>
-        </div>
+ <div className="relative z-10 max-w-lg">
+ <div>
+ <h1 className="text-6xl font-black text-white leading-[1.1] mb-6">
+ Empowering <span className="text-blue-300">ISP Growth</span> Through Data.
+ </h1>
+ <p className="text-blue-100/80 text-xl leading-relaxed font-medium">
+ Enterprise-grade financial intelligence, income automation, and inventory control tailored for internet service providers.
+ </p>
+ </div>
+ <div className="mt-12 flex gap-8">
+ <div className="flex flex-col gap-1">
+ <span className="text-3xl font-black text-white">1.2B+</span>
+ <span className="text-sm font-bold text-blue-200/60 uppercase tracking-widest text-[10px]">Monthly Revenue</span>
+ </div>
+ <div className="w-px h-12 bg-white/10"/>
+ <div className="flex flex-col gap-1">
+ <span className="text-3xl font-black text-white">88%</span>
+ <span className="text-sm font-bold text-blue-200/60 uppercase tracking-widest text-[10px]">Efficiency Gain</span>
+ </div>
+ </div>
+ </div>
 
-        <div className="relative z-10 flex items-center gap-4 text-blue-200/60 text-sm font-bold">
-          <ShieldCheck size={18} className="text-blue-300" />
-          ISO 27001 Certified Enterprise Financial Platform
-        </div>
-      </div>
+ <div className="relative z-10 flex items-center gap-4 text-blue-200/60 text-sm font-bold">
+ <ShieldCheck size={18} className="text-blue-300"/>
+ ISO 27001 Certified Enterprise Financial Platform
+ </div>
+ </div>
 
-      {/* Right side - Form (Client Component) */}
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 md:p-24 relative">
-        <LoginForm />
-        
-        <div className="mt-8 flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-          <Link href="/privacy-policy" className="hover:text-primary transition-colors">
-            Kebijakan Privasi
-          </Link>
-          <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-          <Link href="/terms-of-service" className="hover:text-primary transition-colors">
-            Syarat & Ketentuan
-          </Link>
-        </div>
+ {/* Right side - Form (Client Component) */}
+ <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 md:p-24 relative">
+ <LoginForm />
+ 
+ <div className="mt-8 flex items-center gap-4 text-sm text-muted-foreground">
+ <Link href="/privacy-policy"className="hover:text-primary transition-colors">
+ Kebijakan Privasi
+ </Link>
+ <span className="w-1 h-1 rounded-full bg-slate-300"/>
+ <Link href="/terms-of-service"className="hover:text-primary transition-colors">
+ Syarat & Ketentuan
+ </Link>
+ </div>
 
-        <div className="absolute bottom-8 lg:hidden text-slate-400 text-xs font-bold uppercase tracking-widest">
-          ISP-FinTrack Enterprise v2.4.0
-        </div>
-      </div>
-    </div>
-  );
+ <div className="absolute bottom-8 lg:hidden text-muted-foreground text-xs font-bold uppercase tracking-widest">
+ ISP-FinTrack Enterprise v2.4.0
+ </div>
+ </div>
+ </div>
+ );
 }
