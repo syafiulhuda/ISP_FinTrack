@@ -34,20 +34,6 @@ const PARSEABLE_EXTENSIONS = new Set([
 '.ts','.tsx','.js','.jsx','.mjs','.cjs',
 ]);
 
-/**
- * Safe import-path extraction patterns.
- * These ONLY match the path string — no nested quantifiers that could
- * cause catastrophic backtracking on minified or machine-generated files.
- */
-const IMPORT_PATTERNS: RegExp[] = [
- // from'...'(covers: import … from, export … from)
- /from\s+['"]([^'"\r\n]+)['"]/g,
- // require('...')
- /require\s*\(\s*['"]([^'"\r\n]+)['"]\s*\)/g,
- // dynamic import('...')
- /\bimport\s*\(\s*['"]([^'"\r\n]+)['"]\s*\)/g,
-];
-
 // ─────────────────────────────────────────────────────────────────────────────
 // FileScanner class
 // ─────────────────────────────────────────────────────────────────────────────
@@ -252,18 +238,22 @@ export class FileScanner {
  return FileType.SOURCE;
  }
 
- /** Extracts all import specifiers from a source string */
- private _extractImports(source: string): string[] {
- const imports: string[] = [];
- for (const pattern of IMPORT_PATTERNS) {
- pattern.lastIndex = 0;
- let match: RegExpExecArray | null;
- while ((match = pattern.exec(source)) !== null) {
- if (match[1]) imports.push(match[1]);
- }
- }
- return [...new Set(imports)];
- }
+  /** Extracts all import specifiers from a source string */
+  private _extractImports(source: string): string[] {
+    const patterns: RegExp[] = [
+      /\bfrom\s*['"]([^'"\r\n]+)['"]/g,
+      /\brequire\s*\(\s*['"]([^'"\r\n]+)['"]\s*\)/g,
+      /\bimport\s*\(\s*['"]([^'"\r\n]+)['"]\s*\)/g,
+    ];
+    const imports: string[] = [];
+    for (const pattern of patterns) {
+      let match: RegExpExecArray | null;
+      while ((match = pattern.exec(source)) !== null) {
+        if (match[1]) imports.push(match[1]);
+      }
+    }
+    return [...new Set(imports)];
+  }
 
  /**
  * Resolves a raw import specifier to a **relative** path.

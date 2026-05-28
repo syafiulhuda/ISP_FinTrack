@@ -188,12 +188,9 @@ export default function FinancePage() {
  toast.success("File uploaded! Starting OCR analysis...", { duration: 3000 });
 
  try {
- console.log("Starting OCR with safe LOCAL worker...");
+ console.log("Starting OCR with Tesseract CDN...");
  const worker = await Tesseract.createWorker('eng', 1, {
- workerBlobURL: false,
  logger: m => console.log("OCR:", m),
- workerPath:'/tesseract/worker.min.js',
- corePath:'/tesseract/tesseract-core.wasm.js',
  });
  const ret = await worker.recognize(file);
  const text = ret.data.text;
