@@ -25,7 +25,7 @@ const isServerless = process.env.VERCEL === '1';
 const poolConfig: PoolConfig = {
   max: isServerless ? 2 : 10, // Maximum number of clients in the pool
   idleTimeoutMillis: isServerless ? 15000 : 30000, // Close idle clients sooner in serverless
-  connectionTimeoutMillis: 5000, // Return an error if a connection takes longer than 5 seconds
+  connectionTimeoutMillis: 30000, // 30 seconds to allow for Neon scale-to-zero cold starts
 };
 
 if (env.data.DATABASE_URL) {

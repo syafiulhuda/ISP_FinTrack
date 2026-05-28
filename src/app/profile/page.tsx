@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { m, Variants, AnimatePresence } from "framer-motion";
-import { Edit2, Laptop, Smartphone, Verified, ChevronRight, Info, Loader2, Camera, Lock, ArrowRight, X } from "lucide-react";
+import { Edit2, Laptop, Smartphone, Verified, ChevronRight, Info, Loader2, Camera, Lock, ArrowRight, X, AlertTriangle, ShieldAlert, Copy } from "lucide-react";
 import { getAdminProfile, updateAdminProfile } from "@/actions/admin";
 import { Admin } from "@/types";
 import { changePasswordAction } from "@/actions/auth";
+import { getActiveSessions, revokeSession, revokeOtherSessions, generateTwoFactorSecret, verifyAndEnableTwoFactor, disableTwoFactor, checkTwoFactorStatus, getSecurityLogs, deactivateAccount } from "@/actions/profile";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { LoadingState } from "@/components/LoadingState";
@@ -46,9 +47,24 @@ const getTimeAgo = (dateString: string | null | undefined) => {
 export default function ProfilePage() {
   const queryClient = useQueryClient();
   
-  const { data: profileData, isLoading } = useQuery({
+  const { data: profileData, isLoading: isProfileLoading } = useQuery({
     queryKey: ['adminProfile'],
     queryFn: getAdminProfile
+  });
+
+  const { data: sessions = [], isLoading: isSessionsLoading } = useQuery({
+    queryKey: ['adminSessions'],
+    queryFn: getActiveSessions
+  });
+
+  const { data: securityLogs = [], isLoading: isLogsLoading } = useQuery({
+    queryKey: ['adminSecurityLogs'],
+    queryFn: getSecurityLogs
+  });
+
+  const { data: twoFactorStatus = { enabled: false } } = useQuery({
+    queryKey: ['adminTwoFactorStatus'],
+    queryFn: checkTwoFactorStatus
   });
   
   const [isEditing, setIsEditing] = useState(false);
@@ -63,6 +79,19 @@ export default function ProfilePage() {
   // Avatar Modal States
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [avatarInputUrl, setAvatarInputUrl] = useState('');
+
+  // 2FA Modal States
+  const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [twoFactorSecret, setTwoFactorSecret] = useState('');
+  const [otpToken, setOtpToken] = useState('');
+  const [is2FALoading, setIs2FALoading] = useState(false);
+  const [disable2FAPassword, setDisable2FAPassword] = useState('');
+
+  // Danger Zone Modal States
+  const [showManualKey, setShowManualKey] = useState(false);
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   useEffect(() => {
     if (profileData && !editData) {
@@ -138,8 +167,161 @@ export default function ProfilePage() {
     setIsAvatarModalOpen(false);
   };
 
-  if (isLoading) {
-    return <LoadingState message="Memuat profil admin..." />;
+  // Profile Features Handlers
+  const handleRevokeSession = async (id: string) => {
+    if (!confirm('Are you sure you want to revoke this session?')) return;
+    try {
+      await revokeSession(id);
+      queryClient.invalidateQueries({ queryKey: ['adminSessions'] });
+      toast.success('Session revoked successfully');
+    } catch (error) {
+      toast.error('Failed to revoke session');
+    }
+  };
+
+  const handleRevokeOtherSessions = async () => {
+    if (!confirm('Are you sure you want to logout from all other devices?')) return;
+    try {
+      // Find current session ID conceptually (the active token is handled backend)
+      const currentToken = ""; // backend action uses current token from cookie
+      await revokeOtherSessions(currentToken);
+      queryClient.invalidateQueries({ queryKey: ['adminSessions'] });
+      toast.success('Logged out from other devices');
+    } catch (error) {
+      toast.error('Failed to revoke other sessions');
+    }
+  };
+
+  const handleManage2FA = async () => {
+    if (is2FAModalOpen) {
+      setIs2FAModalOpen(false);
+      return;
+    }
+    if (twoFactorStatus.enabled) {
+      setIs2FAModalOpen(true);
+    } else {
+      try {
+        setIs2FALoading(true);
+        const { qrCode, secret } = await generateTwoFactorSecret();
+        setQrCodeUrl(qrCode);
+        setTwoFactorSecret(secret);
+        setIs2FAModalOpen(true);
+      } catch (error) {
+        toast.error('Failed to generate 2FA secret');
+      } finally {
+        setIs2FALoading(false);
+      }
+    }
+  };
+
+  const handleVerify2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIs2FALoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('token', otpToken);
+      formData.append('secret', twoFactorSecret);
+      
+      const res = await verifyAndEnableTwoFactor(formData);
+      if (res.success) {
+        toast.success('2FA Enabled Successfully');
+        queryClient.invalidateQueries({ queryKey: ['adminTwoFactorStatus'] });
+        queryClient.invalidateQueries({ queryKey: ['adminSecurityLogs'] });
+        setIs2FAModalOpen(false);
+        setOtpToken('');
+      } else {
+        toast.error(res.error || 'Invalid Verification Code');
+      }
+    } catch (error) {
+      toast.error('Failed to verify 2FA');
+    } finally {
+      setIs2FALoading(false);
+    }
+  };
+
+  const handleDisable2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIs2FALoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('password', disable2FAPassword);
+      
+      const res = await disableTwoFactor(formData);
+      if (res.success) {
+        toast.success('2FA Disabled Successfully');
+        queryClient.invalidateQueries({ queryKey: ['adminTwoFactorStatus'] });
+        queryClient.invalidateQueries({ queryKey: ['adminSecurityLogs'] });
+        setIs2FAModalOpen(false);
+        setDisable2FAPassword('');
+      } else {
+        toast.error(res.error || 'Failed to disable 2FA');
+      }
+    } catch (error) {
+      toast.error('Failed to disable 2FA');
+    } finally {
+      setIs2FALoading(false);
+    }
+  };
+
+  const handleDeactivateAccount = async () => {
+    setIsDeactivating(true);
+    try {
+      const res = await deactivateAccount();
+      if (res.success) {
+        toast.success('Account deactivated. Redirecting...');
+        setTimeout(() => window.location.href = '/login', 2000);
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to deactivate account');
+      setIsDeactivating(false);
+      setIsDeactivateModalOpen(false);
+    }
+  };
+
+  if (isProfileLoading || isSessionsLoading || isLogsLoading) {
+    return (
+      <div className="space-y-8 pb-10 animate-pulse">
+        {/* Profile Header Skeleton */}
+        <section className="mb-12">
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-6 text-center md:text-left">
+            <div className="w-32 h-32 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-white dark:border-slate-950 shadow-xl"></div>
+            <div className="flex-1 pb-2 w-full flex flex-col items-center md:items-start gap-2">
+              <div className="w-24 h-3 bg-slate-200 dark:bg-slate-800 rounded-full mt-2"></div>
+              <div className="w-48 h-8 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+              <div className="w-72 h-4 bg-slate-200 dark:bg-slate-800 rounded-full mt-2"></div>
+            </div>
+          </div>
+        </section>
+        
+        {/* Layout Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-xl border border-slate-100 dark:border-slate-800">
+               <div className="w-40 h-6 bg-slate-200 dark:bg-slate-800 rounded-full mb-8"></div>
+               <div className="space-y-6">
+                 {[1, 2, 3].map(i => (
+                   <div key={i} className="space-y-2">
+                     <div className="w-20 h-3 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+                     <div className="w-full h-12 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+                   </div>
+                 ))}
+               </div>
+             </div>
+          </div>
+          <div className="space-y-6">
+             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-xl border border-slate-100 dark:border-slate-800">
+               <div className="w-32 h-6 bg-slate-200 dark:bg-slate-800 rounded-full mb-6"></div>
+               <div className="w-full h-24 bg-slate-200 dark:bg-slate-800 rounded-2xl mb-4"></div>
+               <div className="w-full h-12 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+             </div>
+             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-xl border border-slate-100 dark:border-slate-800">
+               <div className="w-32 h-6 bg-slate-200 dark:bg-slate-800 rounded-full mb-6"></div>
+               <div className="w-full h-20 bg-slate-200 dark:bg-slate-800 rounded-2xl mb-4"></div>
+             </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!profileData) {
@@ -178,33 +360,71 @@ export default function ProfilePage() {
                 <button 
                   onClick={() => setIsAvatarModalOpen(false)}
                   className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                  aria-label="Close modal"
                 >
                   <X size={18} className="text-slate-400" />
                 </button>
               </div>
               <form onSubmit={handleSaveAvatar} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label htmlFor="avatar-url-input" className="text-xs font-bold uppercase text-slate-500 tracking-wider">
+                  <label className="text-xs font-bold uppercase text-slate-500 tracking-wider">
                     Image URL
                   </label>
                   <input 
-                    id="avatar-url-input"
-                    type="url"
-                    required
+                    type="url" required
                     value={avatarInputUrl}
                     onChange={(e) => setAvatarInputUrl(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-slate-800 border border-transparent focus:border-primary/20 rounded-xl py-2.5 px-4 outline-none transition-all font-medium text-sm text-slate-900 dark:text-white"
-                    placeholder="https://example.com/avatar.jpg"
                   />
                 </div>
                 <button 
                   type="submit"
-                  className="w-full bg-primary text-white rounded-xl py-3 font-bold shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all text-sm"
+                  className="w-full bg-primary text-white rounded-xl py-3 font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-all text-sm"
                 >
                   Save Avatar
                 </button>
               </form>
+            </m.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+
+
+      <AnimatePresence>
+        {isDeactivateModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <m.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-xl max-w-md w-full border-2 border-red-500/20"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+                  <ShieldAlert size={32} />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Deactivate Account</h3>
+                <p className="text-sm text-slate-500 mb-6">
+                  This action will immediately revoke your access and all active sessions. 
+                  You will not be able to log in again until another administrator reactivates your account.
+                </p>
+                <div className="w-full flex gap-3">
+                  <button 
+                    onClick={() => setIsDeactivateModalOpen(false)}
+                    className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleDeactivateAccount}
+                    disabled={isDeactivating}
+                    className="flex-1 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isDeactivating && <Loader2 className="animate-spin" size={16} />}
+                    Deactivate Now
+                  </button>
+                </div>
+              </div>
             </m.div>
           </div>
         )}
@@ -217,6 +437,7 @@ export default function ProfilePage() {
             <div className="w-32 h-32 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 border-4 border-white dark:border-slate-950 shadow-xl relative">
               <Image
                 unoptimized
+                priority
                 width={128}
                 height={128}
                 alt="Profile"
@@ -366,7 +587,7 @@ export default function ProfilePage() {
             </div>
           </m.div>
 
-          {/* Session Management (Moved here to eliminate gaps) */}
+          {/* Session Management */}
           <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800 flex-1">
             <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-2">
               Session Management
@@ -375,50 +596,48 @@ export default function ProfilePage() {
               Review and manage your active sessions across different devices and browsers.
             </p>
             <div className="space-y-4">
-              {/* Session Item 1 */}
-              <div className="flex flex-wrap items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-700 rounded-full text-primary shadow-sm shrink-0">
-                    <Laptop size={18} />
+              {sessions.map((session: any, index: number) => {
+                const isMobile = session.device_info.toLowerCase().includes('mobile') || session.device_info.toLowerCase().includes('android') || session.device_info.toLowerCase().includes('iphone');
+                const isCurrent = index === 0; // The first one returned by our query is usually the current active due to last_active DESC, but actually current session could be anywhere. For simplicity, we just mark the first or by matching token, but we don't have token in frontend. We'll assume the most recently active is current.
+
+                return (
+                  <div key={session.id} className="flex flex-wrap items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 flex items-center justify-center rounded-full shadow-sm shrink-0 ${isCurrent ? 'bg-white dark:bg-slate-700 text-primary' : 'bg-white dark:bg-slate-700 text-slate-400'}`}>
+                        {isMobile ? <Smartphone size={18} /> : <Laptop size={18} />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                          {session.device_info}
+                        </p>
+                        <p className="text-[11px] text-slate-500 uppercase tracking-wider mt-0.5">
+                          {session.location} • {isCurrent ? 'Current Session' : getTimeAgo(session.last_active)} • {session.ip_address}
+                        </p>
+                      </div>
+                    </div>
+                    {isCurrent ? (
+                      <span className="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-wider">
+                        Active Now
+                      </span>
+                    ) : (
+                      <button onClick={() => handleRevokeSession(session.id)} className="text-red-600 dark:text-red-500 text-xs font-bold hover:underline">
+                        Revoke
+                      </button>
+                    )}
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                      ASUS ExpertBook • Chrome
-                    </p>
-                    <p className="text-[11px] text-slate-500 uppercase tracking-wider mt-0.5">
-                      Jakarta, Indonesia • Current Session
-                    </p>
-                  </div>
-                </div>
-                <span className="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-wider">
-                  Active Now
-                </span>
-              </div>
-              {/* Session Item 2 */}
-              <div className="flex flex-wrap items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-700 rounded-full text-slate-400 shadow-sm shrink-0">
-                    <Smartphone size={18} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                      Samsung Galaxy S24 • App
-                    </p>
-                    <p className="text-[11px] text-slate-500 uppercase tracking-wider mt-0.5">
-                      Jakarta, Indonesia • 2 hours ago
-                    </p>
-                  </div>
-                </div>
-                <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="text-orange-600 dark:text-orange-500 text-xs font-bold hover:underline">
-                  Revoke
+                );
+              })}
+              {sessions.length === 0 && (
+                 <p className="text-sm text-slate-500 italic">No active sessions found.</p>
+              )}
+            </div>
+            {sessions.length > 1 && (
+              <div className="mt-8 flex justify-end">
+                <button onClick={handleRevokeOtherSessions} className="text-orange-600 dark:text-orange-500 text-sm font-bold px-4 py-2 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded-xl transition-all">
+                  Logout from all other devices
                 </button>
               </div>
-            </div>
-            <div className="mt-8 flex justify-end">
-              <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="text-orange-600 dark:text-orange-500 text-sm font-bold px-4 py-2 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded-xl transition-all">
-                Logout from all other devices
-              </button>
-            </div>
+            )}
           </m.div>
         </div>
 
@@ -541,9 +760,15 @@ export default function ProfilePage() {
                     </label>
                     <p className="text-xs text-slate-500 mt-1">Recommended for admins</p>
                   </div>
-                  <div className="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-wider">
-                    Enabled
-                  </div>
+                  {twoFactorStatus.enabled ? (
+                    <div className="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-wider">
+                      Enabled
+                    </div>
+                  ) : (
+                    <div className="px-3 py-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-[10px] font-black rounded-full uppercase tracking-wider">
+                      Disabled
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl">
                   <Verified className="text-primary shrink-0" size={20} />
@@ -551,54 +776,168 @@ export default function ProfilePage() {
                     <p className="text-[11px] font-bold text-slate-900 dark:text-slate-100 truncate">
                       Authenticator App
                     </p>
-                    <p className="text-[10px] text-slate-500 truncate">Google Authenticator active</p>
+                    <p className="text-[10px] text-slate-500 truncate">{twoFactorStatus.enabled ? 'Google Authenticator active' : 'Not configured'}</p>
                   </div>
-                  <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="text-primary text-[10px] font-bold uppercase tracking-wider hover:underline shrink-0">
-                    Manage
+                  <button onClick={handleManage2FA} className="text-primary text-[10px] font-bold uppercase tracking-wider hover:underline shrink-0">
+                    {is2FAModalOpen ? 'Cancel' : twoFactorStatus.enabled ? 'Manage' : 'Setup'}
                   </button>
                 </div>
+                <AnimatePresence>
+                  {is2FAModalOpen && (
+                    <m.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                      <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
+                        {!twoFactorStatus.enabled ? (
+                          <form onSubmit={handleVerify2FA} className="space-y-4">
+                            <div className="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-xl mb-6 border border-blue-100 dark:border-blue-900/30">
+                              <div className="text-[11px] md:text-xs text-slate-600 dark:text-slate-400 font-medium space-y-1.5 text-left">
+                                <p>1. Install <strong className="text-slate-900 dark:text-slate-200">Google Authenticator</strong> or <strong className="text-slate-900 dark:text-slate-200">Authy</strong>.</p>
+                                <p>2. Scan the QR code below.</p>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-center mb-6">
+                              <div className="p-3 bg-white rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.05)] border border-slate-100 dark:border-slate-800">
+                                {qrCodeUrl ? (
+                                  <img src={qrCodeUrl} alt="2FA QR Code" className="w-44 h-44 rounded-xl object-contain" />
+                                ) : (
+                                  <div className="w-44 h-44 bg-slate-50 animate-pulse rounded-xl" />
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl mb-6 border border-slate-100 dark:border-slate-800">
+                              <button 
+                                type="button"
+                                onClick={() => setShowManualKey(!showManualKey)}
+                                className="w-full flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors"
+                              >
+                                <span>Or enter this setup key manually</span>
+                                <ChevronRight size={14} className={`transform transition-transform ${showManualKey ? 'rotate-90' : ''}`} />
+                              </button>
+                              
+                              <AnimatePresence>
+                                {showManualKey && (
+                                  <m.div 
+                                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                    animate={{ opacity: 1, height: "auto", marginTop: 12 }}
+                                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="flex items-center justify-between gap-2 bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                                      <p className="font-mono text-sm tracking-[0.15em] text-slate-800 dark:text-slate-200 select-all truncate">
+                                        {twoFactorSecret}
+                                      </p>
+                                      <button 
+                                        type="button" 
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(twoFactorSecret);
+                                          toast.success("Secret copied to clipboard");
+                                        }}
+                                        className="p-1.5 text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors shrink-0"
+                                      >
+                                        <Copy size={16} />
+                                      </button>
+                                    </div>
+                                  </m.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+
+                            <div className="space-y-2 mb-2">
+                              <label className="text-[11px] font-black uppercase text-slate-500 tracking-wider flex justify-center">
+                                3. Enter 6-Digit Code
+                              </label>
+                              <div className="relative group w-full">
+                                <ShieldAlert className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors z-20" size={20} />
+                                
+                                <input 
+                                  type="text" required maxLength={6}
+                                  value={otpToken}
+                                  onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, ''))}
+                                  className="w-full text-left tracking-[0.5em] sm:tracking-[0.75em] font-mono bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 pl-14 pr-2 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-xl font-bold text-slate-900 dark:text-white relative z-10 bg-transparent"
+                                />
+
+                                {/* Background placeholder zeros */}
+                                <div className="absolute left-14 top-1/2 -translate-y-1/2 pointer-events-none flex text-xl font-bold font-mono tracking-[0.5em] sm:tracking-[0.75em] text-slate-300 dark:text-slate-700 z-0 select-none">
+                                  <span className="text-transparent">{otpToken}</span>
+                                  <span>{'0'.repeat(Math.max(0, 6 - otpToken.length))}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <button 
+                              type="submit" disabled={is2FALoading || otpToken.length < 6}
+                              className="w-full bg-gradient-to-r from-primary to-blue-600 text-white rounded-2xl py-4 font-black shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:opacity-90 transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {is2FALoading ? <Loader2 className="animate-spin" size={18} /> : <Verified size={18} />}
+                              Verify & Enable 2FA
+                            </button>
+                          </form>
+                        ) : (
+                          <form onSubmit={handleDisable2FA} className="space-y-4">
+                            <p className="text-sm text-slate-500 mb-4">To disable Two-Factor Authentication, please enter your password.</p>
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-bold uppercase text-slate-500 tracking-wider">
+                                Password
+                              </label>
+                              <div className="relative">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                <input 
+                                  type="password" required
+                                  value={disable2FAPassword}
+                                  onChange={(e) => setDisable2FAPassword(e.target.value)}
+                                  className="w-full pl-11 pr-4 bg-slate-50 dark:bg-slate-800 border border-transparent focus:border-primary/20 rounded-xl py-2.5 outline-none transition-all font-medium text-sm text-slate-900 dark:text-white"
+                                />
+                              </div>
+                            </div>
+                            <button 
+                              type="submit" disabled={is2FALoading}
+                              className="w-full bg-red-600 text-white rounded-xl py-3 font-bold shadow-lg shadow-red-600/20 hover:opacity-90 transition-all text-sm flex items-center justify-center gap-2"
+                            >
+                              {is2FALoading && <Loader2 className="animate-spin" size={16} />}
+                              Disable 2FA
+                            </button>
+                          </form>
+                        )}
+                      </div>
+                    </m.div>
+                  )}
+                </AnimatePresence>
               </div>
               <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
                 <label className="text-sm font-bold block mb-4 text-slate-700 dark:text-slate-300">
                   Security Logs
                 </label>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
-                    <div>
-                      <p className="text-[11px] font-bold text-slate-900 dark:text-slate-100">
-                        Successful login
-                      </p>
-                      <p className="text-[10px] text-slate-500">Today, 09:12 AM</p>
+                <div className="space-y-4 max-h-48 overflow-y-auto pr-2">
+                  {securityLogs.map((log: any) => (
+                    <div key={log.created_at + log.action} className="flex items-start gap-3">
+                      <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${log.action.toLowerCase().includes('fail') || log.action.toLowerCase().includes('deactivate') ? 'bg-red-500' : 'bg-green-500'}`} />
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-900 dark:text-slate-100">
+                          {log.action}
+                        </p>
+                        <p className="text-[10px] text-slate-500">{new Date(log.created_at).toLocaleString()} • {log.ip_address}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 mt-1.5 shrink-0" />
-                    <div>
-                      <p className="text-[11px] font-bold text-slate-900 dark:text-slate-100">
-                        Password change request
-                      </p>
-                      <p className="text-[10px] text-slate-500">Oct 12, 2023</p>
-                    </div>
-                  </div>
+                  ))}
+                  {securityLogs.length === 0 && (
+                    <p className="text-[11px] text-slate-500">No security logs available.</p>
+                  )}
                 </div>
-          <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="mt-6 w-full text-center text-[11px] font-bold text-primary uppercase tracking-wider hover:bg-blue-50 dark:hover:bg-blue-900/20 py-3 rounded-xl transition-all">
-            View Full History
-          </button>
               </div>
             </div>
           </m.div>
 
-          {/* Danger Zone (Moved here to eliminate gaps) */}
+          {/* Danger Zone */}
           <m.div variants={itemVariants} className="bg-white dark:bg-slate-900/50 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden group flex-1">
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-600" />
-            <h3 className="text-xl font-bold tracking-tight text-red-600 dark:text-red-500 mb-4">
-              Danger Zone
+            <h3 className="text-xl font-bold tracking-tight text-red-600 dark:text-red-500 mb-4 flex items-center gap-2">
+              <AlertTriangle size={20} /> Danger Zone
             </h3>
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
               Actions here are permanent. Please proceed with caution if you are attempting to deactivate this administrator account.
             </p>
-            <button onClick={() => toast.info("Fitur ini segera hadir 🚀")} className="w-full py-3 border-2 border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-500 text-sm font-bold rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95">
+            <button onClick={() => setIsDeactivateModalOpen(true)} className="w-full py-3 border-2 border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-500 text-sm font-bold rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95">
               Deactivate Account
             </button>
           </m.div>

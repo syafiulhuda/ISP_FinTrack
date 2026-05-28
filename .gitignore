@@ -29,6 +29,9 @@
 # api
 /api
 
+# scratch
+/scratch
+
 # misc
 .DS_Store
 *.pem

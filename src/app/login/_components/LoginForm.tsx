@@ -5,7 +5,7 @@ import { Lock, Mail, ArrowRight, ShieldCheck, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { loginAction, requestPasswordReset, getUsersForResetDropdown } from "@/actions/auth";
+import { loginAction, requestPasswordReset, getUsersForResetDropdown, verifyLogin2FA } from "@/actions/auth";
 
 export function LoginForm() {
   const router = useRouter();
@@ -16,6 +16,11 @@ export function LoginForm() {
   const [success, setSuccess] = useState("");
   const [shake, setShake] = useState(false);
   const [isForgotMode, setIsForgotMode] = useState(false);
+  
+  // 2FA states
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [otpToken, setOtpToken] = useState("");
+  const [adminId, setAdminId] = useState<number | null>(null);
   
   // States for Password Reset Hierarchy
   const [requesterRole, setRequesterRole] = useState("Owner");
@@ -46,13 +51,31 @@ export function LoginForm() {
     setIsLoading(true);
     setError("");
 
+    if (requires2FA && adminId) {
+      // Handle 2FA verification
+      const result = await verifyLogin2FA(adminId, otpToken);
+      if (result.success) {
+        window.location.href = "/";
+      } else {
+        setError(result.error || "Kode verifikasi salah.");
+        setShake(true);
+        setTimeout(() => setShake(false), 600);
+        setIsLoading(false);
+      }
+      return;
+    }
+
     const formData = new FormData();
     formData.append("email", email);
     formData.append("password", password);
 
     const result = await loginAction(formData);
 
-    if (result.success) {
+    if (result.success && result.requires2FA) {
+      setRequires2FA(true);
+      setAdminId(result.adminId || null);
+      setIsLoading(false);
+    } else if (result.success) {
       window.location.href = "/";
     } else {
       setError(result.error || "Login gagal.");
@@ -104,6 +127,8 @@ export function LoginForm() {
           <p className="text-slate-500 dark:text-slate-400 font-medium text-lg">
             {isForgotMode 
               ? "Enter your work email and we'll send you a link to reset your password."
+              : requires2FA 
+              ? "Enter the 6-digit code from your authenticator app to continue." 
               : "Enter your credentials to access the enterprise dashboard."}
           </p>
         </div>
@@ -138,7 +163,7 @@ export function LoginForm() {
           animate={shake ? { x: [-10, 10, -10, 10, 0] } : {}}
           transition={{ duration: 0.4 }}
         >
-          {!isForgotMode ? (
+          {!isForgotMode && !requires2FA ? (
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Work Email</label>
               <div className="relative group">
@@ -149,6 +174,21 @@ export function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@company.com"
                   className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-slate-900 dark:text-white font-medium"
+                />
+              </div>
+            </div>
+          ) : !isForgotMode && requires2FA ? (
+            <div className="space-y-2">
+              <label htmlFor="otp" className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Verification Code</label>
+              <div className="relative group">
+                <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
+                <input 
+                  id="otp"
+                  type="text" required value={otpToken}
+                  maxLength={6}
+                  onChange={(e) => setOtpToken(e.target.value)}
+                  placeholder="000000"
+                  className="w-full text-center tracking-widest text-lg bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 pl-4 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-slate-900 dark:text-white font-black"
                 />
               </div>
             </div>
@@ -226,7 +266,7 @@ export function LoginForm() {
             </>
           )}
 
-          {!isForgotMode && (
+          {!isForgotMode && !requires2FA && (
             <div className="space-y-2">
               <div className="flex justify-between items-end">
                 <label htmlFor="password" className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Password</label>
@@ -247,7 +287,7 @@ export function LoginForm() {
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
                 <input 
                   id="password"
-                  type="password" required={!isForgotMode} value={password}
+                  type="password" required={!isForgotMode && !requires2FA} value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-slate-900 dark:text-white font-medium"
@@ -266,7 +306,17 @@ export function LoginForm() {
             </button>
           )}
 
-          {!isForgotMode && (
+          {requires2FA && !isForgotMode && (
+            <button 
+              type="button" 
+              onClick={() => { setRequires2FA(false); setOtpToken(""); setError(""); }}
+              className="text-sm font-bold text-slate-500 hover:text-primary transition-colors"
+            >
+              ← Back
+            </button>
+          )}
+
+          {!isForgotMode && !requires2FA && (
             <div className="flex items-center gap-2 py-2">
               <input type="checkbox" id="remember" className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary" />
               <label htmlFor="remember" className="text-sm font-medium text-slate-500 dark:text-slate-400">Keep me logged in for 30 days</label>
@@ -288,7 +338,7 @@ export function LoginForm() {
               />
             ) : (
               <>
-                <span>{isForgotMode ? "Send Reset Link" : "Enter Dashboard"}</span>
+                <span>{isForgotMode ? "Send Reset Link" : requires2FA ? "Verify Code" : "Enter Dashboard"}</span>
                 <ArrowRight size={22} />
               </>
             )}
