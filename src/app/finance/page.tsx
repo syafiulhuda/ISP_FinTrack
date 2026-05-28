@@ -323,10 +323,10 @@ export default function FinancePage() {
  }
 
  toast.success("OCR complete. Data saved and verified!");
- } catch (err) {
- console.error(err);
- toast.error("OCR failed. Please enter data manually.");
- } finally {
+    } catch (err) {
+      console.error(err);
+      toast.error(`OCR failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
  setIsScanning(false);
  }
  }
