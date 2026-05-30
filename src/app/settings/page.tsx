@@ -32,9 +32,10 @@ import { useQuery, useMutation, useQueryClient } from"@tanstack/react-query";
 import { getAdminList, createAdmin, getAdminProfile, deleteAdmin, getIntegrationStatus } from"@/actions/admin";
 import { Admin } from"@/types";
 import { cn } from"@/lib/utils";
-import { toast } from"sonner";
-import Link from"next/link";
-import Image from"next/image";
+import { toast } from "sonner";
+import Link from "next/link";
+import Image from "next/image";
+import { ThemeSelector } from "@/components/settings/ThemeSelector";
 
 const containerVariants: Variants = {
  hidden: { opacity: 0 },
@@ -58,6 +59,9 @@ export default function SettingsPage() {
  appLogo: settings.appLogo,
  timezone: settings.timezone ||'Asia/Jakarta (UTC+07)',
  language: settings.language ||'Indonesian (ID)',
+ currentTheme: settings.currentTheme || 'paper-white',
+ darkModeEnabled: settings.darkModeEnabled || false,
+ darkModePreference: settings.darkModePreference || 'system',
  });
 
  const colorPickerRef = useRef<HTMLInputElement>(null);
@@ -123,6 +127,9 @@ export default function SettingsPage() {
  appLogo: settings.appLogo,
  timezone: settings.timezone ||'Asia/Jakarta (UTC+07)',
  language: settings.language ||'Indonesian (ID)',
+ currentTheme: settings.currentTheme || 'paper-white',
+ darkModeEnabled: settings.darkModeEnabled || false,
+ darkModePreference: settings.darkModePreference || 'system',
  });
  }, [settings]);
 
@@ -149,6 +156,9 @@ export default function SettingsPage() {
  appLogo: settings.appLogo,
  timezone: settings.timezone ||'Asia/Jakarta (UTC+07)',
  language: settings.language ||'Indonesian (ID)',
+ currentTheme: settings.currentTheme || 'paper-white',
+ darkModeEnabled: settings.darkModeEnabled || false,
+ darkModePreference: settings.darkModePreference || 'system',
  });
  setIsEditing(false);
  setIsDiscarding(false);
@@ -163,6 +173,48 @@ export default function SettingsPage() {
  setFormData({ ...formData, appLogo: tempLogoUrl });
  setIsLogoModalOpen(false);
  };
+
+ const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = document.createElement('img');
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const MAX_SIZE = 256;
+        
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          // Compress to WEBP with 0.8 quality to reduce payload size while preserving transparency
+          const compressedDataUrl = canvas.toDataURL('image/webp', 0.8);
+          setTempLogoUrl(compressedDataUrl);
+        }
+      };
+      if (event.target?.result) {
+        img.src = event.target.result as string;
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
  return (
  <>
@@ -237,6 +289,23 @@ export default function SettingsPage() {
  </button>
  </div>
  <div className="p-8 space-y-4">
+ <div className="space-y-4">
+ <div className="flex flex-col gap-2">
+   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+   <ImagePlus size={12} /> Upload Image (Auto Compress)
+   </label>
+   <input
+     type="file"
+     accept="image/*"
+     onChange={handleLogoUpload}
+     className="w-full bg-muted border border-border rounded-xl p-2 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-primary file:text-white hover:file:bg-primary/90 text-sm font-medium transition-colors"
+   />
+ </div>
+ <div className="flex items-center gap-4">
+   <div className="h-px bg-border flex-1"></div>
+   <span className="text-xs font-bold text-muted-foreground uppercase">OR</span>
+   <div className="h-px bg-border flex-1"></div>
+ </div>
  <div className="space-y-2">
  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
  <ImagePlus size={12} /> Image URL
@@ -249,6 +318,7 @@ export default function SettingsPage() {
  onChange={(e) => setTempLogoUrl(e.target.value)}
  placeholder="https://example.com/logo.png"
  />
+ </div>
  </div>
  <button
  onClick={confirmLogoUpdate}
@@ -436,7 +506,7 @@ export default function SettingsPage() {
  <div
  onClick={() => isEditing && handleUpdateLogo()}
  className={cn(
-"w-20 h-20 rounded-2xl flex items-center justify-center relative group overflow-hidden border-2 border-dashed border-border transition-colors text-white",
+ "h-20 w-auto rounded-2xl flex items-center justify-center relative group overflow-hidden border-2 border-dashed border-border transition-colors text-white",
  isEditing ?"hover:border-primary cursor-pointer":"cursor-not-allowed opacity-70"
  )}
  style={{
@@ -451,7 +521,7 @@ export default function SettingsPage() {
  }}
  >
  {formData.appLogo ? (
- <Image unoptimized src={formData.appLogo} alt="Preview"width={80} height={80} className="w-full h-full object-cover"/>
+ <img src={formData.appLogo} alt="Preview" className="w-auto h-full object-contain"/>
  ) : (
  <ImagePlus className={cn("group-hover:hidden", !formData.accentColor ?'text-muted-foreground':'text-white/80')} size={24} />
  )}
@@ -462,49 +532,67 @@ export default function SettingsPage() {
  <div>
  <p className="font-bold text-sm text-foreground">Corporate Logo</p>
  <p className="text-xs text-muted-foreground mt-1">Recommended: SVG or PNG (256x256)</p>
- </div>
- </div>
- <div className="space-y-3">
- <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Logo Background Color</p>
- <div className="flex gap-3">
- {['blue','indigo','emerald','amber'].map((color) => (
- <button
- key={color}
- disabled={!isEditing}
- onClick={() => setFormData({ ...formData, accentColor: color })}
- aria-label={`Select ${color} accent color`}
- className={cn(
-"w-8 h-8 rounded-full transition-all",
- color ==='blue'&&"bg-blue-600",
- color ==='indigo'&&"bg-indigo-600",
- color ==='emerald'&&"bg-emerald-600",
- color ==='amber'&&"bg-amber-600",
- formData.accentColor === color ?'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 opacity-100':'opacity-60 hover:opacity-100',
- !isEditing &&"cursor-not-allowed opacity-40"
+ {isEditing && (
+   <div className="mt-3 flex items-center gap-2">
+     <label className="text-xs font-bold uppercase text-muted-foreground">Bg Color</label>
+     <input 
+       type="color" 
+       value={formData.accentColor.startsWith('#') ? formData.accentColor : (formData.accentColor === 'indigo' ? '#4f46e5' : formData.accentColor === 'emerald' ? '#10b981' : formData.accentColor === 'amber' ? '#d97706' : '#2563eb')} 
+       onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
+       className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent"
+     />
+   </div>
  )}
- />
- ))}
- <div
- onClick={() => isEditing && colorPickerRef.current?.click()}
- className={cn(
-"w-8 h-8 rounded-full border border-border flex items-center justify-center transition-colors text-muted-foreground relative",
- formData.accentColor.startsWith('#') ?'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 opacity-100':'opacity-60',
- isEditing ?"cursor-pointer hover:bg-muted dark:hover:bg-muted":"cursor-not-allowed opacity-40"
- )}
- style={formData.accentColor.startsWith('#') ? { backgroundColor: formData.accentColor, color:'white', borderColor:'transparent'} : {}}
- >
- <Pipette size={14} className="relative z-10"/>
- <input
- ref={colorPickerRef}
- type="color"
- disabled={!isEditing}
- className="absolute inset-0 opacity-0 cursor-pointer w-full h-full disabled:cursor-not-allowed"
- value={formData.accentColor.startsWith('#') ? formData.accentColor :'#004ac6'}
- onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
- />
  </div>
  </div>
- </div>
+ 
+          {/* Advanced Theming System */}
+          <div className="space-y-6 pt-6 border-t border-border mt-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h4 className="font-bold text-foreground">Application Theme</h4>
+                <p className="text-xs text-muted-foreground mt-1">Select a visual theme and color mode for your dashboard.</p>
+              </div>
+              <div className="flex items-center gap-2 bg-muted p-1 rounded-xl shrink-0">
+                <button
+                  disabled={isTimLapangan}
+                  onClick={() => setFormData({ ...formData, darkModePreference: 'light', darkModeEnabled: false })}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                    formData.darkModePreference === 'light' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                    isTimLapangan && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  Light
+                </button>
+                <button
+                  disabled={isTimLapangan}
+                  onClick={() => setFormData({ ...formData, darkModePreference: 'dark', darkModeEnabled: true })}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-bold transition-all",
+                    formData.darkModePreference === 'dark' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                    isTimLapangan && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  Dark
+                </button>
+              </div>
+            </div>
+
+            <ThemeSelector 
+              currentThemeId={formData.currentTheme || 'paper-white'}
+              activeMode={formData.darkModePreference as 'light' | 'dark'}
+              disabled={!isEditing || isTimLapangan}
+              onSelectTheme={(themeId, mode) => {
+                setFormData({
+                  ...formData,
+                  currentTheme: themeId,
+                  darkModePreference: mode,
+                  darkModeEnabled: mode === 'dark'
+                });
+              }}
+            />
+          </div>
  </div>
  </m.div>
  )}

@@ -36,14 +36,26 @@ export async function POST(req: Request) {
  
  if (existing.rows.length === 0) {
  
- // 4. Masukkan ke Buku Besar (Transactions) otomatis!
- await query(`
- INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, inputter)
- VALUES ($1, $2, $3,'Verified', NOW(),'Tagihan','pemasukan','System/Webhook')
-`, [order_id, payment_type, Number(gross_amount)]);
+        // 4. Ekstrak ID Pelanggan dan coba dapatkan kotanya
+        const customerId = order_id.includes('-') ? order_id.split('-')[1] : null;
+        let city = 'Unknown';
 
- // 5. Ekstrak ID Pelanggan
- const customerId = order_id.includes('-') ? order_id.split('-')[1] : null;
+        if (customerId) {
+          try {
+            const custRes = await query('SELECT city FROM customers WHERE id = $1', [customerId]);
+            if (custRes.rows.length > 0 && custRes.rows[0].city) {
+              city = custRes.rows[0].city;
+            }
+          } catch (e) {
+            console.error("Failed to fetch customer city:", e);
+          }
+        }
+
+        // 5. Masukkan ke Buku Besar (Transactions) otomatis!
+        await query(`
+          INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, city, inputter)
+          VALUES ($1, $2, $3, 'Verified', NOW(), 'Tagihan', 'pemasukan', $4, 'System/Webhook')
+        `, [order_id, payment_type, Number(gross_amount), city]);
  
  if (customerId) {
  // Tandai invoice lunas

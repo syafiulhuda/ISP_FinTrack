@@ -179,7 +179,7 @@ export async function postOcrEntry(ocrId: string | number, data: {
  INSERT INTO expenses (category, amount, date, description, city, inputter, inputter_tms)
  VALUES ($1, $2, $3, $4, $5, $6, NOW())
  RETURNING id
-`, [transactionType, Number(cleanNumeric), timestamp,'', trxCity || null, inputterName]);
+`, [transactionType, Number(cleanNumeric), timestamp,'', trxCity || 'Unknown', inputterName]);
 
  const expenseId = expenseRes.rows[0].id;
 
@@ -195,18 +195,18 @@ export async function postOcrEntry(ocrId: string | number, data: {
  await query(`
  INSERT INTO transactions (id, method, amount, status, timestamp, type, keterangan, city, inputter, inputter_tms)
  VALUES ($1, $2, $3,'Verified', $4, $5, $6, $7, $8, NOW())
-`, [trxId, data.method, finalAmount, timestamp, transactionType,'pengeluaran', trxCity || null, inputterName]);
+`, [trxId, data.method, finalAmount, timestamp, transactionType,'pengeluaran', trxCity || 'Unknown', inputterName]);
 
  } else {
  trxId = data.reference ||`TRX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
  // Logic to fetch city from customer if it's a standard TRX-CT... format
- let customerCity = null;
+ let customerCity = 'Unknown';
  if (trxId.startsWith('TRX-CT')) {
  try {
  const custId = trxId.split('-')[1]; // Extract CTxxx
  const custRes = await query('SELECT city FROM customers WHERE id = $1 LIMIT 1', [custId]);
- if (custRes.rows.length > 0) {
+ if (custRes.rows.length > 0 && custRes.rows[0].city) {
  customerCity = custRes.rows[0].city;
  }
  } catch (cityErr) {

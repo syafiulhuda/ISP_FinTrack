@@ -13,6 +13,7 @@ export async function loginAction(formData: FormData): Promise<{ success: boolea
  try {
  const email = formData.get("email") as string;
  const password = formData.get("password") as string;
+ const remember = formData.get("remember") === "true";
 
  if (!email || !password) return { success: false, error:'Email dan password harus diisi.'};
 
@@ -51,7 +52,7 @@ export async function loginAction(formData: FormData): Promise<{ success: boolea
  [admin.id, admin.nickname || admin.email.split('@')[0], ip]
  );
 
- await createSession(admin.id);
+ await createSession(admin.id, remember);
  return { success: true };
  } catch (err) {
  logger.error({ message:"Login Action Error:", error: err, path:"action"});
@@ -63,7 +64,7 @@ export async function logoutAction() {
  await destroySession();
 }
 
-export async function verifyLogin2FA(adminId: number, token: string): Promise<{ success: boolean; error?: string }> {
+export async function verifyLogin2FA(adminId: number, token: string, remember: boolean = false): Promise<{ success: boolean; error?: string }> {
  try {
  const adminRes = await query('SELECT two_factor_secret, nickname, email FROM admin WHERE id = $1 AND is_active = true', [adminId]);
  if (adminRes.rows.length === 0) return { success: false, error:'Admin not found'};
@@ -89,7 +90,7 @@ export async function verifyLogin2FA(adminId: number, token: string): Promise<{ 
  [adminId, admin.nickname || admin.email.split('@')[0], ip]
  );
 
- await createSession(adminId);
+ await createSession(adminId, remember);
  return { success: true };
  } catch (error) {
  logger.error({ message:"Verify 2FA Error:", error, path:"action"});
@@ -122,8 +123,11 @@ export async function getUsersForResetDropdown(requesterRole: string) {
  }
 }
 
-export async function requestPasswordReset(targetUserId: number, requesterRole: string, requesterPassword?: string) {
+export async function requestPasswordReset(formData: FormData) {
  try {
+ const targetUserId = Number(formData.get('targetUserId'));
+ const requesterRole = formData.get('requesterRole') as string;
+ const requesterPassword = formData.get('requesterPassword') as string | null;
  // 1. Check if admin exists, active, and get their role/email based on targetUserId
  const userCheck = await query("SELECT id, role, email FROM admin WHERE id = $1 AND is_active = true", [targetUserId]);
  if (userCheck.rows.length === 0) {
@@ -198,11 +202,18 @@ export async function requestPasswordReset(targetUserId: number, requesterRole: 
  [rawEmail, token, expiresAt]
  );
 
- // 4. Determine origin dynamically to support mobile testing (LAN IP)
- const headersList = await headers();
- const protocol = headersList.get('x-forwarded-proto') ||'http';
- const host = headersList.get('host') ||'localhost:3000';
- const appUrl =`${protocol}://${host}`;
+ // 4. Determine base URL dynamically (Vercel support + Local fallback)
+ let appUrl = 'http://localhost:3000';
+ if (process.env.NEXT_PUBLIC_APP_URL) {
+   appUrl = process.env.NEXT_PUBLIC_APP_URL;
+ } else if (process.env.VERCEL_URL) {
+   appUrl = `https://${process.env.VERCEL_URL}`;
+ } else {
+   const headersList = await headers();
+   const protocol = headersList.get('x-forwarded-proto') || (process.env.NODE_ENV === 'production' ? 'https' : 'http');
+   const host = headersList.get('x-forwarded-host') || headersList.get('host') || 'localhost:3000';
+   appUrl = `${protocol}://${host}`;
+ }
 
  // 5. Send Email
  const emailRes = await sendResetPasswordEmail(targetEmail, token, appUrl);

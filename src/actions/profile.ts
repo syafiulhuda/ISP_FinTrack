@@ -165,7 +165,7 @@ export async function getSecurityLogs() {
  FROM admin_security_logs
  WHERE admin_id = $1
  ORDER BY created_at DESC
- LIMIT 10
+ LIMIT 100
 `, [adminId]);
 
  return res.rows;

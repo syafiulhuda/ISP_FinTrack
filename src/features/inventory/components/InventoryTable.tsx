@@ -14,7 +14,8 @@ import {
   X,
   ChevronDown,
   ShieldCheck,
-  ShieldX
+  ShieldX,
+  DollarSign
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -43,12 +44,16 @@ function MobileAssetCard({
   const [isStartingMaintenanceThis, setIsStartingMaintenanceThis] = useState(false);
   const [isDeployingThis, setIsDeployingThis] = useState(false);
   const [isDeletingThis, setIsDeletingThis] = useState(false);
+  const [isSellingThis, setIsSellingThis] = useState(false);
 
   const [deployData, setDeployData] = useState({ warehouse: '', city: '', province: '', latitude: -6.2088, longitude: 106.8456 });
   const [techName, setTechName] = useState("");
   const [techDesc, setTechDesc] = useState("");
   const [techNameStart, setTechNameStart] = useState("");
   const [maintenanceReason, setMaintenanceReason] = useState("");
+  const [localBuyerName, setLocalBuyerName] = useState("");
+  const [localSellPrice, setLocalSellPrice] = useState("");
+  const [localSellNotes, setLocalSellNotes] = useState("");
 
   const { 
     isTimLapangan, 
@@ -57,6 +62,7 @@ function MobileAssetCard({
     handleDeploy, 
     handleStartMaintenance, 
     handleResolveMaintenance,
+    handleSellAsset,
     setDeletingAssetSn,
     setIsDeleting,
     setDeployingAssetSn,
@@ -68,7 +74,11 @@ function MobileAssetCard({
     setResolvingAssetSn,
     setIsResolving,
     setTechName: setGlobalTechName,
-    setTechDesc: setGlobalTechDesc
+    setTechDesc: setGlobalTechDesc,
+    setSellingAssetSn,
+    setSellBuyerName: setGlobalSellBuyerName,
+    setSellPrice: setGlobalSellPrice,
+    setSellNotes: setGlobalSellNotes,
   } = inventory;
 
   return (
@@ -200,7 +210,7 @@ function MobileAssetCard({
                 <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block text-[9px]">Actions</span>
                 
                 {/* Normal Action Buttons */}
-                {!isResolvingThis && !isStartingMaintenanceThis && !isDeployingThis && !isDeletingThis ? (
+                {!isResolvingThis && !isStartingMaintenanceThis && !isDeployingThis && !isDeletingThis && !isSellingThis ? (
                   <div className="flex flex-wrap gap-2" onClick={e => e.stopPropagation()}>
                     {asset.isStock ? (
                       <button
@@ -253,16 +263,19 @@ function MobileAssetCard({
                       </>
                     )}
 
-                    {!isTimLapangan && (
+                    {!isTimLapangan && !asset.isStock && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setIsDeletingThis(true);
+                          setIsSellingThis(true);
+                          setLocalBuyerName("");
+                          setLocalSellPrice("");
+                          setLocalSellNotes("");
                         }}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 dark:bg-rose-955/30 dark:text-rose-400 rounded-xl hover:opacity-90 transition-all font-black text-[10px] uppercase shadow-sm ml-auto"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 rounded-xl hover:opacity-90 transition-all font-black text-[10px] uppercase shadow-sm ml-auto"
                       >
-                        <X size={12} />
-                        <span>Delete</span>
+                        <DollarSign size={12} />
+                        <span>Sell Asset</span>
                       </button>
                     )}
                   </div>
@@ -412,6 +425,53 @@ function MobileAssetCard({
                       </button>
                     </div>
                   </div>
+                ) : isSellingThis ? (
+                  <div className="space-y-3 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-2xl border border-amber-100 dark:border-amber-800/30" onClick={e => e.stopPropagation()}>
+                    <p className="text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-tighter">Sell Asset</p>
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        placeholder="Buyer Name *"
+                        value={localBuyerName}
+                        onChange={(e) => setLocalBuyerName(e.target.value)}
+                        className="w-full px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-700 rounded-xl dark:bg-slate-900 bg-white text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-amber-500/20 transition-all font-bold"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Sale Price (Rp) *"
+                        value={localSellPrice}
+                        onChange={(e) => setLocalSellPrice(e.target.value)}
+                        className="w-full px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-700 rounded-xl dark:bg-slate-900 bg-white text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-amber-500/20 transition-all font-bold"
+                      />
+                      <textarea
+                        placeholder="Notes (optional)"
+                        rows={2}
+                        value={localSellNotes}
+                        onChange={(e) => setLocalSellNotes(e.target.value)}
+                        className="w-full px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-700 rounded-xl dark:bg-slate-900 bg-white text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-amber-500/20 transition-all font-bold resize-none"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        onClick={() => setIsSellingThis(false)}
+                        className="flex-1 py-2.5 text-[10px] font-black text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all uppercase tracking-wider"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSellingAssetSn(asset.sn);
+                          setGlobalSellBuyerName(localBuyerName);
+                          setGlobalSellPrice(localSellPrice);
+                          setGlobalSellNotes(localSellNotes);
+                          setTimeout(handleSellAsset, 0);
+                        }}
+                        className="flex-1 py-2.5 text-[10px] font-black bg-amber-600 text-white rounded-xl hover:opacity-90 shadow-lg shadow-amber-500/20 transition-all uppercase tracking-wider"
+                      >
+                        Confirm Sale
+                      </button>
+                    </div>
+                  </div>
                 ) : null}
               </div>
             )}
@@ -433,7 +493,9 @@ export function InventoryTable({ inventory }: { inventory: any }) {
     deployingAssetSn, setDeployingAssetSn, deployData, setDeployData, handleDeploy,
     isStartingMaintenance, setIsStartingMaintenance, startingAssetSn, setStartingAssetSn, techNameStart, setTechNameStart, maintenanceReason, setMaintenanceReason, handleStartMaintenance,
     isResolving, setIsResolving, resolvingAssetSn, setResolvingAssetSn, techName, setTechName, techDesc, setTechDesc, handleResolveMaintenance,
-    handleUpdateCondition
+    handleUpdateCondition,
+    handleSellAsset, sellingAssetSn, setSellingAssetSn, isSelling, setIsSelling,
+    sellBuyerName, setSellBuyerName, sellPrice, setSellPrice, sellNotes, setSellNotes
   } = inventory;
 
   return (
@@ -674,7 +736,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                                         placeholder="Technician Name"
                                         value={techNameStart}
                                         onChange={(e) => setTechNameStart(e.target.value)}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 dark:text-slate-150"
+                                        className="w-full bg-white dark:bg-slate-700 rounded-xl px-3 py-2 text-xs font-bold border border-slate-200 dark:border-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
                                       />
                                     </div>
                                     <div className="space-y-1">
@@ -684,7 +746,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                                         rows={2}
                                         value={maintenanceReason}
                                         onChange={(e) => setMaintenanceReason(e.target.value)}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-slate-900 dark:text-slate-150"
+                                        className="w-full bg-white dark:bg-slate-700 rounded-xl px-3 py-2 text-xs font-bold border border-slate-200 dark:border-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
                                       />
                                     </div>
                                     <div className="flex gap-2 pt-1">
@@ -719,7 +781,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                                         placeholder="Name"
                                         value={techName}
                                         onChange={(e) => setTechName(e.target.value)}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all text-slate-900 dark:text-slate-150"
+                                        className="w-full bg-white dark:bg-slate-700 rounded-xl px-3 py-2 text-xs font-bold border border-slate-200 dark:border-slate-600 outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
                                       />
                                     </div>
                                     <div className="space-y-1">
@@ -729,7 +791,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                                         rows={2}
                                         value={techDesc}
                                         onChange={(e) => setTechDesc(e.target.value)}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs font-bold border-none outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none text-slate-900 dark:text-slate-150"
+                                        className="w-full bg-white dark:bg-slate-700 rounded-xl px-3 py-2 text-xs font-bold border border-slate-200 dark:border-slate-600 outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
                                       />
                                     </div>
                                     <div className="flex gap-2 pt-1">
@@ -748,6 +810,61 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                                     </div>
                                   </div>
                                 </div>
+                                ) : isSelling && sellingAssetSn === asset.sn ? (
+                                  <div className="space-y-3 p-3">
+                                    <div className="flex justify-between items-center mb-2">
+                                      <h4 className="text-xs font-black text-amber-600 uppercase tracking-tighter">Sell Asset</h4>
+                                      <button onClick={() => setIsSelling(false)} className="text-slate-400 hover:text-red-500 transition-colors">
+                                        <X size={14}/>
+                                      </button>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <div className="space-y-1">
+                                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Buyer Name *</label>
+                                        <input
+                                          type="text"
+                                          placeholder="e.g. PT. Mitra Jaringan"
+                                          value={sellBuyerName}
+                                          onChange={(e) => setSellBuyerName(e.target.value)}
+                                          className="w-full bg-white dark:bg-slate-700 rounded-xl px-3 py-2 text-xs font-bold border border-slate-200 dark:border-slate-600 outline-none focus:ring-2 focus:ring-amber-500/20 transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Sale Price (Rp) *</label>
+                                        <input
+                                          type="text"
+                                          placeholder="e.g. 5000000"
+                                          value={sellPrice}
+                                          onChange={(e) => setSellPrice(e.target.value)}
+                                          className="w-full bg-white dark:bg-slate-700 rounded-xl px-3 py-2 text-xs font-bold border border-slate-200 dark:border-slate-600 outline-none focus:ring-2 focus:ring-amber-500/20 transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Notes</label>
+                                        <textarea
+                                          placeholder="Optional notes..."
+                                          rows={2}
+                                          value={sellNotes}
+                                          onChange={(e) => setSellNotes(e.target.value)}
+                                          className="w-full bg-white dark:bg-slate-700 rounded-xl px-3 py-2 text-xs font-bold border border-slate-200 dark:border-slate-600 outline-none focus:ring-2 focus:ring-amber-500/20 transition-all resize-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                                        />
+                                      </div>
+                                      <div className="flex gap-2 pt-1">
+                                        <button
+                                          onClick={() => setIsSelling(false)}
+                                          className="flex-1 py-2 text-[10px] font-bold text-slate-550 dark:text-slate-450 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          onClick={handleSellAsset}
+                                          className="flex-1 py-2 text-[10px] font-bold bg-amber-600 text-white rounded-lg hover:opacity-90 shadow-lg shadow-amber-500/20 transition-all"
+                                        >
+                                          Confirm Sale
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
                               ) : (
                                 <div className="p-2 space-y-2">
                                   {asset.isStock ? (
@@ -786,7 +903,12 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                                         <>
                                           {asset.condition === 'Maintenance' && (
                                             <button 
-                                              onClick={() => handleUpdateCondition(asset.sn, 'Good')} 
+                                              onClick={() => {
+                                                setResolvingAssetSn(asset.sn);
+                                                setIsResolving(true);
+                                                setTechName("");
+                                                setTechDesc("");
+                                              }} 
                                               className="w-full text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all flex items-center gap-3"
                                             >
                                               <CheckCircle2 size={14} className="text-emerald-500" /> Mark Healthy
@@ -794,7 +916,12 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                                           )}
                                           {asset.condition === 'Good' && (
                                             <button 
-                                              onClick={() => handleUpdateCondition(asset.sn, 'Maintenance')} 
+                                              onClick={() => {
+                                                setStartingAssetSn(asset.sn);
+                                                setIsStartingMaintenance(true);
+                                                setTechNameStart("");
+                                                setMaintenanceReason("");
+                                              }} 
                                               className="w-full text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all flex items-center gap-3"
                                             >
                                               <Wrench size={14} className="text-blue-500" /> Maintenance
@@ -809,6 +936,20 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                                               className="w-full text-left px-4 py-3 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all flex items-center gap-3"
                                             >
                                               <AlertCircle size={14} className="text-rose-500" /> Delete Asset
+                                            </button>
+                                          )}
+                                          {!isTimLapangan && (
+                                            <button 
+                                              onClick={() => {
+                                                setSellingAssetSn(asset.sn);
+                                                setIsSelling(true);
+                                                setSellBuyerName("");
+                                                setSellPrice("");
+                                                setSellNotes("");
+                                              }} 
+                                              className="w-full text-left px-4 py-3 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all flex items-center gap-3"
+                                            >
+                                              <DollarSign size={14} className="text-amber-500" /> Sell Asset
                                             </button>
                                           )}
                                         </>

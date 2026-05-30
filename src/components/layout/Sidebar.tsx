@@ -20,9 +20,9 @@ import {
 } from"lucide-react";
 import { cn } from"@/lib/utils";
 import { m, AnimatePresence } from"framer-motion";
-import { useSettings } from"@/components/providers/SettingsProvider";
-import { useState, useRef } from"react";
-import { useQuery } from"@tanstack/react-query";
+import { useSettings } from "@/components/providers/SettingsProvider";
+import { useState, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getAdminProfile } from"@/actions/admin";
 import { LifeBuoy } from"lucide-react";
 
@@ -39,9 +39,9 @@ const navigation = [
 ];
 
  export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
- const pathname = usePathname();
- const router = useRouter();
- const { settings } = useSettings();
+  const pathname = usePathname();
+  const router = useRouter();
+  const { settings, isLoaded } = useSettings();
 
  const { data: profile } = useQuery({
  queryKey: ['adminProfile'],
@@ -49,9 +49,12 @@ const navigation = [
  });
  const isTimLapangan = profile?.role ==='Tim Lapangan'|| profile?.role ==='Pekerja';
 
- const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
- const [isLoggingOut, setIsLoggingOut] = useState(false);
- const logoutBtnRef = useRef<HTMLDivElement>(null);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const logoutBtnRef = useRef<HTMLDivElement>(null);
+
+  const isActuallyLoaded = isLoaded && (!settings.appLogo || imgLoaded);
 
  const handleLogoutConfirm = async () => {
  setIsLoggingOut(true);
@@ -74,42 +77,60 @@ const navigation = [
  )}>
  {/* Header */}
  <div className="pt-4 px-6">
- <div className="flex items-center space-x-3 mb-2 px-2">
- <m.div
- initial={false}
- animate={{ scale: 1, opacity: 1 }}
- className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-lg overflow-hidden shrink-0"
- style={{
- backgroundColor: settings.accentColor.startsWith('#')
- ? settings.accentColor
- : (
- settings.accentColor ==='indigo'?'#4f46e5':
- settings.accentColor ==='emerald'?'#10b981':
- settings.accentColor ==='amber'?'#d97706':
- '#2563eb' // default blue
- ),
- boxShadow: settings.accentColor.startsWith('#') 
- ?`0 10px 15px -3px ${settings.accentColor}44`
- : (
- settings.accentColor ==='indigo'?'0 10px 15px -3px rgba(79, 70, 229, 0.2)':
- settings.accentColor ==='emerald'?'0 10px 15px -3px rgba(16, 185, 129, 0.2)':
- settings.accentColor ==='amber'?'0 10px 15px -3px rgba(217, 119, 6, 0.2)':
- '0 10px 15px -3px rgba(37, 99, 235, 0.2)'
- )
- }}
- >
- {settings.appLogo ? (
- <Image unoptimized src={settings.appLogo} alt="App Logo"width={36} height={36} className="w-full h-full object-cover"/>
- ) : (
- settings.appName.substring(0, 2).toUpperCase()
- )}
- </m.div>
- <div className="flex flex-col">
- <h1 className="font-black text-base tracking-tight text-foreground leading-none whitespace-nowrap">{settings.appName}</h1>
- <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">Enterprise Finance</p>
- </div>
- </div>
- </div>
+        <div className="mb-2 px-2 h-9 relative">
+          {/* Skeleton - Shows during SSR, or while hydrating, or while image is downloading */}
+          {!isActuallyLoaded && (
+            <div className="flex items-center space-x-3 absolute inset-0">
+              <div className="h-9 w-9 bg-muted animate-pulse rounded-xl shrink-0" />
+              <div className="flex flex-col gap-1 w-full">
+                <div className="h-4 bg-muted animate-pulse rounded w-32" />
+                <div className="h-2 bg-muted animate-pulse rounded w-20" />
+              </div>
+            </div>
+          )}
+
+          {/* Actual Content - Hidden until fully ready */}
+          <div className={cn("flex items-center space-x-3 transition-opacity duration-300", !isActuallyLoaded ? "opacity-0 invisible" : "opacity-100 visible")}>
+            {settings.appLogo ? (
+              <img 
+                src={settings.appLogo} 
+                alt="App Logo" 
+                className="h-9 w-auto max-w-[140px] object-contain shrink-0 rounded-md"
+                onLoad={() => setImgLoaded(true)} 
+              />
+            ) : (
+              <m.div
+                initial={false}
+                animate={{ scale: 1, opacity: 1 }}
+                className="h-9 w-9 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-lg overflow-hidden shrink-0"
+                style={{
+                  backgroundColor: settings.accentColor.startsWith('#')
+                    ? settings.accentColor
+                    : (
+                      settings.accentColor === 'indigo' ? '#4f46e5' :
+                      settings.accentColor === 'emerald' ? '#10b981' :
+                      settings.accentColor === 'amber' ? '#d97706' :
+                      '#2563eb' // default blue
+                    ),
+                  boxShadow: settings.accentColor.startsWith('#') 
+                    ? `0 10px 15px -3px ${settings.accentColor}44`
+                    : (
+                      settings.accentColor === 'indigo' ? '0 10px 15px -3px rgba(79, 70, 229, 0.2)' :
+                      settings.accentColor === 'emerald' ? '0 10px 15px -3px rgba(16, 185, 129, 0.2)' :
+                      settings.accentColor === 'amber' ? '0 10px 15px -3px rgba(217, 119, 6, 0.2)' :
+                      '0 10px 15px -3px rgba(37, 99, 235, 0.2)'
+                    )
+                }}
+              >
+                {settings.appName.substring(0, 2).toUpperCase()}
+              </m.div>
+            )}
+            <div className="flex flex-col">
+              <h1 className="font-black text-base tracking-tight text-foreground leading-none whitespace-nowrap">{settings.appName}</h1>
+              <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">{settings.appSubtitle || "Enterprise Finance"}</p>
+            </div>
+          </div>
+        </div></div>
 
  <div className="px-4 w-full overflow-hidden mt-3">
  {!isTimLapangan && (

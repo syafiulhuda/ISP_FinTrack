@@ -16,6 +16,7 @@ export function LoginForm() {
  const [success, setSuccess] = useState("");
  const [shake, setShake] = useState(false);
  const [isForgotMode, setIsForgotMode] = useState(false);
+ const [rememberMe, setRememberMe] = useState(false);
  
  // 2FA states
  const [requires2FA, setRequires2FA] = useState(false);
@@ -53,7 +54,7 @@ export function LoginForm() {
 
  if (requires2FA && adminId) {
  // Handle 2FA verification
- const result = await verifyLogin2FA(adminId, otpToken);
+ const result = await verifyLogin2FA(adminId, otpToken, rememberMe);
  if (result.success) {
  window.location.href ="/";
  } else {
@@ -68,6 +69,7 @@ export function LoginForm() {
  const formData = new FormData();
  formData.append("email", email);
  formData.append("password", password);
+ formData.append("remember", rememberMe ? "true" : "false");
 
  const result = await loginAction(formData);
 
@@ -101,7 +103,12 @@ export function LoginForm() {
  setError("");
  setSuccess("");
 
- const result = await requestPasswordReset(Number(targetUserId), requesterRole, requesterPassword);
+ const formData = new FormData();
+ formData.append("targetUserId", String(targetUserId));
+ formData.append("requesterRole", requesterRole);
+ if (requesterPassword) formData.append("requesterPassword", requesterPassword);
+
+ const result = await requestPasswordReset(formData);
 
  if (result.success) {
  setSuccess(result.message ||"Reset link sent!");
@@ -318,7 +325,13 @@ export function LoginForm() {
 
  {!isForgotMode && !requires2FA && (
  <div className="flex items-center gap-2 py-2">
- <input type="checkbox"id="remember"className="w-4 h-4 rounded border-border text-primary focus:ring-primary"/>
+ <input 
+ type="checkbox" 
+ id="remember" 
+ checked={rememberMe}
+ onChange={(e) => setRememberMe(e.target.checked)}
+ className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+ />
  <label htmlFor="remember"className="text-sm font-medium text-muted-foreground">Keep me logged in for 30 days</label>
  </div>
  )}

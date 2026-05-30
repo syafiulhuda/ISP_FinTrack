@@ -11,6 +11,7 @@ import { getActiveSessions, revokeSession, revokeOtherSessions, generateTwoFacto
 import { useQuery, useQueryClient } from"@tanstack/react-query";
 import { toast } from"sonner";
 import { LoadingState } from"@/components/LoadingState";
+import Link from "next/link";
 
 const containerVariants: Variants = {
  hidden: { opacity: 0 },
@@ -92,6 +93,10 @@ export default function ProfilePage() {
  const [showManualKey, setShowManualKey] = useState(false);
  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
  const [isDeactivating, setIsDeactivating] = useState(false);
+
+ // Pagination State
+ const [securityLogsPage, setSecurityLogsPage] = useState(1);
+ const logsPerPage = 5;
 
  useEffect(() => {
  if (profileData && !editData) {
@@ -476,7 +481,7 @@ export default function ProfilePage() {
  </m.section>
 
  {/* Bento Grid Layout */}
- <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+ <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
  {/* Left Column: Personal Info & Sessions */}
  <div className="md:col-span-1 lg:col-span-2 flex flex-col gap-6 h-full">
  {/* Personal Information */}
@@ -571,16 +576,15 @@ export default function ProfilePage() {
  )}
  </div>
  </div>
- <div className="mt-10 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border-l-4 border-primary">
- <div className="flex gap-4">
- <Info className="text-primary shrink-0"size={24} />
+ <div className="mt-10 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-primary/20">
+ <div className="flex gap-3">
+ <Info className="text-primary shrink-0 mt-0.5" size={18} />
  <div>
- <p className="text-sm font-bold text-foreground">
+ <p className="text-xs font-bold text-foreground">
  Administrator Privileges
  </p>
- <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
- Your account has global read/write access to all ISP Nodes and Financial Ledgers. 
- Changes to these details require secondary authorization.
+ <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+ Your account has global read/write access to all ISP Nodes and Financial Ledgers. Changes to these details require secondary authorization.
  </p>
  </div>
  </div>
@@ -588,57 +592,67 @@ export default function ProfilePage() {
  </m.div>
 
  {/* Session Management */}
- <m.div variants={itemVariants} className="bg-card rounded-3xl p-8 shadow-sm border border-border flex-1">
- <h3 className="text-xl font-bold tracking-tight text-foreground mb-2">
- Session Management
- </h3>
- <p className="text-sm text-muted-foreground mb-8">
- Review and manage your active sessions across different devices and browsers.
+ <m.div variants={itemVariants} className="bg-card rounded-3xl p-8 shadow-sm border border-border">
+  <h3 className="text-xl font-bold tracking-tight text-foreground mb-2">
+  Session Management
+  </h3>
+  <p className="text-sm text-muted-foreground mb-8">
+  Review and manage your active sessions across different devices and browsers.
+  </p>
+  <div className="space-y-4">
+  {sessions.length > 0 ? (
+   (() => {
+     const session = sessions[0];
+     const isMobile = session.device_info.toLowerCase().includes('mobile') || session.device_info.toLowerCase().includes('android') || session.device_info.toLowerCase().includes('iphone');
+     return (
+       <div className="flex flex-wrap items-center justify-between p-5 bg-muted rounded-2xl gap-4">
+       <div className="flex items-center gap-4">
+         <div className="w-10 h-10 flex items-center justify-center rounded-full shadow-sm shrink-0 bg-white text-primary">
+         {isMobile ? <Smartphone size={18} /> : <Laptop size={18} />}
+         </div>
+         <div>
+         <p className="text-sm font-bold text-foreground">
+           {session.device_info}
+         </p>
+         <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">
+           {session.location} • Current Session • {session.ip_address}
+         </p>
+         </div>
+       </div>
+       <span className="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-wider">
+         Active Now
+       </span>
+       </div>
+     );
+   })()
+  ) : (
+   <p className="text-sm text-muted-foreground italic">No active sessions found.</p>
+  )}
+  </div>
+ 
+ <div className="mt-8 pt-4 border-t border-border flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+ <p className="text-xs text-muted-foreground font-medium">
+  Manage all your active devices and revoke unauthorized access.
  </p>
- <div className="space-y-4">
- {sessions.map((session: any, index: number) => {
- const isMobile = session.device_info.toLowerCase().includes('mobile') || session.device_info.toLowerCase().includes('android') || session.device_info.toLowerCase().includes('iphone');
- const isCurrent = index === 0; // The first one returned by our query is usually the current active due to last_active DESC, but actually current session could be anywhere. For simplicity, we just mark the first or by matching token, but we don't have token in frontend. We'll assume the most recently active is current.
-
- return (
- <div key={session.id} className="flex flex-wrap items-center justify-between p-5 bg-muted rounded-2xl gap-4">
- <div className="flex items-center gap-4">
- <div className={`w-10 h-10 flex items-center justify-center rounded-full shadow-sm shrink-0 ${isCurrent ?'bg-white text-primary':'bg-white text-muted-foreground'}`}>
- {isMobile ? <Smartphone size={18} /> : <Laptop size={18} />}
+ <Link href="/profile/sessions" className="text-primary text-sm font-bold px-4 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
+  View All Sessions <ArrowRight size={16} />
+ </Link>
  </div>
- <div>
- <p className="text-sm font-bold text-foreground">
- {session.device_info}
- </p>
- <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">
- {session.location} • {isCurrent ?'Current Session': getTimeAgo(session.last_active)} • {session.ip_address}
- </p>
- </div>
- </div>
- {isCurrent ? (
- <span className="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-wider">
- Active Now
- </span>
- ) : (
- <button onClick={() => handleRevokeSession(session.id)} className="text-red-600 dark:text-red-500 text-xs font-bold hover:underline">
- Revoke
- </button>
- )}
- </div>
- );
- })}
- {sessions.length === 0 && (
- <p className="text-sm text-muted-foreground italic">No active sessions found.</p>
- )}
- </div>
- {sessions.length > 1 && (
- <div className="mt-8 flex justify-end">
- <button onClick={handleRevokeOtherSessions} className="text-orange-600 dark:text-orange-500 text-sm font-bold px-4 py-2 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded-xl transition-all">
- Logout from all other devices
- </button>
- </div>
- )}
  </m.div>
+
+  {/* Danger Zone (Moved to Left Column to fill gap) */}
+  <m.div variants={itemVariants} className="bg-card rounded-3xl p-8 shadow-sm border border-red-500/20 relative overflow-hidden group w-full flex-1 flex flex-col justify-center">
+  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-600"/>
+  <h3 className="text-xl font-bold tracking-tight text-red-600 dark:text-red-500 mb-2 flex items-center gap-2">
+  <AlertTriangle size={20} /> Danger Zone
+  </h3>
+  <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+  Actions here are permanent. Please proceed with caution if you are attempting to deactivate this administrator account.
+  </p>
+  <button onClick={() => setIsDeactivateModalOpen(true)} className="w-full px-8 py-3 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-500 text-sm font-bold rounded-2xl dark:hover:bg-red-900/30 transition-all active:scale-95 shadow-sm">
+  Deactivate Account
+  </button>
+  </m.div>
  </div>
 
  {/* Right Column: Security & Danger Zone */}
@@ -904,42 +918,99 @@ export default function ProfilePage() {
  )}
  </AnimatePresence>
  </div>
- <div className="pt-6 border-t border-border">
- <label className="text-sm font-bold block mb-4 text-foreground">
- Security Logs
- </label>
- <div className="space-y-4 max-h-48 overflow-y-auto pr-2">
- {securityLogs.map((log: any) => (
- <div key={log.created_at + log.action} className="flex items-start gap-3">
- <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${log.action.toLowerCase().includes('fail') || log.action.toLowerCase().includes('deactivate') ?'bg-red-500':'bg-green-500'}`} />
- <div>
- <p className="text-[11px] font-bold text-foreground">
- {log.action}
- </p>
- <p className="text-[10px] text-muted-foreground">{new Date(log.created_at).toLocaleString()} • {log.ip_address}</p>
- </div>
- </div>
- ))}
- {securityLogs.length === 0 && (
- <p className="text-[11px] text-muted-foreground">No security logs available.</p>
- )}
- </div>
- </div>
  </div>
  </m.div>
 
- {/* Danger Zone */}
- <m.div variants={itemVariants} className="bg-card rounded-3xl p-8 shadow-sm border border-border relative overflow-hidden group flex-1">
- <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-600"/>
- <h3 className="text-xl font-bold tracking-tight text-red-600 dark:text-red-500 mb-4 flex items-center gap-2">
- <AlertTriangle size={20} /> Danger Zone
+ {/* Security Logs Card */}
+ <m.div variants={itemVariants} className="bg-card rounded-3xl p-8 shadow-sm border border-border flex-1 flex flex-col">
+ <div className="flex items-center justify-between mb-8">
+ <h3 className="text-xl font-bold tracking-tight text-foreground">
+ Security Logs
  </h3>
- <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
- Actions here are permanent. Please proceed with caution if you are attempting to deactivate this administrator account.
- </p>
- <button onClick={() => setIsDeactivateModalOpen(true)} className="w-full py-3 border-2 border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-500 text-sm font-bold rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95">
- Deactivate Account
- </button>
+ <span className="text-[10px] uppercase text-muted-foreground font-black tracking-wider">Last 100 activities</span>
+ </div>
+ 
+ <div className="space-y-7">
+ {(() => {
+  const startIndex = (securityLogsPage - 1) * logsPerPage;
+  const paginatedLogs = securityLogs.slice(startIndex, startIndex + logsPerPage);
+  
+  if (paginatedLogs.length === 0) {
+    return <p className="text-[11px] text-muted-foreground">No security logs available.</p>;
+  }
+
+  // Group logs by date
+  let lastDateStr = '';
+  const groupedLogs: any[] = [];
+  
+  for (const log of paginatedLogs) {
+    const dateObj = new Date(log.created_at);
+    const dateStr = dateObj.toLocaleDateString();
+    
+    if (dateStr !== lastDateStr) {
+      groupedLogs.push({ isHeader: true, dateStr, dateObj });
+      lastDateStr = dateStr;
+    }
+    groupedLogs.push({ isHeader: false, log, dateObj });
+  }
+
+  return groupedLogs.map((item: any, idx: number) => {
+    if (item.isHeader) {
+      const isToday = new Date().toLocaleDateString() === item.dateStr;
+      return (
+        <div key={`header-${item.dateStr}-${idx}`} className="sticky top-0 bg-card py-1 z-10 border-b border-border/50 mb-2">
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+            {isToday ? "Today" : item.dateStr}
+          </p>
+        </div>
+      );
+    }
+
+    const log = item.log;
+    const isLastInGroup = idx === groupedLogs.length - 1 || groupedLogs[idx + 1].isHeader;
+    
+    return (
+      <div key={log.created_at + log.action + idx} className="flex items-start gap-3 relative pl-2">
+        {!isLastInGroup && (
+          <div className="absolute left-[7px] top-4 bottom-[-20px] w-[1px] bg-border" />
+        )}
+        <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 relative z-10 ring-4 ring-card ${log.action.toLowerCase().includes('fail') || log.action.toLowerCase().includes('deactivate') ?'bg-red-500':'bg-green-500'}`} />
+        <div>
+          <p className="text-[11px] font-bold text-foreground">
+            {log.action}
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            {item.dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} • {log.ip_address}
+          </p>
+        </div>
+      </div>
+    );
+  });
+ })()}
+ </div>
+
+ {/* Pagination Controls */}
+ {securityLogs.length > logsPerPage && (
+ <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
+  <button 
+    onClick={() => setSecurityLogsPage(p => Math.max(1, p - 1))}
+    disabled={securityLogsPage === 1}
+    className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-lg border border-border text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+  >
+    Previous
+  </button>
+  <span className="text-[11px] font-bold text-muted-foreground">
+    {securityLogsPage} / {Math.ceil(securityLogs.length / logsPerPage)}
+  </span>
+  <button 
+    onClick={() => setSecurityLogsPage(p => Math.min(Math.ceil(securityLogs.length / logsPerPage), p + 1))}
+    disabled={securityLogsPage >= Math.ceil(securityLogs.length / logsPerPage)}
+    className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-lg border border-border text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+  >
+    Next
+  </button>
+ </div>
+  )}
  </m.div>
  </div>
  </div>

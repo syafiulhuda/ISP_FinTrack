@@ -47,11 +47,8 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
  title="Toggle theme"
  aria-label="Toggle dark and light mode"
  >
- {theme === "light" ? (
- <Moon size={20} className="text-indigo-600 drop-shadow-sm" />
- ) : (
- <Sun size={20} className="text-amber-500 drop-shadow-sm" />
- )}
+  <Moon size={20} className="text-indigo-600 drop-shadow-sm dark:hidden" />
+  <Sun size={20} className="text-amber-500 drop-shadow-sm hidden dark:block" />
  </button>
 
  {/* Page Title (Desktop) */}

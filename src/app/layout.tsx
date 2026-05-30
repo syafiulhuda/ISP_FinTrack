@@ -4,6 +4,7 @@ import"./globals.css";
 import { ClientLayout } from"@/components/layout/ClientLayout";
 import { Toaster } from"sonner";
 import { SpeedInsights } from"@vercel/speed-insights/next";
+import Script from "next/script";
 
 const inter = Inter({
  variable:"--font-inter",
@@ -36,13 +37,49 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({
- children,
+  children,
 }: Readonly<{
- children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
- return (
- <html lang="en"className={`${inter.variable} h-full antialiased`} data-scroll-behavior="smooth"suppressHydrationWarning>
- <body suppressHydrationWarning className={`${inter.className} min-h-full bg-background text-foreground overflow-x-hidden`}>
+  // Blocking inline script to prevent FOUC (Flash of Unstyled Content)
+  // It reads localStorage synchronously and applies the theme variables and dark mode class before the first paint.
+  const themeInitScript = `
+    (function() {
+      try {
+        var settingsStr = localStorage.getItem("isp_fintrack_settings");
+        var isDark = false;
+        if (settingsStr) {
+          var settings = JSON.parse(settingsStr);
+          if (settings.darkModePreference === 'system') {
+            isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          } else {
+            isDark = !!settings.darkModeEnabled;
+          }
+        }
+        
+        var htmlElement = document.documentElement;
+        if (isDark) {
+          htmlElement.classList.add('dark');
+        } else {
+          htmlElement.classList.remove('dark');
+        }
+
+        var themeCss = localStorage.getItem("isp_fintrack_theme_css");
+        if (themeCss) {
+          htmlElement.style.cssText = themeCss;
+        }
+      } catch (e) {
+        console.error('Theme initialization failed', e);
+      }
+    })();
+  `;
+
+  return (
+  <html lang="en" className={`${inter.variable} h-full antialiased`} data-scroll-behavior="smooth" suppressHydrationWarning>
+  <head>
+    <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+  </head>
+  <body suppressHydrationWarning className={`${inter.className} min-h-full bg-background text-foreground overflow-x-hidden`}>
  <QueryProvider>
  <FramerProvider>
  <ClientLayout>

@@ -10,7 +10,8 @@ import {
  deleteAsset, 
  updateAssetCondition, 
  deployAsset, 
- startMaintenance 
+ startMaintenance,
+ sellAsset
 } from"@/actions/assets";
 import { getAdminProfile } from"@/actions/admin";
 import { resolveMaintenance } from"@/actions/map";
@@ -79,6 +80,13 @@ export function useInventory() {
  const [deletingAssetSn, setDeletingAssetSn] = useState<string | null>(null);
  const [deployingAssetSn, setDeployingAssetSn] = useState<string | null>(null);
  const [deployData, setDeployData] = useState({ warehouse:'', city:'', province:'', latitude: -6.2088, longitude: 106.8456 });
+
+ // Sell Asset State
+ const [sellingAssetSn, setSellingAssetSn] = useState<string | null>(null);
+ const [isSelling, setIsSelling] = useState(false);
+ const [sellBuyerName, setSellBuyerName] = useState('');
+ const [sellPrice, setSellPrice] = useState('');
+ const [sellNotes, setSellNotes] = useState('');
 
  useEffect(() => {
  if (isRegisterModalOpen) {
@@ -362,6 +370,27 @@ export function useInventory() {
  }
  };
 
+ const handleSellAsset = async () => {
+ if (!sellingAssetSn || !sellBuyerName || !sellPrice) {
+ toast.error('Please fill in buyer name and sale price.');
+ return;
+ }
+ const res = await sellAsset(sellingAssetSn, sellBuyerName, sellPrice, sellNotes);
+ if (res.success) {
+ toast.success(`Asset ${sellingAssetSn} has been marked as Sold!`);
+ setSellingAssetSn(null);
+ setIsSelling(false);
+ setSellBuyerName('');
+ setSellPrice('');
+ setSellNotes('');
+ setActiveActionMenu(null);
+ refetchAssets();
+ refetchStock();
+ } else {
+ toast.error('Failed to process sale.');
+ }
+ };
+
  const isLoadingAll = loadingAssets || loadingStock;
 
  return {
@@ -386,7 +415,10 @@ export function useInventory() {
  dynamicStats, allAssets, filteredAssets, paginatedAssets,
  // Handlers
  handleResetFilters, handleRegisterAsset, handleUpdateCondition, handleDeploy, 
- handleDeleteAsset, handleStartMaintenance, handleResolveMaintenance,
+ handleDeleteAsset, handleStartMaintenance, handleResolveMaintenance, handleSellAsset,
+ // Sell
+ sellingAssetSn, setSellingAssetSn, isSelling, setIsSelling,
+ sellBuyerName, setSellBuyerName, sellPrice, setSellPrice, sellNotes, setSellNotes,
  refetchAssets, refetchStock
  };
 }

@@ -48,7 +48,7 @@ export async function POST(req: Request) {
  let customerId ='';
  let customerName ='Pelanggan';
  let service ='Unknown';
- let city = null;
+ let city = 'Unknown';
  
  if (parts.length >= 3) {
  customerId = parts[1]; // CTxxx
@@ -59,7 +59,9 @@ export async function POST(req: Request) {
  if (custRes.rows.length > 0) {
  customerName = custRes.rows[0].name;
  service = custRes.rows[0].service;
+ if (custRes.rows[0].city) {
  city = custRes.rows[0].city;
+ }
  }
  } catch (e) {
  console.error("Failed to fetch customer for webhook:", e);

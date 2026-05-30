@@ -34,10 +34,22 @@ function getSecondsUntilMidnightWIB(): { seconds: number; expiryAt: number; expi
  };
 }
 
-export async function createSession(adminId: number) {
+export async function createSession(adminId: number, remember: boolean = false) {
  const token = crypto.randomUUID();
- const { seconds, expiryAt, expiryDate } = getSecondsUntilMidnightWIB();
- const cookieStore = await cookies();
+  let seconds: number, expiryAt: number, expiryDate: Date;
+  
+  if (remember) {
+    seconds = 30 * 24 * 60 * 60; // 30 days
+    expiryAt = Date.now() + (seconds * 1000);
+    expiryDate = new Date(expiryAt);
+  } else {
+    const midnightData = getSecondsUntilMidnightWIB();
+    seconds = midnightData.seconds;
+    expiryAt = midnightData.expiryAt;
+    expiryDate = midnightData.expiryDate;
+  }
+  
+  const cookieStore = await cookies();
  
  // Ambil data admin (role)
  const adminRes = await query('SELECT role FROM admin WHERE id = $1 AND is_active = true', [adminId]);

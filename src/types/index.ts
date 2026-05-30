@@ -121,3 +121,17 @@ export interface Expense {
  city?: string;
  description?: string;
 }
+
+// Theme System Types
+export type {
+  ThemeColors,
+  ThemeMetadata,
+  ThemePalette,
+  AccessibilityIssue,
+  ValidationResult,
+  ParseError,
+  Result,
+  UserRole,
+  ThemeMode,
+  DarkModePreference,
+} from './theme';
