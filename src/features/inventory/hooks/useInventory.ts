@@ -39,6 +39,7 @@ export function useInventory() {
  queryFn: getAdminProfile
  });
  const isTimLapangan = profile?.role ==='Tim Lapangan'|| profile?.role ==='Pekerja';
+ const isVisitor = profile?.email === 'visitor@gmail.com';
 
  const [currentPage, setCurrentPage] = useState(1);
  const [selectedType, setSelectedType] = useState("All");
@@ -395,7 +396,7 @@ export function useInventory() {
 
  return {
  // Data & Loaders
- assetRoster, stockAssets, warehouses, profile, isTimLapangan, isLoadingAll,
+ assetRoster, stockAssets, warehouses, profile, isTimLapangan, isVisitor, isLoadingAll,
  // Pagination
  currentPage, setCurrentPage, totalPages, itemsPerPage,
  // Filters

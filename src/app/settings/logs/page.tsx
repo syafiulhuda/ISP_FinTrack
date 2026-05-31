@@ -37,6 +37,7 @@ export default function SystemLogsPage() {
  if (!profile) return false;
  return profile.role ==='System Administrator'|| profile.role ==='Admin Kantor';
  }, [profile]);
+ const isVisitor = profile?.email === 'visitor@gmail.com';
 
  // 2. Fetch Logs
  const { data: logs = [], isLoading: isLogsLoading, refetch, isRefetching } = useQuery({
@@ -295,12 +296,13 @@ export default function SystemLogsPage() {
  <div className="flex items-center gap-2 pt-2 border-t border-border/60">
  <button
  onClick={() => resolveMutation.mutate({ id: row.id, resolved: !row.is_resolved })}
- disabled={resolveMutation.isPending}
+ disabled={resolveMutation.isPending || isVisitor}
  className={cn(
-"px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+"px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5",
  row.is_resolved
  ?"bg-muted hover:bg-muted /80 text-muted-foreground"
- :"bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-500/10"
+ :"bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-500/10",
+ isVisitor ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
  )}
  >
  {row.is_resolved ? (
@@ -368,8 +370,10 @@ export default function SystemLogsPage() {
 
  <button
  onClick={handleClearLogs}
- disabled={clearMutation.isPending || logs.length === 0}
- className="flex items-center gap-2 px-4 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all font-bold text-xs disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-rose-500/10"
+ disabled={clearMutation.isPending || logs.length === 0 || isVisitor}
+ className={cn("flex items-center gap-2 px-4 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all font-bold text-xs shadow-md shadow-rose-500/10",
+ (clearMutation.isPending || logs.length === 0 || isVisitor) ? "opacity-50 cursor-not-allowed" : ""
+ )}
  >
  <Trash2 size={14} />
  Clear All Logs
@@ -575,12 +579,13 @@ export default function SystemLogsPage() {
  e.stopPropagation();
  resolveMutation.mutate({ id: log.id, resolved: !log.is_resolved });
  }}
- disabled={resolveMutation.isPending}
+ disabled={resolveMutation.isPending || isVisitor}
  className={cn(
-"px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+"px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5",
  log.is_resolved
  ?"bg-muted hover:bg-muted /80 text-muted-foreground"
- :"bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-500/10"
+ :"bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-500/10",
+ isVisitor ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
  )}
  >
  {log.is_resolved ? (

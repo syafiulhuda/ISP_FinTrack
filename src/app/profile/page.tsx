@@ -12,6 +12,7 @@ import { useQuery, useQueryClient } from"@tanstack/react-query";
 import { toast } from"sonner";
 import { LoadingState } from"@/components/LoadingState";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 const containerVariants: Variants = {
  hidden: { opacity: 0 },
@@ -68,6 +69,7 @@ export default function ProfilePage() {
  queryFn: checkTwoFactorStatus
  });
  
+ const isVisitor = profileData?.email === 'visitor@gmail.com';
  const [isEditing, setIsEditing] = useState(false);
  const [editData, setEditData] = useState<Admin | null>(null);
  const [isSaving, setIsSaving] = useState(false);
@@ -491,7 +493,9 @@ export default function ProfilePage() {
  Personal Information
  </h3>
  {!isEditing ? (
- <button onClick={handleEdit} className="text-primary font-bold text-sm whitespace-nowrap hover:underline px-3 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+ <button onClick={handleEdit} disabled={isVisitor} className={cn("text-primary font-bold text-sm whitespace-nowrap px-3 py-1.5 rounded-lg transition-colors",
+ isVisitor ? "opacity-50 cursor-not-allowed" : "hover:underline hover:bg-blue-50 dark:hover:bg-blue-900/20"
+ )}>
  Update info
  </button>
  ) : (
@@ -649,7 +653,9 @@ export default function ProfilePage() {
   <p className="text-sm text-muted-foreground leading-relaxed mb-6">
   Actions here are permanent. Please proceed with caution if you are attempting to deactivate this administrator account.
   </p>
-  <button onClick={() => setIsDeactivateModalOpen(true)} className="w-full px-8 py-3 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-500 text-sm font-bold rounded-2xl dark:hover:bg-red-900/30 transition-all active:scale-95 shadow-sm">
+  <button onClick={() => setIsDeactivateModalOpen(true)} disabled={isVisitor} className={cn("w-full px-8 py-3 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-500 text-sm font-bold rounded-2xl transition-all shadow-sm",
+  isVisitor ? "opacity-50 cursor-not-allowed" : "dark:hover:bg-red-900/30 active:scale-95"
+  )}>
   Deactivate Account
   </button>
   </m.div>
@@ -792,7 +798,9 @@ export default function ProfilePage() {
  </p>
  <p className="text-[10px] text-muted-foreground truncate">{twoFactorStatus.enabled ?'Google Authenticator active':'Not configured'}</p>
  </div>
- <button onClick={handleManage2FA} className="text-primary text-[10px] font-bold uppercase tracking-wider hover:underline shrink-0">
+ <button onClick={handleManage2FA} disabled={isVisitor} className={cn("text-primary text-[10px] font-bold uppercase tracking-wider shrink-0",
+ isVisitor ? "opacity-50 cursor-not-allowed" : "hover:underline"
+ )}>
  {is2FAModalOpen ?'Cancel': twoFactorStatus.enabled ?'Manage':'Setup'}
  </button>
  </div>

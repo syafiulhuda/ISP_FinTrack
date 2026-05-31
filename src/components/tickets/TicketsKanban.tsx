@@ -5,6 +5,8 @@ import { m, AnimatePresence } from"framer-motion";
 import { AlertCircle, Clock, CheckCircle, Search, Filter, ChevronDown, X } from"lucide-react";
 import { toast } from"sonner";
 import { updateTicketStatus, getResolvedHistoryTickets } from"@/actions/tickets";
+import { getAdminProfile } from "@/actions/admin";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from"@/lib/utils";
 import Link from"next/link";
 
@@ -22,6 +24,9 @@ interface Ticket {
 }
 
 export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) {
+ const { data: profile } = useQuery({ queryKey: ['adminProfile'], queryFn: getAdminProfile });
+ const isVisitor = profile?.email === 'visitor@gmail.com';
+
  const [tickets, setTickets] = useState(initialTickets);
  const [search, setSearch] = useState("");
  const [showFilters, setShowFilters] = useState(false);
@@ -423,10 +428,12 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
  <m.div
  layout
  key={t.id}
- draggable
- onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, t.id)}
+ draggable={!isVisitor}
+ onDragStart={(e) => !isVisitor && handleDragStart(e as unknown as React.DragEvent, t.id)}
  style={{ WebkitTouchCallout:'none'}}
- className="p-5 bg-card border border-border rounded-2xl shadow-sm cursor-grab active:cursor-grabbing hover:border-indigo-500/50 hover:shadow-lg transition-all select-none touch-pan-y"
+ className={cn("p-5 bg-card border border-border rounded-2xl shadow-sm hover:border-indigo-500/50 hover:shadow-lg transition-all select-none touch-pan-y",
+ !isVisitor && "cursor-grab active:cursor-grabbing"
+ )}
  >
  <div className="flex justify-between items-start mb-3">
  <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider",
@@ -452,7 +459,7 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
  
  {/* Mobile Quick Actions (Visible primarily on touch devices or smaller screens) */}
  <div className="mt-4 pt-3 flex items-center justify-end border-t border-slate-50 lg:hidden">
- {col.id ==='OPEN'? (
+ {(!isVisitor && col.id ==='OPEN')? (
  <button
  onClick={(e) => {
  e.stopPropagation();
@@ -463,7 +470,7 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
  >
  Start Progress &rarr;
  </button>
- ) : col.id ==='IN_PROGRESS'? (
+ ) : (!isVisitor && col.id ==='IN_PROGRESS')? (
  <button
  onClick={(e) => {
  e.stopPropagation();

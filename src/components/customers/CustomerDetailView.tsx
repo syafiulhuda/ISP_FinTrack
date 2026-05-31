@@ -14,10 +14,12 @@ import Link from"next/link";
 import { toggleVipStatus, sendPaymentReminder } from"@/actions/customers";
 import { createPaymentLink } from"@/actions/payment";
 import { useState, useEffect } from"react";
-import { toast } from"sonner";
-import { PaymentModal } from"@/components/ui/PaymentModal";
-import { CustomerEditModal } from"@/components/customers/CustomerEditModal";
-import { TicketSlideOver } from"@/components/tickets/TicketSlideOver";
+import { toast } from "sonner";
+import { PaymentModal } from "@/components/ui/PaymentModal";
+import { CustomerEditModal } from "@/components/customers/CustomerEditModal";
+import { TicketSlideOver } from "@/components/tickets/TicketSlideOver";
+import { useQuery } from "@tanstack/react-query";
+import { getAdminProfile } from "@/actions/admin";
 
 const formatCompactNumber = (input: number | string) => {
  const number = Number(input);
@@ -144,6 +146,8 @@ function CopyItem({ label, value, icon: Icon }: { label: string; value: string; 
 }
 
 export default function CustomerDetailView({ data, initialTickets = [] }: { data: any, initialTickets?: any[] }) {
+ const { data: profile } = useQuery({ queryKey: ['adminProfile'], queryFn: getAdminProfile });
+ const isVisitor = profile?.email === 'visitor@gmail.com';
  const [isVip, setIsVip] = useState(data.is_vip || false);
  const [isSending, setIsSending] = useState(false);
  const [isTogglingVip, setIsTogglingVip] = useState(false);
@@ -279,30 +283,36 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto shrink-0">
  <button
  onClick={() => setEditModalOpen(true)}
+ disabled={isVisitor}
  aria-label="Edit Network Profile"
- className="flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-card hover:bg-muted dark:hover:bg-muted text-foreground border border-border rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-sm"
+ className={cn("flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-card hover:bg-muted dark:hover:bg-muted text-foreground border border-border rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-sm",
+ isVisitor && "opacity-50 cursor-not-allowed"
+ )}
  >
  <Settings size={16} />
  <span className="truncate">Edit Profile</span>
  </button>
  <button
  onClick={handleSendReminder}
- disabled={isSending}
+ disabled={isSending || isVisitor}
  aria-label="Send payment reminder"
- className="flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-lg shadow-primary/ disabled:opacity-50"
+ className={cn("flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-lg shadow-primary/",
+ (isSending || isVisitor) ? "opacity-50" : ""
+ )}
  >
  <Bell size={16} className={cn(isSending &&"animate-bounce")} />
  <span className="truncate">{isSending ?"Sending...":"Send Reminder"}</span>
  </button>
  <button
  onClick={handleToggleVip}
- disabled={isTogglingVip}
+ disabled={isTogglingVip || isVisitor}
  aria-label={isVip ?"Remove VIP status":"Mark as VIP"}
  className={cn(
-"flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 border rounded-2xl font-bold text-xs tablet:text-sm transition-all disabled:opacity-50",
+ "flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 border rounded-2xl font-bold text-xs tablet:text-sm transition-all",
  isVip
  ?"bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400"
- :"bg-card border-border text-foreground hover:bg-muted dark:hover:bg-muted"
+ :"bg-card border-border text-foreground hover:bg-muted dark:hover:bg-muted",
+ (isTogglingVip || isVisitor) ? "opacity-50 cursor-not-allowed" : ""
  )}
  >
  <Star size={16} className={cn(isVip &&"fill-current")} />
@@ -336,7 +346,10 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  toast.error("Failed to generate link:"+ res.error, { id:"snap"});
  }
  }}
- className="flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-primary/10 hover:bg-primary/20 dark:bg-primary/ dark:hover:bg-primary/ text-primary dark:text-primary border border-primary/20 dark:border-primary/ rounded-2xl font-bold text-xs tablet:text-sm transition-all cursor-pointer"
+ disabled={isVisitor}
+ className={cn("flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-primary/10 hover:bg-primary/20 dark:bg-primary/ dark:hover:bg-primary/ text-primary dark:text-primary border border-primary/20 dark:border-primary/ rounded-2xl font-bold text-xs tablet:text-sm transition-all",
+ isVisitor ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+ )}
  >
  <CreditCard size={16} />
  <span className="truncate">Payment Link</span>

@@ -4,8 +4,11 @@ import { useState, useEffect } from"react";
 import { createPortal } from"react-dom";
 import { m, AnimatePresence } from"framer-motion";
 import { X, Save, Router, Globe, Cpu, Activity, Users } from"lucide-react";
-import { toast } from"sonner";
-import { updateCustomerNetwork } from"@/actions/customers";
+import { toast } from "sonner";
+import { updateCustomerNetwork } from "@/actions/customers";
+import { useQuery } from "@tanstack/react-query";
+import { getAdminProfile } from "@/actions/admin";
+import { cn } from "@/lib/utils";
 
 interface CustomerEditModalProps {
  isOpen: boolean;
@@ -14,6 +17,8 @@ interface CustomerEditModalProps {
 }
 
 export function CustomerEditModal({ isOpen, onClose, customer }: CustomerEditModalProps) {
+ const { data: profile } = useQuery({ queryKey: ['adminProfile'], queryFn: getAdminProfile });
+ const isVisitor = profile?.email === 'visitor@gmail.com';
  const [loading, setLoading] = useState(false);
  const [formData, setFormData] = useState({
  pppoe_user: customer?.pppoe_user ||"",
@@ -183,8 +188,10 @@ export function CustomerEditModal({ isOpen, onClose, customer }: CustomerEditMod
  </button>
  <button 
  type="submit"
- disabled={loading}
- className="flex items-center gap-2 px-6 py-3 font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-lg shadow-indigo-600/20 transition-all disabled:opacity-50"
+ disabled={loading || isVisitor}
+ className={cn("flex items-center gap-2 px-6 py-3 font-bold text-sm text-white bg-primary hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20 transition-all",
+ (loading || isVisitor) ? "opacity-50 cursor-not-allowed" : ""
+ )}
  >
  {loading ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"/> : <Save size={16} />}
  Save Changes

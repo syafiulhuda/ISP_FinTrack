@@ -168,3 +168,22 @@ export async function requireRole(allowedRoles: string[]) {
  }
  return adminId;
 }
+
+export async function isVisitor(): Promise<boolean> {
+  const adminId = await getSession();
+  if (!adminId) return false;
+  
+  const res = await query('SELECT email FROM admin WHERE id = $1', [adminId]);
+  if (res.rows.length > 0 && res.rows[0].email === 'visitor@gmail.com') {
+    return true;
+  }
+  return false;
+}
+
+export async function requireNotVisitor() {
+  const visitor = await isVisitor();
+  if (visitor) {
+    throw new Error("Visitor is not allowed to modify data");
+  }
+}
+

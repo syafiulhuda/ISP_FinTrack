@@ -8,9 +8,11 @@ import {
  markNotificationAsRead, 
  markAllNotificationsAsRead,
  deleteNotification,
- hideAllNotifications
+ hideAllNotifications,
+ getAdminProfile
 } from"@/actions/admin";
 import { Notification } from"@/types";
+import { cn } from "@/lib/utils";
 
 import { useState } from"react";
 import { LoadingState } from"@/components/LoadingState";
@@ -59,6 +61,8 @@ const itemVariants: Variants = {
 
 export default function NotificationsPage() {
  const queryClient = useQueryClient();
+ const { data: profile } = useQuery({ queryKey: ['adminProfile'], queryFn: getAdminProfile });
+ const isVisitor = profile?.email === 'visitor@gmail.com';
 
  const { data: notifications = [], isLoading } = useQuery({
  queryKey: ['notifications'],
@@ -185,8 +189,10 @@ export default function NotificationsPage() {
  {unreadAlerts > 0 && (
  <button 
  onClick={() => markAllReadMutation.mutate()}
- disabled={markAllReadMutation.isPending}
- className="text-[10px] sm:text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-widest disabled:opacity-50"
+ disabled={markAllReadMutation.isPending || isVisitor}
+ className={cn("text-[10px] sm:text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-widest",
+ (markAllReadMutation.isPending || isVisitor) ? "opacity-50 cursor-not-allowed" : ""
+ )}
  >
  Mark All as Read
  </button>
@@ -197,7 +203,10 @@ export default function NotificationsPage() {
  hideAllMutation.mutate();
  }
  }}
- className="text-[10px] sm:text-xs font-bold text-muted-foreground hover:text-red-500 transition-colors uppercase tracking-widest"
+ disabled={isVisitor}
+ className={cn("text-[10px] sm:text-xs font-bold text-muted-foreground hover:text-red-500 transition-colors uppercase tracking-widest",
+ isVisitor ? "opacity-50 cursor-not-allowed hover:text-muted-foreground" : ""
+ )}
  >
  Clear All
  </button>
@@ -279,20 +288,23 @@ export default function NotificationsPage() {
  {notif.action_label && (
  <button 
  onClick={() => toast.info("Fitur ini segera hadir 🚀")}
- className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+ disabled={isVisitor}
+ className={cn(`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
  cat ==='Finance'?'bg-primary text-primary-foreground hover:bg-blue-600': 
  cat ==='Inventory'?'bg-orange-500 text-white hover:bg-orange-600':
  cat ==='Reminder'?'bg-indigo-600 text-white hover:bg-indigo-700':
-'bg-purple-600 text-white hover:bg-purple-700'
- }`}>
+ 'bg-purple-600 text-white hover:bg-purple-700'
+ }`, isVisitor ? "opacity-50 cursor-not-allowed" : "")}>
  {notif.action_label}
  </button>
  )}
  {notif.is_unread && (
  <button 
  onClick={() => markReadMutation.mutate(notif.id)}
- className="bg-muted px-4 py-2 rounded-xl text-xs font-bold text-foreground hover:bg-muted transition-colors disabled:opacity-50"
- disabled={markReadMutation.isPending}
+ className={cn("bg-muted px-4 py-2 rounded-xl text-xs font-bold text-foreground hover:bg-muted transition-colors",
+ (markReadMutation.isPending || isVisitor) ? "opacity-50 cursor-not-allowed" : ""
+ )}
+ disabled={markReadMutation.isPending || isVisitor}
  >
  Dismiss
  </button>
@@ -312,7 +324,10 @@ export default function NotificationsPage() {
  deleteMutation.mutate(notif.id);
  }
  }}
- className="absolute right-4 bottom-4 p-2 text-muted-foreground hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+ disabled={isVisitor}
+ className={cn("absolute right-4 bottom-4 p-2 text-muted-foreground hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100",
+ isVisitor ? "opacity-50 cursor-not-allowed hover:text-muted-foreground" : ""
+ )}
  title="Delete notification"
  aria-label="Delete notification"
  >

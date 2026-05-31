@@ -52,6 +52,7 @@ export default function ServiceTiersPage() {
  queryFn: getAdminProfile
  });
  const isTimLapangan = profile?.role ==='Tim Lapangan'|| profile?.role ==='Pekerja';
+ const isVisitor = profile?.email === 'visitor@gmail.com';
 
  const toggleCustomerExpand = (customerId: string) => {
  setExpandedCustomers(prev => ({
@@ -240,12 +241,15 @@ export default function ServiceTiersPage() {
  <p className="text-base md:text-lg font-medium text-muted-foreground mt-2">Manage broadband tiers and subscriber distribution.</p>
  </div>
  <div className="flex items-center gap-4">
- {!isTimLapangan && (
+ {(!isTimLapangan) && (
  <m.button
- whileHover={{ scale: 1.02 }}
- whileTap={{ scale: 0.98 }}
- onClick={() => setIsAddModalOpen(true)}
- className="bg-primary text-white px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-primary/20 hover:opacity-95 transition-all flex items-center gap-2"
+ whileHover={!isVisitor ? { scale: 1.02 } : {}}
+ whileTap={!isVisitor ? { scale: 0.98 } : {}}
+ onClick={() => !isVisitor && setIsAddModalOpen(true)}
+ disabled={isVisitor}
+ className={cn("bg-primary text-white px-8 py-4 rounded-2xl font-black text-sm shadow-lg shadow-primary/20 transition-all flex items-center gap-2",
+ isVisitor ? "opacity-50 cursor-not-allowed" : "hover:opacity-95"
+ )}
  >
  <Plus size={18} /> Add New Customer
  </m.button>
@@ -350,12 +354,17 @@ export default function ServiceTiersPage() {
  {/* Add New Tier Card */}
  {(!loadingTiers && !isTimLapangan) && (
  <m.button
- whileHover={{ scale: 1.02 }}
- whileTap={{ scale: 0.98 }}
- onClick={() => setIsAddTierModalOpen(true)}
- className="flex-shrink-0 min-w-[280px] p-6 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-4 hover:border-primary hover:bg-primary/5 transition-all group"
+ whileHover={!isVisitor ? { scale: 1.02 } : {}}
+ whileTap={!isVisitor ? { scale: 0.98 } : {}}
+ onClick={() => !isVisitor && setIsAddTierModalOpen(true)}
+ disabled={isVisitor}
+ className={cn("flex-shrink-0 min-w-[280px] p-6 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-4 transition-all group",
+ isVisitor ? "opacity-50 cursor-not-allowed" : "hover:border-primary hover:bg-primary/5"
+ )}
  >
- <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+ <div className={cn("w-12 h-12 rounded-full flex items-center justify-center transition-colors",
+ isVisitor ? "bg-muted text-muted-foreground" : "bg-muted group-hover:bg-primary group-hover:text-white"
+ )}>
  <Plus size={24} />
  </div>
  <div className="text-center">

@@ -81,8 +81,9 @@ export default function SettingsPage() {
  queryKey: ['adminProfile'],
  queryFn: getAdminProfile
  });
- const isTimLapangan = profile?.role ==='Tim Lapangan'|| profile?.role ==='Pekerja';
- const isSystemAdmin = profile?.role ==='System Administrator';
+ const isTimLapangan = profile?.role === 'Tim Lapangan' || profile?.role === 'Pekerja';
+ const isSystemAdmin = profile?.role === 'System Administrator';
+ const isVisitor = profile?.email === 'visitor@gmail.com';
 
  const { data: adminList = [] } = useQuery({
  queryKey: ['adminList'],
@@ -664,7 +665,8 @@ export default function SettingsPage() {
  </h3>
  <button
  onClick={() => setIsAddManagerOpen(true)}
- className="text-primary font-bold text-sm hover:underline"
+ disabled={isVisitor}
+ className={cn("text-primary font-bold text-sm hover:underline", isVisitor && "opacity-50 cursor-not-allowed no-underline")}
  >
  Add New User
  </button>
@@ -853,8 +855,10 @@ export default function SettingsPage() {
  deleteAdminMutation.mutate(admin.id);
  }
  }}
- disabled={deleteAdminMutation.isPending}
- className="text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 cursor-pointer transition-all disabled:opacity-50 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+ disabled={deleteAdminMutation.isPending || isVisitor}
+ className={cn("text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 cursor-pointer transition-all disabled:opacity-50 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20",
+ isVisitor ? "opacity-50 cursor-not-allowed hover:text-muted-foreground" : ""
+ )}
  title="Delete User"
  >
  <Trash2 size={18} />
@@ -876,7 +880,10 @@ export default function SettingsPage() {
  {!isEditing ? (
  <button
  onClick={() => setIsEditing(true)}
- className="px-8 py-3 rounded-xl bg-primary text-primary-foreground font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"
+ disabled={isVisitor}
+ className={cn("px-8 py-3 rounded-xl bg-primary text-primary-foreground font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 active:scale-95 transition-all",
+ isVisitor ? "opacity-50 cursor-not-allowed" : ""
+ )}
  >
  Edit Configurations
  </button>

@@ -77,7 +77,7 @@ export default function RootLayout({
   return (
   <html lang="en" className={`${inter.variable} h-full antialiased`} data-scroll-behavior="smooth" suppressHydrationWarning>
   <head>
-    <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+    <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
   </head>
   <body suppressHydrationWarning className={`${inter.className} min-h-full bg-background text-foreground overflow-x-hidden`}>
  <QueryProvider>

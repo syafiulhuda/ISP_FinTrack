@@ -19,6 +19,7 @@ export default function InventoryPage() {
 
  const {
  isTimLapangan,
+ isVisitor,
  selectedType, setSelectedType,
  selectedCondition, setSelectedCondition,
  selectedOwnership, setSelectedOwnership,
@@ -45,7 +46,7 @@ export default function InventoryPage() {
  </p>
  </m.div>
 
- {!isTimLapangan && (
+ {(!isTimLapangan) && (
  <m.div
  initial={{ opacity: 0, x: 20 }}
  animate={{ opacity: 1, x: 0 }}
@@ -58,10 +59,13 @@ export default function InventoryPage() {
  View All Assets
  </Link>
  <m.button
- whileHover={{ scale: 1.02 }}
- whileTap={{ scale: 0.98 }}
- onClick={() => setIsRegisterModalOpen(true)}
- className="w-full sm:w-auto px-5 py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary transition-all flex items-center justify-center whitespace-nowrap"
+ whileHover={!isVisitor ? { scale: 1.02 } : {}}
+ whileTap={!isVisitor ? { scale: 0.98 } : {}}
+ onClick={() => !isVisitor && setIsRegisterModalOpen(true)}
+ disabled={isVisitor}
+ className={cn("w-full sm:w-auto px-5 py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-sm shadow-lg shadow-primary/20 transition-all flex items-center justify-center whitespace-nowrap",
+ isVisitor ? "opacity-50 cursor-not-allowed" : "hover:bg-primary"
+ )}
  >
  Register New Asset
  </m.button>

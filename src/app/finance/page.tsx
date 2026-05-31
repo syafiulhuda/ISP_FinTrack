@@ -44,7 +44,8 @@ export default function FinancePage() {
  queryKey: ['adminProfile'],
  queryFn: getAdminProfile
  });
- const isTimLapangan = profile?.role ==='Tim Lapangan'|| profile?.role ==='Pekerja';
+ const isTimLapangan = profile?.role === 'Tim Lapangan' || profile?.role === 'Pekerja';
+ const isVisitor = profile?.email === 'visitor@gmail.com';
 
  const [currentPage, setCurrentPage] = useState(1);
  const [selectedKeterangan, setSelectedKeterangan] = useState("All");
@@ -684,16 +685,20 @@ export default function FinancePage() {
  <div className="mt-12 flex flex-col sm:flex-row gap-4">
  <button
  onClick={() => isEditing ? handleCancel() : setIsEditing(true)}
- className="w-full sm:flex-1 rounded-xl py-4 px-4 text-sm font-bold transition-all bg-muted text-foreground hover:bg-muted"
+ disabled={isVisitor}
+ className={cn(
+ "w-full sm:flex-1 rounded-xl py-4 px-4 text-sm font-bold transition-all bg-muted text-foreground hover:bg-muted",
+ isVisitor && "opacity-50 cursor-not-allowed"
+ )}
  >
  {isEditing ?"Cancel":"Edit Details"}
  </button>
  <button
  onClick={() => isEditing ? handleSaveAndPost() : handlePost()}
- disabled={isPosting}
+ disabled={isPosting || isVisitor}
  className={cn(
  "w-full sm:flex-[2] text-white rounded-xl py-4 px-4 text-sm font-bold transition-all shadow-lg bg-primary hover:opacity-90 shadow-primary/25",
- isPosting && "opacity-50 cursor-not-allowed"
+ (isPosting || isVisitor) && "opacity-50 cursor-not-allowed"
  )}
  >
  {isPosting ? "Processing..." : (isEditing ? "Save & Post Entry ✓" : "Confirm & Post Entry")}
