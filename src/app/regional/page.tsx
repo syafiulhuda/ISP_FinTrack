@@ -472,7 +472,7 @@ export default function RegionalAnalysisPage() {
  <div className="hidden lg:grid lg:grid-cols-3 gap-6">
  {isLoadingAll ? (
  SKELETON_ITEMS.map((_, i) => (
- <div key={i} className="h-[140px] bg-muted animate-pulse rounded-3xl"/>
+ <div key={i} className="h-[140px] skeleton-card rounded-3xl"/>
  ))
  ) : (
  <>
@@ -563,11 +563,9 @@ export default function RegionalAnalysisPage() {
  <div className="block lg:hidden divide-y divide-slate-100 dark:divide-slate-800">
  {isLoadingAll ? (
  SKELETON_ITEMS.map((_, i) => (
- <div key={i} className="p-5 space-y-3 animate-pulse">
- <div className="flex justify-between items-center">
- <div className="h-4 bg-muted rounded w-1/3"/>
- <div className="h-4 bg-muted rounded w-1/4"/>
- </div>
+ <div key={i} className="p-5 space-y-3">
+ <div className="h-4 skeleton-card rounded w-1/3"/>
+ <div className="h-4 skeleton-card rounded w-1/4"/>
  </div>
  ))
  ) : paginatedProfit.length === 0 ? (
@@ -740,11 +738,9 @@ export default function RegionalAnalysisPage() {
  <div className="block lg:hidden divide-y divide-slate-100 dark:divide-slate-800">
  {isLoadingAll ? (
  SKELETON_ITEMS.map((_, i) => (
- <div key={i} className="p-5 space-y-3 animate-pulse">
- <div className="flex justify-between items-center">
- <div className="h-4 bg-muted rounded w-1/3"/>
- <div className="h-4 bg-muted rounded w-1/4"/>
- </div>
+ <div key={i} className="p-5 space-y-3">
+ <div className="h-4 skeleton-card rounded w-1/3"/>
+ <div className="h-4 skeleton-card rounded w-1/4"/>
  </div>
  ))
  ) : paginatedAging.length === 0 ? (

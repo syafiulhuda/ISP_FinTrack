@@ -330,43 +330,43 @@ function CustomTooltip({ active, payload, label, unit =""}: CustomTooltipProps) 
 }
 
 function PredictionCardSkeleton() {
- return (
- <div className="bg-card p-6 sm:p-8 rounded-[2.5rem] border border-border shadow-sm relative overflow-hidden h-[178px] animate-pulse">
- <div className="flex items-center gap-4 mb-5">
- <div className="w-12 h-12 rounded-2xl bg-muted shrink-0"/>
- <div className="w-24 h-4 bg-muted rounded"/>
- </div>
- <div className="w-36 h-8 bg-muted rounded mb-4"/>
- <div className="flex items-center gap-2">
- <div className="w-16 h-5 bg-muted rounded-xl"/>
- <div className="w-20 h-3 bg-muted rounded"/>
- </div>
- </div>
- );
+  return (
+    <div className="bg-card p-6 sm:p-8 rounded-[2.5rem] border border-border shadow-sm relative overflow-hidden h-[178px]">
+      <div className="flex items-center gap-4 mb-5">
+        <div className="w-12 h-12 rounded-2xl skeleton-card shrink-0"/>
+        <div className="w-24 h-4 skeleton-card rounded"/>
+      </div>
+      <div className="w-36 h-8 skeleton-card rounded mb-4"/>
+      <div className="flex items-center gap-2">
+        <div className="w-16 h-5 skeleton-card rounded-xl"/>
+        <div className="w-20 h-3 skeleton-card rounded"/>
+      </div>
+    </div>
+  );
 }
 
 const CHART_SKELETON_HEIGHTS = ["30%","45%","60%","35%","50%","70%","85%","60%","40%","55%","75%","90%"];
 const CHART_SKELETON_BARS = Array.from({ length: 12 });
 
 function ChartSkeleton() {
- return (
- <div className="bg-card p-8 rounded-[2.5rem] border border-border shadow-sm flex flex-col h-[442px] animate-pulse">
- <div className="flex items-center justify-between mb-10">
- <div className="space-y-2">
- <div className="w-48 h-6 bg-muted rounded"/>
- <div className="w-32 h-3 bg-muted rounded"/>
- </div>
- <div className="w-24 h-6 bg-muted rounded-xl"/>
- </div>
- <div className="flex-1 w-full bg-muted/50 /30 rounded-[2rem] flex items-end justify-between p-6 gap-2">
- {CHART_SKELETON_BARS.map((_, i) => (
- <div 
- key={i} 
- className="w-full bg-muted/50 rounded-t-lg animate-pulse"
- style={{ height: CHART_SKELETON_HEIGHTS[i] }} 
- />
- ))}
- </div>
- </div>
- );
+  return (
+    <div className="bg-card p-8 rounded-[2.5rem] border border-border shadow-sm flex flex-col h-[442px]">
+      <div className="flex items-center justify-between mb-10">
+        <div className="space-y-2">
+          <div className="w-48 h-6 skeleton-card rounded"/>
+          <div className="w-32 h-3 skeleton-card rounded"/>
+        </div>
+        <div className="w-24 h-6 skeleton-card rounded-xl"/>
+      </div>
+      <div className="flex-1 w-full skeleton-theme rounded-[2rem] flex items-end justify-between p-6 gap-2">
+        {CHART_SKELETON_BARS.map((_, i) => (
+          <div 
+            key={i} 
+            className="w-full skeleton-card rounded-t-lg"
+            style={{ height: CHART_SKELETON_HEIGHTS[i] }} 
+          />
+        ))}
+      </div>
+    </div>
+  );
 }

@@ -54,7 +54,7 @@ export const getDashboardSummary = unstable_cache(
  }
  },
  ['dashboard_summary_mv'],
- { revalidate: 60, tags: ['dashboard'] }
+ { revalidate: 300, tags: ['dashboard'] }
 );
 
 // =============================================================================

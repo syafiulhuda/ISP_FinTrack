@@ -81,10 +81,10 @@ const navigation = [
           {/* Skeleton - Shows during SSR, or while hydrating, or while image is downloading */}
           {!isActuallyLoaded && (
             <div className="flex items-center space-x-3 absolute inset-0">
-              <div className="h-9 w-9 bg-muted animate-pulse rounded-xl shrink-0" />
+              <div className="h-9 w-9 skeleton-theme rounded-xl shrink-0" />
               <div className="flex flex-col gap-1 w-full">
-                <div className="h-4 bg-muted animate-pulse rounded w-32" />
-                <div className="h-2 bg-muted animate-pulse rounded w-20" />
+                <div className="h-4 skeleton-theme rounded w-32" />
+                <div className="h-2 skeleton-theme rounded w-20" />
               </div>
             </div>
           )}

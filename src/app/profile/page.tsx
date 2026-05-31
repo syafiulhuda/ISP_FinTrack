@@ -285,51 +285,51 @@ export default function ProfilePage() {
  }
  };
 
- if (isProfileLoading || isSessionsLoading || isLogsLoading) {
- return (
- <div className="space-y-8 pb-10 animate-pulse">
- {/* Profile Header Skeleton */}
- <section className="mb-12">
- <div className="flex flex-col md:flex-row items-center md:items-end gap-6 text-center md:text-left">
- <div className="w-32 h-32 rounded-full bg-muted border-4 border-white dark:border-slate-950 shadow-xl"></div>
- <div className="flex-1 pb-2 w-full flex flex-col items-center md:items-start gap-2">
- <div className="w-24 h-3 bg-muted rounded-full mt-2"></div>
- <div className="w-48 h-8 bg-muted rounded-full"></div>
- <div className="w-72 h-4 bg-muted rounded-full mt-2"></div>
- </div>
- </div>
- </section>
- 
- {/* Layout Skeleton */}
- <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
- <div className="lg:col-span-2 space-y-6">
- <div className="bg-card rounded-3xl p-6 md:p-8 shadow-xl border border-border">
- <div className="w-40 h-6 bg-muted rounded-full mb-8"></div>
- <div className="space-y-6">
- {[1, 2, 3].map(i => (
- <div key={i} className="space-y-2">
- <div className="w-20 h-3 bg-muted rounded-full"></div>
- <div className="w-full h-12 bg-muted rounded-xl"></div>
- </div>
- ))}
- </div>
- </div>
- </div>
- <div className="space-y-6">
- <div className="bg-card rounded-3xl p-6 md:p-8 shadow-xl border border-border">
- <div className="w-32 h-6 bg-muted rounded-full mb-6"></div>
- <div className="w-full h-24 bg-muted rounded-2xl mb-4"></div>
- <div className="w-full h-12 bg-muted rounded-xl"></div>
- </div>
- <div className="bg-card rounded-3xl p-6 md:p-8 shadow-xl border border-border">
- <div className="w-32 h-6 bg-muted rounded-full mb-6"></div>
- <div className="w-full h-20 bg-muted rounded-2xl mb-4"></div>
- </div>
- </div>
- </div>
- </div>
- );
- }
+  if (isProfileLoading || isSessionsLoading || isLogsLoading) {
+    return (
+      <div className="space-y-8 pb-10">
+        {/* Profile Header Skeleton */}
+        <section className="mb-12">
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-6 text-center md:text-left">
+            <div className="w-32 h-32 rounded-full skeleton-theme border-4 border-white dark:border-slate-950 shadow-xl"></div>
+            <div className="flex-1 pb-2 w-full flex flex-col items-center md:items-start gap-2">
+              <div className="w-24 h-3 skeleton-theme rounded-full mt-2"></div>
+              <div className="w-48 h-8 skeleton-theme rounded-full"></div>
+              <div className="w-72 h-4 skeleton-theme rounded-full mt-2"></div>
+            </div>
+          </div>
+        </section>
+        
+        {/* Layout Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-card rounded-3xl p-6 md:p-8 shadow-xl border border-border">
+              <div className="w-40 h-6 skeleton-card rounded-full mb-8"></div>
+              <div className="space-y-6">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="space-y-2">
+                    <div className="w-20 h-3 skeleton-card rounded-full"></div>
+                    <div className="w-full h-12 skeleton-card rounded-xl"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="space-y-6">
+            <div className="bg-card rounded-3xl p-6 md:p-8 shadow-xl border border-border">
+              <div className="w-32 h-6 skeleton-card rounded-full mb-6"></div>
+              <div className="w-full h-12 skeleton-card rounded-xl mb-4"></div>
+              <div className="w-full h-12 skeleton-card rounded-xl"></div>
+            </div>
+            <div className="bg-card rounded-3xl p-6 md:p-8 shadow-xl border border-border">
+              <div className="w-32 h-6 skeleton-card rounded-full mb-6"></div>
+              <div className="w-full h-20 skeleton-card rounded-2xl mb-4"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
  if (!profileData) {
  return (

@@ -23,12 +23,12 @@ import { ChartContainer } from'@/components/charts/ChartContainer';
 
 const DashboardRevenueChart = dynamic(
  () => import('@/components/charts/DashboardCharts').then(mod => mod.DashboardRevenueChart),
- { ssr: false, loading: () => <div className="h-[300px] w-full bg-muted animate-pulse rounded-xl"/> }
+ { ssr: false, loading: () => <div className="h-[300px] w-full skeleton-card rounded-xl"/> }
 );
 
 const DashboardCustomerChart = dynamic(
  () => import('@/components/charts/DashboardCharts').then(mod => mod.DashboardCustomerChart),
- { ssr: false, loading: () => <div className="h-[220px] w-full bg-muted animate-pulse rounded-xl"/> }
+ { ssr: false, loading: () => <div className="h-[220px] w-full skeleton-card rounded-xl"/> }
 );
 import { useQuery } from"@tanstack/react-query";
 import { getDashboardData } from'@/actions/dashboard';
@@ -523,7 +523,7 @@ export default function Dashboard() {
  }}
  >
  {isLoading ? (
- <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] bg-muted animate-pulse rounded-[1.5rem] shadow-xl"/>
+ <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] skeleton-theme rounded-[1.5rem] shadow-xl"/>
  ) : (
  kpis.map((kpi, i) => {
  const N = kpis.length;
@@ -613,7 +613,7 @@ export default function Dashboard() {
  <div className="hidden lg:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
  {isLoading ? (
  Array.from({ length: 4 }).map((_, i) => (
- <div key={i} className="h-[140px] bg-muted animate-pulse rounded-3xl"/>
+ <div key={i} className="h-[140px] skeleton-theme rounded-3xl"/>
  ))
  ) : (
  kpis.map((kpi, index) => (

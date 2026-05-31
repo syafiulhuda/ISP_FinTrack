@@ -280,12 +280,12 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  </div>
  </div>
 
- <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto shrink-0">
+ <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3 w-full xl:w-auto shrink-0">
  <button
  onClick={() => setEditModalOpen(true)}
  disabled={isVisitor}
  aria-label="Edit Network Profile"
- className={cn("flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-card hover:bg-muted dark:hover:bg-muted text-foreground border border-border rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-sm",
+ className={cn("flex w-full sm:w-auto items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 tablet:px-6 py-3 bg-card hover:bg-muted dark:hover:bg-muted text-foreground border border-border rounded-2xl font-bold text-[10px] sm:text-xs tablet:text-sm transition-all shadow-sm",
  isVisitor && "opacity-50 cursor-not-allowed"
  )}
  >
@@ -296,7 +296,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  onClick={handleSendReminder}
  disabled={isSending || isVisitor}
  aria-label="Send payment reminder"
- className={cn("flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-lg shadow-primary/",
+ className={cn("flex w-full sm:w-auto items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 tablet:px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-[10px] sm:text-xs tablet:text-sm transition-all shadow-lg shadow-primary/30",
  (isSending || isVisitor) ? "opacity-50" : ""
  )}
  >
@@ -308,7 +308,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  disabled={isTogglingVip || isVisitor}
  aria-label={isVip ?"Remove VIP status":"Mark as VIP"}
  className={cn(
- "flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 border rounded-2xl font-bold text-xs tablet:text-sm transition-all",
+ "flex w-full sm:w-auto items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 tablet:px-6 py-3 border rounded-2xl font-bold text-[10px] sm:text-xs tablet:text-sm transition-all",
  isVip
  ?"bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400"
  :"bg-card border-border text-foreground hover:bg-muted dark:hover:bg-muted",

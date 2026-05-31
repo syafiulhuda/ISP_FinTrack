@@ -52,7 +52,7 @@ export const getProfitabilitySummary = unstable_cache(
  }
  },
  ['profitability_summary_mv'],
- { revalidate: 60, tags: ['profitability'] }
+ { revalidate: 300, tags: ['profitability'] }
 );
 
 /**

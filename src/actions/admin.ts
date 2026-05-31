@@ -184,11 +184,51 @@ export async function markNotificationAsRead(id: number) {
 }
 
 export async function markAllNotificationsAsRead() {
- try {
- await query('UPDATE notifications SET is_unread = false');
- revalidatePath('/notifications');
- } catch (e) {
- logger.error({ message:"DB Error: markAllNotificationsAsRead", error: e, path:"action"});
- }
- return { success: true };
+  try {
+    await query('UPDATE notifications SET is_unread = false');
+    revalidatePath('/notifications');
+  } catch (e) {
+    logger.error({ message: "DB Error: markAllNotificationsAsRead", error: e, path: "action" });
+  }
+  return { success: true };
+}
+
+// Database Performance Actions
+export async function getIndexStats() {
+  try {
+    const res = await query(`
+      SELECT 
+        relname AS table_name, 
+        indexrelname AS index_name, 
+        idx_scan, 
+        idx_tup_read, 
+        idx_tup_fetch 
+      FROM pg_stat_user_indexes 
+      ORDER BY idx_scan DESC 
+      LIMIT 20;
+    `);
+    return res.rows;
+  } catch (e) {
+    logger.error({ message: "DB Error: getIndexStats", error: e, path: "action" });
+    return [];
+  }
+}
+
+export async function getSlowQueries() {
+  try {
+    const res = await query(`
+      SELECT 
+        query, 
+        calls, 
+        total_exec_time / calls as avg_time_ms, 
+        rows 
+      FROM pg_stat_statements 
+      ORDER BY avg_time_ms DESC 
+      LIMIT 10;
+    `);
+    return res.rows;
+  } catch (e) {
+    logger.warn({ message: "pg_stat_statements might not be enabled or permission denied.", error: e, path: "action" });
+    return [];
+  }
 }

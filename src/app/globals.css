@@ -230,7 +230,33 @@
   .animate-float-delayed {
     animation: float 15s ease-in-out infinite reverse;
   }
+
+  /**
+   * Themed Skeleton Utilities
+   * Follows the app theme palette so loading states feel native.
+   * Light: Soft primary-tinted blue using the app's --primary color.
+   * Dark:  Slightly-raised muted tone on top of card surfaces.
+   */
+  .skeleton-theme {
+    @apply animate-pulse;
+    background-color: color-mix(in srgb, var(--primary) 8%, #cbd5e1);
+  }
+
+  .dark .skeleton-theme {
+    background-color: color-mix(in srgb, var(--primary) 10%, var(--muted));
+  }
+
+  /* For items that sit on top of a bg-card parent */
+  .skeleton-card {
+    @apply animate-pulse;
+    background-color: color-mix(in srgb, var(--primary) 5%, #e2e8f0);
+  }
+
+  .dark .skeleton-card {
+    background-color: color-mix(in srgb, var(--primary) 8%, var(--border));
+  }
 }
+
 
 /* Premium Leaflet Tooltip Overrides */
 .leaflet-tooltip-pane .leaflet-tooltip {

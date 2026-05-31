@@ -16,7 +16,7 @@ const IconMap = {
 "clock": Clock
 };
 
-const STATS_SKELETON_ITEMS = Array.from({ length: 4 });
+const STATS_SKELETON_ITEMS = Array.from({ length: 7 });
 
 interface StatData {
  label: string;
@@ -57,7 +57,7 @@ export function InventoryStats({ isLoadingAll, dynamicStats }: InventoryStatsPro
  }}
  >
  {isLoadingAll ? (
- <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] bg-muted animate-pulse rounded-[1.5rem] shadow-xl"/>
+ <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] skeleton-card rounded-[1.5rem] shadow-xl"/>
  ) : (
  dynamicStats.map((stat, i) => {
  const Icon = IconMap[stat.trendIcon as keyof typeof IconMap] || Cpu;
@@ -161,7 +161,7 @@ export function InventoryStats({ isLoadingAll, dynamicStats }: InventoryStatsPro
  <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
  {isLoadingAll ? (
  STATS_SKELETON_ITEMS.map((_, i) => (
- <div key={i} className="min-h-[140px] tablet:h-28 lg:h-48 bg-muted animate-pulse rounded-3xl tablet:rounded-[2.5rem]"/>
+ <div key={i} className="min-h-[140px] tablet:h-28 lg:h-48 skeleton-card rounded-3xl tablet:rounded-[2.5rem]"/>
  ))
  ) : (
  dynamicStats.map((stat, index) => {
