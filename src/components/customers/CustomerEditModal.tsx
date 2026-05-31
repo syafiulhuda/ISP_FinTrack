@@ -71,7 +71,7 @@ export function CustomerEditModal({ isOpen, onClose, customer }: CustomerEditMod
  initial={{ scale: 0.95, opacity: 0, y: 20 }}
  animate={{ scale: 1, opacity: 1, y: 0 }}
  exit={{ scale: 0.95, opacity: 0, y: 20 }}
- className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl border border-border overflow-hidden"
+ className="relative w-full max-w-2xl bg-card rounded-[2.5rem] shadow-2xl border border-border overflow-hidden"
  >
  {/* Header */}
  <div className="px-6 py-5 border-b border-border flex justify-between items-center bg-muted/50">
@@ -101,7 +101,7 @@ export function CustomerEditModal({ isOpen, onClose, customer }: CustomerEditMod
  value={formData.pppoe_user}
  onChange={handleChange}
  placeholder="e.g. jdoe_home"
- className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-indigo-500 outline-none"
+ className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-indigo-500 outline-none placeholder:text-muted-foreground"
  />
  </div>
 
@@ -115,7 +115,7 @@ export function CustomerEditModal({ isOpen, onClose, customer }: CustomerEditMod
  value={formData.pppoe_password}
  onChange={handleChange}
  placeholder="Password"
- className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-indigo-500 outline-none"
+ className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-indigo-500 outline-none placeholder:text-muted-foreground"
  />
  </div>
 
@@ -129,7 +129,7 @@ export function CustomerEditModal({ isOpen, onClose, customer }: CustomerEditMod
  value={formData.ip_address}
  onChange={handleChange}
  placeholder="e.g. 10.10.2.14"
- className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm font-mono font-bold text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+ className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm font-mono font-bold text-foreground focus:ring-2 focus:ring-emerald-500 outline-none placeholder:text-muted-foreground"
  />
  </div>
 
@@ -143,7 +143,7 @@ export function CustomerEditModal({ isOpen, onClose, customer }: CustomerEditMod
  value={formData.mac_address}
  onChange={handleChange}
  placeholder="e.g. 00:1A:2B:3C:4D:5E"
- className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm font-mono font-bold text-foreground focus:ring-2 focus:ring-amber-500 outline-none uppercase"
+ className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm font-mono font-bold text-foreground focus:ring-2 focus:ring-amber-500 outline-none uppercase placeholder:text-muted-foreground"
  />
  </div>
 
@@ -157,7 +157,7 @@ export function CustomerEditModal({ isOpen, onClose, customer }: CustomerEditMod
  value={formData.olt_port}
  onChange={handleChange}
  placeholder="e.g. PON 1/1/2"
- className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-rose-500 outline-none"
+ className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-rose-500 outline-none placeholder:text-muted-foreground"
  />
  </div>
 
@@ -171,7 +171,7 @@ export function CustomerEditModal({ isOpen, onClose, customer }: CustomerEditMod
  value={formData.optical_attenuation}
  onChange={handleChange}
  placeholder="e.g. -21.5 dBm"
- className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-violet-500 outline-none"
+ className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-violet-500 outline-none placeholder:text-muted-foreground"
  />
  </div>
 

@@ -12,14 +12,31 @@ export async function register() {
  console.log("STARTUP: Warming up DB pool...");
  pool.query("SELECT 1").catch(err => console.error("STARTUP ERROR: DB Warmup failed", err));
 
- // 1. Jalankan job SEGERA saat server aktif (Startup Job)
- // Semua MV di-refresh secara non-blocking agar TTFB tidak terpengaruh
- console.log("STARTUP: Running initial refresh of all materialized views...");
- refreshAgingMV().catch(err => console.error("STARTUP ERROR: Failed initial aging refresh", err));
- refreshPredictions().catch(err => console.error("STARTUP ERROR: Failed initial prediction refresh", err));
- refreshDashboardMV().catch(err => console.error("STARTUP ERROR: Failed initial dashboard MV refresh", err));
- refreshProfitabilityMV().catch(err => console.error("STARTUP ERROR: Failed initial profitability MV refresh", err));
- refreshExecutiveMV().catch(err => console.error("STARTUP ERROR: Failed initial executive MV refresh", err));
+  // Helper: retry async fn up to maxRetries times with delay
+  const withRetry = async (fn: () => Promise<unknown>, name: string, maxRetries = 3, delayMs = 2000) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await fn();
+        return;
+      } catch (err) {
+        console.error(`STARTUP ERROR: ${name} failed (attempt ${attempt}/${maxRetries})`, err);
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        } else {
+          console.error(`STARTUP ERROR: ${name} permanently failed after ${maxRetries} attempts.`);
+        }
+      }
+    }
+  };
+
+  // 1. Jalankan job SEGERA saat server aktif (Startup Job)
+  // Semua MV di-refresh secara non-blocking agar TTFB tidak terpengaruh
+  console.log("STARTUP: Running initial refresh of all materialized views...");
+  withRetry(refreshAgingMV, "Aging MV");
+  withRetry(refreshPredictions, "Predictions MV");
+  withRetry(refreshDashboardMV, "Dashboard MV");
+  withRetry(refreshProfitabilityMV, "Profitability MV");
+  withRetry(refreshExecutiveMV, "Executive MV");
 
  // Disable node-cron on Vercel to save memory (use Vercel Cron instead)
  if (process.env.VERCEL !=="1") {

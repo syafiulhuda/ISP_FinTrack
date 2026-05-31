@@ -622,7 +622,7 @@ export default function ProfitabilityPage() {
  <div className="flex items-center gap-3 sm:gap-4">
  <div className={cn(
 "w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors duration-300",
- isCenter ? (isBad ?"bg-orange-500/20 text-orange-400":"bg-cyan-500/20 text-cyan-400") :"bg-white/5 text-muted-foreground"
+ isCenter ? (isBad ?"bg-orange-500/20 text-orange-400":"bg-cyan-500/20 text-cyan-400") :"bg-muted text-muted-foreground"
  )}>
  <kpi.icon className="w-4 h-4 sm:w-6 sm:h-6"/>
  </div>
@@ -645,7 +645,7 @@ export default function ProfitabilityPage() {
  <div>
  <div className={cn(
 "text-3xl sm:text-5xl font-black tracking-tight transition-colors duration-300",
- isCenter ?"text-white":"text-muted-foreground"
+ isCenter ?"text-foreground":"text-muted-foreground"
  )}>
  {kpi.value}
  </div>

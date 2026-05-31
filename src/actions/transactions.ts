@@ -1,10 +1,10 @@
 'use server';
-import { logger } from'@/lib/logger';
-
-import { query } from'@/lib/db';
-import { revalidatePath } from'next/cache';
-import { Transaction, OcrData, Invoice } from'@/types';
-import { getAdminProfile } from'./admin';
+import { logger } from '@/lib/logger';
+import { query } from '@/lib/db';
+import { revalidatePath } from 'next/cache';
+import { Transaction, OcrData, Invoice } from '@/types';
+import { getAdminProfile } from './admin';
+import { UpdateOcrDataSchema, PostOcrEntrySchema } from '@/lib/validation';
 
 export async function getTransactions(monthsBack?: number): Promise<(Transaction & { numericAmount?: number })[]> {
  try {
@@ -93,6 +93,13 @@ export async function updateOcrData(id: string | number, data: {
  confidence?: string
 }) {
  try {
+ // Validate input
+ const parsed = UpdateOcrDataSchema.safeParse(data);
+ if (!parsed.success) {
+ const msg = parsed.error.issues.map((e: { message: string }) => e.message).join(', ');
+ return null;
+ }
+
  const profile = await getAdminProfile();
  const inputterName = (profile as any).nickname || profile.fullName ||'Unknown Admin';
  
@@ -132,6 +139,14 @@ export async function postOcrEntry(ocrId: string | number, data: {
  location?: string
 }) {
  try {
+ // Validate input
+ const parsed = PostOcrEntrySchema.safeParse(data);
+ if (!parsed.success) {
+ const msg = parsed.error.issues.map((e: { message: string }) => e.message).join(', ');
+ logger.error({ message: `postOcrEntry validation failed: ${msg}`, error: new Error(msg), path: 'action' });
+ return { success: false, error: `Validasi gagal: ${msg}` };
+ }
+
  let sanitizedDate = data.date;
  const monthsId: Record<string, string> = {
 'Jan':'Jan','Feb':'Feb','Mar':'Mar','Apr':'Apr','Mei':'May', 

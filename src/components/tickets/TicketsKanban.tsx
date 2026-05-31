@@ -40,6 +40,7 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
  const resolvedRef = useRef<HTMLDivElement>(null);
  const [resolvedHeight, setResolvedHeight] = useState(80);
  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+ const [draggingId, setDraggingId] = useState<string | null>(null);
 
  // Modal State for resolving tickets
  const [resolveModalOpen, setResolveModalOpen] = useState(false);
@@ -84,19 +85,25 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
  }, [unresolvedHistoryTickets.length, showHistoryOnly]);
 
  const handleDragStart = (e: React.DragEvent, id: string) => {
- e.dataTransfer.setData("ticketId", id);
- // Optional: Set a drag image or effect
- e.dataTransfer.effectAllowed ="move";
+  e.dataTransfer.setData("ticketId", id);
+  e.dataTransfer.effectAllowed = "move";
+  setDraggingId(id);
  };
 
  const handleDragLeave = () => {
  setDragOverCol(null);
  };
 
+ const handleDragEnd = () => {
+  setDraggingId(null);
+  setDragOverCol(null);
+ };
+
  const handleDrop = async (e: React.DragEvent, newStatus: string) => {
- e.preventDefault();
- setDragOverCol(null);
- const id = e.dataTransfer.getData("ticketId");
+  e.preventDefault();
+  setDragOverCol(null);
+  setDraggingId(null);
+  const id = e.dataTransfer.getData("ticketId");
 
  const ticket = tickets.find(t => t.id.toString() === id);
 
@@ -393,9 +400,12 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
  >
  <div
  onClick={() => setExpandedCols(prev => ({ ...prev, [col.id]: !prev[col.id] }))}
- className={cn("flex items-center justify-between p-4 bg-card border border-t-4 rounded-2xl shadow-md mb-2 cursor-pointer transition-colors hover:bg-muted dark:hover:bg-muted/50", 
- col.color,
- dragOverCol === col.id ?"border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 scale-[1.02]":"border-border"
+ className={cn(
+  "flex items-center justify-between p-4 bg-card border border-t-4 rounded-2xl shadow-md mb-2 cursor-pointer transition-all hover:bg-muted dark:hover:bg-muted/50",
+  col.color,
+  dragOverCol === col.id
+   ? "border-indigo-500 bg-indigo-50/80 dark:bg-indigo-900/30 scale-[1.02] shadow-lg shadow-indigo-500/20"
+   : "border-border"
  )}
  >
  <h3 className="font-black text-foreground flex items-center gap-2">
@@ -430,9 +440,12 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
  key={t.id}
  draggable={!isVisitor}
  onDragStart={(e) => !isVisitor && handleDragStart(e as unknown as React.DragEvent, t.id)}
+ onDragEnd={handleDragEnd}
  style={{ WebkitTouchCallout:'none'}}
- className={cn("p-5 bg-card border border-border rounded-2xl shadow-sm hover:border-indigo-500/50 hover:shadow-lg transition-all select-none touch-pan-y",
- !isVisitor && "cursor-grab active:cursor-grabbing"
+ className={cn(
+  "p-5 bg-card border border-border rounded-2xl shadow-sm hover:border-indigo-500/50 hover:shadow-lg transition-all select-none touch-pan-y",
+  !isVisitor && "cursor-grab active:cursor-grabbing",
+  draggingId === t.id && "opacity-40 scale-95 rotate-1 shadow-2xl border-primary/50 ring-2 ring-primary/30"
  )}
  >
  <div className="flex justify-between items-start mb-3">
@@ -486,9 +499,18 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
  </m.div>
  ))}
  {filteredTickets.filter(t => t.status === col.id).length === 0 && (
- <div className="p-8 border-2 border-dashed border-border rounded-2xl text-center text-muted-foreground text-sm font-bold">
- Drop here
- </div>
+  <m.div
+   animate={dragOverCol === col.id ? { scale: [1, 1.02, 1], opacity: [0.7, 1, 0.7] } : {}}
+   transition={{ repeat: dragOverCol === col.id ? Infinity : 0, duration: 1 }}
+   className={cn(
+    "p-8 border-2 border-dashed rounded-2xl text-center text-sm font-bold transition-colors",
+    dragOverCol === col.id
+     ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500"
+     : "border-border text-muted-foreground"
+   )}
+  >
+   {dragOverCol === col.id ? "✦ Release to drop here" : "Drop here"}
+  </m.div>
  )}
  </div>
  </m.div>

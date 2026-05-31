@@ -619,7 +619,7 @@ export default function ExecutiveDashboard() {
  <div className="flex items-center gap-3">
  <div className={cn(
 "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors duration-300",
- isCenter ? (isBad ?"bg-orange-500/20 text-orange-400":"bg-cyan-500/20 text-cyan-400") :"bg-white/5 text-muted-foreground"
+ isCenter ? (isBad ?"bg-orange-500/20 text-orange-400":"bg-cyan-500/20 text-cyan-400") :"bg-muted text-muted-foreground"
  )}>
  <k.icon className="w-4 h-4 sm:w-5 sm:h-5"/>
  </div>
@@ -641,7 +641,7 @@ export default function ExecutiveDashboard() {
  <div>
  <div className={cn(
 "text-2xl sm:text-4xl font-black tracking-tight transition-colors duration-300 truncate",
- isCenter ?"text-white":"text-muted-foreground"
+ isCenter ?"text-foreground":"text-muted-foreground"
  )}>
  {k.val}
  </div>
@@ -812,7 +812,7 @@ export default function ExecutiveDashboard() {
  <div className="flex items-center gap-3">
  <div className={cn(
 "w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors duration-300",
- isCenter ? (isBad ?"bg-orange-500/20 text-orange-400":"bg-cyan-500/20 text-cyan-400") :"bg-white/5 text-muted-foreground"
+ isCenter ? (isBad ?"bg-orange-500/20 text-orange-400":"bg-cyan-500/20 text-cyan-400") :"bg-muted/50 text-muted-foreground"
  )}>
  <k.icon className="w-4 h-4 sm:w-6 sm:h-6"/>
  </div>
@@ -834,7 +834,7 @@ export default function ExecutiveDashboard() {
  <div>
  <div className={cn(
 "text-3xl sm:text-5xl font-black tracking-tight transition-colors duration-300 truncate",
- isCenter ?"text-white":"text-muted-foreground"
+  isCenter ? "text-foreground" : "text-muted-foreground"
  )}>
  {k.val}
  </div>
@@ -842,7 +842,7 @@ export default function ExecutiveDashboard() {
  <span className={cn(
 "text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-1 rounded-full tracking-wider transition-colors",
  isCenter 
- ? (isBad ?"bg-orange-500/20 text-orange-400":"bg-white/10 text-muted-foreground")
+ ? (isBad ?"bg-orange-500/20 text-orange-400":"bg-white/10 text-foreground")
  :"bg-transparent text-muted-foreground"
  )}>
  {k.desc}

@@ -3,10 +3,14 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  disable: false, // Diaktifkan agar bisa testing PWA Install di local
+  disable: false,
   register: true,
+  // File custom kita di-inject ke dalam sw.js yang di-generate Workbox
+  customWorkerSrc: "sw-custom.js",
+  // SW baru langsung aktif tanpa menunggu semua tab ditutup
   workboxOptions: {
-    skipWaiting: false,
+    skipWaiting: true,
+    clientsClaim: true,
   },
 });
 
@@ -18,6 +22,14 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ['10.203.217.55'],
   async headers() {
     return [
+      {
+        // Service Worker harus selalu fresh — jangan di-cache oleh HTTP layer
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Pragma", value: "no-cache" },
+        ]
+      },
       {
         source: "/:path*",
         headers: [

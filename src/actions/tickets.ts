@@ -138,7 +138,7 @@ export async function updateTicketStatus(id: string, status: string, assignTo?: 
  }
  
  params.push(id);
- sql +=`WHERE id = $${params.length} RETURNING customer_id`;
+ sql += ` WHERE id = $${params.length} RETURNING customer_id`;
  
  const res = await query(sql, params);
  

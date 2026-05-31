@@ -1,10 +1,10 @@
 'use server';
 import { logger } from '@/lib/logger';
-
 import { query } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { Asset } from '@/types';
 import { getAdminProfile } from './admin';
+import { CreateAssetSchema } from '@/lib/validation';
 
 export async function getAssetRoster(): Promise<Asset[]> {
   try {
@@ -59,6 +59,13 @@ export async function createAsset(data: {
   longitude?: number
 }) {
   try {
+    // Validate input
+    const parsed = CreateAssetSchema.safeParse(data);
+    if (!parsed.success) {
+      const msg = parsed.error.issues.map((e: { message: string }) => e.message).join(', ');
+      return { success: false, error: `Validasi gagal: ${msg}` };
+    }
+
     const profile = await getAdminProfile();
     const inputterName = profile.fullName || 'Unknown Admin';
 

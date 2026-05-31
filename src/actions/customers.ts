@@ -1,10 +1,10 @@
 'use server';
-import { logger } from'@/lib/logger';
-
-import { query } from'@/lib/db';
-import { revalidatePath } from'next/cache';
-import { Customer } from'@/types';
-import { getAdminProfile } from'./admin';
+import { logger } from '@/lib/logger';
+import { query } from '@/lib/db';
+import { revalidatePath } from 'next/cache';
+import { Customer } from '@/types';
+import { getAdminProfile } from './admin';
+import { CreateCustomerSchema } from '@/lib/validation';
 
 export async function getCustomers(page: number = 1, limit: number = 10): Promise<{ customers: Customer[], total: number }> {
  try {
@@ -220,14 +220,23 @@ export async function createCustomer(data: {
  address: string
 }): Promise<{ success: boolean; id?: string; error?: string }> {
  try {
- const maxIdRes = await query("SELECT id FROM customers WHERE id LIKE'CT%'ORDER BY id DESC LIMIT 1");
+ // Validate input
+ const parsed = CreateCustomerSchema.safeParse(data);
+ if (!parsed.success) {
+ const msg = parsed.error.issues.map((e: { message: string }) => e.message).join(', ');
+ return { success: false, error: `Validasi gagal: ${msg}` };
+ }
+
+ // Acquire advisory lock to prevent race condition on ID generation
+ await query("SELECT pg_advisory_xact_lock(1234567890)");
+ const maxIdRes = await query("SELECT id FROM customers WHERE id LIKE 'CT%' ORDER BY id DESC LIMIT 1");
  let nextNum = 1;
  if (maxIdRes.rows.length > 0) {
  const lastId = maxIdRes.rows[0].id;
- const lastNum = parseInt(lastId.replace('CT',''));
+ const lastNum = parseInt(lastId.replace('CT', ''));
  nextNum = lastNum + 1;
  }
- const nextId =`CT${String(nextNum).padStart(3,'0')}`;
+ const nextId = `CT${String(nextNum).padStart(3, '0')}`;
 
  const profile = await getAdminProfile();
  const inputter = profile.fullName ||'Unknown Admin';

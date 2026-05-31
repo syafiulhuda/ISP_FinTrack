@@ -10,8 +10,13 @@ import { refreshExecutiveMV } from'@/actions/executive';
 
 export async function GET(request: Request) {
  try {
+ const cronSecret = process.env.CRON_SECRET;
+ if (!cronSecret || cronSecret.length < 32) {
+ return NextResponse.json({ error:'Internal Server Configuration Error'}, { status: 500 });
+ }
+
  const authHeader = request.headers.get('authorization');
- if (authHeader !==`Bearer ${process.env.CRON_SECRET}`) {
+ if (authHeader !==`Bearer ${cronSecret}`) {
  return NextResponse.json({ error:'Unauthorized'}, { status: 401 });
  }
 
