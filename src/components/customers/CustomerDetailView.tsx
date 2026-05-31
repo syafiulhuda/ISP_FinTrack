@@ -124,17 +124,17 @@ function CopyItem({ label, value, icon: Icon }: { label: string; value: string; 
  onClick={handleCopy}
  className={cn(
 "flex items-center justify-between gap-2 p-3 bg-muted/40 border border-border rounded-xl transition-all",
- value && value !=='N/A'?"cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 group":"opacity-70"
+ value && value !=='N/A'?"cursor-pointer hover:border-primary/ hover:bg-primary/10 dark:hover:bg-primary/ group":"opacity-70"
  )}
  >
  <div className="flex items-center gap-2.5 truncate">
- <Icon size={16} className="text-muted-foreground group-hover:text-indigo-500 transition-colors shrink-0"/>
+ <Icon size={16} className="text-muted-foreground group-hover:text-primary transition-colors shrink-0"/>
  <span className="font-mono text-sm font-bold text-foreground truncate">
  {value ||'N/A'}
  </span>
  </div>
  {value && value !=='N/A'&& (
- <div className="shrink-0 text-muted-foreground group-hover:text-indigo-500 transition-colors">
+ <div className="shrink-0 text-muted-foreground group-hover:text-primary transition-colors">
  {copied ? <Check size={14} className="text-emerald-500"/> : <Copy size={14} />}
  </div>
  )}
@@ -202,7 +202,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  if (res.success) {
  toast.success('Reminder Sent!', {
  description:`Notification sent to ${data.name}.`,
- icon: <Bell size={16} className="text-indigo-500"/>
+ icon: <Bell size={16} className="text-primary"/>
  });
  if (res.waUrl) {
  window.open(res.waUrl,'_blank');
@@ -223,7 +223,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  : data.ltv >= 2000000 ?"Regular Subscriber"
  :"New / Low-Value";
  const segmentColor = data.ltv >= 5000000 ?"text-violet-600 bg-violet-500/10"
- : data.ltv >= 2000000 ?"text-indigo-600 bg-indigo-500/10"
+ : data.ltv >= 2000000 ?"text-primary bg-primary/"
  :"text-muted-foreground bg-muted";
 
  const churnPct = isAtRisk ?"High (>60%)": data.healthScore >= 80 ?"Low (<10%)":"Medium (20-40%)";
@@ -260,14 +260,14 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  isActive ?"bg-emerald-500/10 text-emerald-500":"bg-rose-500/10 text-rose-500"
  )}>{data.status}</span>
  </div>
- <div className="flex items-center gap-2 mt-1 overflow-x-auto no-scrollbar w-full pb-1 -mb-1">
+ <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 w-full">
  <p className="text-[10px] tablet:text-sm text-muted-foreground font-medium flex items-center gap-1 whitespace-nowrap">
- <ShieldCheck size={12} className="text-indigo-500 shrink-0"/>
+ <ShieldCheck size={12} className="text-primary shrink-0"/>
  ID: {data.id}
  </p>
- <span className="text-muted-foreground shrink-0">•</span>
+ <span className="text-muted-foreground shrink-0 hidden sm:block">•</span>
  <p className="text-[10px] tablet:text-sm text-muted-foreground font-medium whitespace-nowrap shrink-0">{data.service} Plan</p>
- <span className="text-muted-foreground shrink-0">•</span>
+ <span className="text-muted-foreground shrink-0 hidden sm:block">•</span>
  <p className="text-[10px] tablet:text-sm text-muted-foreground font-medium flex items-center gap-1 whitespace-nowrap shrink-0">
  <MapPin size={12} className="text-muted-foreground shrink-0"/>
  {data.city}, {data.province}
@@ -289,7 +289,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  onClick={handleSendReminder}
  disabled={isSending}
  aria-label="Send payment reminder"
- className="flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+ className="flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-xs tablet:text-sm transition-all shadow-lg shadow-primary/ disabled:opacity-50"
  >
  <Bell size={16} className={cn(isSending &&"animate-bounce")} />
  <span className="truncate">{isSending ?"Sending...":"Send Reminder"}</span>
@@ -336,7 +336,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  toast.error("Failed to generate link:"+ res.error, { id:"snap"});
  }
  }}
- className="flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 rounded-2xl font-bold text-xs tablet:text-sm transition-all cursor-pointer"
+ className="flex flex-1 md:flex-none items-center justify-center gap-2 px-4 tablet:px-6 py-3 bg-primary/10 hover:bg-primary/20 dark:bg-primary/ dark:hover:bg-primary/ text-primary dark:text-primary border border-primary/20 dark:border-primary/ rounded-2xl font-bold text-xs tablet:text-sm transition-all cursor-pointer"
  >
  <CreditCard size={16} />
  <span className="truncate">Payment Link</span>
@@ -347,7 +347,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  {/* KPI Cards */}
  <div className="grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-4 gap-3 tablet:gap-4">
  {[
- { label:"Lifetime Value (LTV)", value: formatCompactNumber(data.ltv), icon: TrendingUp, color:"text-indigo-500", bg:"bg-indigo-500/10"},
+ { label:"Lifetime Value (LTV)", value: formatCompactNumber(data.ltv), icon: TrendingUp, color:"text-primary", bg:"bg-primary/"},
  { label:"Payment Frequency", value:`${data.txCount}x`, icon: CreditCard, color:"text-emerald-500", bg:"bg-emerald-500/10"},
  { label:"Avg. Monthly Payment", value: formatCompactNumber(avgPayment), icon: Activity, color:"text-violet-500", bg:"bg-violet-500/10"},
  { label:"Tenure (Months)", value:`${tenureMonths || 0} Mo`, icon: Milestone, color:"text-cyan-500", bg:"bg-cyan-500/10"}
@@ -385,7 +385,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
 
  <div className="bg-card p-8 rounded-3xl border border-border shadow-sm flex-1">
  <h2 className="text-base sm:text-lg font-black mb-6 flex items-start gap-3">
- <Users size={20} className="text-indigo-500 mt-1 shrink-0"/>
+ <Users size={20} className="text-primary mt-1 shrink-0"/>
  <span>CRM Intelligence</span>
  </h2>
  <div className="space-y-6">
@@ -400,7 +400,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  <div>
  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Active Service</p>
  <div className="flex items-center gap-2 text-foreground font-bold">
- <Package size={16} className="text-indigo-500"/>
+ <Package size={16} className="text-primary"/>
  {data.service}
  </div>
  </div>
@@ -425,7 +425,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  <div className="bg-card p-8 rounded-3xl border border-border shadow-sm flex-1">
  <div className="flex items-center justify-between mb-6">
  <h2 className="text-base sm:text-lg font-black flex items-start gap-3">
- <Router size={20} className="text-indigo-500 mt-1 shrink-0"/>
+ <Router size={20} className="text-primary mt-1 shrink-0"/>
  <span>Network Profile</span>
  </h2>
  </div>
@@ -442,7 +442,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  </div>
  
  <div className="mt-6 pt-4 border-t border-border">
- <div className="flex items-center gap-2 p-3 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-medium">
+ <div className="flex items-center gap-2 p-3 bg-primary/10 dark:bg-primary/ text-primary dark:text-indigo-300 rounded-xl text-xs font-medium">
  <Info size={14} className="shrink-0"/>
  <p>Click any item above to copy it to your clipboard for quick NOC troubleshooting.</p>
  </div>
@@ -496,7 +496,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full shadow-lg"style={{ backgroundColor: entry.color }} />
  <span className="text-[10px] md:text-sm font-bold opacity-90">{entry.name ==='ontime'?'Tepat Waktu':'Terlambat'}</span>
  </span>
- <span className="text-[10px] md:text-sm font-black font-mono text-indigo-400">
+ <span className="text-[10px] md:text-sm font-black font-mono text-primary">
  {entry.payload.isUnpaid && entry.name ==='late'?'UNPAID': formatCurrency(entry.value)}
  </span>
  </div>
@@ -573,12 +573,12 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase", 
  t.priority ==='CRITICAL'?'bg-rose-500/10 text-rose-500':
  t.priority ==='HIGH'?'bg-amber-500/10 text-amber-500':
- t.priority ==='MEDIUM'?'bg-indigo-500/10 text-indigo-500':
+ t.priority ==='MEDIUM'?'bg-primary/ text-primary':
 'bg-muted text-muted-foreground'
  )}>{t.priority}</span>
  <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase", 
  t.status ==='OPEN'?'bg-amber-500/10 text-amber-500':
- t.status ==='IN_PROGRESS'?'bg-blue-500/10 text-blue-500':
+ t.status ==='IN_PROGRESS'?'bg-primary/ text-primary':
 'bg-emerald-500/10 text-emerald-500'
  )}>{t.status}</span>
  </div>
@@ -790,7 +790,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  </div>
 
  <div className={cn("p-6 rounded-3xl border shadow-lg flex flex-col gap-4 relative overflow-hidden",
- isAtRisk ?"bg-rose-500/5 border-rose-500/20": isExcellent ?"bg-emerald-500/5 border-emerald-500/20":"bg-indigo-500/5 border-indigo-500/20"
+ isAtRisk ?"bg-rose-500/5 border-rose-500/20": isExcellent ?"bg-emerald-500/5 border-emerald-500/20":"bg-primary/ border-primary/"
  )}>
  <div className="flex items-center gap-4">
  <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
@@ -806,7 +806,7 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  {generateAIRecommendation(data)}
  </p>
  <button className={cn("w-full mt-2 py-3.5 rounded-xl font-black text-sm transition-transform hover:scale-[1.02] active:scale-[0.98]",
- isAtRisk ?"bg-rose-500 text-white shadow-rose-500/20": isExcellent ?"bg-emerald-500 text-white shadow-emerald-500/20":"bg-indigo-500 text-white shadow-indigo-500/20"
+ isAtRisk ?"bg-rose-500 text-white shadow-rose-500/20": isExcellent ?"bg-emerald-500 text-white shadow-emerald-500/20":"bg-indigo-500 text-white shadow-primary/"
  )}>
  {isAtRisk ?"Launch Task": isExcellent ?"Upsell Now":"Log Observation"}
  </button>

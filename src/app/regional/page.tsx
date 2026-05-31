@@ -220,7 +220,7 @@ export default function RegionalAnalysisPage() {
  return Object.values(grouped).map(v => {
  const arpu = v.activeCount > 0 ? v.revenue / v.activeCount : 0;
  const status = arpu >= 200000 ?"OPTIMAL":"ACTION NEEDED";
- const color = status ==="OPTIMAL"?"bg-blue-100 text-blue-600":"bg-orange-100 text-orange-600";
+ const color = status ==="OPTIMAL"?"bg-primary/10 text-primary":"bg-orange-100 text-orange-600";
  
  const customerIds = filtered.filter(c => (c.village ||"Other") === v.node).map(c => c.id);
  const villageInvoices = invoicesList.filter(inv => customerIds.includes(inv.customer_id) && inv.status ==='Unpaid');
@@ -437,20 +437,20 @@ export default function RegionalAnalysisPage() {
  className={cn(
  "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300 border",
  isCenter 
- ?"bg-card border-cyan-400 shadow-[0_0_25px_3px_rgba(34,211,238,0.3)] dark:shadow-[0_0_35px_5px_rgba(34,211,238,0.4)]"
+ ?"bg-card border-primary/50 shadow-[0_0_25px_3px_color-mix(in_srgb,var(--primary),transparent_70%)] dark:shadow-[0_0_35px_5px_color-mix(in_srgb,var(--primary),transparent_60%)]"
  :"bg-muted/80 border-border shadow-none"
  )}
  >
  <div className="flex items-center gap-3 sm:gap-4">
  <div className={cn(
 "w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors duration-300",
- isCenter ?"bg-cyan-500/20 text-cyan-400":"bg-white/5 text-muted-foreground"
+ isCenter ?"bg-primary/15 text-primary":"bg-foreground/5 text-muted-foreground"
  )}>
  <stat.icon className="w-4 h-4 sm:w-6 sm:h-6"/>
  </div>
  <span className={cn(
 "text-[10px] sm:text-sm font-black tracking-widest transition-colors duration-300",
- isCenter ?"text-cyan-400":"text-muted-foreground"
+ isCenter ?"text-primary":"text-muted-foreground"
  )}>
  {stat.title}
  </span>
@@ -458,7 +458,7 @@ export default function RegionalAnalysisPage() {
  
  <div className={cn(
 "text-3xl sm:text-5xl font-black tracking-tight transition-colors duration-300",
- isCenter ?"text-white":"text-muted-foreground"
+ isCenter ?"text-foreground":"text-muted-foreground"
  )}>
  {stat.value}
  </div>
@@ -523,7 +523,7 @@ export default function RegionalAnalysisPage() {
  className:"px-10 py-6",
  render: (row: NodeRow) => (
  <div className="flex items-center gap-4">
- <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,74,198,0.5)]"/>
+ <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_color-mix(in_srgb,var(--primary),transparent_50%)]"/>
  <span className="font-black text-foreground text-lg">{row.node}</span>
  </div>
  )
@@ -543,7 +543,7 @@ export default function RegionalAnalysisPage() {
  { 
  header:"ARPU", 
  accessor:"arpu", 
- className:"px-10 py-6 font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap",
+ className:"px-10 py-6 font-bold text-primary text-primary whitespace-nowrap",
  render: (row: NodeRow) => <span className="tabular-nums">Rp {row.arpu}</span>
  },
  { 
@@ -585,7 +585,7 @@ export default function RegionalAnalysisPage() {
  className="flex items-center justify-between cursor-pointer group"
  >
  <div className="flex items-center gap-3">
- <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,74,198,0.5)]"/>
+ <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_color-mix(in_srgb,var(--primary),transparent_50%)]"/>
  <span className="font-black text-foreground text-sm group-hover:text-primary transition-colors">{row.node}</span>
  </div>
  
@@ -621,7 +621,7 @@ export default function RegionalAnalysisPage() {
  </div>
  <div className="bg-muted/40 p-3 rounded-xl border border-border/60">
  <span className="block text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">ARPU</span>
- <span className="font-black text-blue-600 dark:text-blue-400">Rp {row.arpu}</span>
+ <span className="font-black text-primary text-primary">Rp {row.arpu}</span>
  </div>
  <div className="col-span-2 bg-muted/40 p-3 rounded-xl border border-border/60 flex items-center justify-between">
  <div>
@@ -666,7 +666,7 @@ export default function RegionalAnalysisPage() {
  onClick={() => setProfitPage(pageNum)}
  className={cn(
 "w-8 h-8 rounded-lg text-[10px] sm:text-xs font-bold transition-all",
- profitPage === pageNum ?"bg-primary text-white shadow-lg shadow-primary/20":"text-muted-foreground hover:text-foreground dark:hover:text-white"
+ profitPage === pageNum ?"bg-primary text-foreground shadow-lg shadow-primary/20":"text-muted-foreground hover:text-foreground dark:hover:text-foreground"
  )}
  >
  {pageNum}
@@ -843,7 +843,7 @@ export default function RegionalAnalysisPage() {
  onClick={() => setAgingPage(pageNum)}
  className={cn(
 "w-8 h-8 rounded-lg text-[10px] sm:text-xs font-bold transition-all",
- agingPage === pageNum ?"bg-primary text-white shadow-lg shadow-primary/20":"text-muted-foreground hover:text-foreground dark:hover:text-white"
+ agingPage === pageNum ?"bg-primary text-foreground shadow-lg shadow-primary/20":"text-muted-foreground hover:text-foreground dark:hover:text-foreground"
  )}
  >
  {pageNum}

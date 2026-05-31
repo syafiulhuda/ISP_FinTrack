@@ -15,7 +15,7 @@ export default async function TicketsPage() {
  <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
  <div className="mb-8">
  <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
- <div className="w-12 h-12 bg-indigo-500/10 text-indigo-500 rounded-2xl flex items-center justify-center">
+ <div className="w-12 h-12 bg-primary/ text-primary rounded-2xl flex items-center justify-center">
  <LifeBuoy size={24} />
  </div>
  NOC Trouble Tickets

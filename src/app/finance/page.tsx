@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from"react";
 import Image from"next/image";
+import Link from"next/link";
 
 import { m, AnimatePresence } from"framer-motion";
 import {
@@ -66,8 +67,6 @@ export default function FinancePage() {
  return str;
  };
 
- const [isModalOpen, setIsModalOpen] = useState(false);
- const [modalSearch, setModalSearch] = useState("");
  const [isZoomed, setIsZoomed] = useState(false);
  const [isEditing, setIsEditing] = useState(false);
  const [isPosting, setIsPosting] = useState(false);
@@ -416,14 +415,6 @@ export default function FinancePage() {
  );
 
 
- const filteredTransactions = filteredByKeterangan.filter(trx =>
- (trx.id?.toLowerCase() ||"").includes(modalSearch.toLowerCase()) ||
- (trx.method?.toLowerCase() ||"").includes(modalSearch.toLowerCase()) ||
- (trx.status?.toLowerCase() ||"").includes(modalSearch.toLowerCase())
- );
-
-
-
  return (
  <div className="pt-4 space-y-10">
  {!isTimLapangan && (
@@ -759,12 +750,12 @@ export default function FinancePage() {
  <div className="flex flex-col gap-4">
  <div className="flex items-center justify-between">
  <h2 className="text-2xl md:text-3xl font-bold text-foreground">Recent Processed Slips</h2>
- <button
- onClick={() => setIsModalOpen(true)}
+ <Link
+ href="/finance/all"
  className="text-primary text-[10px] md:text-sm font-bold hover:underline flex items-center gap-1 shrink-0 whitespace-nowrap"
  >
  View All <ChevronRight size={14} className="md:w-[16px] md:h-[16px]"/>
- </button>
+ </Link>
  </div>
 
  <div className="flex flex-row items-center gap-2 md:gap-4 w-full md:w-auto">
@@ -1029,93 +1020,7 @@ export default function FinancePage() {
           </div>
         )}
 
-      {/* View All - Section Contained Slider Panel */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="absolute inset-0 z-50 flex justify-end">
-            {/* Backdrop - Contained */}
-            <m.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsModalOpen(false)}
-              className="absolute inset-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm"
-            />
 
-            {/* Drawer Panel - Contained */}
-            <m.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="relative w-full max-w-xl h-full bg-white dark:bg-slate-950 shadow-2xl flex flex-col border-l border-border"
-            >
-              {/* Header Section - Condensed */}
-              <div className="p-6 border-b border-border bg-white dark:bg-slate-950 sticky top-0 z-20">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-black text-foreground tracking-tight">Full Transaction Log</h2>
-                  <button
-                    onClick={() => setIsModalOpen(false)}
-                    className="p-2 hover:bg-muted dark:hover:bg-slate-800 rounded-xl text-muted-foreground transition-all"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-
- {/* Search Bar */}
- <div className="relative">
- <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"size={16} />
- <input
- type="text"
- placeholder="Search ID, method..."
- value={modalSearch}
- onChange={(e) => setModalSearch(e.target.value)}
- className="w-full bg-muted border border-border rounded-xl pl-10 pr-4 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all"
- />
- </div>
- </div>
-
- {/* Condensed List */}
- <div className="flex-1 overflow-y-auto custom-scrollbar">
- <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
- {filteredTransactions.map((trx, index) => (
- <div
- key={`${trx.id}-${index}`}
- className="flex items-center justify-between px-6 py-4 hover:bg-muted dark:hover:bg-muted/30 transition-all cursor-pointer"
- >
- <div className="flex items-center gap-3">
- <div className="p-2 rounded-lg bg-muted text-muted-foreground">
- {trx.type ==='qris'? <QrCode size={16} /> : <Building2 size={16} />}
- </div>
- <div>
- <p className="text-xs font-bold text-foreground">{trx.method}</p>
- <p className="text-[9px] font-mono font-bold text-muted-foreground mt-0.5">{trx.id}</p>
- </div>
- </div>
- <div className="text-right">
- <p className="text-sm font-black text-foreground">{trx.amount}</p>
- <p className="text-[9px] font-medium text-muted-foreground">
- {typeof trx.timestamp ==='object'&& trx.timestamp !== null ? (trx.timestamp as Date).toLocaleString('id-ID') : trx.timestamp}
- </p>
- </div>
- </div>
- ))}
- </div>
- </div>
-
- {/* Footer */}
- <div className="p-4 border-t border-border bg-muted/50 text-center">
- <button
- onClick={() => setIsModalOpen(false)}
- className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
- >
- Back to Summary
- </button>
- </div>
- </m.div>
- </div>
- )}
- </AnimatePresence>
  </div>
 
  <AnimatePresence>

@@ -47,12 +47,12 @@ const createClusterCustomIcon = (cluster: any): L.DivIcon => {
  html:`
  <div style="
  width:${size}px;height:${size}px;border-radius:50%;
- background:linear-gradient(135deg,#3b82f6,#6366f1);
- color:white;font-weight:900;font-size:${size < 40 ?'11':'13'}px;
+ background:var(--background);
+ color:var(--foreground);font-weight:900;font-size:${size < 40 ?'11':'13'}px;
  display:flex;align-items:center;justify-content:center;
- box-shadow:0 4px 12px rgba(99,102,241,0.4);
- border:2px solid rgba(255,255,255,0.3);
-">${count}</div>
+ box-shadow:0 4px 12px color-mix(in srgb, var(--primary), transparent 60%);
+ border:2px solid var(--primary);
+ ">${count}</div>
 `,
  className:'custom-cluster-icon',
  iconSize: [size, size],
@@ -187,7 +187,7 @@ const MemoizedMarker = memo(function AssetMarker({
  <Tooltip direction="top"offset={[0, -10]} opacity={1}>
  <div className="bg-card/95 /95 border border-white/10 rounded-2xl shadow-2xl p-3 flex flex-col gap-2.5 min-w-[200px] text-white">
  <div className="flex justify-between items-center">
- <span className="text-[9px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md">
+ <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-md">
  {asset.type}
  </span>
  <div className="flex items-center gap-1.5">

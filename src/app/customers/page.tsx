@@ -52,7 +52,7 @@ function MobileCustomerCard({
  <div className="flex items-center justify-between gap-2.5 md-phone:gap-3">
  {/* Left Side: Avatar & Name Info */}
  <div className="flex items-center gap-2 md-phone:gap-3 min-w-0 flex-1">
- <div className="w-8 h-8 md-phone:w-10 md-phone:h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500 font-black text-[10px] md-phone:text-xs shrink-0">
+ <div className="w-8 h-8 md-phone:w-10 md-phone:h-10 rounded-xl bg-primary/10 dark:bg-primary/ flex items-center justify-center text-primary font-black text-[10px] md-phone:text-xs shrink-0">
  {customer.id.substring(0, 2)}
  </div>
  <div className="min-w-0 flex-1">
@@ -72,7 +72,7 @@ function MobileCustomerCard({
  )}>
  {customer.healthScore || 0}%<span className="hidden min-[450px]:inline"> • {getHealthLabel(customer.healthScore || 0)}</span>
  </span>
- <div className="p-1.5 bg-muted rounded-lg text-muted-foreground hover:text-indigo-500 dark:hover:text-indigo-400 transition-all">
+ <div className="p-1.5 bg-muted rounded-lg text-muted-foreground hover:text-primary dark:hover:text-primary transition-all">
  {isOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
  </div>
  </div>
@@ -138,7 +138,7 @@ function MobileCustomerCard({
  <Link
  href={`/customers/${customer.id}`}
  onClick={(e) => e.stopPropagation()}
- className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-100 transition-all font-black text-[11px]"
+ className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary/10 dark:bg-primary/ text-primary dark:text-primary rounded-xl hover:bg-primary/20 transition-all font-black text-[11px]"
  >
  <span>GO TO CUSTOMER 360</span>
  <ChevronRight size={14} />
@@ -243,7 +243,7 @@ export default function CustomerAnalysisPage() {
 
  <div className="flex flex-col lg-phone:flex-row items-stretch lg-phone:items-center justify-between gap-2.5 w-full tablet:w-auto">
  <div className="relative group w-full lg-phone:flex-1 tablet:w-64 laptop:w-80 tablet:flex-none">
- <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-indigo-500 transition-colors"size={18} />
+ <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"size={18} />
  <input
  type="text"
  placeholder="Search customers..."
@@ -252,7 +252,7 @@ export default function CustomerAnalysisPage() {
  setSearchTerm(e.target.value);
  setCurrentPage(1);
  }}
- className="pl-12 pr-4 py-3 bg-card border border-border rounded-2xl w-full focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-sm font-bold shadow-sm"
+ className="pl-12 pr-4 py-3 bg-card border border-border rounded-2xl w-full focus:ring-4 focus:ring-primary/10 focus:border-indigo-500 transition-all outline-none text-sm font-bold shadow-sm"
  aria-label="Search customers by name or ID"
  />
  </div>
@@ -264,7 +264,7 @@ export default function CustomerAnalysisPage() {
  setStatusFilter(e.target.value);
  setCurrentPage(1);
  }}
- className="flex-1 lg-phone:flex-none px-4 pr-10 py-3 bg-card border border-border rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 outline-none cursor-pointer lg-phone:min-w-[120px] appearance-none relative"
+ className="flex-1 lg-phone:flex-none px-4 pr-10 py-3 bg-card border border-border rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none cursor-pointer lg-phone:min-w-[120px] appearance-none relative"
  aria-label="Filter by customer status"
  style={{
  backgroundImage:`url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg'fill='none'viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280'stroke-linecap='round'stroke-linejoin='round'stroke-width='2'd='M5 7l5 5 5-5'/%3e%3c/svg%3e")`,
@@ -280,7 +280,7 @@ export default function CustomerAnalysisPage() {
 
  <button
  onClick={resetFilters}
- className="p-3 bg-muted text-muted-foreground hover:text-indigo-500 rounded-2xl transition-all shrink-0 animate-pulse-subtle"
+ className="p-3 bg-muted text-muted-foreground hover:text-primary rounded-2xl transition-all shrink-0 animate-pulse-subtle"
  title="Reset Filters"
  aria-label="Reset all search and status filters"
  >
@@ -304,9 +304,9 @@ export default function CustomerAnalysisPage() {
  animate={{ opacity: 1, y: 0 }}
  className="bg-card p-8 rounded-[2.5rem] border border-border shadow-sm relative overflow-hidden"
  >
- <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -mr-16 -mt-16 blur-3xl"/>
+ <div className="absolute top-0 right-0 w-32 h-32 bg-primary/ rounded-full -mr-16 -mt-16 blur-3xl"/>
  <div className="flex items-center gap-4 mb-4">
- <div className="p-3 bg-indigo-500/10 text-indigo-500 rounded-2xl">
+ <div className="p-3 bg-primary/ text-primary rounded-2xl">
  <TrendingUp size={24} />
  </div>
  <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Total Portfolio LTV</span>
@@ -410,7 +410,7 @@ export default function CustomerAnalysisPage() {
  >
  <td className="px-4 py-5">
  <div className="flex items-center gap-4">
- <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500 font-black text-sm">
+ <div className="w-12 h-12 rounded-2xl bg-primary/10 dark:bg-primary/ flex items-center justify-center text-primary font-black text-sm">
  {customer.id.substring(0, 2)}
  </div>
  <div>
@@ -475,7 +475,7 @@ export default function CustomerAnalysisPage() {
  <td className="px-4 py-5 text-right">
  <Link
  href={`/customers/${customer.id}`}
- className="inline-block p-3 bg-muted hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-600 rounded-2xl transition-all text-muted-foreground group-hover:scale-110 shadow-sm"
+ className="inline-block p-3 bg-muted hover:bg-primary hover:text-white dark:hover:bg-primary rounded-2xl transition-all text-muted-foreground group-hover:scale-110 shadow-sm"
  aria-label={`View details for customer ${customer.name}`}
  >
  <ChevronRight size={18} className="transition-transform group-hover:translate-x-0.5"/>

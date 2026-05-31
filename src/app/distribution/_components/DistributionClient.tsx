@@ -52,7 +52,7 @@ function LegendContent({ nodeStats }: { nodeStats: any }) {
  <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest">Map Architecture</h2>
  <p className="text-lg font-black tracking-tighter">Network Nodes</p>
  </div>
- <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+ <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
  <Database size={20} />
  </div>
  </div>
@@ -60,7 +60,7 @@ function LegendContent({ nodeStats }: { nodeStats: any }) {
  <div className="space-y-4">
  <div className="flex items-center justify-between group">
  <div className="flex items-center gap-3">
- <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+ <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
  <Database size={16} />
  </div>
  <span className="text-[12px] font-bold">OLT Terminal</span>
@@ -69,7 +69,7 @@ function LegendContent({ nodeStats }: { nodeStats: any }) {
  </div>
  <div className="flex items-center justify-between group">
  <div className="flex items-center gap-3">
- <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:indigo-400">
+ <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
  <Cpu size={16} />
  </div>
  <span className="text-[12px] font-bold">ODP Node</span>
@@ -296,7 +296,7 @@ export function DistributionClient() {
  <div className="relative flex items-center">
  <SearchIcon className="absolute left-3 text-muted-foreground"size={18} />
  <input
- className="bg-white/80 dark:bg-slate-900/80 border border-border rounded-full pl-10 pr-4 py-1.5 text-sm w-full max-w-[180px] sm-phone:max-w-[220px] md:max-w-80 focus:ring-2 focus:ring-blue-500/20 placeholder:text-muted-foreground shadow-sm"
+ className="bg-white/80 dark:bg-slate-900/80 border border-border rounded-full pl-10 pr-4 py-1.5 text-sm w-full max-w-[180px] sm-phone:max-w-[220px] md:max-w-80 focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground shadow-sm"
  placeholder="Search Node ID or Location"
  type="text"
  aria-label="Search nodes by ID or location"
@@ -355,7 +355,7 @@ export function DistributionClient() {
  className={cn(
 "w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider",
  mapTheme === theme
- ?"bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+ ?"bg-primary text-white shadow-lg shadow-primary/20"
  :"hover:bg-muted dark:hover:bg-muted text-muted-foreground"
  )}
  >
@@ -385,7 +385,7 @@ export function DistributionClient() {
  setIsProfileOpen(!isProfileOpen);
  setIsMapSettingsOpen(false);
  }}
- className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs hover:ring-4 hover:ring-blue-500/20 active:scale-95 transition-all"
+ className="h-8 w-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs hover:ring-4 hover:ring-primary/20 active:scale-95 transition-all"
  >
  AD
  </button>
@@ -398,7 +398,7 @@ export function DistributionClient() {
  className="absolute right-0 top-full mt-3 w-64 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-border p-6 z-50 text-left"
  >
  <div className="flex items-center gap-3 mb-4">
- <div className="h-10 w-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-sm">
+ <div className="h-10 w-10 rounded-xl bg-primary text-white flex items-center justify-center font-black text-sm">
  AD
  </div>
  <div>
@@ -409,7 +409,7 @@ export function DistributionClient() {
  <div className="border-t border-border pt-3 space-y-2">
  <div className="flex justify-between items-center text-[10px] font-bold">
  <span className="text-muted-foreground uppercase">Operator Zone</span>
- <span className="text-blue-600 dark:text-blue-400">HQ NATIONAL</span>
+ <span className="text-primary">HQ NATIONAL</span>
  </div>
  <div className="flex justify-between items-center text-[10px] font-bold">
  <span className="text-muted-foreground uppercase">Node Access</span>
@@ -468,7 +468,7 @@ export function DistributionClient() {
  type="checkbox"
  checked={activeLayers[layer as keyof typeof activeLayers]}
  onChange={() => setActiveLayers(prev => ({ ...prev, [layer]: !prev[layer as keyof typeof activeLayers] }))}
- className="peer h-5 w-5 cursor-pointer appearance-none rounded-lg border-2 border-border transition-all checked:bg-blue-600 checked:border-blue-600"
+ className="peer h-5 w-5 cursor-pointer appearance-none rounded-lg border-2 border-border transition-all checked:bg-primary checked:border-blue-600"
  />
  <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100">
  <Check size={12} strokeWidth={4} />
@@ -633,7 +633,7 @@ export function DistributionClient() {
  <div className="flex justify-between items-start mb-4 lg:mb-6">
  <div>
  <span className={cn(
-"text-[9px] md:text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full",
+"text-[9px] md:text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full",
  nodeStatus ==='Online'?"bg-green-100 dark:bg-green-900/30 text-green-600":
  nodeStatus ==='Maintenance'?"bg-amber-100 dark:bg-amber-900/30 text-amber-600":
  (nodeStatus ==='Warning'|| nodeStatus ==='Broken') ?"bg-red-100 dark:bg-red-900/30 text-red-600":
@@ -654,7 +654,7 @@ export function DistributionClient() {
 
  <div className="grid grid-cols-2 gap-3 lg:gap-4">
  <div className="bg-muted p-3 lg:p-4 rounded-2xl border border-border/50 /50">
- <p className="text-[9px] md:text-[10px] text-muted-foreground font-black uppercase mb-1">Capacity</p>
+ <p className="text-[9px] md:text-[9px] text-muted-foreground font-black uppercase mb-1">Capacity</p>
  <div className="flex items-baseline gap-1">
  <span className="text-base lg:text-lg font-black">12</span>
  <span className="text-[10px] md:text-xs text-muted-foreground font-bold">/ 16 Ports</span>
@@ -664,7 +664,7 @@ export function DistributionClient() {
  </div>
  </div>
  <div className="bg-muted p-3 lg:p-4 rounded-2xl border border-border/50 /50">
- <p className="text-[9px] md:text-[10px] text-muted-foreground font-black uppercase mb-1">Health</p>
+ <p className="text-[9px] md:text-[9px] text-muted-foreground font-black uppercase mb-1">Health</p>
  <div className="flex items-baseline gap-1">
  <span className={cn("text-base lg:text-lg font-black", healthInfo.textColor)}>
  {healthInfo.label}
@@ -796,7 +796,7 @@ export function DistributionClient() {
  <div className="bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-3 lg:p-4 rounded-r-2xl">
  <div className="flex justify-between mb-2">
  <p className="text-[10px] md:text-xs font-black text-amber-600">#TCK-8921-X</p>
- <div className="flex items-center gap-1 text-[8px] md:text-[10px] text-muted-foreground font-bold">
+ <div className="flex items-center gap-1 text-[8px] md:text-[9px] text-muted-foreground font-bold">
  <Clock size={10} />
  <span>2h ago</span>
  </div>
@@ -848,36 +848,36 @@ export function DistributionClient() {
  </AnimatePresence>
 
  {/* Bottom Floating Stats */}
- <div className={cn("absolute bottom-16 md:bottom-10 left-4 sm-phone:left-6 md:left-8 z-40 flex flex-col min-[350px]:flex-row gap-2 md:gap-4 pointer-events-none transition-all duration-300", selectedNode &&"hidden lg:flex")}>
+ <div className={cn("absolute bottom-16 md:bottom-10 left-4 sm-phone:left-6 md:left-8 z-40 flex flex-col min-[350px]:flex-row gap-2 md:gap-3 pointer-events-none transition-all duration-300", selectedNode &&"hidden lg:flex")}>
  <m.div
  initial={{ y: 20, opacity: 0 }}
  animate={{ y: 0, opacity: 1 }}
- className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-md px-3 md:px-6 py-2 md:py-4 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-border/50 flex items-center gap-2 md:gap-4 group hover:bg-white dark:hover:bg-card transition-all cursor-default pointer-events-auto"
+ className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-md px-3 md:px-4 py-2 md:py-2.5 rounded-[1rem] md:rounded-[1.25rem] shadow-xl border border-border/50 flex items-center gap-2 md:gap-3 group hover:bg-white dark:hover:bg-card transition-all cursor-default pointer-events-auto"
  >
- <div className="bg-blue-100 dark:bg-blue-900/30 p-2 md:p-3 rounded-xl md:rounded-2xl text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
- <Activity size={16} className="md:w-6 md:h-6"/>
+ <div className="bg-primary/10 p-2 md:p-2.5 rounded-xl md:rounded-xl text-primary group-hover:scale-110 transition-transform">
+ <Activity size={16} className="md:w-5 md:h-5"/>
  </div>
  <div>
- <p className="text-sm md:text-2xl font-black leading-none tracking-tighter">
+ <p className="text-sm md:text-lg font-black leading-none tracking-tighter">
  {assets.length > 0 ? ((assets.filter(a => (a.condition || a.status) ==='Good'|| (a.condition || a.status) ==='Online').length / assets.length) * 100).toFixed(1) : 0}%
  </p>
- <p className="text-[8px] md:text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-0.5 md:mt-1">Health</p>
+ <p className="text-[8px] md:text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-0.5 md:mt-1">Health</p>
  </div>
  </m.div>
  <m.div
  initial={{ y: 20, opacity: 0 }}
  animate={{ y: 0, opacity: 1 }}
  transition={{ delay: 0.1 }}
- className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-md px-3 md:px-6 py-2 md:py-4 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-border/50 flex items-center gap-2 md:gap-4 group hover:bg-white dark:hover:bg-card transition-all cursor-default pointer-events-auto"
+ className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-md px-3 md:px-4 py-2 md:py-2.5 rounded-[1rem] md:rounded-[1.25rem] shadow-xl border border-border/50 flex items-center gap-2 md:gap-3 group hover:bg-white dark:hover:bg-card transition-all cursor-default pointer-events-auto"
  >
- <div className="bg-red-100 dark:bg-red-900/30 p-2 md:p-3 rounded-xl md:rounded-2xl text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform">
- <AlertTriangle size={16} className="md:w-6 md:h-6"/>
+ <div className="bg-red-100 dark:bg-red-900/30 p-2 md:p-2.5 rounded-xl md:rounded-xl text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform">
+ <AlertTriangle size={16} className="md:w-5 md:h-5"/>
  </div>
  <div>
- <p className="text-sm md:text-2xl font-black leading-none tracking-tighter text-red-600">
+ <p className="text-sm md:text-lg font-black leading-none tracking-tighter text-red-600">
  {String(assets.filter(a => (a.condition || a.status) !=='Good'&& (a.condition || a.status) !=='Online').length).padStart(2,'0')}
  </p>
- <p className="text-[8px] md:text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-0.5 md:mt-1">Outages</p>
+ <p className="text-[8px] md:text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-0.5 md:mt-1">Outages</p>
  </div>
  </m.div>
  </div>
@@ -947,10 +947,10 @@ export function DistributionClient() {
  <div className="space-y-6">
  {maintenanceHistory.map((item, idx) => (
  <div key={item.id} className="relative pl-8 border-l-2 border-border pb-6 last:pb-0">
- <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-4 border-white dark:border-slate-900 shadow-sm"/>
+ <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-white dark:border-slate-900 shadow-sm"/>
  <div className="bg-muted p-5 rounded-2xl border border-border/50 /50">
  <div className="flex justify-between items-start mb-2">
- <p className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter">{item.technician_name}</p>
+ <p className="text-xs font-black text-primary uppercase tracking-tighter">{item.technician_name}</p>
  <span className="text-[10px] font-bold text-muted-foreground">{new Date(item.date).toLocaleString()}</span>
  </div>
  <p className="text-sm font-bold leading-relaxed">{item.description}</p>

@@ -106,7 +106,7 @@ export function InventoryModals({ inventory }: { inventory: any }) {
  </div>
 
  <div className="flex flex-col gap-3 pt-6 border-t border-border mt-6">
- <button type="submit"className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 transition-all hover:opacity-90 flex items-center justify-center gap-2">
+ <button type="submit"className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black text-sm shadow-xl shadow-primary/20 transition-all hover:opacity-90 flex items-center justify-center gap-2">
  <Plus size={18} /> Register Asset
  </button>
  <button 

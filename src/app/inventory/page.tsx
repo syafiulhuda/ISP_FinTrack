@@ -5,8 +5,9 @@ import {
  RotateCcw,
  ChevronDown,
  Plus
-} from"lucide-react";
-import { cn } from"@/lib/utils";
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 import { InventoryStats } from"@/features/inventory/components/InventoryStats";
 import { InventoryTable } from"@/features/inventory/components/InventoryTable";
@@ -48,13 +49,19 @@ export default function InventoryPage() {
  <m.div
  initial={{ opacity: 0, x: 20 }}
  animate={{ opacity: 1, x: 0 }}
- className="flex items-center shrink-0 w-full sm:w-auto mt-2 md:mt-0"
+ className="flex flex-wrap sm:flex-nowrap items-center shrink-0 w-full sm:w-auto mt-2 md:mt-0 gap-3"
  >
+ <Link
+ href="/inventory/all"
+ className="w-full sm:w-auto px-5 py-3.5 bg-card border border-border text-foreground rounded-xl font-bold text-sm shadow-sm hover:bg-muted transition-all flex items-center justify-center whitespace-nowrap"
+ >
+ View All Assets
+ </Link>
  <m.button
  whileHover={{ scale: 1.02 }}
  whileTap={{ scale: 0.98 }}
  onClick={() => setIsRegisterModalOpen(true)}
- className="w-auto px-5 py-3.5 bg-blue-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-all flex items-center justify-center"
+ className="w-full sm:w-auto px-5 py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary transition-all flex items-center justify-center whitespace-nowrap"
  >
  Register New Asset
  </m.button>
@@ -77,7 +84,7 @@ export default function InventoryPage() {
  <div className="flex flex-row items-start justify-between w-full lg:w-auto shrink-0 gap-3">
  <div className="min-w-0">
  <h3 className="text-xl font-black text-foreground uppercase tracking-tight truncate">Asset Roster</h3>
- <p className="text-[11px] md:text-[12px] font-medium text-muted-foreground mt-0.5 leading-tight">Detailed list of managed network components.</p>
+ <p className="text-[11px] md:text-[12px] font-medium text-muted-foreground mt-0.5 leading-tight">Complete inventory ledger of all registered items.</p>
  </div>
 
  {/* Mobile Reset Button */}

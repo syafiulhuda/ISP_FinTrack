@@ -15,7 +15,7 @@ export default async function TicketsHistoryPage() {
  return (
  <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
  <div className="mb-8">
- <Link href="/tickets"className="inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-indigo-600 mb-4 transition-colors">
+ <Link href="/tickets"className="inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary mb-4 transition-colors">
  <ChevronLeft size={16} /> Back to Tickets List
  </Link>
  <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-3">

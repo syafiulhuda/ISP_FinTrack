@@ -78,20 +78,20 @@ export function TicketSlideOver({ isOpen, onClose, customerId }: TicketSlideOver
  animate={{ x: 0 }}
  exit={{ x:"100%"}}
  transition={{ type:"spring", damping: 30, stiffness: 300 }}
- className="fixed right-0 top-0 bottom-0 z-[210] w-full md:max-w-md bg-white shadow-2xl flex flex-col border-l border-border"
+ className="fixed right-0 top-0 bottom-0 z-[210] w-full md:max-w-md bg-card shadow-2xl flex flex-col border-l border-border"
  >
  {/* Header */}
  <div className="px-6 py-5 border-b border-border flex justify-between items-center bg-card/50">
  <div>
  <h2 className="text-lg font-black text-foreground flex items-center gap-2">
- <AlertCircle size={20} className="text-indigo-500"/>
+ <AlertCircle size={20} className="text-primary"/>
  New Trouble Ticket
  </h2>
  <p className="text-xs font-bold text-muted-foreground mt-1">Report an issue for customer {customerId}</p>
  </div>
  <button
  onClick={onClose}
- className="p-2 bg-white hover:bg-muted rounded-full transition-colors border border-border"
+ className="p-2 bg-muted/50 hover:bg-muted rounded-full transition-colors border border-border"
  >
  <X size={16} className="text-muted-foreground"/>
  </button>
@@ -108,7 +108,7 @@ export function TicketSlideOver({ isOpen, onClose, customerId }: TicketSlideOver
  name="issue_category"
  value={formData.issue_category}
  onChange={handleChange}
- className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-indigo-500 outline-none appearance-none"
+ className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-primary outline-none appearance-none"
  >
  <option value="LOSS">LOSS (Red Light)</option>
  <option value="SLOW">Slow Connection</option>
@@ -156,12 +156,12 @@ export function TicketSlideOver({ isOpen, onClose, customerId }: TicketSlideOver
  className={cn(
 "cursor-pointer p-4 rounded-2xl border-2 transition-all",
  formData.priority ==="MEDIUM"
- ?"border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10"
- :"border-border hover:border-indigo-200"
+ ?"border-primary bg-primary/10 dark:bg-primary/20"
+ :"border-border hover:border-primary/30"
  )}
  >
- <CheckCircle size={20} className={formData.priority ==="MEDIUM"?"text-indigo-500":"text-muted-foreground"} />
- <p className={cn("font-black mt-2 text-sm", formData.priority ==="MEDIUM"?"text-indigo-700 dark:text-indigo-400":"text-muted-foreground")}>Medium</p>
+ <CheckCircle size={20} className={formData.priority ==="MEDIUM"?"text-primary":"text-muted-foreground"} />
+ <p className={cn("font-black mt-2 text-sm", formData.priority ==="MEDIUM"?"text-primary":"text-muted-foreground")}>Medium</p>
  <p className="text-[10px] text-muted-foreground font-medium mt-1">SLA: 24 Hours</p>
  </div>
 
@@ -190,19 +190,19 @@ export function TicketSlideOver({ isOpen, onClose, customerId }: TicketSlideOver
  onChange={handleChange}
  rows={5}
  placeholder="Describe the issue in detail..."
- className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm font-medium text-foreground focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+ className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-medium text-foreground focus:ring-2 focus:ring-primary outline-none resize-none"
  />
  </div>
  </form>
  </div>
 
  {/* Footer */}
- <div className="p-6 border-t border-border bg-white">
+ <div className="p-6 border-t border-border bg-card/50">
  <button
  type="submit"
  form="ticket-form"
  disabled={loading}
- className="w-full flex justify-center items-center gap-2 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black shadow-xl shadow-indigo-500/20 transition-all disabled:opacity-50"
+ className="w-full flex justify-center items-center gap-2 py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-black shadow-xl shadow-primary/20 transition-all disabled:opacity-50"
  >
  {loading ? (
  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"/>

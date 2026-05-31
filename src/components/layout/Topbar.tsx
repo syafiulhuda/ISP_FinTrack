@@ -1,16 +1,18 @@
 "use client";
 
 import { Menu, Bell, Settings, Sun, Moon } from"lucide-react";
-import { useTheme } from"@/components/providers/ThemeProvider";
-import Link from"next/link";
+import { useTheme } from "@/components/providers/ThemeProvider";
+import { useSettings } from "@/components/providers/SettingsProvider";
+import Link from "next/link";
 import Image from"next/image";
 import { useQuery } from"@tanstack/react-query";
 import { getAdminProfile, getNotifications } from"@/actions/admin";
 import { Admin, Notification } from"@/types";
 
 export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
- const { theme, toggleTheme } = useTheme();
- const { data: adminProfile } = useQuery({
+  const { theme, toggleTheme } = useTheme();
+  const { settings } = useSettings();
+  const { data: adminProfile } = useQuery({
  queryKey: ['adminProfile'],
  queryFn: getAdminProfile
  });
@@ -37,7 +39,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
  >
  <Menu size={24} />
  </button>
- <span className="text-lg font-black tracking-tight text-blue-600 dark:text-blue-500 whitespace-nowrap shrink-0">ISP-FinTrack</span>
+ <span className="text-lg font-black tracking-tight text-primary whitespace-nowrap shrink-0">{settings.appName}</span>
  </div>
 
  {/* Dark Mode Toggle (Desktop & Mobile) */}

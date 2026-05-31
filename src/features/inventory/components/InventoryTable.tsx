@@ -115,7 +115,7 @@ function MobileAssetCard({
             <div className="flex items-center gap-1.5 min-w-0">
               <p className="font-black text-slate-900 dark:text-slate-100 text-xs md-phone:text-sm truncate">{asset.sn}</p>
               {!asset.isStock && asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual" && (
-                <span className="bg-blue-100 text-blue-750 dark:bg-blue-900/30 dark:text-blue-400 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tight whitespace-nowrap shrink-0">
+                <span className="bg-primary/20 text-blue-750 dark:bg-primary/20 dark:text-primary text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tight whitespace-nowrap shrink-0">
                   Deployed
                 </span>
               )}
@@ -135,7 +135,7 @@ function MobileAssetCard({
             <span className={cn(
               "text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md border whitespace-nowrap uppercase",
               asset.condition === "Good" ? "bg-green-100 text-green-700 border-green-200/50" :
-              asset.condition === "Maintenance" ? "bg-blue-100 text-blue-700 border-blue-200/50" :
+              asset.condition === "Maintenance" ? "bg-primary/20 text-blue-700 border-blue-200/50" :
               asset.condition === "Warning" ? "bg-orange-100 text-orange-700 border-orange-200/50" :
               "bg-red-105 text-red-705 border-red-200/50"
             )}>
@@ -178,7 +178,7 @@ function MobileAssetCard({
                     Dimiliki
                   </span>
                 ) : asset.kepemilikan === "Sewa" ? (
-                  <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-955/30 dark:text-blue-400 h-7">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1 rounded-full bg-primary/20 text-blue-700 dark:bg-blue-955/30 dark:text-primary h-7">
                     <ShieldCheck size={12} />
                     Sewa
                   </span>
@@ -225,7 +225,7 @@ function MobileAssetCard({
                             longitude: Number(asset.longitude) || 106.8456 
                           });
                         }}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-primary text-white rounded-xl hover:opacity-90 transition-all font-black text-[10px] uppercase shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-all font-black text-[10px] uppercase shadow-sm"
                       >
                         <Wifi size={12} />
                         <span>Use Asset</span>
@@ -254,7 +254,7 @@ function MobileAssetCard({
                               setMaintenanceReason("");
                               setTechNameStart("");
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-xl hover:opacity-90 transition-all font-black text-[10px] uppercase shadow-sm"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-all font-black text-[10px] uppercase shadow-sm"
                           >
                             <Wrench size={12} />
                             <span>Maintenance</span>
@@ -319,7 +319,7 @@ function MobileAssetCard({
                           // We trigger the actual deploy after state updates, or we can just call handleDeploy directly
                           setTimeout(() => handleDeploy(asset.sn), 0);
                         }}
-                        className="flex-1 py-2.5 text-[10px] font-black bg-primary text-white rounded-xl hover:opacity-90 shadow-lg shadow-primary/20 transition-all uppercase tracking-wider"
+                        className="flex-1 py-2.5 text-[10px] font-black bg-primary text-primary-foreground rounded-xl hover:opacity-90 shadow-lg shadow-primary/20 transition-all uppercase tracking-wider"
                       >
                         Confirm
                       </button>
@@ -327,21 +327,21 @@ function MobileAssetCard({
                   </div>
                 ) : isStartingMaintenanceThis ? (
                   <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-800" onClick={e => e.stopPropagation()}>
-                    <p className="text-[10px] font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter text-blue-500">Initiate Maintenance</p>
+                    <p className="text-[10px] font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter text-primary">Initiate Maintenance</p>
                     <div className="space-y-2">
                       <input 
                         type="text" 
                         placeholder="Technician Name"
                         value={techNameStart}
                         onChange={(e) => setTechNameStart(e.target.value)}
-                        className="w-full px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-700 rounded-xl dark:bg-slate-900 bg-white text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-bold"
+                        className="w-full px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-700 rounded-xl dark:bg-slate-900 bg-white text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold"
                       />
                       <textarea 
                         placeholder="Problem Description..."
                         rows={2}
                         value={maintenanceReason}
                         onChange={(e) => setMaintenanceReason(e.target.value)}
-                        className="w-full px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-700 rounded-xl dark:bg-slate-900 bg-white text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-bold resize-none"
+                        className="w-full px-3 py-2.5 text-xs border border-slate-200 dark:border-slate-700 rounded-xl dark:bg-slate-900 bg-white text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold resize-none"
                       />
                     </div>
                     <div className="flex gap-2 pt-2">
@@ -358,7 +358,7 @@ function MobileAssetCard({
                           setGlobalMaintenanceReason(maintenanceReason);
                           setTimeout(handleStartMaintenance, 0);
                         }}
-                        className="flex-1 py-2.5 text-[10px] font-black bg-blue-600 text-white rounded-xl hover:opacity-90 shadow-lg shadow-blue-500/20 transition-all uppercase tracking-wider"
+                        className="flex-1 py-2.5 text-[10px] font-black bg-primary text-primary-foreground rounded-xl hover:opacity-90 shadow-lg shadow-primary/ transition-all uppercase tracking-wider"
                       >
                         Start
                       </button>
@@ -563,7 +563,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-black text-slate-900 dark:text-slate-100 text-sm md:text-base whitespace-nowrap" title={asset.sn}>{asset.sn}</p>
                             {!asset.isStock && asset.kepemilikan !== "Dijual" && asset.kepemilikan !== "Telah Dijual" && (
-                              <span className="bg-blue-100 text-blue-700 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tight hidden sm:inline-block">
+                              <span className="bg-primary/20 text-blue-700 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tight hidden sm:inline-block">
                                 Deployed
                               </span>
                             )}
@@ -587,7 +587,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                         <div className={cn(
                           "flex items-center gap-1.5 text-[9px] font-black uppercase px-3 py-1.5 rounded-full w-fit whitespace-nowrap",
                           asset.condition === "Good" ? "bg-green-100 text-green-700" :
-                          asset.condition === "Maintenance" ? "bg-blue-100 text-blue-700" :
+                          asset.condition === "Maintenance" ? "bg-primary/20 text-blue-700" :
                           asset.condition === "Warning" ? "bg-orange-100 text-orange-700" :
                           "bg-red-100 text-red-700"
                         )}>
@@ -607,7 +607,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                           Dimiliki
                         </span>
                       ) : asset.kepemilikan === "Sewa" ? (
-                        <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-955/30 dark:text-blue-400 h-7 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1 rounded-full bg-primary/20 text-blue-700 dark:bg-blue-955/30 dark:text-primary h-7 whitespace-nowrap">
                           <ShieldCheck size={12} />
                           Sewa
                         </span>
@@ -645,7 +645,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                             className={cn(
                               "p-2 rounded-xl transition-all shadow-sm",
                               activeActionMenu === asset.sn 
-                                ? "bg-primary text-white" 
+                                ? "bg-primary text-primary-foreground" 
                                 : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:border-slate-300 dark:hover:border-slate-700"
                             )}
                           >
@@ -714,7 +714,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                                     </button>
                                     <button 
                                       onClick={() => handleDeploy(asset.sn)}
-                                      className="flex-1 py-2 text-[10px] font-bold bg-primary text-white rounded-lg hover:opacity-90 shadow-lg shadow-primary/20 transition-all"
+                                      className="flex-1 py-2 text-[10px] font-bold bg-primary text-primary-foreground rounded-lg hover:opacity-90 shadow-lg shadow-primary/20 transition-all"
                                     >
                                       Confirm
                                     </button>
@@ -723,7 +723,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                               ) : isStartingMaintenance && startingAssetSn === asset.sn ? (
                                 <div className="space-y-4 p-3">
                                   <div className="flex justify-between items-center mb-2">
-                                    <h4 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter text-blue-500">Initiate Maintenance</h4>
+                                    <h4 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-tighter text-primary">Initiate Maintenance</h4>
                                     <button onClick={() => setIsStartingMaintenance(false)} className="text-slate-400 hover:text-red-500 transition-colors">
                                       <X size={14}/>
                                     </button>
@@ -736,7 +736,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                                         placeholder="Technician Name"
                                         value={techNameStart}
                                         onChange={(e) => setTechNameStart(e.target.value)}
-                                        className="w-full bg-white dark:bg-slate-700 rounded-xl px-3 py-2 text-xs font-bold border border-slate-200 dark:border-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                                        className="w-full bg-white dark:bg-slate-700 rounded-xl px-3 py-2 text-xs font-bold border border-slate-200 dark:border-slate-600 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
                                       />
                                     </div>
                                     <div className="space-y-1">
@@ -746,7 +746,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                                         rows={2}
                                         value={maintenanceReason}
                                         onChange={(e) => setMaintenanceReason(e.target.value)}
-                                        className="w-full bg-white dark:bg-slate-700 rounded-xl px-3 py-2 text-xs font-bold border border-slate-200 dark:border-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                                        className="w-full bg-white dark:bg-slate-700 rounded-xl px-3 py-2 text-xs font-bold border border-slate-200 dark:border-slate-600 outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
                                       />
                                     </div>
                                     <div className="flex gap-2 pt-1">
@@ -758,7 +758,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                                       </button>
                                       <button 
                                         onClick={handleStartMaintenance}
-                                        className="flex-1 py-2 text-[10px] font-bold bg-blue-600 text-white rounded-lg hover:opacity-90 shadow-lg shadow-blue-500/20 transition-all"
+                                        className="flex-1 py-2 text-[10px] font-bold bg-primary text-primary-foreground rounded-lg hover:opacity-90 shadow-lg shadow-primary/ transition-all"
                                       >
                                         Start
                                       </button>
@@ -924,7 +924,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                                               }} 
                                               className="w-full text-left px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all flex items-center gap-3"
                                             >
-                                              <Wrench size={14} className="text-blue-500" /> Maintenance
+                                              <Wrench size={14} className="text-primary" /> Maintenance
                                             </button>
                                           )}
                                           {asset.condition === 'Broken' && (
@@ -998,7 +998,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
                     onClick={() => setCurrentPage(pageNum)}
                     className={cn(
                       "w-8 h-8 rounded-lg text-xs font-bold transition-all",
-                      currentPage === pageNum ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      currentPage === pageNum ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 dark:hover:text-white"
                     )}
                   >
                     {pageNum}

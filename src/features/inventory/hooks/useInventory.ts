@@ -177,7 +177,7 @@ export function useInventory() {
  value: mounted ? rented.toLocaleString() :"---",
  trend:"Aset sewa",
  trendIcon:"check-circle",
- color:"bg-blue-500/10",
+ color:"bg-primary/",
  isAlert: false
  },
  {
