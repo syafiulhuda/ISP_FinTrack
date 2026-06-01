@@ -100,36 +100,42 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
  };
 
  const handleDrop = async (e: React.DragEvent, newStatus: string) => {
-  e.preventDefault();
-  setDragOverCol(null);
-  setDraggingId(null);
-  const id = e.dataTransfer.getData("ticketId");
+ e.preventDefault();
+ setDragOverCol(null);
+ 
+ const id = e.dataTransfer.getData("ticketId") || draggingId;
+ setDraggingId(null);
+ 
+ if (!id) {
+ toast.error("Failed to identify ticket. Please try again.");
+ return;
+ }
 
- const ticket = tickets.find(t => t.id.toString() === id);
+ const ticket = tickets.find(t => t.id.toString() === id.toString());
 
- // Workflow Rule: Prevent skipping"In Progress"
- if (ticket && ticket.status ==='OPEN'&& newStatus ==='RESOLVED') {
+ // Workflow Rule: Prevent skipping "In Progress"
+ if (ticket && ticket.status === 'OPEN' && newStatus === 'RESOLVED') {
  toast.error("Action restricted!", {
- description:"Please move the ticket to'In Progress'first before resolving it.",
- icon: <AlertCircle size={16} className="text-rose-500"/>
+ description: "Please move the ticket to 'In Progress' first before resolving it.",
+ icon: <AlertCircle size={16} className="text-rose-500" />
  });
  return;
  }
 
- if (newStatus ==='RESOLVED') {
- setTicketToResolve(id);
+ if (newStatus === 'RESOLVED') {
+ setTicketToResolve(id.toString());
  setResolveModalOpen(true);
  return;
  }
 
  // Optimistic UI Update with real-time timestamp
- setTickets(prev => prev.map(t => t.id.toString() === id ? {
+ setTickets(prev => prev.map(t => t.id.toString() === id.toString() ? {
  ...t,
  status: newStatus,
- resolved_at_str: (newStatus ==='RESOLVED'|| newStatus ==='CLOSED') ? new Date().toISOString() : null
+ resolved_at_str: (newStatus === 'RESOLVED' || newStatus === 'CLOSED') ? new Date().toISOString() : null
  } : t));
 
- const res = await updateTicketStatus(id, newStatus);
+ const res = await updateTicketStatus(id.toString(), newStatus);
  if (!res.success) {
  toast.error("Failed to update ticket status");
  // Revert if failed

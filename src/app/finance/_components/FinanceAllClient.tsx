@@ -28,17 +28,17 @@ export function FinanceAllClient() {
 
   return (
     <div className="space-y-6">
-      <div className="mb-8">
-        <Link href="/finance" className="inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary mb-4 transition-colors">
+      <div className="mb-6 md:mb-8">
+        <Link href="/finance" className="inline-flex items-center gap-2 text-[13px] md:text-sm font-bold text-muted-foreground hover:text-primary mb-4 transition-colors">
           <ChevronLeft size={16} /> Back to Finance Dashboard
         </Link>
-        <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
-          <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center shrink-0">
-            <Receipt size={24} />
+        <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-start sm:items-center gap-3">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+            <Receipt className="w-5 h-5 md:w-6 md:h-6" />
           </div>
-          Full Transaction Log
+          <span className="leading-tight">Full Transaction Log</span>
         </h1>
-        <p className="text-muted-foreground font-medium mt-2 max-w-2xl">
+        <p className="text-xs md:text-sm text-muted-foreground font-medium mt-2 max-w-2xl">
           Complete log of all processed financial transactions.
         </p>
       </div>
@@ -47,7 +47,7 @@ export function FinanceAllClient() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-card rounded-[2.5rem] shadow-sm border border-border"
+        className="bg-card rounded-3xl md:rounded-[2.5rem] shadow-sm border border-border"
       >
         <div className="p-4 md:p-6 lg:p-8 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex-1 w-full md:w-auto flex flex-col md:flex-row items-center gap-4 md:gap-2">
@@ -58,13 +58,13 @@ export function FinanceAllClient() {
                 placeholder="Search ID, method..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-muted border-none rounded-full pl-10 pr-4 py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-primary outline-none"
+                className="w-full bg-muted border-none rounded-xl md:rounded-full pl-10 pr-4 py-2.5 md:py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-primary outline-none"
               />
             </div>
           </div>
           
-          <div className="flex items-center gap-2 w-full md:w-auto shrink-0 justify-end">
-            <span className="text-xs font-bold text-muted-foreground bg-muted px-4 py-3 rounded-full border border-border shadow-sm shrink-0">
+          <div className="flex items-center gap-2 w-full md:w-auto shrink-0 justify-start md:justify-end">
+            <span className="text-[11px] md:text-xs font-bold text-muted-foreground bg-muted px-4 py-2.5 md:py-3 rounded-xl md:rounded-full border border-border shadow-sm shrink-0">
               Showing {filteredTransactions.length} transactions
             </span>
           </div>

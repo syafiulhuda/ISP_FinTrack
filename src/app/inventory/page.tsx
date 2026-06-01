@@ -38,8 +38,8 @@ export default function InventoryPage() {
  animate={{ opacity: 1, x: 0 }}
  className="space-y-3"
  >
- <h1 className="text-4xl tablet:text-5xl lg:text-6xl font-black text-foreground tracking-tight leading-none">
- Asset<br />Management
+ <h1 className="text-2xl min-[360px]:text-3xl sm:text-4xl tablet:text-5xl lg:text-6xl font-black text-foreground tracking-tight leading-none whitespace-nowrap">
+ Asset Management
  </h1>
  <p className="text-sm tablet:text-base font-medium text-muted-foreground max-w-sm tablet:max-w-md leading-relaxed">
  Real-time tracking and health audit of ISP infrastructure hardware.
@@ -50,11 +50,11 @@ export default function InventoryPage() {
  <m.div
  initial={{ opacity: 0, x: 20 }}
  animate={{ opacity: 1, x: 0 }}
- className="flex flex-wrap sm:flex-nowrap items-center shrink-0 w-full sm:w-auto mt-2 md:mt-0 gap-3"
+ className="grid grid-cols-2 sm:flex sm:flex-nowrap items-center shrink-0 w-full sm:w-auto mt-2 md:mt-0 gap-2 sm:gap-3"
  >
  <Link
  href="/inventory/all"
- className="w-full sm:w-auto px-5 py-3.5 bg-card border border-border text-foreground rounded-xl font-bold text-sm shadow-sm hover:bg-muted transition-all flex items-center justify-center whitespace-nowrap"
+ className="w-full sm:w-auto px-2 py-3 sm:px-5 sm:py-3.5 bg-card border border-border text-foreground rounded-xl font-bold text-[11px] sm:text-sm shadow-sm hover:bg-muted transition-all flex items-center justify-center text-center leading-tight"
  >
  View All Assets
  </Link>
@@ -63,7 +63,7 @@ export default function InventoryPage() {
  whileTap={!isVisitor ? { scale: 0.98 } : {}}
  onClick={() => !isVisitor && setIsRegisterModalOpen(true)}
  disabled={isVisitor}
- className={cn("w-full sm:w-auto px-5 py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-sm shadow-lg shadow-primary/20 transition-all flex items-center justify-center whitespace-nowrap",
+ className={cn("w-full sm:w-auto px-2 py-3 sm:px-5 sm:py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-[11px] sm:text-sm shadow-lg shadow-primary/20 transition-all flex items-center justify-center text-center leading-tight",
  isVisitor ? "opacity-50 cursor-not-allowed" : "hover:bg-primary"
  )}
  >

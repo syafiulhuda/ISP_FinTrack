@@ -23,7 +23,7 @@ import { ChartContainer } from'@/components/charts/ChartContainer';
 
 const DashboardRevenueChart = dynamic(
  () => import('@/components/charts/DashboardCharts').then(mod => mod.DashboardRevenueChart),
- { ssr: false, loading: () => <div className="h-[300px] w-full skeleton-card rounded-xl"/> }
+ { ssr: false, loading: () => <div className="h-[200px] sm:h-[250px] lg:h-[300px] w-full skeleton-theme rounded-xl"/> }
 );
 
 const DashboardCustomerChart = dynamic(
@@ -505,7 +505,7 @@ export default function Dashboard() {
  {/* KPI Cards */}
  {/* Mobile & Tablet 3D Cover Flow Carousel */}
  <div 
- className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
+ className="block lg:hidden h-[195px] sm:h-[250px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
  onTouchStart={(e) => {
  touchStartX.current = e.touches[0].clientX;
  }}
@@ -523,7 +523,7 @@ export default function Dashboard() {
  }}
  >
  {isLoading ? (
- <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] skeleton-theme rounded-[1.5rem] shadow-xl"/>
+ <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[145px] sm:h-[190px] skeleton-theme rounded-[1.5rem] shadow-xl"/>
  ) : (
  kpis.map((kpi, i) => {
  const N = kpis.length;
@@ -559,7 +559,7 @@ export default function Dashboard() {
  animate={{ x, scale, zIndex, opacity }}
  transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
  className={cn(
- "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300 border",
+ "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[145px] sm:h-[190px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300 border",
  isCenter 
  ?"bg-card border-cyan-400 shadow-[0_0_25px_3px_rgba(34,211,238,0.3)] dark:shadow-[0_0_35px_5px_rgba(34,211,238,0.4)]"
  :"bg-muted/80 border-border shadow-none",
@@ -631,9 +631,9 @@ export default function Dashboard() {
 
  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
  <section
- className="lg:col-span-2 bg-card rounded-[2.5rem] p-10 shadow-sm border border-border flex flex-col h-full"
+ className="lg:col-span-2 bg-card rounded-[2.5rem] p-6 sm:p-8 lg:p-10 shadow-sm border border-border flex flex-col h-full"
  >
- <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+ <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 sm:mb-8">
  <div>
  <h3 className="text-2xl font-black text-foreground">Revenue Growth</h3>
  <p className="text-xs sm:text-sm font-medium text-muted-foreground mt-1">{dynamicData.dateRangeLabel}</p>
@@ -655,7 +655,7 @@ export default function Dashboard() {
  <ExternalLink size={18} />
  </Link>
  </div>
- <ChartContainer className="flex-1 w-full mt-4 h-[300px]">
+ <ChartContainer className="flex-1 w-full mt-2 sm:mt-4 h-[120px] sm:h-[250px] lg:h-[300px]">
  {isLoading ? (
  <div className="h-full w-full bg-muted animate-pulse rounded-xl"/>
  ) : (

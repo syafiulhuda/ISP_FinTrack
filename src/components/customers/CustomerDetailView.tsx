@@ -13,7 +13,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import Link from"next/link";
 import { toggleVipStatus, sendPaymentReminder } from"@/actions/customers";
 import { createPaymentLink } from"@/actions/payment";
-import { useState, useEffect } from"react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { PaymentModal } from "@/components/ui/PaymentModal";
 import { CustomerEditModal } from "@/components/customers/CustomerEditModal";
@@ -153,6 +153,8 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  const [isTogglingVip, setIsTogglingVip] = useState(false);
  const [expandedLatePayments, setExpandedLatePayments] = useState<Record<number, boolean>>({});
  const [mounted, setMounted] = useState(false);
+ const [activeStatKpi, setActiveStatKpi] = useState(0);
+ const touchStartXKpi = useRef<number | null>(null);
 
  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
  const [paymentRedirectUrl, setPaymentRedirectUrl] = useState("");
@@ -357,28 +359,95 @@ export default function CustomerDetailView({ data, initialTickets = [] }: { data
  </div>
  </div>
 
- {/* KPI Cards */}
- <div className="grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-4 gap-3 tablet:gap-4">
- {[
- { label:"Lifetime Value (LTV)", value: formatCompactNumber(data.ltv), icon: TrendingUp, color:"text-primary", bg:"bg-primary/"},
- { label:"Payment Frequency", value:`${data.txCount}x`, icon: CreditCard, color:"text-emerald-500", bg:"bg-emerald-500/10"},
- { label:"Avg. Monthly Payment", value: formatCompactNumber(avgPayment), icon: Activity, color:"text-violet-500", bg:"bg-violet-500/10"},
- { label:"Tenure (Months)", value:`${tenureMonths || 0} Mo`, icon: Milestone, color:"text-cyan-500", bg:"bg-cyan-500/10"}
- ].map((k, i) => (
- <m.div key={i}
- initial={{ opacity: 0, y: 20 }}
- animate={{ opacity: 1, y: 0 }}
- transition={{ delay: i * 0.1 }}
- className="bg-card p-4 tablet:p-6 rounded-3xl border border-border shadow-sm"
- >
- <div className={`w-8 h-8 tablet:w-10 tablet:h-10 rounded-xl flex items-center justify-center mb-3 tablet:mb-4 ${k.bg} ${k.color}`}>
- <k.icon size={16} className="tablet:w-5 tablet:h-5"/>
- </div>
- <p className="text-[10px] tablet:text-xs font-bold text-muted-foreground uppercase tracking-widest leading-tight">{k.label}</p>
- <h2 className="text-sm sm:text-lg tablet:text-xl xl:text-2xl font-black text-foreground mt-1 whitespace-nowrap tabular-nums">{k.value}</h2>
- </m.div>
- ))}
- </div>
+ <>
+    {/* MOBILE CAROUSEL */}
+    <div 
+      className="block lg:hidden h-[195px] sm:h-[250px] w-full relative overflow-hidden !-mb-2 touch-pan-y"
+      onTouchStart={(e) => {
+        touchStartXKpi.current = e.touches[0].clientX;
+      }}
+      onTouchEnd={(e) => {
+        if (touchStartXKpi.current === null) return;
+        const touchEndX = e.changedTouches[0].clientX;
+        const diff = touchStartXKpi.current - touchEndX;
+        const N = 4;
+        if (diff > 40) setActiveStatKpi((prev) => (prev + 1) % N);
+        else if (diff < -40) setActiveStatKpi((prev) => (prev - 1 + N) % N);
+        touchStartXKpi.current = null;
+      }}
+    >
+      {[
+        { label: "Lifetime Value (LTV)", value: formatCompactNumber(data.ltv), icon: TrendingUp, color: "text-primary", bg: "bg-primary/10", shadow: "shadow-[0_0_25px_3px_color-mix(in_srgb,var(--primary),transparent_70%)]" },
+        { label: "Payment Frequency", value: `${data.txCount}x`, icon: CreditCard, color: "text-emerald-500", bg: "bg-emerald-500/10", shadow: "shadow-[0_0_25px_3px_rgba(16,185,129,0.3)]" },
+        { label: "Avg. Monthly Payment", value: formatCompactNumber(avgPayment), icon: Activity, color: "text-violet-500", bg: "bg-violet-500/10", shadow: "shadow-[0_0_25px_3px_rgba(139,92,246,0.3)]" },
+        { label: "Tenure (Months)", value: `${tenureMonths || 0} Mo`, icon: Milestone, color: "text-cyan-500", bg: "bg-cyan-500/10", shadow: "shadow-[0_0_25px_3px_rgba(6,182,212,0.3)]" }
+      ].map((k, i) => {
+        const N = 4;
+        const offset = (i - activeStatKpi + N) % N;
+        const isCenter = offset === 0;
+        const isRight = offset === 1;
+        const isLeft = offset === N - 1;
+        const isVisible = isCenter || isRight || isLeft;
+        
+        const x = isCenter ? "0%" : isRight ? "85%" : isLeft ? "-85%" : "0%";
+        const scale = isCenter ? 1 : 0.85;
+        const zIndex = isCenter ? 30 : (isVisible ? 20 : 10);
+        const opacity = isCenter ? 1 : (isVisible ? 0.7 : 0);
+        
+        return (
+          <m.div
+            key={k.label}
+            onClick={() => isVisible && setActiveStatKpi(i)}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(e, { offset }) => {
+              if (offset.x < -40) setActiveStatKpi((prev) => (prev + 1) % N);
+              else if (offset.x > 40) setActiveStatKpi((prev) => (prev - 1 + N) % N);
+            }}
+            animate={{ x, scale, zIndex, opacity }}
+            transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+            className={cn(
+              "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[145px] sm:h-[190px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300 border",
+              isCenter ? `bg-card border-border ${k.shadow}` : "bg-muted/80 border-border shadow-none",
+              !isVisible && "pointer-events-none"
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <div className={cn("w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center", isCenter ? k.bg : "bg-muted text-muted-foreground")}>
+                <k.icon className={cn("w-5 h-5 sm:w-6 sm:h-6", isCenter ? k.color : "")} />
+              </div>
+              <span className={cn("text-[10px] sm:text-xs font-black tracking-widest uppercase", isCenter ? "text-foreground" : "text-muted-foreground")}>{k.label}</span>
+            </div>
+            <div className={cn("text-3xl sm:text-5xl font-black tracking-tight", isCenter ? "text-foreground" : "text-muted-foreground")}>{k.value}</div>
+          </m.div>
+        );
+      })}
+    </div>
+
+    {/* DESKTOP GRID */}
+    <div className="hidden lg:grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-4 gap-3 tablet:gap-4">
+    {[
+    { label:"Lifetime Value (LTV)", value: formatCompactNumber(data.ltv), icon: TrendingUp, color:"text-primary", bg:"bg-primary/10"},
+    { label:"Payment Frequency", value:`${data.txCount}x`, icon: CreditCard, color:"text-emerald-500", bg:"bg-emerald-500/10"},
+    { label:"Avg. Monthly Payment", value: formatCompactNumber(avgPayment), icon: Activity, color:"text-violet-500", bg:"bg-violet-500/10"},
+    { label:"Tenure (Months)", value:`${tenureMonths || 0} Mo`, icon: Milestone, color:"text-cyan-500", bg:"bg-cyan-500/10"}
+    ].map((k, i) => (
+    <m.div key={i}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: i * 0.1 }}
+    className="bg-card p-4 tablet:p-6 rounded-3xl border border-border shadow-sm"
+    >
+    <div className={`w-8 h-8 tablet:w-10 tablet:h-10 rounded-xl flex items-center justify-center mb-3 tablet:mb-4 ${k.bg} ${k.color}`}>
+    <k.icon size={16} className="tablet:w-5 tablet:h-5"/>
+    </div>
+    <p className="text-[10px] tablet:text-xs font-bold text-muted-foreground uppercase tracking-widest leading-tight">{k.label}</p>
+    <h2 className="text-sm sm:text-lg tablet:text-xl xl:text-2xl font-black text-foreground mt-1 whitespace-nowrap tabular-nums">{k.value}</h2>
+    </m.div>
+    ))}
+    </div>
+  </>
 
  {/* Main Analysis Grid */}
  <div className="grid grid-cols-1 lg:grid-cols-2 laptop:grid-cols-3 gap-8 items-stretch">

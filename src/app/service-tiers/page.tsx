@@ -716,7 +716,7 @@ export default function ServiceTiersPage() {
  </div>
  <div className="space-y-1 text-right">
  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block">City / Regency</span>
- <span className="font-bold text-slate-950 block truncate"title={cust.city}>
+ <span className="font-bold text-foreground block truncate"title={cust.city}>
  {cust.city ||'-'}
  </span>
  </div>

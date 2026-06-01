@@ -630,13 +630,13 @@ export default function SettingsPage() {
  dotColor: integrations?.ocr.status ==='CONNECTED'?"bg-emerald-500":"bg-orange-500"
  },
  ].map((item) => (
- <div key={item.name} className="flex items-center justify-between p-3 bg-muted rounded-xl">
+ <div key={item.name} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-muted rounded-xl gap-3 sm:gap-2">
  <div className="flex items-center gap-3">
- <item.icon className="text-muted-foreground"size={18} />
- <span className="text-sm font-bold text-foreground flex items-center gap-2">
+ <item.icon className="text-muted-foreground shrink-0"size={18} />
+ <span className="text-sm font-bold text-foreground flex flex-wrap items-center gap-2 leading-tight">
  {item.name}
  {item.env && (
- <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground tracking-wider">
+ <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-background border border-border text-muted-foreground tracking-wider shrink-0">
  {item.env}
  </span>
  )}
@@ -644,10 +644,10 @@ export default function SettingsPage() {
  </div>
  <button
  onClick={() => toast.info("Status ditarik otomatis dari konfigurasi server (Environment Variables).")}
- className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest cursor-pointer hover:opacity-80 transition-opacity", item.color)}
+ className={cn("flex w-fit items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest cursor-pointer hover:opacity-80 transition-opacity ml-[30px] sm:ml-0 shrink-0", item.color)}
  >
- <span className={cn("w-1.5 h-1.5 rounded-full", item.dotColor, item.status ==="CONNECTED"&&"animate-pulse")}></span>
- {item.status}
+ <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", item.dotColor, item.status ==="CONNECTED"&&"animate-pulse")}></span>
+ <span className="whitespace-nowrap">{item.status}</span>
  </button>
  </div>
  ))}

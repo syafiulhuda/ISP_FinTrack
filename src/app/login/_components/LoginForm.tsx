@@ -120,18 +120,18 @@ export function LoginForm() {
  };
 
  return (
- <div className="w-full max-w-md min-h-[450px] flex flex-col justify-center">
+ <div className="w-full max-w-md flex flex-col justify-center">
  <m.div 
  key={isForgotMode ?"forgot":"login"}
  initial={false} 
  animate={{ opacity: 1, x: 0 }} 
  transition={{ duration: 0.5 }}
  >
- <div className="mb-12">
- <h2 className="text-4xl font-black text-foreground tracking-tight mb-3">
+ <div className="mb-8 lg:mb-12">
+ <h2 className="text-4xl font-black text-foreground tracking-tight mb-2 lg:mb-3">
  {isForgotMode ?"Reset Password":"Welcome Back"}
  </h2>
- <p className="text-muted-foreground font-medium text-lg">
+ <p className="text-muted-foreground font-medium text-sm lg:text-lg">
  {isForgotMode 
  ?"Enter your work email and we'll send you a link to reset your password."
  : requires2FA 
@@ -180,7 +180,7 @@ export function LoginForm() {
  type="email"required value={email}
  onChange={(e) => setEmail(e.target.value)}
  placeholder="name@company.com"
- className="w-full bg-card border-2 border-border rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-foreground font-medium"
+ className="w-full bg-card border-2 border-border rounded-2xl py-3.5 lg:py-4 pl-12 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-foreground font-medium"
  />
  </div>
  </div>
@@ -195,7 +195,7 @@ export function LoginForm() {
  maxLength={6}
  onChange={(e) => setOtpToken(e.target.value)}
  placeholder="000000"
- className="w-full text-center tracking-widest text-lg bg-card border-2 border-border rounded-2xl py-4 pl-4 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-foreground font-black"
+ className="w-full text-center tracking-widest text-lg bg-card border-2 border-border rounded-2xl py-3.5 lg:py-4 pl-4 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-foreground font-black"
  />
  </div>
  </div>
@@ -211,7 +211,7 @@ export function LoginForm() {
  setRequesterRole(e.target.value);
  fetchUsersForRole(e.target.value);
  }}
- className="w-full appearance-none bg-card border-2 border-border rounded-2xl py-4 pl-12 pr-10 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-foreground font-medium"
+ className="w-full appearance-none bg-card border-2 border-border rounded-2xl py-3.5 lg:py-4 pl-12 pr-10 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-foreground font-medium"
  >
  <option value="Owner">Owner</option>
  <option value="Admin Kantor">Admin Kantor</option>
@@ -231,7 +231,7 @@ export function LoginForm() {
  value={targetUserId}
  onChange={(e) => setTargetUserId(e.target.value ? Number(e.target.value) :"")}
  disabled={isLoadingUsers || availableUsers.length === 0}
- className="w-full appearance-none bg-card border-2 border-border rounded-2xl py-4 pl-12 pr-10 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-foreground font-medium disabled:opacity-50"
+ className="w-full appearance-none bg-card border-2 border-border rounded-2xl py-3.5 lg:py-4 pl-12 pr-10 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-foreground font-medium disabled:opacity-50"
  >
  <option value="">-- Pilih User --</option>
  {availableUsers.map((user) => (
@@ -265,7 +265,7 @@ export function LoginForm() {
  type="password"required value={requesterPassword}
  onChange={(e) => setRequesterPassword(e.target.value)}
  placeholder="••••••••"
- className="w-full bg-card border-2 border-border rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-foreground font-medium"
+ className="w-full bg-card border-2 border-border rounded-2xl py-3.5 lg:py-4 pl-12 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-foreground font-medium"
  />
  </div>
  </m.div>
@@ -297,7 +297,7 @@ export function LoginForm() {
  type="password"required={!isForgotMode && !requires2FA} value={password}
  onChange={(e) => setPassword(e.target.value)}
  placeholder="••••••••"
- className="w-full bg-card border-2 border-border rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-foreground font-medium"
+ className="w-full bg-card border-2 border-border rounded-2xl py-3.5 lg:py-4 pl-12 pr-4 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all text-foreground font-medium"
  />
  </div>
  </div>
@@ -339,7 +339,7 @@ export function LoginForm() {
  <button 
  type="submit" disabled={isLoading}
  className={cn(
-                "w-full bg-primary text-primary-foreground rounded-2xl py-4 font-black text-lg hover:opacity-90 transition-all flex items-center justify-center gap-3 relative overflow-hidden",
+ "w-full bg-primary text-primary-foreground rounded-2xl py-3.5 lg:py-4 font-black text-lg hover:opacity-90 transition-all flex items-center justify-center gap-3 relative overflow-hidden",
  isLoading && "cursor-not-allowed opacity-80"
  )}
  >
@@ -358,8 +358,8 @@ export function LoginForm() {
  </button>
  </m.form>
 
- <div className="mt-12 text-center">
- <p className="text-muted-foreground text-sm font-medium">
+ <div className="mt-8 lg:mt-12 text-center">
+ <p className="text-muted-foreground text-xs lg:text-sm font-medium">
  Don&apos;t have an account yet? <button className="text-primary font-bold hover:underline">Contact Administrator</button>
  </p>
  </div>

@@ -237,14 +237,14 @@ const navigation = [
  className="hidden md:block fixed bottom-8 left-[17rem] w-72 z-[9999]"
  >
  <div className="bg-card rounded-2xl shadow-2xl border border-border/80 /80 overflow-hidden">
- {/* Red gradient header strip */}
- <div className="bg-gradient-to-r from-red-500 to-rose-600 px-4 py-3 flex items-center gap-3">
- <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
- <AlertTriangle size={16} className="text-white"/>
+ {/* Primary header strip */}
+ <div className="bg-primary px-4 py-3 flex items-center gap-3">
+ <div className="w-8 h-8 rounded-xl bg-primary-foreground/20 flex items-center justify-center shrink-0">
+ <AlertTriangle size={16} className="text-primary-foreground"/>
  </div>
  <div>
- <p className="text-white text-sm font-black tracking-tight leading-tight">Keluar dari sesi ini?</p>
- <p className="text-white/70 text-[10px] font-medium mt-0.5">Sesi aktif Anda akan diakhiri.</p>
+ <p className="text-primary-foreground text-sm font-black tracking-tight leading-tight">Keluar dari sesi ini?</p>
+ <p className="text-primary-foreground/80 text-[10px] font-medium mt-0.5">Sesi aktif Anda akan diakhiri.</p>
  </div>
  </div>
  <div className="px-4 py-3">
@@ -262,7 +262,7 @@ const navigation = [
  <button
  onClick={handleLogoutConfirm}
  disabled={isLoggingOut}
- className="flex-1 py-2 text-xs font-bold bg-red-500 text-white rounded-xl hover:bg-red-600 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-lg shadow-red-500/25"
+ className="flex-1 py-2 text-xs font-bold bg-primary text-primary-foreground rounded-xl hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-lg shadow-primary/25"
  >
  {isLoggingOut ? (
  <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin"/>
@@ -297,21 +297,21 @@ const navigation = [
  animate={{ y: 0 }}
  exit={{ y:'100%'}}
  transition={{ type:'spring', stiffness: 400, damping: 36, mass: 0.8 }}
- className="relative bg-white rounded-t-[28px] shadow-2xl overflow-hidden"
+ className="relative bg-card rounded-t-[28px] shadow-2xl overflow-hidden border-t border-border"
  >
  {/* Drag handle */}
  <div className="flex justify-center pt-3 pb-1">
- <div className="w-10 h-1 bg-slate-300 rounded-full"/>
+ <div className="w-10 h-1 bg-muted-foreground/30 rounded-full"/>
  </div>
 
- {/* Red strip */}
- <div className="mx-4 mt-3 bg-gradient-to-r from-red-500 to-rose-600 rounded-2xl px-5 py-4 flex items-center gap-4">
- <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
- <AlertTriangle size={20} className="text-white"/>
+ {/* Primary strip */}
+ <div className="mx-4 mt-3 bg-primary rounded-2xl px-5 py-4 flex items-center gap-4">
+ <div className="w-10 h-10 rounded-xl bg-primary-foreground/20 flex items-center justify-center shrink-0">
+ <AlertTriangle size={20} className="text-primary-foreground"/>
  </div>
  <div>
- <p className="text-white font-black text-base leading-tight">Keluar dari sesi ini?</p>
- <p className="text-white/70 text-xs font-medium mt-0.5">Sesi aktif Anda akan diakhiri.</p>
+ <p className="text-primary-foreground font-black text-base leading-tight">Keluar dari sesi ini?</p>
+ <p className="text-primary-foreground/80 text-xs font-medium mt-0.5">Sesi aktif Anda akan diakhiri.</p>
  </div>
  </div>
 
@@ -330,7 +330,7 @@ const navigation = [
  <button
  onClick={handleLogoutConfirm}
  disabled={isLoggingOut}
- className="flex-1 py-4 bg-red-500 text-white font-bold rounded-2xl text-sm shadow-xl shadow-red-500/30 hover:bg-red-600 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+ className="flex-1 py-4 bg-primary text-primary-foreground font-bold rounded-2xl text-sm shadow-xl shadow-primary/30 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
  >
  {isLoggingOut ? (
  <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"/>

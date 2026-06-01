@@ -152,6 +152,7 @@ export default function ProfitabilityPage() {
 
  const [mounted, setMounted] = useState(false);
  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+ const [tempSelectedProvince, setTempSelectedProvince] = useState("All Regions");
  const [activeStat, setActiveStat] = useState(0);
  const profitabilityRef = useRef<HTMLDivElement>(null);
  const touchStartX = useRef<number | null>(null);
@@ -505,7 +506,12 @@ export default function ProfitabilityPage() {
 
  <div className="relative w-full lg-phone:w-auto shrink-0"ref={dropdownRef}>
  <button
- onClick={() => !isDataLoading && setIsDropdownOpen(!isDropdownOpen)}
+ onClick={() => {
+ if (!isDataLoading) {
+ setTempSelectedProvince(selectedProvince);
+ setIsDropdownOpen(!isDropdownOpen);
+ }
+ }}
  className="flex items-center justify-between gap-1 tablet:gap-3 bg-muted px-3 tablet:px-4 py-2.5 tablet:py-2 rounded-[1rem] border border-border w-full lg-phone:min-w-[125px] lg-phone:max-w-[150px] tablet:min-w-[160px] tablet:max-w-none h-[42px] tablet:h-[38px] hover:border-indigo-500/50 transition-all active:scale-95 shrink-0"
  >
  <div className="flex items-center gap-1.5 tablet:gap-2 overflow-hidden w-full">
@@ -523,32 +529,79 @@ export default function ProfitabilityPage() {
 
  <AnimatePresence>
  {isDropdownOpen && (
+ <>
+ {/* Mobile Backdrop */}
  <m.div
- initial={{ opacity: 0, y: 10, scale: 0.95 }}
+ initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+ onClick={() => setIsDropdownOpen(false)}
+ className="lg:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-[99]"
+ />
+
+ <m.div
+ initial={{ opacity: 0, y: 20, scale: 0.95 }}
  animate={{ opacity: 1, y: 0, scale: 1 }}
- exit={{ opacity: 0, y: 10, scale: 0.95 }}
- className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-xl"
+ exit={{ opacity: 0, y: 20, scale: 0.95 }}
+ className="fixed lg:absolute bottom-0 left-0 lg:bottom-auto lg:left-auto lg:right-0 lg:mt-2 w-full lg:w-56 bg-card border border-border rounded-t-[2rem] lg:rounded-2xl shadow-2xl overflow-hidden z-[100] lg:z-50 backdrop-blur-xl flex flex-col max-h-[85vh] lg:max-h-[50vh]"
  >
- <div className="p-1">
+ {/* Drag handle mobile */}
+ <div className="lg:hidden flex justify-center pt-3 pb-2 shrink-0">
+ <div className="w-12 h-1.5 bg-muted-foreground/20 rounded-full"/>
+ </div>
+
+ {/* Header mobile */}
+ <div className="lg:hidden px-6 py-4 border-b border-border shrink-0 flex items-center justify-between">
+ <h3 className="text-lg font-black tracking-tight">Select Region</h3>
+ </div>
+
+ <div className="p-2 lg:p-1 overflow-y-auto custom-scrollbar flex-1">
  {provinces.map((p: string) => (
  <button
  key={p}
  onClick={() => {
+ if (window.innerWidth >= 1024) {
  setSelectedProvince(p);
  setIsDropdownOpen(false);
  setSearchQuery("");
+ } else {
+ setTempSelectedProvince(p);
+ }
  }}
- className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-between group ${selectedProvince === p
- ?"bg-indigo-500 text-white shadow-lg shadow-indigo-500/20"
- :"text-muted-foreground hover:bg-muted dark:hover:bg-muted"
- }`}
+ className={cn(
+ "w-full text-left px-5 lg:px-4 py-4 lg:py-2.5 rounded-2xl lg:rounded-xl text-base lg:text-sm transition-all flex items-center justify-between group",
+ selectedProvince === p ? "lg:bg-indigo-500 lg:text-white lg:font-bold lg:shadow-lg lg:shadow-indigo-500/20" : "lg:text-muted-foreground lg:font-medium lg:hover:bg-muted dark:lg:hover:bg-muted",
+ tempSelectedProvince === p ? "max-lg:bg-indigo-500 max-lg:text-white max-lg:font-bold max-lg:shadow-lg max-lg:shadow-indigo-500/20" : "max-lg:text-muted-foreground max-lg:font-medium max-lg:hover:bg-muted dark:max-lg:hover:bg-muted"
+ )}
  >
- {p}
- {selectedProvince === p && <m.div layoutId="activeCheck"className="w-1.5 h-1.5 bg-white rounded-full"/>}
+ <span>{p}</span>
+ <div className={cn("rounded-full bg-white transition-all",
+ selectedProvince === p ? "lg:w-1.5 lg:h-1.5" : "lg:w-0 lg:h-0",
+ tempSelectedProvince === p ? "max-lg:w-2 max-lg:h-2" : "max-lg:w-0 max-lg:h-0"
+ )}/>
  </button>
  ))}
  </div>
+
+ {/* Mobile Action Buttons */}
+ <div className="lg:hidden p-4 border-t border-border shrink-0 bg-card/50 flex gap-3 pb-safe">
+ <button
+ onClick={() => setIsDropdownOpen(false)}
+ className="flex-1 py-4 bg-muted text-foreground font-bold rounded-2xl text-sm transition-all active:scale-95"
+ >
+ Back
+ </button>
+ <button
+ onClick={() => {
+ setSelectedProvince(tempSelectedProvince);
+ setIsDropdownOpen(false);
+ setSearchQuery("");
+ }}
+ className="flex-1 py-4 bg-indigo-500 text-white font-bold rounded-2xl text-sm shadow-xl shadow-indigo-500/30 transition-all active:scale-95"
+ >
+ Confirm
+ </button>
+ </div>
  </m.div>
+ </>
  )}
  </AnimatePresence>
  </div>
@@ -557,7 +610,7 @@ export default function ProfitabilityPage() {
 
  {/* Mobile & Tablet 3D Cover Flow Carousel */}
  <div 
- className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
+ className="block lg:hidden h-[195px] sm:h-[250px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
  onTouchStart={(e) => {
  touchStartX.current = e.touches[0].clientX;
  }}
@@ -575,7 +628,7 @@ export default function ProfitabilityPage() {
  }}
  >
  {isDataLoading ? (
- <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] bg-muted animate-pulse rounded-[1.5rem] shadow-xl"/>
+ <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[145px] sm:h-[190px] bg-muted animate-pulse rounded-[1.5rem] shadow-xl"/>
  ) : (
  dynamicData.metrics.map((kpi, i) => {
  const N = dynamicData.metrics.length;
@@ -611,7 +664,7 @@ export default function ProfitabilityPage() {
  animate={{ x, scale, zIndex, opacity }}
  transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
  className={cn(
-"absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300 border",
+"absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[145px] sm:h-[190px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300 border",
  isCenter 
  ? (isBad ?"bg-card border-orange-500 shadow-[0_0_25px_3px_rgba(249,115,22,0.3)] dark:shadow-[0_0_35px_5px_rgba(249,115,22,0.4)]":"bg-card border-cyan-400 shadow-[0_0_25px_3px_rgba(34,211,238,0.3)] dark:shadow-[0_0_35px_5px_rgba(34,211,238,0.4)]")
  :"bg-muted/80 border-border shadow-none",

@@ -28,6 +28,8 @@ import { toast } from"sonner";
 
 export default function PredictionsPage() {
  const [modelType, setModelType] = useState<'lr'|'nn'>('lr');
+ const [activeStat, setActiveStat] = useState(0);
+ const touchStartX = React.useRef<number | null>(null);
 
  const { data: predictions, isLoading, refetch, isFetching } = useQuery({
  queryKey: ['predictions', modelType],
@@ -146,12 +148,15 @@ export default function PredictionsPage() {
 
  {isLoading && !predictions ? (
  <div className="space-y-8 animate-pulse">
- {/* Prediction Highlights */}
- <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
- <PredictionCardSkeleton />
- <PredictionCardSkeleton />
- <PredictionCardSkeleton />
- </div>
+  {/* Prediction Highlights */}
+  <div className="hidden lg:grid grid-cols-1 md:grid-cols-3 gap-6">
+  <PredictionCardSkeleton />
+  <PredictionCardSkeleton />
+  <PredictionCardSkeleton />
+  </div>
+  <div className="block lg:hidden h-[195px] sm:h-[250px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+    <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[145px] sm:h-[190px] skeleton-theme rounded-[1.5rem] shadow-xl"/>
+  </div>
 
  {/* Charts Section */}
  <div className="grid grid-cols-1 gap-8">
@@ -175,7 +180,7 @@ export default function PredictionsPage() {
  className="space-y-8"
  >
  {/* Prediction Highlights */}
- <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+ <div className="hidden lg:grid grid-cols-1 md:grid-cols-3 gap-6">
  <PredictionCard 
  title="Predicted Revenue"
  value={`Rp ${formatCompactNumber(predictions.predicted.revenue)}`}
@@ -199,6 +204,111 @@ export default function PredictionsPage() {
  color="amber"
  reverseColor
  />
+ </div>
+
+ {/* MOBILE CAROUSEL */}
+ <div 
+ className="block lg:hidden h-[195px] sm:h-[250px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
+ onTouchStart={(e) => {
+ touchStartX.current = e.touches[0].clientX;
+ }}
+ onTouchEnd={(e) => {
+ if (touchStartX.current === null) return;
+ const touchEndX = e.changedTouches[0].clientX;
+ const diff = touchStartX.current - touchEndX;
+ const N = 3;
+ if (diff > 40) setActiveStat((prev) => (prev + 1) % N);
+ else if (diff < -40) setActiveStat((prev) => (prev - 1 + N) % N);
+ touchStartX.current = null;
+ }}
+ >
+ {[
+ { 
+ title: "Predicted Revenue", 
+ value: `Rp ${formatCompactNumber(predictions.predicted.revenue)}`, 
+ change: calculateChange(predictions.predicted.revenue, predictions.actual[predictions.actual.length-1].revenue),
+ icon: DollarSign, color: "primary", reverseColor: false 
+ },
+ { 
+ title: "Estimated Churn", 
+ value: `${predictions.predicted.churn_rate}%`, 
+ change: calculateChange(predictions.predicted.churn_rate, predictions.actual[predictions.actual.length-1].churn_rate, true),
+ icon: Users, color: "rose", reverseColor: true 
+ },
+ { 
+ title: "Projected OPEX", 
+ value: `Rp ${formatCompactNumber(predictions.predicted.expenses)}`, 
+ change: calculateChange(predictions.predicted.expenses, predictions.actual[predictions.actual.length-1].expenses),
+ icon: Activity, color: "amber", reverseColor: true 
+ }
+ ].map((k, i) => {
+ const N = 3;
+ const offset = (i - activeStat + N) % N;
+ const isCenter = offset === 0;
+ const isRight = offset === 1;
+ const isLeft = offset === N - 1;
+ const isVisible = isCenter || isRight || isLeft;
+ 
+ const x = isCenter ? "0%" : isRight ? "85%" : isLeft ? "-85%" : "0%";
+ const scale = isCenter ? 1 : 0.85;
+ const zIndex = isCenter ? 30 : (isVisible ? 20 : 10);
+ const opacity = isCenter ? 1 : (isVisible ? 0.7 : 0);
+
+ const isPositive = parseFloat(k.change) > 0;
+ const isGood = k.reverseColor ? !isPositive : isPositive;
+
+ const colorMap: Record<string, string> = {
+ primary: "text-primary bg-primary/10",
+ rose: "text-rose-500 bg-rose-500/10",
+ amber: "text-amber-500 bg-amber-500/10"
+ };
+
+ const shadowMap: Record<string, string> = {
+ primary: "shadow-[0_0_25px_3px_color-mix(in_srgb,var(--primary),transparent_70%)] dark:shadow-[0_0_35px_5px_color-mix(in_srgb,var(--primary),transparent_60%)] border-primary/50",
+ rose: "shadow-[0_0_25px_3px_rgba(244,63,94,0.3)] dark:shadow-[0_0_35px_5px_rgba(244,63,94,0.4)] border-rose-500/50",
+ amber: "shadow-[0_0_25px_3px_rgba(245,158,11,0.3)] dark:shadow-[0_0_35px_5px_rgba(245,158,11,0.4)] border-amber-500/50"
+ };
+
+ return (
+ <m.div
+ key={k.title}
+ onClick={() => isVisible && setActiveStat(i)}
+ drag="x"
+ dragConstraints={{ left: 0, right: 0 }}
+ dragElastic={0.2}
+ onDragEnd={(e, { offset }) => {
+ if (offset.x < -40) setActiveStat((prev) => (prev + 1) % N);
+ else if (offset.x > 40) setActiveStat((prev) => (prev - 1 + N) % N);
+ }}
+ animate={{ x, scale, zIndex, opacity }}
+ transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+ className={cn(
+ "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[145px] sm:h-[190px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300 border",
+ isCenter ? `bg-card ${shadowMap[k.color]}` : "bg-muted/80 border-border shadow-none",
+ !isVisible && "pointer-events-none"
+ )}
+ >
+ <div className="flex items-center gap-3">
+ <div className={cn("w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center", isCenter ? colorMap[k.color] : "bg-muted text-muted-foreground")}>
+ <k.icon className="w-5 h-5 sm:w-6 sm:h-6" />
+ </div>
+ <span className={cn("text-[10px] sm:text-xs font-black tracking-widest uppercase", isCenter ? "text-foreground" : "text-muted-foreground")}>{k.title}</span>
+ </div>
+ <div>
+ <div className={cn("text-3xl sm:text-5xl font-black tracking-tight", isCenter ? "text-foreground" : "text-muted-foreground")}>{k.value}</div>
+ <div className="flex items-center gap-2 mt-2">
+ <div className={cn("flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black shadow-sm", 
+ isCenter ? (isGood ? "bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/20" : "bg-rose-500/10 text-rose-500 ring-1 ring-rose-500/20") : "bg-muted text-muted-foreground"
+ )}>
+ {isPositive ? "+" : ""}{k.change}%
+ <ArrowRight size={10} className={cn("transition-transform", isPositive ? "-rotate-45" : "rotate-45")} />
+ </div>
+ <span className="text-[10px] font-bold text-muted-foreground">vs Last Month</span>
+ </div>
+ </div>
+ </m.div>
+ );
+ })}
  </div>
 
  {/* Charts Section */}

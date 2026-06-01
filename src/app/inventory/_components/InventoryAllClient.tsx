@@ -42,7 +42,7 @@ export function InventoryAllClient() {
         transition={{ delay: 0.2 }}
         className="bg-card rounded-[2.5rem] shadow-sm border border-border"
       >
-        <div className="p-4 md:p-6 lg:p-8 border-b border-border flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="p-4 md:p-6 lg:p-8 border-b border-border flex flex-col-reverse lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex-1 min-w-0 flex flex-col lg:flex-row items-center gap-2 lg:gap-1.5 w-full lg:w-auto">
             {/* Desktop Reset Button */}
             <m.button
@@ -126,7 +126,7 @@ export function InventoryAllClient() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between lg:justify-end gap-2 w-full lg:w-auto shrink-0 mt-1 lg:mt-0">
+          <div className="flex items-center justify-between lg:justify-end gap-2 w-full lg:w-auto shrink-0">
             {/* Mobile Reset Button */}
             <m.button
               whileHover={{ scale: 1.05 }}

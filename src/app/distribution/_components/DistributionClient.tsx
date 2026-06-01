@@ -500,8 +500,8 @@ export function DistributionClient() {
  <button
  onClick={() => setIsLegendOpen(!isLegendOpen)}
  className={cn(
-"bg-white/90 dark:bg-slate-950/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-border/50 text-primary transition-all active:scale-95",
- isLegendOpen &&"bg-primary text-primary-foreground border-primary"
+ "bg-white/90 dark:bg-slate-950/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-border/50 text-primary transition-all active:scale-95",
+ isLegendOpen && "border-primary text-primary"
  )}
  aria-label={isLegendOpen ?"Close legend":"Open map legend"}
  aria-expanded={isLegendOpen}

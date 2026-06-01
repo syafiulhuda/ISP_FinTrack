@@ -54,6 +54,7 @@ export default function ExecutiveDashboard() {
  const [startDate, setStartDate] = useState("");
  const [endDate, setEndDate] = useState("");
  const [selectedProvince, setSelectedProvince] = useState("All Regions");
+ const [tempSelectedProvince, setTempSelectedProvince] = useState("All Regions");
  const [isRegionOpen, setIsRegionOpen] = useState(false);
  const [datesInitialized, setDatesInitialized] = useState(false);
  const dropdownRef = useRef<HTMLDivElement>(null);
@@ -433,7 +434,12 @@ export default function ExecutiveDashboard() {
 
  <div className="relative w-full lg-phone:w-auto shrink-0"ref={dropdownRef}>
  <button 
- onClick={() => !isDataLoading && setIsRegionOpen(!isRegionOpen)}
+ onClick={() => {
+ if (!isDataLoading) {
+ setTempSelectedProvince(selectedProvince);
+ setIsRegionOpen(!isRegionOpen);
+ }
+ }}
  className="flex items-center justify-between gap-1 tablet:gap-3 bg-muted px-3 tablet:px-4 py-2.5 tablet:py-2 rounded-[1rem] border border-border w-full lg-phone:min-w-[125px] lg-phone:max-w-[150px] tablet:min-w-[160px] tablet:max-w-none h-[42px] tablet:h-[38px] hover:border-primary/50 transition-all active:scale-95 shrink-0"
  aria-label={`Select region. Current selection: ${selectedProvince}`}
  aria-expanded={isRegionOpen}
@@ -453,32 +459,77 @@ export default function ExecutiveDashboard() {
 
  <AnimatePresence>
  {isRegionOpen && (
+ <>
+ {/* Mobile Backdrop */}
+ <m.div
+ initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+ onClick={() => setIsRegionOpen(false)}
+ className="lg:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-[99]"
+ />
+
  <m.div 
- initial={{ opacity: 0, y: 10, scale: 0.95 }}
+ initial={{ opacity: 0, y: 20, scale: 0.95 }}
  animate={{ opacity: 1, y: 0, scale: 1 }}
- exit={{ opacity: 0, y: 10, scale: 0.95 }}
- className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-xl"
+ exit={{ opacity: 0, y: 20, scale: 0.95 }}
+ className="fixed lg:absolute bottom-0 left-0 lg:bottom-auto lg:left-auto lg:right-0 lg:mt-2 w-full lg:w-56 bg-card border border-border rounded-t-[2rem] lg:rounded-2xl shadow-2xl overflow-hidden z-[100] lg:z-50 backdrop-blur-xl flex flex-col max-h-[85vh] lg:max-h-[50vh]"
  >
- <div className="p-1">
+ {/* Drag handle mobile */}
+ <div className="lg:hidden flex justify-center pt-3 pb-2 shrink-0">
+ <div className="w-12 h-1.5 bg-muted-foreground/20 rounded-full"/>
+ </div>
+
+ {/* Header mobile */}
+ <div className="lg:hidden px-6 py-4 border-b border-border shrink-0 flex items-center justify-between">
+ <h3 className="text-lg font-black tracking-tight">Select Region</h3>
+ </div>
+
+ <div className="p-2 lg:p-1 overflow-y-auto custom-scrollbar flex-1">
  {provinces.map((p: string) => (
  <button
  key={p}
  onClick={() => {
+ if (window.innerWidth >= 1024) {
  setSelectedProvince(p);
  setIsRegionOpen(false);
+ } else {
+ setTempSelectedProvince(p);
+ }
  }}
- className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-between group ${
- selectedProvince === p 
- ?"bg-primary text-primary-foreground shadow-lg shadow-primary/20"
- :"text-muted-foreground hover:bg-muted dark:hover:bg-muted"
- }`}
+ className={cn(
+ "w-full text-left px-5 lg:px-4 py-4 lg:py-2.5 rounded-2xl lg:rounded-xl text-base lg:text-sm transition-all flex items-center justify-between group",
+ selectedProvince === p ? "lg:bg-primary lg:text-primary-foreground lg:font-bold lg:shadow-lg lg:shadow-primary/20" : "lg:text-muted-foreground lg:font-medium lg:hover:bg-muted dark:lg:hover:bg-muted",
+ tempSelectedProvince === p ? "max-lg:bg-primary max-lg:text-primary-foreground max-lg:font-bold max-lg:shadow-lg max-lg:shadow-primary/20" : "max-lg:text-muted-foreground max-lg:font-medium max-lg:hover:bg-muted dark:max-lg:hover:bg-muted"
+ )}
  >
- {p}
- {selectedProvince === p && <m.div layoutId="activeCheck"className="w-1.5 h-1.5 bg-primary-foreground rounded-full"/>}
+ <span>{p}</span>
+ <div className={cn("rounded-full transition-all",
+ selectedProvince === p ? "lg:w-1.5 lg:h-1.5 lg:bg-primary-foreground" : "lg:w-0 lg:h-0",
+ tempSelectedProvince === p ? "max-lg:w-2 max-lg:h-2 max-lg:bg-primary-foreground" : "max-lg:w-0 max-lg:h-0"
+ )}/>
  </button>
  ))}
  </div>
+ 
+ {/* Mobile Action Buttons */}
+ <div className="lg:hidden p-4 border-t border-border shrink-0 bg-card/50 flex gap-3 pb-safe">
+ <button
+ onClick={() => setIsRegionOpen(false)}
+ className="flex-1 py-4 bg-muted text-foreground font-bold rounded-2xl text-sm transition-all active:scale-95"
+ >
+ Back
+ </button>
+ <button
+ onClick={() => {
+ setSelectedProvince(tempSelectedProvince);
+ setIsRegionOpen(false);
+ }}
+ className="flex-1 py-4 bg-primary text-primary-foreground font-bold rounded-2xl text-sm shadow-xl shadow-primary/30 transition-all active:scale-95"
+ >
+ Confirm
+ </button>
+ </div>
  </m.div>
+ </>
  )}
  </AnimatePresence>
  </div>
@@ -530,8 +581,8 @@ export default function ExecutiveDashboard() {
  <div className="space-y-8">
  {isDataLoading ? (
  <>
- <div className="block lg:hidden h-[160px] sm:h-[220px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
- <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[120px] sm:h-[160px] bg-muted animate-pulse rounded-[1.5rem] shadow-xl"/>
+ <div className="block lg:hidden h-[175px] sm:h-[230px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+ <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[135px] sm:h-[170px] bg-muted animate-pulse rounded-[1.5rem] shadow-xl"/>
  </div>
  <div className="hidden lg:grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
  {Array.from({ length: 5 }).map((_, i) => (
@@ -563,7 +614,7 @@ export default function ExecutiveDashboard() {
  <>
  {/* Mobile & Tablet 3D Cover Flow Carousel */}
  <div 
- className="block lg:hidden h-[160px] sm:h-[220px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
+ className="block lg:hidden h-[175px] sm:h-[230px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
  onTouchStart={(e) => {
  touchStartXFin.current = e.touches[0].clientX;
  }}
@@ -685,22 +736,26 @@ export default function ExecutiveDashboard() {
  <YAxis tickFormatter={(val) =>`Rp${val/1000000}M`} axisLine={false} tickLine={false} tick={{fill:'currentColor', fontSize: 12}} className="text-muted-foreground" />
  <RechartsTooltip 
  cursor={{ stroke:'hsl(var(--primary))', strokeWidth: 2, strokeDasharray:'5 5'}} 
- content={({ active, payload }) => active && payload && payload.length && (
- <div className="bg-card/90 backdrop-blur-md text-foreground px-4 py-3 rounded-2xl text-xs font-black shadow-2xl border border-border">
- <p className="opacity-60 mb-2 uppercase tracking-tighter text-[9px]">{payload[0].payload.month}</p>
- <div className="flex flex-col gap-2">
+ content={({ active, payload }) => active && payload && payload.length ? (
+ <div className="bg-card/90 backdrop-blur-md text-foreground px-3 tablet:px-4 py-2 tablet:py-3 rounded-xl tablet:rounded-2xl text-[10px] tablet:text-xs font-black shadow-2xl border border-border">
+ <p className="opacity-60 mb-1.5 uppercase tracking-tighter text-[8px] tablet:text-[9px]">{payload[0].payload.month}</p>
+ <div className="flex flex-col gap-1.5 tablet:gap-2">
  {payload.map((entry: any, i: number) => (
- <div key={i} className="flex items-center justify-between gap-6">
- <span className="flex items-center gap-2">
- <div className="w-2 h-2 rounded-full"style={{ backgroundColor: entry.color }} />
- {entry.name}
+ <div key={i} className="flex items-center justify-between gap-3 tablet:gap-6">
+ <span className="flex items-center gap-1.5 tablet:gap-2">
+ <div className="w-1.5 h-1.5 tablet:w-2 tablet:h-2 rounded-full shrink-0"style={{ backgroundColor: entry.color }} />
+ <span className="whitespace-nowrap leading-none">{entry.name}</span>
  </span>
- <span className="font-mono">{new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits: 0}).format(entry.value)}</span>
+ <span className="font-mono tabular-nums whitespace-nowrap text-right">
+ {Math.abs(entry.value) >= 1000000 
+ ? `${entry.value < 0 ? '-' : ''}Rp ${(Math.abs(entry.value) / 1000000).toFixed(1)}M` 
+ : new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits: 0}).format(entry.value)}
+ </span>
  </div>
  ))}
  </div>
  </div>
- )} 
+ ) : null} 
  />
  <Legend 
  verticalAlign="bottom"
@@ -735,8 +790,8 @@ export default function ExecutiveDashboard() {
  <div className="space-y-8">
  {isDataLoading ? (
  <div className="animate-pulse space-y-8">
- <div className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
- <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] bg-muted rounded-[1.5rem] shadow-xl"/>
+ <div className="block lg:hidden h-[195px] sm:h-[250px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6">
+ <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[145px] sm:h-[190px] bg-muted rounded-[1.5rem] shadow-xl"/>
  </div>
  <div className="hidden lg:block h-32 bg-muted rounded-3xl"/>
  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -756,7 +811,7 @@ export default function ExecutiveDashboard() {
  <>
  {/* Mobile & Tablet 3D Cover Flow Carousel */}
  <div 
- className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
+ className="block lg:hidden h-[195px] sm:h-[250px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
  onTouchStart={(e) => {
  touchStartXInv.current = e.touches[0].clientX;
  }}
@@ -802,7 +857,7 @@ export default function ExecutiveDashboard() {
  animate={{ x, scale, zIndex, opacity }}
  transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
  className={cn(
- "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300 border",
+ "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[135px] sm:h-[170px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300 border",
  isCenter ? "bg-card border-cyan-400 shadow-[0_0_25px_3px_rgba(34,211,238,0.3)] dark:shadow-[0_0_35px_5px_rgba(34,211,238,0.4)]" : "bg-muted/80 border-border shadow-none",
  isBad && isCenter ? "border-orange-500 shadow-[0_0_25px_3px_rgba(249,115,22,0.3)] dark:shadow-[0_0_35px_5px_rgba(249,115,22,0.4)]" : "",
  !isVisible && "pointer-events-none"
@@ -1064,17 +1119,17 @@ export default function ExecutiveDashboard() {
  </span>
  </div>
  </div>
- <div className="flex flex-row md:flex-col flex-wrap justify-center gap-x-4 gap-y-3 w-full md:w-1/2 px-2">
+ <div className="grid grid-cols-2 md:flex md:flex-col justify-center gap-2 w-full md:w-1/2 px-0">
  {processedData.inventory.ownershipDist.map((entry: { name: string; value: number; color?: string }, i: number) => {
  const totalVal = processedData.inventory.ownershipDist.reduce((acc: number, curr: { value?: number }) => acc + (curr.value || 0), 0);
  const pct = totalVal > 0 ? ((entry.value / totalVal) * 100).toFixed(0) : 0;
  return (
- <div key={i} className="flex items-center gap-3 bg-card hover:bg-muted dark:hover:bg-muted/80 px-4 py-2.5 rounded-2xl border border-border transition-all shadow-sm">
- <div className="w-3 h-3 rounded-full shrink-0"style={{ backgroundColor: ["#6366f1","#06b6d4","#f43f5e"][i % 3] }} />
+ <div key={i} className="flex items-center gap-2 sm:gap-3 bg-card hover:bg-muted dark:hover:bg-muted/80 px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl border border-border transition-all shadow-sm">
+ <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full shrink-0"style={{ backgroundColor: ["#6366f1","#06b6d4","#f43f5e"][i % 3] }} />
  <div className="flex flex-col">
- <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{entry.name}</span>
- <span className="text-xs font-black text-foreground">
- {entry.value} Devices <span className="font-extrabold ml-1"style={{ color: ["#6366f1","#06b6d4","#f43f5e"][i % 3] }}>({pct}%)</span>
+ <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{entry.name}</span>
+ <span className="text-[10px] sm:text-xs font-black text-foreground">
+ {entry.value} <span className="hidden lg-phone:inline">Devices</span> <span className="font-extrabold ml-0.5 sm:ml-1"style={{ color: ["#6366f1","#06b6d4","#f43f5e"][i % 3] }}>({pct}%)</span>
  </span>
  </div>
  </div>

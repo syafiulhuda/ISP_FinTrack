@@ -39,7 +39,7 @@ export function InventoryStats({ isLoadingAll, dynamicStats }: InventoryStatsPro
  <>
  {/* Mobile & Tablet 3D Cover Flow Carousel */}
  <div 
- className="block lg:hidden h-[180px] sm:h-[240px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
+ className="block lg:hidden h-[195px] sm:h-[250px] w-full relative overflow-hidden !-mt-2 sm:!-mt-4 !mb-6 touch-pan-y"
  onTouchStart={(e) => {
  touchStartX.current = e.touches[0].clientX;
  }}
@@ -57,7 +57,7 @@ export function InventoryStats({ isLoadingAll, dynamicStats }: InventoryStatsPro
  }}
  >
  {isLoadingAll ? (
- <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] skeleton-card rounded-[1.5rem] shadow-xl"/>
+ <div className="absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[145px] sm:h-[190px] skeleton-card rounded-[1.5rem] shadow-xl"/>
  ) : (
  dynamicStats.map((stat, i) => {
  const Icon = IconMap[stat.trendIcon as keyof typeof IconMap] || Cpu;
@@ -96,7 +96,7 @@ export function InventoryStats({ isLoadingAll, dynamicStats }: InventoryStatsPro
  }}
  transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
  className={cn(
- "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[130px] sm:h-[180px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300 border",
+ "absolute inset-0 m-auto w-[230px] sm:w-[420px] h-[145px] sm:h-[190px] rounded-[1.5rem] sm:rounded-[2rem] cursor-pointer p-5 sm:p-8 flex flex-col justify-between transition-colors duration-300 border",
  isCenter 
  ? (stat.isAlert 
  ?"bg-card border-orange-500 shadow-[0_0_25px_3px_rgba(249,115,22,0.3)] dark:shadow-[0_0_35px_5px_rgba(249,115,22,0.4)]"
