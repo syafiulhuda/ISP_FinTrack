@@ -479,8 +479,8 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
  </span>
  </div>
  
- {/* Mobile Quick Actions (Visible primarily on touch devices or smaller screens) */}
- <div className="mt-4 pt-3 flex items-center justify-end border-t border-slate-50 lg:hidden">
+ {/* Quick Actions (Visible on all devices for accessibility) */}
+ <div className="mt-4 pt-3 flex items-center justify-end border-t border-slate-50 dark:border-white/5">
  {(!isVisitor && col.id ==='OPEN')? (
  <button
  onClick={(e) => {

@@ -31,47 +31,47 @@ export default function InventoryPage() {
 
  return (
  <div className="p-4 md:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6 md:space-y-8 min-h-screen pt-6 lg:pt-8 bg-background">
- {/* Header */}
- <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
- <m.div
- initial={{ opacity: 0, x: -20 }}
- animate={{ opacity: 1, x: 0 }}
- className="space-y-3"
- >
- <h1 className="text-2xl min-[360px]:text-3xl sm:text-4xl tablet:text-5xl lg:text-6xl font-black text-foreground tracking-tight leading-none whitespace-nowrap">
- Asset Management
- </h1>
- <p className="text-sm tablet:text-base font-medium text-muted-foreground max-w-sm tablet:max-w-md leading-relaxed">
- Real-time tracking and health audit of ISP infrastructure hardware.
- </p>
- </m.div>
+  {/* Header */}
+  <div className="flex flex-row flex-wrap items-end justify-between gap-4 md:gap-6 relative z-10">
+  <m.div
+  initial={{ opacity: 0, x: -20 }}
+  animate={{ opacity: 1, x: 0 }}
+  className="space-y-2 sm:space-y-3 shrink min-w-[280px]"
+  >
+  <h1 className="text-3xl sm:text-4xl md:text-4xl lg:text-5xl xl:text-6xl font-black text-foreground tracking-tight leading-none whitespace-nowrap">
+  Asset Management
+  </h1>
+  <p className="text-xs sm:text-sm tablet:text-base font-medium text-muted-foreground max-w-sm tablet:max-w-md leading-relaxed">
+  Real-time tracking and health audit of ISP infrastructure hardware.
+  </p>
+  </m.div>
 
- {(!isTimLapangan) && (
- <m.div
- initial={{ opacity: 0, x: 20 }}
- animate={{ opacity: 1, x: 0 }}
- className="grid grid-cols-2 sm:flex sm:flex-nowrap items-center shrink-0 w-full sm:w-auto mt-2 md:mt-0 gap-2 sm:gap-3"
- >
- <Link
- href="/inventory/all"
- className="w-full sm:w-auto px-2 py-3 sm:px-5 sm:py-3.5 bg-card border border-border text-foreground rounded-xl font-bold text-[11px] sm:text-sm shadow-sm hover:bg-muted transition-all flex items-center justify-center text-center leading-tight"
- >
- View All Assets
- </Link>
- <m.button
- whileHover={!isVisitor ? { scale: 1.02 } : {}}
- whileTap={!isVisitor ? { scale: 0.98 } : {}}
- onClick={() => !isVisitor && setIsRegisterModalOpen(true)}
- disabled={isVisitor}
- className={cn("w-full sm:w-auto px-2 py-3 sm:px-5 sm:py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-[11px] sm:text-sm shadow-lg shadow-primary/20 transition-all flex items-center justify-center text-center leading-tight",
- isVisitor ? "opacity-50 cursor-not-allowed" : "hover:bg-primary"
- )}
- >
- Register New Asset
- </m.button>
- </m.div>
- )}
- </div>
+  {(!isTimLapangan) && (
+  <m.div
+  initial={{ opacity: 0, x: 20 }}
+  animate={{ opacity: 1, x: 0 }}
+  className="flex flex-row items-center w-full sm:w-auto mt-2 md:mt-0 gap-2 sm:gap-3 shrink-0"
+  >
+  <Link
+  href="/inventory/all"
+  className="flex-1 sm:flex-none px-3 py-3 sm:px-5 sm:py-3.5 bg-card border border-border text-foreground rounded-xl font-bold text-[11px] sm:text-sm shadow-sm hover:bg-muted transition-all flex items-center justify-center text-center leading-tight whitespace-nowrap"
+  >
+  View All Assets
+  </Link>
+  <m.button
+  whileHover={!isVisitor ? { scale: 1.02 } : {}}
+  whileTap={!isVisitor ? { scale: 0.98 } : {}}
+  onClick={() => !isVisitor && setIsRegisterModalOpen(true)}
+  disabled={isVisitor}
+  className={cn("flex-1 sm:flex-none px-3 py-3 sm:px-5 sm:py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-[11px] sm:text-sm shadow-lg shadow-primary/20 transition-all flex items-center justify-center text-center leading-tight whitespace-nowrap",
+  isVisitor ? "opacity-50 cursor-not-allowed" : "hover:bg-primary"
+  )}
+  >
+  Register New Asset
+  </m.button>
+  </m.div>
+  )}
+  </div>
 
  <InventoryStats isLoadingAll={inventory.isLoadingAll} dynamicStats={inventory.dynamicStats} />
 

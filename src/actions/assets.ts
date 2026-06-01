@@ -140,18 +140,7 @@ export async function startMaintenance(sn: string, technician: string, reason: s
       VALUES ($1, 'START MAINTENANCE: ' || $2, $3, NOW(), $4, NOW())
     `, [assetId, reason, technician, inputterName]);
 
-    // 4. Notification
-    await query(`
-      INSERT INTO notifications (
-        category, title, message, type, is_unread,
-        created_at, inputter, inputter_tms
-      )
-      VALUES (
-        'System', 'Maintenance Started',
-        'Asset ' || $1 || ' (SN: ' || $2 || ') moved to Maintenance by ' || $3,
-        'warning', true, NOW(), $4, NOW()
-      )
-    `, [assetId, sn, technician, inputterName]);
+    // 4. Notification removed as per user request (handled via trouble tickets)
 
     revalidatePath('/inventory');
     revalidatePath('/distribution');
@@ -231,7 +220,7 @@ export async function sellAsset(sn: string, buyerName: string, salePrice: string
         created_at, inputter, inputter_tms
       )
       VALUES (
-        'System', 'Asset Sold',
+        'Finance', 'Asset Sold',
         'Asset ' || $1 || ' (SN: ' || $2 || ') has been sold to ' || $3 || ' for Rp ' || $4,
         'info', true, NOW(), $5, NOW()
       )
