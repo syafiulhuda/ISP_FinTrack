@@ -21,8 +21,9 @@ export async function createTicket(data: {
  const dd = String(wibNow.getUTCDate()).padStart(2,'0');
  const hh = String(wibNow.getUTCHours()).padStart(2,'0');
  const min = String(wibNow.getUTCMinutes()).padStart(2,'0');
+ const randomString = Math.random().toString(36).substring(2, 5).toUpperCase();
  
- const ticket_number =`TKT-${data.customer_id}-${yyyy}${mm}${dd}-${hh}${min}`;
+ const ticket_number =`TKT-${data.customer_id}-${yyyy}${mm}${dd}-${hh}${min}-${randomString}`;
 
  await query(`
  INSERT INTO tickets (ticket_number, customer_id, issue_category, description, status, priority, assigned_to)

@@ -24,8 +24,8 @@ export default function CustomerLoading() {
         </div>
       </div>
 
-      {/* KPI Cards Skeleton */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Desktop KPI Cards Skeleton */}
+      <div className="hidden lg:grid grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="bg-card p-6 rounded-3xl border border-border h-32">
             <div className="w-8 h-8 skeleton-card rounded-xl mb-3"/>
@@ -33,6 +33,15 @@ export default function CustomerLoading() {
             <div className="h-6 skeleton-card rounded-lg w-24"/>
           </div>
         ))}
+      </div>
+
+      {/* Mobile KPI Carousel Skeleton */}
+      <div className="block lg:hidden h-[195px] sm:h-[250px] w-full relative overflow-hidden !-mb-2 flex items-center justify-center">
+        <div className="w-[85%] max-w-sm h-[80%] bg-card p-6 rounded-[2.5rem] sm:rounded-[3rem] border border-border shadow-lg flex flex-col justify-center">
+          <div className="w-12 h-12 skeleton-card rounded-2xl mb-4"/>
+          <div className="h-4 skeleton-card rounded-lg w-32 mb-2"/>
+          <div className="h-8 skeleton-card rounded-xl w-40"/>
+        </div>
       </div>
 
       {/* Main Grid Skeleton */}

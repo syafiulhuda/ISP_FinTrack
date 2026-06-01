@@ -568,8 +568,8 @@ export default function ProfitabilityPage() {
  }}
  className={cn(
  "w-full text-left px-5 lg:px-4 py-4 lg:py-2.5 rounded-2xl lg:rounded-xl text-base lg:text-sm transition-all flex items-center justify-between group",
- selectedProvince === p ? "lg:bg-indigo-500 lg:text-white lg:font-bold lg:shadow-lg lg:shadow-indigo-500/20" : "lg:text-muted-foreground lg:font-medium lg:hover:bg-muted dark:lg:hover:bg-muted",
- tempSelectedProvince === p ? "max-lg:bg-indigo-500 max-lg:text-white max-lg:font-bold max-lg:shadow-lg max-lg:shadow-indigo-500/20" : "max-lg:text-muted-foreground max-lg:font-medium max-lg:hover:bg-muted dark:max-lg:hover:bg-muted"
+ selectedProvince === p ? "lg:bg-primary lg:text-primary-foreground lg:font-bold lg:shadow-lg lg:shadow-primary/20" : "lg:text-muted-foreground lg:font-medium lg:hover:bg-muted dark:lg:hover:bg-muted",
+ tempSelectedProvince === p ? "max-lg:bg-primary max-lg:text-primary-foreground max-lg:font-bold max-lg:shadow-lg max-lg:shadow-primary/20" : "max-lg:text-muted-foreground max-lg:font-medium max-lg:hover:bg-muted dark:max-lg:hover:bg-muted"
  )}
  >
  <span>{p}</span>
@@ -595,7 +595,7 @@ export default function ProfitabilityPage() {
  setIsDropdownOpen(false);
  setSearchQuery("");
  }}
- className="flex-1 py-4 bg-indigo-500 text-white font-bold rounded-2xl text-sm shadow-xl shadow-indigo-500/30 transition-all active:scale-95"
+ className="flex-1 py-4 bg-primary text-primary-foreground font-bold rounded-2xl text-sm shadow-xl shadow-primary/30 transition-all active:scale-95"
  >
  Confirm
  </button>

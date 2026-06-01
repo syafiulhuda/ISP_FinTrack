@@ -181,27 +181,30 @@ export function TicketsKanban({ initialTickets }: { initialTickets: Ticket[] }) 
  }
  };
 
- const filteredTickets = tickets.filter(t => {
+ const searchedTickets = tickets.filter(t => {
  const matchesSearch = t.ticket_number.toLowerCase().includes(search.toLowerCase()) ||
  t.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
  t.description?.toLowerCase().includes(search.toLowerCase());
  const matchesPriority = priorityFilter ? t.priority === priorityFilter : true;
+ return matchesSearch && matchesPriority;
+ });
 
- const isUnresolvedHistory = t.status !=='RESOLVED'&& t.status !=='CLOSED'&& t.created_at_str && new Date(t.created_at_str).toDateString() !== new Date().toDateString();
+ const filteredTickets = searchedTickets.filter(t => {
+ const isUnresolvedHistory = t.status !== 'RESOLVED' && t.status !== 'CLOSED' && t.created_at_str && new Date(t.created_at_str).toDateString() !== new Date().toDateString();
 
  const matchesHistory = showHistoryOnly
  ? isUnresolvedHistory
  : !isUnresolvedHistory;
 
- return matchesSearch && matchesPriority && matchesHistory;
+ return matchesHistory;
  });
 
  const columns = [
- { id:"OPEN", label:"Open Tickets", color:"border-amber-500", bg:"bg-amber-500/10", icon: AlertCircle },
- { id:"IN_PROGRESS", label:"In Progress", color:"border-blue-500", bg:"bg-blue-500/10", icon: Clock }
+ { id: "OPEN", label: "Open Tickets", color: "border-amber-500", bg: "bg-amber-500/10", icon: AlertCircle },
+ { id: "IN_PROGRESS", label: "In Progress", color: "border-blue-500", bg: "bg-blue-500/10", icon: Clock }
  ];
 
- const resolvedTickets = filteredTickets.filter(t => t.status ==="RESOLVED");
+ const resolvedTickets = searchedTickets.filter(t => t.status === "RESOLVED");
 
  return (
  <div className="flex flex-col">
