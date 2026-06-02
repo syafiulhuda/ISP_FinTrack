@@ -65,8 +65,7 @@ export default function SessionsHistoryPage() {
     if (!confirm('Are you sure you want to logout from all other devices?')) return;
     setIsRevokingAll(true);
     try {
-      const currentToken = ""; // backend action uses current token from cookie
-      await revokeOtherSessions(currentToken);
+      await revokeOtherSessions();
       queryClient.invalidateQueries({ queryKey: ['adminSessions'] });
       toast.success('Logged out from other devices');
     } catch (error) {

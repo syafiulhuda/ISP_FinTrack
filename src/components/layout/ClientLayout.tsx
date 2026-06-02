@@ -9,6 +9,7 @@ import { m, AnimatePresence } from"framer-motion";
 import { useState, useEffect } from"react";
 import { ErrorBoundary } from"@/components/ErrorBoundary";
 import { PwaUpdater } from"@/components/layout/PwaUpdater";
+import { AuthGuard } from "@/components/layout/AuthGuard";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -57,7 +58,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
  <div className="w-full max-w-[2000px] mx-auto">
  <ErrorBoundary>
  <div className="animate-in fade-in duration-300">
+ <AuthGuard>
  {children}
+ </AuthGuard>
  </div>
  </ErrorBoundary>
  </div>

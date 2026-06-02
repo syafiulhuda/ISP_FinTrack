@@ -18,6 +18,10 @@ import { FramerProvider } from"@/components/providers/FramerProvider";
 export const metadata: Metadata = {
  title:"ISP-FinTrack - Financial Management for ISPs",
  description:"Enterprise finance, profitability analysis, and inventory management for ISPs.",
+ icons: {
+ icon: '/icon.svg',
+ apple: '/icon.svg',
+ },
  appleWebApp: {
  capable: true,
  statusBarStyle:'default',

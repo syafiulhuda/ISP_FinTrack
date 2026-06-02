@@ -141,7 +141,7 @@ export default function AuditTrailPage() {
  value={adminSearch}
  onChange={(e) => setAdminSearch(e.target.value)}
  aria-label="Cari nama admin"
- className="w-full bg-muted border border-border rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-foreground placeholder:text-muted-foreground"
+ className="w-full bg-transparent border border-border rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground"
  />
  </div>
  
@@ -152,7 +152,7 @@ export default function AuditTrailPage() {
  value={dateFilter}
  onChange={(e) => setDateFilter(e.target.value)}
  aria-label="Filter berdasarkan tanggal"
- className="w-full sm:w-auto bg-muted border border-border rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-foreground"
+ className="w-full sm:w-auto bg-transparent border border-border rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground"
  />
  </div>
 

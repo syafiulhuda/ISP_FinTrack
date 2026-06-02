@@ -53,8 +53,8 @@ export default function ExecutiveDashboard() {
  const [hoveredSlice, setHoveredSlice] = useState<{ name: string; value: number } | null>(null);
  const [startDate, setStartDate] = useState("");
  const [endDate, setEndDate] = useState("");
- const [selectedProvince, setSelectedProvince] = useState("All Regions");
- const [tempSelectedProvince, setTempSelectedProvince] = useState("All Regions");
+ const [selectedProvinces, setSelectedProvinces] = useState<string[]>([]);
+ const [tempSelectedProvinces, setTempSelectedProvinces] = useState<string[]>([]);
  const [isRegionOpen, setIsRegionOpen] = useState(false);
  const [datesInitialized, setDatesInitialized] = useState(false);
  const dropdownRef = useRef<HTMLDivElement>(null);
@@ -106,9 +106,9 @@ export default function ExecutiveDashboard() {
  if (!data) return null;
 
  const { customers, transactions, expenses, assetRoster, stockAssets } = data;
- const isAllRegions = selectedProvince ==="All Regions";
- const normalize = (val: string | undefined | null) => val ? String(val).toLowerCase().trim() :"";
- const selectedProvLower = normalize(selectedProvince);
+ const isAllRegions = selectedProvinces.length === 0;
+ const normalize = (val: string | undefined | null) => val ? String(val).toLowerCase().trim() : "";
+ const selectedProvsLower = selectedProvinces.map(p => normalize(p));
  const toTitleCase = (val: string) => {
  if (!val) return"";
  return val.trim().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
@@ -165,7 +165,7 @@ export default function ExecutiveDashboard() {
  const filteredCustomers = customers.filter((c: Customer) => {
  const joinDate = getLocalDate(c.createdAt || c.tanggal_daftar);
  if (joinDate > endDate) return false;
- if (!isAllRegions && normalize(c.province ||"") !== selectedProvLower) return false;
+ if (!isAllRegions && !selectedProvsLower.includes(normalize(c.province || ""))) return false;
  return true;
  });
 
@@ -186,7 +186,7 @@ export default function ExecutiveDashboard() {
  else if (lon > 106.5 && lon < 107 && lat > -6.5 && lat < -6) prov ="DKI Jakarta";
  }
 
- if (!isAllRegions && !normalize(String(prov)).includes(selectedProvLower)) return false;
+ if (!isAllRegions && !selectedProvsLower.some(p => normalize(String(prov)).includes(p))) return false;
  return true;
  });
 
@@ -205,7 +205,7 @@ export default function ExecutiveDashboard() {
  else if (lon > 106.5 && lon < 107 && lat > -6.5 && lat < -6) prov ="DKI Jakarta";
  }
 
- if (!isAllRegions && !normalize(String(prov)).includes(selectedProvLower)) return false;
+ if (!isAllRegions && !selectedProvsLower.some(p => normalize(String(prov)).includes(p))) return false;
  return true;
  });
 
@@ -232,7 +232,7 @@ export default function ExecutiveDashboard() {
  txProvince = cityProv ||"Other";
  }
 
- if (!isAllRegions && !normalize(String(txProvince)).includes(selectedProvLower)) return;
+ if (!isAllRegions && !selectedProvsLower.some(p => normalize(String(txProvince)).includes(p))) return;
 
  const amt = Number(tx.numericAmount || String(tx.amount).replace(/[^0-9]/g,''));
  const monthStr = txDate.substring(0, 7);
@@ -368,7 +368,7 @@ export default function ExecutiveDashboard() {
  ).map(([name, value]: [string, number]) => ({ name: name as string, value: value as number })).sort((a, b) => b.value - a.value)
  }
  };
- }, [data, startDate, endDate, selectedProvince]);
+ }, [data, startDate, endDate, selectedProvinces]);
 
  if (isError) {
  return (
@@ -384,9 +384,9 @@ export default function ExecutiveDashboard() {
  <div className="min-h-screen pb-20">
  {/* GLOBAL CONTROL PANEL */}
  <div className="relative z-40 bg-card border-b border-border p-4 md:px-8 pt-8 shadow-sm">
- <div className="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-6 mb-6 w-full">
- <div>
- <h1 className="text-3xl font-black text-foreground">Unified Executive Summary</h1>
+ <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-end gap-6 mb-6 w-full">
+ <div className="shrink-0">
+ <h1 className="text-3xl font-black text-foreground lg:whitespace-nowrap">Unified Executive Summary</h1>
  <p className="text-muted-foreground text-sm mt-1 font-medium">Single-pane-of-glass overview of ISP-FinTrack metrics.</p>
  </div>
 
@@ -436,12 +436,12 @@ export default function ExecutiveDashboard() {
  <button 
  onClick={() => {
  if (!isDataLoading) {
- setTempSelectedProvince(selectedProvince);
+ setTempSelectedProvinces(selectedProvinces);
  setIsRegionOpen(!isRegionOpen);
  }
  }}
  className="flex items-center justify-between gap-1 tablet:gap-3 bg-muted px-3 tablet:px-4 py-2.5 tablet:py-2 rounded-[1rem] border border-border w-full lg-phone:min-w-[125px] lg-phone:max-w-[150px] tablet:min-w-[160px] tablet:max-w-none h-[42px] tablet:h-[38px] hover:border-primary/50 transition-all active:scale-95 shrink-0"
- aria-label={`Select region. Current selection: ${selectedProvince}`}
+ aria-label={`Select region. Current selection: ${selectedProvinces.length === 0 ? "All Regions" : selectedProvinces.join(', ')}`}
  aria-expanded={isRegionOpen}
  >
  <div className="flex items-center gap-1.5 tablet:gap-2 overflow-hidden w-full">
@@ -449,7 +449,9 @@ export default function ExecutiveDashboard() {
  {isDataLoading ? (
  <div className="h-3.5 w-full bg-muted animate-pulse rounded-md"/>
  ) : (
- <span className="text-[10px] lg-phone:text-xs tablet:text-sm font-bold text-foreground truncate">{selectedProvince}</span>
+ <span className="text-[10px] lg-phone:text-xs tablet:text-sm font-bold text-foreground truncate">
+ {selectedProvinces.length === 0 ? "All Regions" : selectedProvinces.length === 1 ? selectedProvinces[0] : `${selectedProvinces.length} Regions`}
+ </span>
  )}
  </div>
  {!isDataLoading && (
@@ -484,30 +486,41 @@ export default function ExecutiveDashboard() {
  </div>
 
  <div className="p-2 lg:p-1 overflow-y-auto custom-scrollbar flex-1">
- {provinces.map((p: string) => (
+ {provinces.map((p: string) => {
+ const isSelectedDesktop = p === "All Regions" ? selectedProvinces.length === 0 : selectedProvinces.includes(p);
+ const isSelectedMobile = p === "All Regions" ? tempSelectedProvinces.length === 0 : tempSelectedProvinces.includes(p);
+ return (
  <button
  key={p}
  onClick={() => {
  if (window.innerWidth >= 1024) {
- setSelectedProvince(p);
- setIsRegionOpen(false);
+ setSelectedProvinces(prev => {
+   if (p === "All Regions") return [];
+   if (prev.includes(p)) return prev.filter(item => item !== p);
+   return [...prev, p];
+ });
  } else {
- setTempSelectedProvince(p);
+ setTempSelectedProvinces(prev => {
+   if (p === "All Regions") return [];
+   if (prev.includes(p)) return prev.filter(item => item !== p);
+   return [...prev, p];
+ });
  }
  }}
  className={cn(
  "w-full text-left px-5 lg:px-4 py-4 lg:py-2.5 rounded-2xl lg:rounded-xl text-base lg:text-sm transition-all flex items-center justify-between group",
- selectedProvince === p ? "lg:bg-primary lg:text-primary-foreground lg:font-bold lg:shadow-lg lg:shadow-primary/20" : "lg:text-muted-foreground lg:font-medium lg:hover:bg-muted dark:lg:hover:bg-muted",
- tempSelectedProvince === p ? "max-lg:bg-primary max-lg:text-primary-foreground max-lg:font-bold max-lg:shadow-lg max-lg:shadow-primary/20" : "max-lg:text-muted-foreground max-lg:font-medium max-lg:hover:bg-muted dark:max-lg:hover:bg-muted"
+ isSelectedDesktop ? "lg:bg-primary lg:text-primary-foreground lg:font-bold lg:shadow-lg lg:shadow-primary/20" : "lg:text-muted-foreground lg:font-medium lg:hover:bg-muted dark:lg:hover:bg-muted",
+ isSelectedMobile ? "max-lg:bg-primary max-lg:text-primary-foreground max-lg:font-bold max-lg:shadow-lg max-lg:shadow-primary/20" : "max-lg:text-muted-foreground max-lg:font-medium max-lg:hover:bg-muted dark:max-lg:hover:bg-muted"
  )}
  >
  <span>{p}</span>
  <div className={cn("rounded-full transition-all",
- selectedProvince === p ? "lg:w-1.5 lg:h-1.5 lg:bg-primary-foreground" : "lg:w-0 lg:h-0",
- tempSelectedProvince === p ? "max-lg:w-2 max-lg:h-2 max-lg:bg-primary-foreground" : "max-lg:w-0 max-lg:h-0"
+ isSelectedDesktop ? "lg:w-1.5 lg:h-1.5 lg:bg-primary-foreground" : "lg:w-0 lg:h-0",
+ isSelectedMobile ? "max-lg:w-2 max-lg:h-2 max-lg:bg-primary-foreground" : "max-lg:w-0 max-lg:h-0"
  )}/>
  </button>
- ))}
+ );
+ })}
  </div>
  
  {/* Mobile Action Buttons */}
@@ -520,7 +533,7 @@ export default function ExecutiveDashboard() {
  </button>
  <button
  onClick={() => {
- setSelectedProvince(tempSelectedProvince);
+ setSelectedProvinces(tempSelectedProvinces);
  setIsRegionOpen(false);
  }}
  className="flex-1 py-4 bg-primary text-primary-foreground font-bold rounded-2xl text-sm shadow-xl shadow-primary/30 transition-all active:scale-95"

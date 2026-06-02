@@ -392,52 +392,54 @@ export default function SystemLogsPage() {
  placeholder="Cari pesan, path, user ID, atau stack trace..."
  value={search}
  onChange={(e) => setSearch(e.target.value)}
- className="w-full bg-muted border border-border rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-foreground placeholder:text-muted-foreground"
+ className="w-full bg-transparent border border-border rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground placeholder:text-muted-foreground"
  />
  </div>
 
- <div className="flex flex-col sm:flex-row gap-3">
- <div className="relative">
+ <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+ <div className="flex flex-row gap-3 w-full sm:w-auto">
+ <div className="relative flex-1 sm:flex-none">
  <select
  value={levelFilter}
  onChange={(e) => setLevelFilter(e.target.value)}
- className="w-full sm:w-40 bg-muted border border-border rounded-xl px-3 py-2.5 text-[13px] font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all text-foreground appearance-none pr-8 cursor-pointer"
+ className="w-full sm:w-40 bg-transparent border border-border rounded-xl px-3 py-2.5 text-[13px] font-bold outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground appearance-none pr-8 cursor-pointer"
  >
- <option value="ALL">Semua Level</option>
- <option value="INFO">INFO</option>
- <option value="WARN">WARN</option>
- <option value="ERROR">ERROR</option>
+ <option className="bg-background text-foreground" value="ALL">Semua Level</option>
+ <option className="bg-background text-foreground" value="INFO">INFO</option>
+ <option className="bg-background text-foreground" value="WARN">WARN</option>
+ <option className="bg-background text-foreground" value="ERROR">ERROR</option>
  </select>
  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"/>
  </div>
 
- <div className="relative">
+ <div className="relative flex-1 sm:flex-none">
  <select
  value={statusFilter}
  onChange={(e) => setStatusFilter(e.target.value)}
- className="w-full sm:w-40 bg-muted border border-border rounded-xl px-3 py-2.5 text-[13px] font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all text-foreground appearance-none pr-8 cursor-pointer"
+ className="w-full sm:w-40 bg-transparent border border-border rounded-xl px-3 py-2.5 text-[13px] font-bold outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground appearance-none pr-8 cursor-pointer"
  >
- <option value="ALL">Semua Status</option>
- <option value="ACTIVE">Aktif (Unresolved)</option>
- <option value="RESOLVED">Selesai (Resolved)</option>
+ <option className="bg-background text-foreground" value="ALL">Semua Status</option>
+ <option className="bg-background text-foreground" value="ACTIVE">Aktif (Unresolved)</option>
+ <option className="bg-background text-foreground" value="RESOLVED">Selesai (Resolved)</option>
  </select>
  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"/>
  </div>
+ </div>
 
- <div className="relative">
+ <div className="relative w-full sm:w-auto">
  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"size={16} />
  <input
  type="date"
  value={dateFilter}
  onChange={(e) => setDateFilter(e.target.value)}
- className="w-full sm:w-auto bg-muted border border-border rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 transition-all text-foreground cursor-pointer"
+ className="w-full sm:w-auto bg-transparent border border-border rounded-xl pl-9 pr-3 py-2.5 text-[13px] font-medium outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground cursor-pointer"
  />
  </div>
 
  {(search || levelFilter !=="ALL"|| statusFilter !=="ALL"|| dateFilter) && (
  <button
  onClick={() => { setSearch(""); setLevelFilter("ALL"); setStatusFilter("ALL"); setDateFilter(""); }}
- className="flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-colors shrink-0"
+ className="flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-colors shrink-0 w-full sm:w-auto"
  >
  <FilterX size={16} />
  Reset Filter

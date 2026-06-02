@@ -57,7 +57,7 @@ const formatDisplayDate = (dateStr: string) => {
 };
 
 export default function ProfitabilityPage() {
- const [selectedProvince, setSelectedProvince] = useState("All Regions");
+ const [selectedProvinces, setSelectedProvinces] = useState<string[]>([]);
  const [startDate, setStartDate] = useState("");
  const [endDate, setEndDate] = useState("");
  const [searchQuery, setSearchQuery] = useState("");
@@ -152,7 +152,7 @@ export default function ProfitabilityPage() {
 
  const [mounted, setMounted] = useState(false);
  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
- const [tempSelectedProvince, setTempSelectedProvince] = useState("All Regions");
+ const [tempSelectedProvinces, setTempSelectedProvinces] = useState<string[]>([]);
  const [activeStat, setActiveStat] = useState(0);
  const profitabilityRef = useRef<HTMLDivElement>(null);
  const touchStartX = useRef<number | null>(null);
@@ -200,9 +200,9 @@ export default function ProfitabilityPage() {
  latestProfit: 0
  };
  }
- const isAllRegions = selectedProvince ==="All Regions";
- const normalize = (val: string | null | undefined) => val ? String(val).toLowerCase().trim() :"";
- const selectedProvLower = normalize(selectedProvince);
+ const isAllRegions = selectedProvinces.length === 0;
+ const normalize = (val: string | null | undefined) => val ? String(val).toLowerCase().trim() : "";
+ const selectedProvsLower = selectedProvinces.map(p => normalize(p));
 
  // 1. Calculate Selected Range & Months
  const startMonthStr = startDate.substring(0, 7);
@@ -265,13 +265,13 @@ export default function ProfitabilityPage() {
  // Region Filter Logic
  if (!isAllRegions) {
  const cityProv = getProvinceFromCity(tx.city) || tx.city;
- const matchesDirectly = cityProv && normalize(String(cityProv)).includes(selectedProvLower);
+ const matchesDirectly = cityProv && selectedProvsLower.some(p => normalize(String(cityProv)).includes(p));
 
  if (!matchesDirectly) {
  const idSuffix = tx.id?.split('-')[1];
- if (tx.keterangan ==="pemasukan") {
+ if (tx.keterangan === "pemasukan") {
  const customer = customerList.find((c: Customer) => String(c.id) === idSuffix);
- if (normalize(customer?.province ||"") !== selectedProvLower) return;
+ if (!selectedProvsLower.includes(normalize(customer?.province || ""))) return;
  } else {
  return;
  }
@@ -339,15 +339,15 @@ export default function ProfitabilityPage() {
  const activeAtEnd = customerList.filter((c: Customer) => {
  const joinDate = getLocalDate(c.createdAt || (c as any).registration_date);
  if (joinDate > endDate) return false;
- if (!isAllRegions && c.province !== selectedProvince) return false;
- return c.status ==="Active";
+ if (!isAllRegions && !selectedProvinces.includes(c.province || "")) return false;
+ return c.status === "Active";
  }).length;
 
  const inactiveAtEnd = customerList.filter((c: Customer) => {
  const joinDate = getLocalDate(c.createdAt || (c as any).registration_date);
  if (joinDate > endDate) return false;
- if (!isAllRegions && c.province !== selectedProvince) return false;
- return c.status ==="Inactive"|| c.status ==="Non-Active";
+ if (!isAllRegions && !selectedProvinces.includes(c.province || "")) return false;
+ return c.status === "Inactive" || c.status === "Non-Active";
  }).length;
 
  // 5. Chart Data (Range Focused)
@@ -363,24 +363,24 @@ export default function ProfitabilityPage() {
 
  const incomeByType: Record<string, number> = {};
  const expenseByType: Record<string, number> = {};
- const allocationFactor = isAllRegions ? 1 : (customerList.length > 0 ? (customerList.filter((c: Customer) => normalize(c.province ||"") === selectedProvLower).length / customerList.length) : 0);
+ const allocationFactor = isAllRegions ? 1 : (customerList.length > 0 ? (customerList.filter((c: Customer) => selectedProvsLower.includes(normalize(c.province || ""))).length / customerList.length) : 0);
 
  // For Income (Revenue Component) - purely from transactions
  transactions.forEach((tx: Transaction) => {
  const txDate = getLocalDate(tx.timestamp);
  if (txDate < startDate || txDate > endDate) return;
 
- if (!isAllRegions) {
- const cityProv = getProvinceFromCity(tx.city) || tx.city;
- const matchesDirectly = cityProv && normalize(String(cityProv)).includes(selectedProvLower);
- if (!matchesDirectly) {
- const idSuffix = tx.id?.split('-')[1];
- if (tx.keterangan ==="pemasukan") {
- const customer = customerList.find((c: Customer) => String(c.id) === idSuffix);
- if (normalize(customer?.province ||"") !== selectedProvLower) return;
- } else return;
- }
- }
+  if (!isAllRegions) {
+  const cityProv = getProvinceFromCity(tx.city) || tx.city;
+  const matchesDirectly = cityProv && selectedProvsLower.some(p => normalize(String(cityProv)).includes(p));
+  if (!matchesDirectly) {
+  const idSuffix = tx.id?.split('-')[1];
+  if (tx.keterangan === "pemasukan") {
+  const customer = customerList.find((c: Customer) => String(c.id) === idSuffix);
+  if (!selectedProvsLower.includes(normalize(customer?.province || ""))) return;
+  } else return;
+  }
+  }
 
  if (tx.status ==="Verified"&& tx.keterangan ==="pemasukan") {
  // SQL Waterfall strictly uses'Revenue'as the category for all income
@@ -394,8 +394,8 @@ export default function ProfitabilityPage() {
  const expDate = getLocalDate(exp.date);
  if (expDate < startDate || expDate > endDate) return;
 
- const expProv = getProvinceFromCity(exp.city) || exp.city;
- if (!isAllRegions && expProv && !normalize(String(expProv)).includes(selectedProvLower)) return;
+  const expProv = getProvinceFromCity(exp.city) || exp.city;
+  if (!isAllRegions && expProv && !selectedProvsLower.some(p => normalize(String(expProv)).includes(p))) return;
 
  const type = exp.category ||"General Expense";
  const allocatedAmount = Math.abs(Number(exp.amount) || 0) * (isAllRegions ? 1 : allocationFactor);
@@ -407,10 +407,10 @@ export default function ProfitabilityPage() {
  ...Object.entries(expenseByType).map(([name, value]) => ({ name, value: -Number(value), isExpense: true }))
  ].filter(d => d.value !== 0);
 
- const activeCustomers = customerList.filter((c: Customer) => {
- const joinDate = getLocalDate(c.createdAt || (c as any).registration_date);
- return joinDate <= endDate && c.status ==="Active"&& (isAllRegions || normalize(c.province ||"") === selectedProvLower);
- });
+  const activeCustomers = customerList.filter((c: Customer) => {
+  const joinDate = getLocalDate(c.createdAt || (c as any).registration_date);
+  return joinDate <= endDate && c.status === "Active" && (isAllRegions || selectedProvsLower.includes(normalize(c.province || "")));
+  });
 
  const distribution = ["Premium","Standard","Basic","Gamers"].map(name => {
  const count = activeCustomers.filter(c => (c.service ==='Gamers Node'?'Gamers': c.service) === name).length;
@@ -441,7 +441,7 @@ export default function ProfitabilityPage() {
  growthTrend,
  latestProfit: rangeStats.profit
  };
- }, [selectedProvince, startDate, endDate, customerList, transactions, expenseList]);
+ }, [selectedProvinces, startDate, endDate, customerList, transactions, expenseList]);
 
  const filteredProvinces = useMemo(() =>
  provinces.filter((p: string) => p.toLowerCase().includes(searchQuery.toLowerCase())),
@@ -507,20 +507,22 @@ export default function ProfitabilityPage() {
  <div className="relative w-full lg-phone:w-auto shrink-0"ref={dropdownRef}>
  <button
  onClick={() => {
- if (!isDataLoading) {
- setTempSelectedProvince(selectedProvince);
- setIsDropdownOpen(!isDropdownOpen);
- }
+  if (!isDataLoading) {
+  setTempSelectedProvinces(selectedProvinces);
+  setIsDropdownOpen(!isDropdownOpen);
+  }
  }}
  className="flex items-center justify-between gap-1 tablet:gap-3 bg-muted px-3 tablet:px-4 py-2.5 tablet:py-2 rounded-[1rem] border border-border w-full lg-phone:min-w-[125px] lg-phone:max-w-[150px] tablet:min-w-[160px] tablet:max-w-none h-[42px] tablet:h-[38px] hover:border-indigo-500/50 transition-all active:scale-95 shrink-0"
  >
  <div className="flex items-center gap-1.5 tablet:gap-2 overflow-hidden w-full">
  <MapPin className="w-3.5 h-3.5 tablet:w-4 tablet:h-4 text-indigo-500 shrink-0"/>
- {isDataLoading ? (
- <div className="h-3.5 w-full bg-muted animate-pulse rounded-md"/>
- ) : (
- <span className="text-[10px] lg-phone:text-xs tablet:text-sm font-bold text-foreground truncate">{selectedProvince}</span>
- )}
+  {isDataLoading ? (
+  <div className="h-3.5 w-full bg-muted animate-pulse rounded-md"/>
+  ) : (
+  <span className="text-[10px] lg-phone:text-xs tablet:text-sm font-bold text-foreground truncate">
+  {selectedProvinces.length === 0 ? "All Regions" : selectedProvinces.length === 1 ? selectedProvinces[0] : `${selectedProvinces.length} Regions`}
+  </span>
+  )}
  </div>
  {!isDataLoading && (
  <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-300 ${isDropdownOpen ?'rotate-180':''}`} />
@@ -553,33 +555,44 @@ export default function ProfitabilityPage() {
  <h3 className="text-lg font-black tracking-tight">Select Region</h3>
  </div>
 
- <div className="p-2 lg:p-1 overflow-y-auto custom-scrollbar flex-1">
- {provinces.map((p: string) => (
- <button
- key={p}
- onClick={() => {
- if (window.innerWidth >= 1024) {
- setSelectedProvince(p);
- setIsDropdownOpen(false);
- setSearchQuery("");
- } else {
- setTempSelectedProvince(p);
- }
- }}
- className={cn(
- "w-full text-left px-5 lg:px-4 py-4 lg:py-2.5 rounded-2xl lg:rounded-xl text-base lg:text-sm transition-all flex items-center justify-between group",
- selectedProvince === p ? "lg:bg-primary lg:text-primary-foreground lg:font-bold lg:shadow-lg lg:shadow-primary/20" : "lg:text-muted-foreground lg:font-medium lg:hover:bg-muted dark:lg:hover:bg-muted",
- tempSelectedProvince === p ? "max-lg:bg-primary max-lg:text-primary-foreground max-lg:font-bold max-lg:shadow-lg max-lg:shadow-primary/20" : "max-lg:text-muted-foreground max-lg:font-medium max-lg:hover:bg-muted dark:max-lg:hover:bg-muted"
- )}
- >
- <span>{p}</span>
- <div className={cn("rounded-full bg-white transition-all",
- selectedProvince === p ? "lg:w-1.5 lg:h-1.5" : "lg:w-0 lg:h-0",
- tempSelectedProvince === p ? "max-lg:w-2 max-lg:h-2" : "max-lg:w-0 max-lg:h-0"
- )}/>
- </button>
- ))}
- </div>
+  <div className="p-2 lg:p-1 overflow-y-auto custom-scrollbar flex-1">
+  {provinces.map((p: string) => {
+  const isSelectedDesktop = p === "All Regions" ? selectedProvinces.length === 0 : selectedProvinces.includes(p);
+  const isSelectedMobile = p === "All Regions" ? tempSelectedProvinces.length === 0 : tempSelectedProvinces.includes(p);
+  return (
+  <button
+  key={p}
+  onClick={() => {
+  if (window.innerWidth >= 1024) {
+  setSelectedProvinces(prev => {
+    if (p === "All Regions") return [];
+    if (prev.includes(p)) return prev.filter(item => item !== p);
+    return [...prev, p];
+  });
+  setSearchQuery("");
+  } else {
+  setTempSelectedProvinces(prev => {
+    if (p === "All Regions") return [];
+    if (prev.includes(p)) return prev.filter(item => item !== p);
+    return [...prev, p];
+  });
+  }
+  }}
+  className={cn(
+  "w-full text-left px-5 lg:px-4 py-4 lg:py-2.5 rounded-2xl lg:rounded-xl text-base lg:text-sm transition-all flex items-center justify-between group",
+  isSelectedDesktop ? "lg:bg-primary lg:text-primary-foreground lg:font-bold lg:shadow-lg lg:shadow-primary/20" : "lg:text-muted-foreground lg:font-medium lg:hover:bg-muted dark:lg:hover:bg-muted",
+  isSelectedMobile ? "max-lg:bg-primary max-lg:text-primary-foreground max-lg:font-bold max-lg:shadow-lg max-lg:shadow-primary/20" : "max-lg:text-muted-foreground max-lg:font-medium max-lg:hover:bg-muted dark:max-lg:hover:bg-muted"
+  )}
+  >
+  <span>{p}</span>
+  <div className={cn("rounded-full bg-white transition-all",
+  isSelectedDesktop ? "lg:w-1.5 lg:h-1.5" : "lg:w-0 lg:h-0",
+  isSelectedMobile ? "max-lg:w-2 max-lg:h-2" : "max-lg:w-0 max-lg:h-0"
+  )}/>
+  </button>
+  );
+  })}
+  </div>
 
  {/* Mobile Action Buttons */}
  <div className="lg:hidden p-4 border-t border-border shrink-0 bg-card/50 flex gap-3 pb-safe">
@@ -589,12 +602,12 @@ export default function ProfitabilityPage() {
  >
  Back
  </button>
- <button
- onClick={() => {
- setSelectedProvince(tempSelectedProvince);
- setIsDropdownOpen(false);
- setSearchQuery("");
- }}
+  <button
+  onClick={() => {
+  setSelectedProvinces(tempSelectedProvinces);
+  setIsDropdownOpen(false);
+  setSearchQuery("");
+  }}
  className="flex-1 py-4 bg-primary text-primary-foreground font-bold rounded-2xl text-sm shadow-xl shadow-primary/30 transition-all active:scale-95"
  >
  Confirm

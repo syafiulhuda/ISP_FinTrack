@@ -174,8 +174,12 @@ export function DistributionClient() {
  });
  const deferredActiveLayers = useDeferredValue(activeLayers);
 
+ const { data: maintenanceHistory = [], isLoading: isLoadingHistory } = useQuery({
+ queryKey: ['maintenance-history', selectedNode?.id],
+ queryFn: () => getMaintenanceHistory(selectedNode.id),
+ enabled: !!selectedNode?.id,
+ });
 
- const [maintenanceHistory, setMaintenanceHistory] = useState<any[]>([]);
  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
  const [isLegendOpen, setIsLegendOpen] = useState(false);
  const [mapTheme, setMapTheme] = useState("dark");
@@ -780,8 +784,10 @@ export function DistributionClient() {
  <AlertTriangle size={14} />
  Incidents
  </h3>
- {nodeStatus !=='Online'&& (
- <span className="text-[8px] md:text-[9px] bg-red-100 dark:bg-red-900/30 text-red-600 px-2 py-0.5 rounded-full font-black">1 Critical</span>
+ {nodeStatus !=='Online'&& maintenanceHistory.length > 0 && (
+ <span className="text-[8px] md:text-[9px] bg-red-100 dark:bg-red-900/30 text-red-600 px-2 py-0.5 rounded-full font-black">
+ {maintenanceHistory.length} Log{maintenanceHistory.length > 1 ? 's' : ''}
+ </span>
  )}
  </div>
 
@@ -791,56 +797,68 @@ export function DistributionClient() {
  <Activity size={18} />
  </div>
  <p className="text-[10px] md:text-xs font-bold text-muted-foreground italic">Perfect condition</p>
+ {maintenanceHistory.length > 0 && (
+ <button onClick={() => setIsHistoryModalOpen(true)} className="mt-4 text-[9px] md:text-[10px] font-black text-primary hover:underline uppercase tracking-widest">
+ View Logs
+ </button>
+ )}
  </div>
  ) : (
  <div className="bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-3 lg:p-4 rounded-r-2xl">
+ {isLoadingHistory ? (
+ <div className="animate-pulse space-y-3">
+ <div className="h-4 bg-amber-200/50 rounded w-1/3"></div>
+ <div className="h-3 bg-amber-200/50 rounded w-full"></div>
+ <div className="h-3 bg-amber-200/50 rounded w-2/3"></div>
+ </div>
+ ) : maintenanceHistory.length > 0 ? (
+ <>
  <div className="flex justify-between mb-2">
- <p className="text-[10px] md:text-xs font-black text-amber-600">#TCK-8921-X</p>
+ <p className="text-[10px] md:text-[11px] font-black text-amber-600">#MNT-{maintenanceHistory[0].id}</p>
  <div className="flex items-center gap-1 text-[8px] md:text-[9px] text-muted-foreground font-bold">
  <Clock size={10} />
- <span>2h ago</span>
+ <span>{new Date(maintenanceHistory[0].date).toLocaleDateString()}</span>
  </div>
  </div>
  <p className="text-[11px] md:text-[12px] font-bold text-foreground leading-relaxed mb-3 lg:mb-4">
- Power loss detected at main supply.
+ {maintenanceHistory[0].description}
  </p>
+ <div className="flex items-center justify-between mt-4 border-t border-amber-200/50 pt-3">
  <div className="flex items-center gap-2 lg:gap-3">
  <div className="h-7 w-7 lg:h-8 lg:w-8 rounded-full bg-muted overflow-hidden ring-2 ring-white">
  <Image
  unoptimized
  width={32}
  height={32}
- src="https://ui-avatars.com/api/?name=Budi+Santoso&background=random&size=100"
+ src={`https://ui-avatars.com/api/?name=${encodeURIComponent(maintenanceHistory[0].technician_name)}&background=random&size=100`}
  className="w-full h-full object-cover"
  alt="Technician"
  />
  </div>
  <div>
- <p className="text-[10px] md:text-[11px] font-black">Budi Santoso</p>
+ <p className="text-[10px] md:text-[11px] font-black">{maintenanceHistory[0].technician_name}</p>
  <p className="text-[8px] md:text-[9px] font-bold text-muted-foreground uppercase tracking-tighter truncate max-w-[100px] lg:max-w-none">Field Engineer</p>
  </div>
  </div>
+ 
+ <button onClick={() => setIsHistoryModalOpen(true)} className="text-[9px] md:text-[10px] font-black text-primary hover:underline uppercase tracking-tighter shrink-0 bg-white/50 px-3 py-1.5 rounded-lg border border-primary/20">
+ View All Logs
+ </button>
+ </div>
+ </>
+ ) : (
+ <div className="flex flex-col gap-2">
+ <p className="text-[11px] md:text-[12px] font-bold text-foreground leading-relaxed">
+ Awaiting Diagnosis
+ </p>
+ <p className="text-[9px] md:text-[10px] text-muted-foreground font-medium italic">
+ Condition is marked as Maintenance/Broken, but no technician history found.
+ </p>
+ </div>
+ )}
  </div>
  )}
  </section>
- </div>
-
- <div className="p-4 sm:p-5 lg:p-8 bg-muted/50 /30 space-y-3">
- <button
- onClick={async () => {
- const res = await dispatchTechnician(selectedNode.id, selectedNode.sn);
- if (res.success) {
- toast.success("Technician dispatched successfully!");
- queryClient.invalidateQueries({ queryKey: ['map-assets'] });
- } else {
- toast.error("Failed to dispatch technician.");
- }
- }}
- className="w-full bg-primary text-primary-foreground py-3 lg:py-4 rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:translate-y-[-2px] transition-all flex items-center justify-center gap-3"
- >
- <Activity size={18} />
- Dispatch
- </button>
  </div>
  </m.div>
  </div>

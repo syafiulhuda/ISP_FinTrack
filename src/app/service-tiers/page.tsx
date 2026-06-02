@@ -258,7 +258,7 @@ export default function ServiceTiersPage() {
  </div>
 
  {/* Horizontal Scroll: Service Tiers */}
- <div className="flex overflow-x-auto pb-6 gap-6 no-scrollbar min-h-[262px]">
+ <div className="flex overflow-x-auto pt-2 pb-6 px-1 -mx-1 gap-6 no-scrollbar min-h-[270px]">
  {loadingTiers ? (
  TIER_SKELETON_CARDS.map((_, i) => (
  <div 
@@ -331,11 +331,10 @@ export default function ServiceTiersPage() {
  <p className={cn("text-sm mt-1", isFeatured ?"text-white/80":"text-muted-foreground")}>{formatCurrency(tier.price)} / mo</p>
  </div>
 
- <div className="space-y-4 pt-4 relative">
  <div className={cn(
-"absolute top-0 left-0 right-0 h-full -z-10 rounded-xl rounded-t-none",
- isFeatured ?"bg-black/5":"bg-muted"
- )}></div>
+ "space-y-3 px-6 py-4 mt-6 -mx-6 -mb-6 border-t",
+ isFeatured ?"bg-black/10 border-black/10":"bg-muted/30 border-border"
+ )}>
  <div className="flex justify-between items-center text-sm">
  <span className={cn(isFeatured ?"text-white/80":"text-muted-foreground")}>FUP Limit</span>
  <span className="font-semibold">{tier.fup}</span>

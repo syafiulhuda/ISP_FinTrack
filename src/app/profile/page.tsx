@@ -189,9 +189,8 @@ export default function ProfilePage() {
  const handleRevokeOtherSessions = async () => {
  if (!confirm('Are you sure you want to logout from all other devices?')) return;
  try {
- // Find current session ID conceptually (the active token is handled backend)
- const currentToken =""; // backend action uses current token from cookie
- await revokeOtherSessions(currentToken);
+  // Find current session ID conceptually (the active token is handled backend)
+  await revokeOtherSessions();
  queryClient.invalidateQueries({ queryKey: ['adminSessions'] });
  toast.success('Logged out from other devices');
  } catch (error) {

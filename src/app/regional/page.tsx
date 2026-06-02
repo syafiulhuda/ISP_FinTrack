@@ -48,7 +48,7 @@ interface NodeRow {
 const SKELETON_ITEMS = Array.from({ length: 3 });
 
 export default function RegionalAnalysisPage() {
- const [selectedProvince, setSelectedProvince] = useState("All Provinces");
+ const [selectedProvinces, setSelectedProvinces] = useState<string[]>([]);
  const [selectedCity, setSelectedCity] = useState("All Cities");
  const [selectedDistrict, setSelectedDistrict] = useState("All Districts");
  const [selectedSubDistrict, setSelectedSubDistrict] = useState("All Sub-districts");
@@ -90,23 +90,23 @@ export default function RegionalAnalysisPage() {
 
  const assetSummary = useMemo(() => {
  const filteredAssets = assetRoster.filter(a => {
- // Find the most specific selection
- let matchTarget ="";
- if (selectedSubDistrict !=="All Sub-districts") matchTarget = selectedSubDistrict;
- else if (selectedDistrict !=="All Districts") matchTarget = selectedDistrict;
- else if (selectedCity !=="All Cities") matchTarget = selectedCity;
- else if (selectedProvince !=="All Provinces") matchTarget = selectedProvince;
+  // Find the most specific selection
+  let matchTargets: string[] = [];
+  if (selectedSubDistrict !== "All Sub-districts") matchTargets = [selectedSubDistrict];
+  else if (selectedDistrict !== "All Districts") matchTargets = [selectedDistrict];
+  else if (selectedCity !== "All Cities") matchTargets = [selectedCity];
+  else if (selectedProvinces.length > 0) matchTargets = selectedProvinces;
 
- // If no specific selection, include all
- if (!matchTarget) return true;
+  // If no specific selection, include all
+  if (matchTargets.length === 0) return true;
 
- const loc = a.location.toLowerCase();
- // Clean target from formal prefixes (e.g."Kota Bandung"->"bandung")
- const cleanTarget = matchTarget.replace(/^(Kota|Kabupaten|Kecamatan|Kelurahan|Provinsi)\s+/i,'').toLowerCase();
-
- // Fuzzy match against the location string
- return loc.includes(cleanTarget);
- });
+  const loc = a.location.toLowerCase();
+  
+  return matchTargets.some(target => {
+  const cleanTarget = target.replace(/^(Kota|Kabupaten|Kecamatan|Kelurahan|Provinsi)\s+/i, '').toLowerCase();
+  return loc.includes(cleanTarget);
+  });
+  });
 
  const online = filteredAssets.filter(a => (a.status ||'').toLowerCase() ==='online').length;
  const offline = filteredAssets.filter(a => (a.status ||'').toLowerCase() ==='offline').length;
@@ -117,8 +117,8 @@ export default function RegionalAnalysisPage() {
  online, 
  offline,
  sold 
- };
- }, [assetRoster, selectedProvince, selectedCity, selectedDistrict, selectedSubDistrict]);
+  };
+  }, [assetRoster, selectedProvinces, selectedCity, selectedDistrict, selectedSubDistrict]);
 
  const [profitPage, setProfitPage] = useState(1);
  const [agingPage, setAgingPage] = useState(1);
@@ -145,51 +145,54 @@ export default function RegionalAnalysisPage() {
  return ["All Provinces", ...Array.from(normalized.values()).sort()];
  }, [customerList]);
  
- const cities = useMemo(() => {
- const list = selectedProvince ==="All Provinces"? customerList : customerList.filter(c => normalize(c.province) === selectedProvince);
- const raw = list.map(c => c.city).filter(Boolean) as string[];
- const normalized = new Map<string, string>();
- raw.forEach(p => {
- const key = p.toLowerCase().trim();
- if (!normalized.has(key)) normalized.set(key, normalize(p));
- });
- return ["All Cities", ...Array.from(normalized.values()).sort()];
- }, [selectedProvince, customerList]);
+  const cities = useMemo(() => {
+  const isAllProvinces = selectedProvinces.length === 0;
+  const list = isAllProvinces ? customerList : customerList.filter(c => selectedProvinces.includes(normalize(c.province)));
+  const raw = list.map(c => c.city).filter(Boolean) as string[];
+  const normalized = new Map<string, string>();
+  raw.forEach(p => {
+  const key = p.toLowerCase().trim();
+  if (!normalized.has(key)) normalized.set(key, normalize(p));
+  });
+  return ["All Cities", ...Array.from(normalized.values()).sort()];
+  }, [selectedProvinces, customerList]);
 
- const districts = useMemo(() => {
- const list = selectedCity ==="All Cities"
- ? (selectedProvince ==="All Provinces"? customerList : customerList.filter(c => normalize(c.province) === selectedProvince)) 
- : customerList.filter(c => normalize(c.city) === selectedCity);
- const raw = list.map(c => c.district).filter(Boolean) as string[];
- const normalized = new Map<string, string>();
- raw.forEach(p => {
- const key = p.toLowerCase().trim();
- if (!normalized.has(key)) normalized.set(key, normalize(p));
- });
- return ["All Districts", ...Array.from(normalized.values()).sort()];
- }, [selectedProvince, selectedCity, customerList]);
+  const districts = useMemo(() => {
+  const isAllProvinces = selectedProvinces.length === 0;
+  const list = selectedCity === "All Cities"
+  ? (isAllProvinces ? customerList : customerList.filter(c => selectedProvinces.includes(normalize(c.province)))) 
+  : customerList.filter(c => normalize(c.city) === selectedCity);
+  const raw = list.map(c => c.district).filter(Boolean) as string[];
+  const normalized = new Map<string, string>();
+  raw.forEach(p => {
+  const key = p.toLowerCase().trim();
+  if (!normalized.has(key)) normalized.set(key, normalize(p));
+  });
+  return ["All Districts", ...Array.from(normalized.values()).sort()];
+  }, [selectedProvinces, selectedCity, customerList]);
 
- const subDistricts = useMemo(() => {
- const list = selectedDistrict ==="All Districts"
- ? (selectedCity ==="All Cities"? (selectedProvince ==="All Provinces"? customerList : customerList.filter(c => normalize(c.province) === selectedProvince)) : customerList.filter(c => normalize(c.city) === selectedCity)) 
- : customerList.filter(c => normalize(c.district) === selectedDistrict);
- const raw = list.map(c => c.village).filter(Boolean) as string[];
- const normalized = new Map<string, string>();
- raw.forEach(p => {
- const key = p.toLowerCase().trim();
- if (!normalized.has(key)) normalized.set(key, normalize(p));
- });
- return ["All Sub-districts", ...Array.from(normalized.values()).sort()];
- }, [selectedProvince, selectedCity, selectedDistrict, customerList]);
+  const subDistricts = useMemo(() => {
+  const isAllProvinces = selectedProvinces.length === 0;
+  const list = selectedDistrict === "All Districts"
+  ? (selectedCity === "All Cities" ? (isAllProvinces ? customerList : customerList.filter(c => selectedProvinces.includes(normalize(c.province)))) : customerList.filter(c => normalize(c.city) === selectedCity)) 
+  : customerList.filter(c => normalize(c.district) === selectedDistrict);
+  const raw = list.map(c => c.village).filter(Boolean) as string[];
+  const normalized = new Map<string, string>();
+  raw.forEach(p => {
+  const key = p.toLowerCase().trim();
+  if (!normalized.has(key)) normalized.set(key, normalize(p));
+  });
+  return ["All Sub-districts", ...Array.from(normalized.values()).sort()];
+  }, [selectedProvinces, selectedCity, selectedDistrict, customerList]);
 
- const dynamicData = useMemo(() => {
- let filtered = customerList.filter(c => {
- const pMatch = selectedProvince ==="All Provinces"|| normalize(c.province) === selectedProvince;
- const cMatch = selectedCity ==="All Cities"|| normalize(c.city) === selectedCity;
- const dMatch = selectedDistrict ==="All Districts"|| normalize(c.district) === selectedDistrict;
- const sMatch = selectedSubDistrict ==="All Sub-districts"|| normalize(c.village) === selectedSubDistrict;
- return pMatch && cMatch && dMatch && sMatch;
- });
+  const dynamicData = useMemo(() => {
+  let filtered = customerList.filter(c => {
+  const pMatch = selectedProvinces.length === 0 || selectedProvinces.includes(normalize(c.province));
+  const cMatch = selectedCity === "All Cities" || normalize(c.city) === selectedCity;
+  const dMatch = selectedDistrict === "All Districts" || normalize(c.district) === selectedDistrict;
+  const sMatch = selectedSubDistrict === "All Sub-districts" || normalize(c.village) === selectedSubDistrict;
+  return pMatch && cMatch && dMatch && sMatch;
+  });
 
  const grouped: Record<string, { node: string; customerCount: number; revenue: number; activeCount: number; inactiveCount: number }> = {};
  filtered.forEach(c => {
@@ -295,7 +298,7 @@ export default function RegionalAnalysisPage() {
  
  return totalB - totalA; // Terbesar ke terkecil
  }).filter(v => v.node.toLowerCase().includes(searchQuery.toLowerCase()));
- }, [selectedProvince, selectedCity, selectedDistrict, selectedSubDistrict, searchQuery, customerList, serviceTiers, mounted, invoicesList, agingMVData]);
+ }, [selectedProvinces, selectedCity, selectedDistrict, selectedSubDistrict, searchQuery, customerList, serviceTiers, mounted, invoicesList, agingMVData]);
 
  const paginatedProfit = dynamicData.slice((profitPage - 1) * itemsPerPage, profitPage * itemsPerPage);
  const totalProfitPages = Math.ceil(dynamicData.length / itemsPerPage);
@@ -316,60 +319,65 @@ export default function RegionalAnalysisPage() {
  </div>
 
  <div className="bg-card p-8 rounded-[2.5rem] shadow-sm border border-border">
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
- {[
- { 
- label:"Province", 
- value: selectedProvince, 
- setter: (val: string) => {
- setSelectedProvince(val);
- setSelectedCity("All Cities");
- setSelectedDistrict("All Districts");
- setSelectedSubDistrict("All Sub-districts");
- }, 
- options: provinces 
- },
- { 
- label:"City", 
- value: selectedCity, 
- setter: (val: string) => {
- setSelectedCity(val);
- setSelectedDistrict("All Districts");
- setSelectedSubDistrict("All Sub-districts");
- }, 
- options: cities 
- },
- { 
- label:"District", 
- value: selectedDistrict, 
- setter: (val: string) => {
- setSelectedDistrict(val);
- setSelectedSubDistrict("All Sub-districts");
- }, 
- options: districts 
- },
- { 
- label:"Sub-district", 
- value: selectedSubDistrict, 
- setter: setSelectedSubDistrict, 
- options: subDistricts 
- },
- ].map((filter, i) => (
- <div key={i} className="space-y-3">
- <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">{filter.label}</label>
- <CustomFilterDropdown
- label={filter.label}
- value={filter.value}
- options={filter.options}
- onChange={(val) => {
- filter.setter(val);
- setProfitPage(1);
- setAgingPage(1);
- }}
- />
- </div>
- ))}
- </div>
+  <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+  <div className="space-y-3">
+  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Province</label>
+  <CustomMultiFilterDropdown
+  label="Province"
+  value={selectedProvinces}
+  options={provinces}
+  onChange={(val: string[]) => {
+  setSelectedProvinces(val);
+  setSelectedCity("All Cities");
+  setSelectedDistrict("All Districts");
+  setSelectedSubDistrict("All Sub-districts");
+  setProfitPage(1);
+  setAgingPage(1);
+  }}
+  />
+  </div>
+  {[
+  { 
+  label:"City", 
+  value: selectedCity, 
+  setter: (val: string) => {
+  setSelectedCity(val);
+  setSelectedDistrict("All Districts");
+  setSelectedSubDistrict("All Sub-districts");
+  }, 
+  options: cities 
+  },
+  { 
+  label:"District", 
+  value: selectedDistrict, 
+  setter: (val: string) => {
+  setSelectedDistrict(val);
+  setSelectedSubDistrict("All Sub-districts");
+  }, 
+  options: districts 
+  },
+  { 
+  label:"Sub-district", 
+  value: selectedSubDistrict, 
+  setter: setSelectedSubDistrict, 
+  options: subDistricts 
+  },
+  ].map((filter, i) => (
+  <div key={i} className="space-y-3">
+  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">{filter.label}</label>
+  <CustomFilterDropdown
+  label={filter.label}
+  value={filter.value}
+  options={filter.options}
+  onChange={(val) => {
+  filter.setter(val);
+  setProfitPage(1);
+  setAgingPage(1);
+  }}
+  />
+  </div>
+  ))}
+  </div>
  </div>
 
  {/* Mobile & Tablet 3D Cover Flow Carousel */}
@@ -856,7 +864,87 @@ export default function RegionalAnalysisPage() {
  );
 }
 
-const CustomFilterDropdown = ({ label, value, options, onChange }: { label: string, value: string, options: string[], onChange: (val: string) => void }) => {
+function CustomMultiFilterDropdown({ label, value, options, onChange }: { label: string, value: string[], options: string[], onChange: (val: string[]) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [tempValue, setTempValue] = useState<string[]>(value);
+
+  const displayValue = value.length === 0 ? options[0] : value.length === 1 ? value[0] : `${value.length} Selected`;
+
+  return (
+  <div className="relative group">
+  <button 
+  onClick={() => {
+  setTempValue(value);
+  setIsOpen(true);
+  }}
+  className="flex items-center justify-between w-full bg-muted border-none rounded-2xl pl-5 pr-5 py-4 text-[11px] sm:text-xs font-bold text-foreground focus:ring-4 focus:ring-primary/10 transition-all outline-none cursor-pointer shadow-sm truncate hover:bg-muted/80"
+  >
+  <span className="truncate">{displayValue}</span>
+  <ChevronDown className={cn("text-muted-foreground transition-transform shrink-0", isOpen && "rotate-180")} size={16} />
+  </button>
+
+  <AnimatePresence>
+  {isOpen && (
+  <>
+  <m.div
+  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+  onClick={() => setIsOpen(false)}
+  className="lg:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-[99]"
+  />
+  <m.div
+  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+  animate={{ opacity: 1, y: 0, scale: 1 }}
+  exit={{ opacity: 0, y: 20, scale: 0.95 }}
+  className="fixed lg:absolute bottom-0 left-0 lg:bottom-auto lg:top-full lg:left-0 lg:mt-2 w-full lg:w-64 bg-card border border-border rounded-t-[2rem] lg:rounded-2xl shadow-2xl overflow-hidden z-[100] lg:z-50 backdrop-blur-xl flex flex-col max-h-[85vh] lg:max-h-[50vh]"
+  >
+  <div className="lg:hidden flex justify-center pt-3 pb-2 shrink-0">
+  <div className="w-12 h-1.5 bg-muted-foreground/20 rounded-full"/>
+  </div>
+  <div className="lg:hidden px-6 py-4 border-b border-border shrink-0 flex items-center justify-between">
+  <h3 className="text-lg font-black tracking-tight">{label}</h3>
+  </div>
+  <div className="p-2 lg:p-1 overflow-y-auto custom-scrollbar flex-1">
+  {options.map((opt) => {
+  const isSelectedDesktop = opt === options[0] ? value.length === 0 : value.includes(opt);
+  const isSelectedMobile = opt === options[0] ? tempValue.length === 0 : tempValue.includes(opt);
+  return (
+  <button
+  key={opt}
+  onClick={() => {
+  if (window.innerWidth >= 1024) {
+    onChange(opt === options[0] ? [] : value.includes(opt) ? value.filter(v => v !== opt) : [...value, opt]);
+  } else {
+    setTempValue(prev => opt === options[0] ? [] : prev.includes(opt) ? prev.filter(v => v !== opt) : [...prev, opt]);
+  }
+  }}
+  className={cn(
+  "w-full text-left px-5 lg:px-4 py-4 lg:py-2.5 rounded-2xl lg:rounded-xl text-base lg:text-sm transition-all flex items-center justify-between group",
+  isSelectedDesktop ? "lg:bg-primary lg:text-primary-foreground lg:font-bold lg:shadow-lg lg:shadow-primary/20" : "lg:text-muted-foreground lg:font-medium lg:hover:bg-muted dark:lg:hover:bg-muted",
+  isSelectedMobile ? "max-lg:bg-primary max-lg:text-primary-foreground max-lg:font-bold max-lg:shadow-lg max-lg:shadow-primary/20" : "max-lg:text-muted-foreground max-lg:font-medium max-lg:hover:bg-muted dark:max-lg:hover:bg-muted"
+  )}
+  >
+  <span>{opt}</span>
+  <div className={cn("rounded-full transition-all bg-white",
+  isSelectedDesktop ? "lg:w-1.5 lg:h-1.5" : "lg:w-0 lg:h-0",
+  isSelectedMobile ? "max-lg:w-2 max-lg:h-2" : "max-lg:w-0 max-lg:h-0"
+  )}/>
+  </button>
+  );
+  })}
+  </div>
+  <div className="lg:hidden p-4 border-t border-border shrink-0 bg-card/50 flex gap-3 pb-safe">
+  <button onClick={() => setIsOpen(false)} className="flex-1 py-4 bg-muted text-foreground font-bold rounded-2xl text-sm transition-all active:scale-95">Back</button>
+  <button onClick={() => { onChange(tempValue); setIsOpen(false); }} className="flex-1 py-4 bg-primary text-primary-foreground font-bold rounded-2xl text-sm shadow-xl shadow-primary/30 transition-all active:scale-95">Confirm</button>
+  </div>
+  </m.div>
+  </>
+  )}
+  </AnimatePresence>
+  </div>
+  );
+};
+
+function CustomFilterDropdown({ label, value, options, onChange }: { label: string, value: string, options: string[], onChange: (val: string) => void }) {
  const [isOpen, setIsOpen] = useState(false);
  const [tempValue, setTempValue] = useState(value);
 

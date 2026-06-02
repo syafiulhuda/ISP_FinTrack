@@ -28,6 +28,24 @@ export function proxy(request: NextRequest) {
  return NextResponse.redirect(loginUrl);
  }
 
+ try {
+ const parts = session.value.split(':');
+ if (parts.length < 3) {
+ const loginUrl = new URL('/login', request.url);
+ return NextResponse.redirect(loginUrl);
+ }
+
+ const expiryAt = parseInt(parts[2]);
+ if (isNaN(expiryAt) || Date.now() > expiryAt) {
+ const response = NextResponse.redirect(new URL('/login', request.url));
+ response.cookies.delete('fintrack_session');
+ return response;
+ }
+ } catch (error) {
+ const loginUrl = new URL('/login', request.url);
+ return NextResponse.redirect(loginUrl);
+ }
+
  return NextResponse.next();
 }
 

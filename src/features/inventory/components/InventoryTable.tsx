@@ -511,7 +511,7 @@ export function InventoryTable({ inventory }: { inventory: any }) {
         ))}
       </div>
 
-      <div className="hidden lg:block overflow-x-auto min-h-[400px]">
+      <div className="hidden lg:block overflow-visible min-h-[400px] pb-16">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b-2 border-slate-100 dark:border-slate-800">

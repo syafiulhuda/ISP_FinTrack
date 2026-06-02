@@ -13,7 +13,7 @@ import qrcode from'qrcode';
 
 export async function getActiveSessions() {
  const adminId = await getSession();
- if (!adminId) throw new Error("Unauthorized");
+ if (!adminId) return [];
 
  const res = await query(`
  SELECT id, device_info, ip_address, location, created_at, last_active, token
@@ -46,9 +46,17 @@ export async function revokeSession(sessionId: string) {
  return { success: true };
 }
 
-export async function revokeOtherSessions(currentToken: string) {
+export async function revokeOtherSessions() {
  const adminId = await getSession();
  if (!adminId) throw new Error("Unauthorized");
+
+ const { cookies } = await import('next/headers');
+ const cookieStore = await cookies();
+ const sessionCookie = cookieStore.get('fintrack_session');
+ 
+ if (!sessionCookie?.value) throw new Error("No session found");
+ const parts = sessionCookie.value.split(':');
+ const currentToken = parts[1];
 
  await query(`
  DELETE FROM admin_sessions 
@@ -158,7 +166,7 @@ export async function checkTwoFactorStatus() {
 
 export async function getSecurityLogs() {
  const adminId = await getSession();
- if (!adminId) throw new Error("Unauthorized");
+ if (!adminId) return [];
 
  const res = await query(`
  SELECT action, ip_address, created_at
