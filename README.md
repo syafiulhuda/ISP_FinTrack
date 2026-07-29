@@ -94,8 +94,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 You can use the default administrator account to explore the dashboard:
 
-- **Email**: `admin@company.com`
-- **Password**: `admin`
+- **Email**: `owner@ispfintrack.local`
+- **Password**: `owner`
 
 ---
 
